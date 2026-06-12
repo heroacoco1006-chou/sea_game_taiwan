@@ -1,0 +1,25 @@
+# 依賴套件
+node_modules/
+
+# 建置輸出
+dist/
+build/
+out/
+release/
+
+# Electron 打包輸出
+*.exe
+*.asar
+
+# 暫存與系統檔
+.DS_Store
+Thumbs.db
+*.log
+.cache/
+
+# 本機環境設定
+.env
+.env.local
+
+# Claude Code 工作檔
+.claude/
