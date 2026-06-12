@@ -3,6 +3,7 @@ import BootScene from './scenes/BootScene';
 import TitleScene from './scenes/TitleScene';
 import WorldMapScene from './scenes/WorldMapScene';
 import PortScene from './scenes/PortScene';
+import FacilityScene from './scenes/FacilityScene';
 import TradeScene from './scenes/TradeScene';
 import * as state from './state';
 
@@ -16,7 +17,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, TitleScene, WorldMapScene, PortScene, TradeScene],
+  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene],
 });
 
 // 偵錯掛鉤（供自動化測試）

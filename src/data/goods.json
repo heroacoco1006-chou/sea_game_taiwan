@@ -1,12 +1,28 @@
 {
   "goods": [
-    { "id": "silk_raw", "name": "生絲", "basePrice": 100, "desc": "中國特產，日本武士最愛的高級衣料原料，運到日本可大賺一筆。" },
-    { "id": "silk_cloth", "name": "絲綢", "basePrice": 160, "desc": "織好的絲布，比生絲更貴重。" },
-    { "id": "porcelain", "name": "瓷器", "basePrice": 80, "desc": "中國名產，歐洲人與日本人都搶著要。" },
-    { "id": "tea", "name": "茶葉", "basePrice": 40, "desc": "中國的日常飲品，外國人覺得新奇。" },
-    { "id": "deerskin", "name": "鹿皮", "basePrice": 60, "desc": "台灣特產！日本武士用來做甲冑的內裡。" },
-    { "id": "sugar", "name": "蔗糖", "basePrice": 50, "desc": "台灣平原種的甘蔗做成的糖，甜甜的黃金。" },
-    { "id": "silver", "name": "白銀", "basePrice": 200, "desc": "日本盛產的貴金屬，當時全世界都拿它當錢用。" },
-    { "id": "rice", "name": "米", "basePrice": 20, "desc": "人人要吃的主食，利潤不高但穩定。" }
+    { "id": "silk_raw", "name": "生絲", "category": "silk", "basePrice": 100, "color": "#f2d8d0", "desc": "中國特產，日本武士最愛的高級衣料原料，運到日本可大賺一筆。" },
+    { "id": "silk_cloth", "name": "絲綢", "category": "silk", "basePrice": 160, "color": "#e08aa0", "desc": "織好的絲布，比生絲更貴重，各國貴族都搶著要。" },
+    { "id": "cotton", "name": "棉布", "category": "silk", "basePrice": 45, "color": "#e8e4d8", "desc": "印度與中國產的棉織品，平民百姓的日常衣料。" },
+    { "id": "porcelain", "name": "瓷器", "category": "ceramic", "basePrice": 80, "color": "#cfe0ea", "desc": "中國名產，薄得透光的青花瓷，歐洲人視為珍寶。" },
+    { "id": "pottery", "name": "陶器", "category": "ceramic", "basePrice": 35, "color": "#b08860", "desc": "日常用的陶壺陶碗，便宜實用。" },
+    { "id": "lacquer", "name": "漆器", "category": "ceramic", "basePrice": 120, "color": "#8a3024", "desc": "日本的名產工藝品，塗上天然漆的器具，又美又耐用。" },
+    { "id": "pepper", "name": "胡椒", "category": "spice", "basePrice": 90, "color": "#5a4a3a", "desc": "爪哇與蘇門答臘產的香料，歐洲人拿它來保存肉類。" },
+    { "id": "clove", "name": "丁香", "category": "spice", "basePrice": 150, "color": "#7a4a28", "desc": "只有摩鹿加群島出產的珍貴香料，香氣濃郁。" },
+    { "id": "nutmeg", "name": "肉豆蔻", "category": "spice", "basePrice": 170, "color": "#9a6a3a", "desc": "全世界只有班達群島出產！比黃金還貴的香料。" },
+    { "id": "sappan", "name": "蘇木", "category": "spice", "basePrice": 55, "color": "#a04838", "desc": "東南亞出產的染料木材，可以把布染成漂亮的紅色。" },
+    { "id": "rice", "name": "米", "category": "food", "basePrice": 20, "color": "#f0ead8", "desc": "人人要吃的主食，利潤不高但到處都需要。" },
+    { "id": "tea", "name": "茶葉", "category": "food", "basePrice": 40, "color": "#6a8a4a", "desc": "中國的日常飲品，外國人覺得新奇又好喝。" },
+    { "id": "sugar", "name": "蔗糖", "category": "food", "basePrice": 50, "color": "#e8d8a8", "desc": "台灣平原種的甘蔗做成的糖，甜甜的黃金。" },
+    { "id": "wine", "name": "酒", "category": "food", "basePrice": 60, "color": "#9a3a4a", "desc": "各地的美酒，船員的最愛（小朋友不能喝喔）。" },
+    { "id": "salt", "name": "鹽", "category": "food", "basePrice": 25, "color": "#f5f5f0", "desc": "保存食物不可缺少的調味料，海邊曬出來的白金。" },
+    { "id": "deerskin", "name": "鹿皮", "category": "material", "basePrice": 60, "color": "#c89858", "desc": "台灣特產！日本武士用來做甲冑的內裡，一年要好幾萬張。" },
+    { "id": "sulfur", "name": "硫磺", "category": "material", "basePrice": 45, "color": "#e8e040", "desc": "北台灣火山出產，做火藥的重要原料。" },
+    { "id": "wood", "name": "木材", "category": "material", "basePrice": 30, "color": "#8a6a40", "desc": "造船蓋房都需要的木料。" },
+    { "id": "tin", "name": "錫", "category": "material", "basePrice": 70, "color": "#c8c8d0", "desc": "馬來半島出產的金屬，做餐具和合金的材料。" },
+    { "id": "copper", "name": "銅", "category": "material", "basePrice": 85, "color": "#c87838", "desc": "日本出產的金屬，鑄錢和做器具都要用。" },
+    { "id": "rattan", "name": "藤", "category": "material", "basePrice": 35, "color": "#a89858", "desc": "熱帶地區的藤條，編家具和綁船具的好材料。" },
+    { "id": "silver", "name": "白銀", "category": "treasure", "basePrice": 200, "color": "#e0e0e8", "desc": "日本與墨西哥盛產，當時全世界都拿它當錢用。" },
+    { "id": "coral", "name": "珊瑚", "category": "treasure", "basePrice": 130, "color": "#e86858", "desc": "琉球海域採的紅珊瑚，做首飾的寶貝。" },
+    { "id": "ivory", "name": "象牙", "category": "treasure", "basePrice": 180, "color": "#f0e8d8", "desc": "暹羅大象的牙，雕刻工藝品的高級材料。" }
   ]
 }

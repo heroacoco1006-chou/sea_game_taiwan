@@ -68,6 +68,61 @@ export function makeButton(
   return c;
 }
 
+export interface ModalChoice {
+  label: string;
+  onPick: () => void;
+}
+
+/** 事件對話框（畫面置中、固定於鏡頭）：顯示文字與選項按鈕，回傳容器（選擇後自動銷毀） */
+export function showModal(
+  scene: Phaser.Scene,
+  title: string,
+  body: string,
+  choices: ModalChoice[]
+): Phaser.GameObjects.Container {
+  const cam = scene.cameras.main;
+  const w = 640;
+  const h = 240 + choices.length * 64;
+  const cx = cam.width / 2;
+  const cy = cam.height / 2;
+
+  const dim = scene.add.rectangle(cx, cy, cam.width, cam.height, 0x000000, 0.45);
+  const panel = scene.add.graphics();
+  panel.fillStyle(COLORS.wood, 1);
+  panel.fillRoundedRect(cx - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 10);
+  panel.fillStyle(COLORS.parchment, 1);
+  panel.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, 8);
+
+  const titleT = scene.add.text(cx, cy - h / 2 + 40, title, textStyle(28)).setOrigin(0.5);
+  const bodyT = scene.add
+    .text(cx, cy - h / 2 + 80, body, { ...textStyle(19), wordWrap: { width: w - 80 }, lineSpacing: 6 })
+    .setOrigin(0.5, 0);
+
+  const parts: Phaser.GameObjects.GameObject[] = [dim, panel, titleT, bodyT];
+  const container = scene.add.container(0, 0, parts);
+  container.setDepth(2000);
+  container.setScrollFactor(0);
+
+  choices.forEach((c, i) => {
+    const btn = makeButton(
+      scene,
+      cx,
+      cy + h / 2 - (choices.length - i) * 64 + 8,
+      w - 160,
+      52,
+      c.label,
+      () => {
+        container.destroy();
+        c.onPick();
+      },
+      19
+    );
+    btn.setScrollFactor(0);
+    container.add(btn);
+  });
+  return container;
+}
+
 /** 短暫浮現的提示訊息 */
 export function toast(scene: Phaser.Scene, msg: string, x = 640, y = 80): void {
   const t = scene.add

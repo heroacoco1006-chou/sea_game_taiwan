@@ -44,7 +44,7 @@ export default class TitleScene extends Phaser.Scene {
     if (!canLoad) loadBtn.setAlpha(0.45).disableInteractive();
 
     this.add
-      .text(width / 2, 600, 'M1 核心原型 — 月港・大員・平戶 三港貿易', textStyle(16, '#9ab8c8'))
+      .text(width / 2, 600, 'M2 — 東亞與南洋 22 港・季風航海・走動式港町', textStyle(16, '#9ab8c8'))
       .setOrigin(0.5);
   }
 }
