@@ -1,0 +1,40 @@
+{
+  "ports": [
+    {
+      "id": "yuegang",
+      "name": "月港",
+      "x": 300,
+      "y": 330,
+      "region": "中國福建",
+      "desc": "明朝唯一合法的民間海外貿易港，福建商人都從這裡出海。生絲、瓷器又多又便宜。",
+      "priceMod": {
+        "silk_raw": 0.6, "silk_cloth": 0.7, "porcelain": 0.65, "tea": 0.7,
+        "deerskin": 1.3, "sugar": 1.2, "silver": 1.1, "rice": 0.9
+      }
+    },
+    {
+      "id": "tayouan",
+      "name": "大員",
+      "x": 545,
+      "y": 500,
+      "region": "台灣",
+      "desc": "荷蘭東印度公司在台灣的據點，熱蘭遮城就在這裡。鹿皮與蔗糖的集散地，東亞貿易的十字路口。",
+      "priceMod": {
+        "silk_raw": 1.1, "silk_cloth": 1.15, "porcelain": 1.2, "tea": 1.0,
+        "deerskin": 0.55, "sugar": 0.6, "silver": 1.05, "rice": 1.1
+      }
+    },
+    {
+      "id": "hirado",
+      "name": "平戶",
+      "x": 980,
+      "y": 170,
+      "region": "日本九州",
+      "desc": "日本對外貿易的大門，各國商館林立。中國生絲在這裡能換到大量白銀。",
+      "priceMod": {
+        "silk_raw": 1.8, "silk_cloth": 1.6, "porcelain": 1.4, "tea": 1.3,
+        "deerskin": 1.5, "sugar": 1.3, "silver": 0.7, "rice": 1.0
+      }
+    }
+  ]
+}

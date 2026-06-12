@@ -1,0 +1,12 @@
+{
+  "goods": [
+    { "id": "silk_raw", "name": "生絲", "basePrice": 100, "desc": "中國特產，日本武士最愛的高級衣料原料，運到日本可大賺一筆。" },
+    { "id": "silk_cloth", "name": "絲綢", "basePrice": 160, "desc": "織好的絲布，比生絲更貴重。" },
+    { "id": "porcelain", "name": "瓷器", "basePrice": 80, "desc": "中國名產，歐洲人與日本人都搶著要。" },
+    { "id": "tea", "name": "茶葉", "basePrice": 40, "desc": "中國的日常飲品，外國人覺得新奇。" },
+    { "id": "deerskin", "name": "鹿皮", "basePrice": 60, "desc": "台灣特產！日本武士用來做甲冑的內裡。" },
+    { "id": "sugar", "name": "蔗糖", "basePrice": 50, "desc": "台灣平原種的甘蔗做成的糖，甜甜的黃金。" },
+    { "id": "silver", "name": "白銀", "basePrice": 200, "desc": "日本盛產的貴金屬，當時全世界都拿它當錢用。" },
+    { "id": "rice", "name": "米", "basePrice": 20, "desc": "人人要吃的主食，利潤不高但穩定。" }
+  ]
+}
