@@ -5,7 +5,14 @@
 
 ---
 
-## [2026-06-12] 夥伴名冊定案 25 位＋主線要角招募規則
+## [2026-06-12] 開發工具：Codex 插件可委派繪圖等任務
+
+- 背景：老闆指示安裝 OpenAI Codex 插件（`openai/codex-plugin-cc`），用於呼叫 Codex 協助人物繪製。
+- 記憶：
+  - 插件已裝（codex@openai-codex v1.0.4，user scope）；codex CLI 0.130.0、ChatGPT 帳號已登入，可直接用
+  - 委派方式：`/codex:rescue <任務>` 或直接說「請 Codex 做○○」；Codex 是程式 AI，繪圖採「寫程式產生像素圖」方式
+  - 美術產線分工（規劃）：小航設計規格與色盤 → 委派 Codex 寫產圖程式 → 小航驗收並登錄 `assets/CREDITS.md`（自製素材標註為程式生成）
+- 影響：M1 起的人物、船隻 sprite 可用此產線；版權底線不變（§CLAUDE.md 3-2）。
 
 - 背景：老闆指示補入鄭氏集團史實人物為可招募夥伴。
 - 記憶（老闆已確認）：
