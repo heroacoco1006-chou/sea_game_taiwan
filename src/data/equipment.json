@@ -23,5 +23,12 @@
     { "id": "fh_dragon", "name": "海龍像", "price": 750, "effect": "speed", "desc": "威猛的海龍，劈波斬浪（航速提升）。" },
     { "id": "fh_lion", "name": "獅子像", "price": 850, "effect": "cannon", "desc": "怒吼的獅子，鼓舞砲手（海戰砲擊威力提升）。" },
     { "id": "fh_phoenix", "name": "鳳凰像", "price": 700, "effect": "morale", "desc": "祥瑞的鳳凰，安定軍心（船員疲勞減緩）。" }
+  ],
+  "consumables": [
+    { "id": "c_lime", "name": "萊姆", "price": 120, "effect": "cure_scurvy", "desc": "酸甜的水果，能立刻解除壞血病狀態。" },
+    { "id": "c_cat", "name": "船貓", "price": 300, "effect": "catch_rats", "desc": "帶上船抓老鼠，能立刻解除鼠患。" },
+    { "id": "c_prayer", "name": "祈禱藥水", "price": 500, "effect": "calm_storm", "desc": "船員祈願用的安神藥水，能立刻停止暴風雨狀態。" },
+    { "id": "c_ginger", "name": "生薑藥湯", "price": 180, "effect": "reduce_fatigue", "desc": "暖身提神，降低疲勞，也能緩解思鄉病。" },
+    { "id": "c_mediator", "name": "安撫酒", "price": 260, "effect": "calm_crew", "desc": "請水手喝一點安撫情緒，能解除船上叛亂。" }
   ]
 }

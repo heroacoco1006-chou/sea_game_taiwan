@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
-import { COLORS, textStyle } from '../ui';
+import { COLORS, textStyle, makeButton } from '../ui';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -162,6 +162,10 @@ export default class PortScene extends Phaser.Scene {
     this.add
       .text(14, 12, `【${this.port.name}】${this.port.region}　　${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(17, '#f2e3bd'))
       .setDepth(101).setScrollFactor(0);
+    makeButton(this, W - 62, 24, 96, 34, '資訊', () => {
+      saveGame(this.state);
+      this.scene.start('Info', { from: 'Port', portId: this.port.id, spawn: { x: this.player.x, y: this.player.y } });
+    }, 15).setDepth(102).setScrollFactor(0);
     this.hint = this.add
       .text(W / 2, H - 8, '', textStyle(16, '#fff4d6'))
       .setOrigin(0.5, 1).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);

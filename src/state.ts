@@ -109,6 +109,15 @@ export interface WeaponItem { id: string; name: string; price: number; board: nu
 export interface ArmorItem { id: string; name: string; price: number; defense: number; desc: string; }
 export interface AccessoryItem { id: string; name: string; price: number; effect: string; desc: string; }
 export interface FigureheadItem { id: string; name: string; price: number; effect: string; desc: string; }
+export interface ConsumableItem { id: string; name: string; price: number; effect: string; desc: string; }
+
+export type ShopCat = 'weapon' | 'armor' | 'accessory' | 'consumable';
+export type SeaStatusId = 'storm' | 'rats' | 'scurvy' | 'mutiny' | 'homesick';
+
+export interface SeaStatus {
+  id: SeaStatusId;
+  days: number;
+}
 
 export interface GameState {
   version: number;
@@ -133,6 +142,10 @@ export interface GameState {
   equip: Equip;
   /** 已招募的夥伴 */
   mates: Mate[];
+  /** 背包：已購買的個人裝備、船首像、消耗品數量 */
+  inventory: Record<string, number>;
+  /** 海上持續狀態（每日結算，入港不會自動消失） */
+  statuses: SeaStatus[];
 }
 
 export const FLEET_MAX = 5; // 含旗艦
@@ -149,11 +162,20 @@ export const WEAPONS: WeaponItem[] = equipData.weapons;
 export const ARMORS: ArmorItem[] = equipData.armors;
 export const ACCESSORIES: AccessoryItem[] = equipData.accessories;
 export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
+export const CONSUMABLES: ConsumableItem[] = equipData.consumables;
 export const ROLES: RoleDef[] = matesData.roles;
 export const MATE_DEFS: MateDef[] = matesData.mates;
 export const CREW_START = 16;
 export const START_YEAR = 1624;
-export const CANNON_PRICE = 100;
+export const CANNON_PRICE = 3000;
+
+export const SEA_STATUS_DEFS: Record<SeaStatusId, { name: string; desc: string }> = {
+  storm: { name: '暴風雨', desc: '每天造成船體損傷，航速下降。可用祈禱藥水解除。' },
+  rats: { name: '鼠患', desc: '老鼠偷吃糧食，食物消耗增加。可用船貓解除。' },
+  scurvy: { name: '壞血病', desc: '船員疲勞快速上升，拖太久會有人倒下。可用萊姆解除。' },
+  mutiny: { name: '船上叛亂', desc: '船員不聽指揮，航速下降且疲勞增加。可用安撫酒解除。' },
+  homesick: { name: '思鄉病', desc: '長期離岸讓船員低落，疲勞增加。可用生薑藥湯緩解。' },
+};
 
 const SAVE_KEY = 'seagame_save1';
 const START_POS = { x: 1340, y: 1075 }; // 月港外海
@@ -226,7 +248,7 @@ export function damageFleet(state: GameState, dmg: number): void {
 export function newGame(): GameState {
   const type = SHIPS[0]; // 小戎克船
   return {
-    version: 5,
+    version: 6,
     gold: 1000,
     day: 1,
     ship: {
@@ -250,6 +272,8 @@ export function newGame(): GameState {
     quest: null,
     equip: { weapon: null, armor: null, accessory: null },
     mates: [],
+    inventory: {},
+    statuses: [],
   };
 }
 
@@ -342,6 +366,14 @@ export function fatigueMod(state: GameState): number {
   return Math.max(0.4, m);
 }
 
+/** 持續狀態造成的航速倍率 */
+export function statusSpeedMod(state: GameState): number {
+  let m = 1;
+  if (hasSeaStatus(state, 'storm')) m *= 0.75;
+  if (hasSeaStatus(state, 'mutiny')) m *= 0.75;
+  return m;
+}
+
 /** 海戰砲擊倍率（獅子像＋砲術長） */
 export function cannonMod(state: GameState): number {
   let m = figureheadEffect(state) === 'cannon' ? 1.25 : 1;
@@ -380,6 +412,149 @@ export function boardBonus(state: GameState): number {
 /** 接舷減員是否獲得緩衝（醫師夥伴或重甲） */
 export function reduceCrewLoss(state: GameState): boolean {
   return hasRole(state, 'surgeon') || armorDefense(state) >= 8;
+}
+
+// ---------- 背包／道具 ----------
+
+export function itemNameById(id: string): string {
+  return (
+    WEAPONS.find((x) => x.id === id)?.name ??
+    ARMORS.find((x) => x.id === id)?.name ??
+    ACCESSORIES.find((x) => x.id === id)?.name ??
+    FIGUREHEADS.find((x) => x.id === id)?.name ??
+    CONSUMABLES.find((x) => x.id === id)?.name ??
+    id
+  );
+}
+
+export function addInventory(state: GameState, id: string, qty = 1): void {
+  state.inventory[id] = (state.inventory[id] ?? 0) + qty;
+}
+
+export function hasInventory(state: GameState, id: string): boolean {
+  return (state.inventory[id] ?? 0) > 0;
+}
+
+function consumeInventory(state: GameState, id: string): void {
+  state.inventory[id] = Math.max(0, (state.inventory[id] ?? 0) - 1);
+  if (state.inventory[id] <= 0) delete state.inventory[id];
+}
+
+export function shopItemIdsForPort(port: Port): Record<ShopCat, string[]> {
+  const isTaiwan = port.region === '台灣' || port.region === '澎湖';
+  const stock: Record<ShopCat, Set<string>> = {
+    weapon: new Set(['w_knife']),
+    armor: new Set(['a_cloth']),
+    accessory: new Set(['ac_compass']),
+    consumable: new Set(['c_lime']),
+  };
+  const add = (cat: ShopCat, ids: string[]) => ids.forEach((id) => stock[cat].add(id));
+
+  if (port.culture === 'han') {
+    add('weapon', ['w_saber']);
+    add('armor', ['a_brigandine']);
+    add('accessory', ['ac_abacus', 'ac_charm']);
+    add('consumable', ['c_cat', 'c_ginger']);
+  } else if (port.culture === 'wa') {
+    add('weapon', ['w_katana']);
+    add('armor', ['a_nanban']);
+    add('accessory', ['ac_telescope']);
+    add('consumable', ['c_cat', 'c_mediator']);
+  } else if (port.culture === 'euro') {
+    add('weapon', ['w_rapier', 'w_musket']);
+    add('armor', ['a_leather']);
+    add('accessory', ['ac_telescope']);
+    add('consumable', ['c_prayer']);
+  } else {
+    add('armor', ['a_leather']);
+    add('accessory', ['ac_charm']);
+    add('consumable', ['c_ginger', 'c_mediator']);
+  }
+
+  if (isTaiwan) {
+    add('accessory', ['ac_charm']);
+    add('consumable', ['c_lime', 'c_cat', 'c_prayer']);
+  }
+  if (port.id === 'malacca' || port.id === 'batavia' || port.id === 'banten') {
+    add('consumable', ['c_lime', 'c_cat']);
+  }
+
+  return {
+    weapon: [...stock.weapon],
+    armor: [...stock.armor],
+    accessory: [...stock.accessory],
+    consumable: [...stock.consumable],
+  };
+}
+
+export function availableShipsAtPort(port: Port): ShipType[] {
+  let ids: string[] = [];
+  if (port.id === 'tayouan') {
+    ids = ['caravel', 'fluyt', 'carrack', 'galleon'];
+  } else if (port.region.includes('中國') || port.culture === 'han') {
+    ids = ['junk_small', 'junk_large', 'fuchuan'];
+  } else if (port.culture === 'wa') {
+    ids = ['shuinsen'];
+  } else if (port.id === 'manila') {
+    ids = ['caravel', 'carrack', 'galleon'];
+  } else if (port.id === 'malacca') {
+    ids = ['caravel', 'carrack', 'fluyt'];
+  } else if (port.id === 'batavia') {
+    ids = ['fluyt', 'caravel'];
+  } else if (port.culture === 'euro') {
+    ids = ['caravel'];
+  }
+  return ids.map(shipTypeById);
+}
+
+// ---------- 海上狀態 ----------
+
+export function hasSeaStatus(state: GameState, id: SeaStatusId): boolean {
+  return state.statuses.some((x) => x.id === id && x.days > 0);
+}
+
+export function addSeaStatus(state: GameState, id: SeaStatusId, days: number): void {
+  const found = state.statuses.find((x) => x.id === id);
+  if (found) found.days = Math.max(found.days, days);
+  else state.statuses.push({ id, days });
+}
+
+export function removeSeaStatus(state: GameState, id: SeaStatusId): void {
+  state.statuses = state.statuses.filter((x) => x.id !== id);
+}
+
+export function statusSummary(state: GameState): string {
+  const active = state.statuses.filter((x) => x.days > 0);
+  if (active.length === 0) return '無';
+  return active.map((x) => `${SEA_STATUS_DEFS[x.id].name}${x.days}天`).join('、');
+}
+
+export function useConsumable(state: GameState, itemId: string): string {
+  const item = CONSUMABLES.find((x) => x.id === itemId);
+  if (!item) return '找不到這個道具。';
+  if (!hasInventory(state, itemId)) return `背包裡沒有【${item.name}】。`;
+
+  if (item.effect === 'cure_scurvy') {
+    if (!hasSeaStatus(state, 'scurvy')) return '船上目前沒有壞血病，不需要使用萊姆。';
+    removeSeaStatus(state, 'scurvy');
+    state.fatigue = Math.max(0, state.fatigue - 10);
+  } else if (item.effect === 'catch_rats') {
+    if (!hasSeaStatus(state, 'rats')) return '船上目前沒有鼠患，不需要放出船貓。';
+    removeSeaStatus(state, 'rats');
+  } else if (item.effect === 'calm_storm') {
+    if (!hasSeaStatus(state, 'storm')) return '現在沒有暴風雨，不需要使用祈禱藥水。';
+    removeSeaStatus(state, 'storm');
+  } else if (item.effect === 'reduce_fatigue') {
+    state.fatigue = Math.max(0, state.fatigue - 25);
+    removeSeaStatus(state, 'homesick');
+  } else if (item.effect === 'calm_crew') {
+    if (!hasSeaStatus(state, 'mutiny')) return '船員現在沒有叛亂，不需要安撫酒。';
+    removeSeaStatus(state, 'mutiny');
+    state.fatigue = Math.max(0, state.fatigue - 10);
+  }
+
+  consumeInventory(state, itemId);
+  return `使用了【${item.name}】。`;
 }
 
 export function saveGame(state: GameState): void {
@@ -421,6 +596,17 @@ export function loadGame(): GameState | null {
         (full.ship as PlayerShip).figurehead = null;
       }
       full.version = 5;
+    }
+    // v5 → v6：補背包／海上持續狀態。已裝備物品自動補進背包，避免舊檔換裝時找不到。
+    if (s.version < 6) {
+      const full = s as GameState;
+      full.inventory = full.inventory ?? {};
+      full.statuses = full.statuses ?? [];
+      const equipped = [full.equip?.weapon, full.equip?.armor, full.equip?.accessory, full.ship?.figurehead].filter(Boolean) as string[];
+      for (const id of equipped) {
+        if ((full.inventory[id] ?? 0) <= 0) full.inventory[id] = 1;
+      }
+      full.version = 6;
       return full;
     }
     return s as GameState;

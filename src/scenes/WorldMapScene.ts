@@ -5,9 +5,10 @@ import {
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
   fleetMinCrew, crewMax,
-  gearSpeedMod, stormDamageMod, ambushMod, fatigueMod,
+  gearSpeedMod, stormDamageMod, ambushMod, fatigueMod, statusSpeedMod,
+  addSeaStatus, hasSeaStatus, statusSummary,
 } from '../state';
-import { COLORS, textStyle, showModal } from '../ui';
+import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
@@ -92,6 +93,10 @@ export default class WorldMapScene extends Phaser.Scene {
     const H = this.scale.height;
     this.add.rectangle(W / 2, 34, W, 68, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     this.hud = this.add.text(14, 8, '', { ...textStyle(17, '#f2e3bd'), lineSpacing: 6 }).setDepth(101).setScrollFactor(0);
+    makeButton(this, W - 62, 34, 96, 36, '資訊', () => {
+      saveGame(this.state);
+      this.scene.start('Info', { from: 'WorldMap' });
+    }, 15).setDepth(102).setScrollFactor(0);
     this.hint = this.add
       .text(W / 2, H - 24, '', textStyle(16, '#fff4d6'))
       .setOrigin(0.5).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
@@ -169,7 +174,7 @@ export default class WorldMapScene extends Phaser.Scene {
       const supplyMod = this.state.food <= 0 || this.state.water <= 0 ? 0.5 : 1;
       const speed =
         SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) *
-        supplyMod * crewSpeedMod(this.state) * gearSpeedMod(this.state);
+        supplyMod * crewSpeedMod(this.state) * gearSpeedMod(this.state) * statusSpeedMod(this.state);
       const len = Math.hypot(dx, dy);
       const nx = Phaser.Math.Clamp(this.ship.x + (dx / len) * speed * dt, 10, WORLD_W - 10);
       const ny = Phaser.Math.Clamp(this.ship.y + (dy / len) * speed * dt, 10, WORLD_H - 10);
@@ -227,9 +232,23 @@ export default class WorldMapScene extends Phaser.Scene {
 
     // 疲勞：每天累積，水手少升更快；斷糧斷水大增（壞血病風險）
     let fatigueGain = 3 + (s.crew <= 10 ? 2 : 0);
+    if (hasSeaStatus(s, 'rats')) {
+      s.food = Math.max(0, s.food - Math.max(1, Math.ceil(foodPerDay(s.crew) / 2)));
+      fatigueGain += 2;
+    }
+    if (hasSeaStatus(s, 'storm')) {
+      const dmg = Math.round((6 + Math.floor(Math.random() * 8)) * stormDamageMod(s));
+      s.ship.hull = Math.max(0, s.ship.hull - dmg);
+      fatigueGain += 5;
+      this.checkShipwreck();
+    }
+    if (hasSeaStatus(s, 'scurvy')) fatigueGain += 10;
+    if (hasSeaStatus(s, 'mutiny')) fatigueGain += 8;
+    if (hasSeaStatus(s, 'homesick')) fatigueGain += 5;
     if (s.food <= 0 || s.water <= 0) {
       fatigueGain += 8;
       if (s.ship.hull > 1) s.ship.hull -= 2;
+      addSeaStatus(s, 'scurvy', 5);
       if (s.day % 3 === 0) {
         this.pauseWithModal(
           '船員餓著肚子……',
@@ -239,6 +258,9 @@ export default class WorldMapScene extends Phaser.Scene {
       }
     }
     s.fatigue = Math.min(100, s.fatigue + Math.round(fatigueGain * fatigueMod(s)));
+    s.statuses = s.statuses
+      .map((x) => ({ ...x, days: x.days - 1 }))
+      .filter((x) => x.days > 0);
 
     // 疲勞滿 100：一名水手倒下
     if (s.fatigue >= 100) {
@@ -271,6 +293,7 @@ export default class WorldMapScene extends Phaser.Scene {
       s.food = Math.floor(s.food * 0.85);
       s.water = Math.floor(s.water * 0.85);
       s.fatigue = Math.min(100, s.fatigue + 10);
+      addSeaStatus(s, 'storm', 3);
       const driftX = (Math.random() - 0.5) * 160;
       const driftY = (Math.random() - 0.5) * 160;
       const nx = Phaser.Math.Clamp(this.ship.x + driftX, 10, WORLD_W - 10);
@@ -283,13 +306,43 @@ export default class WorldMapScene extends Phaser.Scene {
       const seasonNote = month >= 7 && month <= 9 ? '夏秋之際是颱風季，' : '';
       this.pauseWithModal(
         '暴風雨！',
-        `${seasonNote}巨浪打上甲板，船被吹得偏離了航線！\n\n船體 -${dmg}　糧水流失一成五`,
+        `${seasonNote}巨浪打上甲板，船被吹得偏離了航線！\n\n船體 -${dmg}　糧水流失一成五\n\n暴風雨會持續數日，可用【祈禱藥水】立刻解除。`,
         [{ label: '穩住舵，繼續前進！', onPick: () => this.checkShipwreck() }]
       );
       return;
     }
 
-    if (roll < stormP + 0.05) {
+    if (roll < stormP + 0.04) {
+      addSeaStatus(s, 'rats', 5);
+      this.pauseWithModal(
+        '船艙裡有老鼠！',
+        '水手在糧食桶旁發現老鼠咬痕。鼠患期間糧食會消耗得更快。\n\n可在背包使用【船貓】立刻解除。',
+        [{ label: '把糧食蓋好，繼續航行', onPick: () => this.updateHud() }]
+      );
+      return;
+    }
+
+    if (roll < stormP + 0.07 && s.daysAtSea >= 7) {
+      addSeaStatus(s, 'homesick', 4);
+      this.pauseWithModal(
+        '思鄉病',
+        '離港太久，幾名水手開始想家，做事提不起勁。思鄉病會讓疲勞升得更快。\n\n可用【生薑藥湯】緩解，或早點進港休息。',
+        [{ label: '安慰大家，繼續找港口', onPick: () => this.updateHud() }]
+      );
+      return;
+    }
+
+    if (roll < stormP + 0.095 && s.fatigue >= 65) {
+      addSeaStatus(s, 'mutiny', 3);
+      this.pauseWithModal(
+        '船上叛亂！',
+        '疲勞太高，幾名水手拒絕聽令，船速會暫時下降，疲勞也會繼續升高。\n\n可用【安撫酒】立刻解除。',
+        [{ label: '先穩住局面', onPick: () => this.updateHud() }]
+      );
+      return;
+    }
+
+    if (roll < stormP + 0.095 + 0.05) {
       const find = 40 + Math.floor(Math.random() * 120);
       s.gold += find;
       this.pauseWithModal(
@@ -300,7 +353,7 @@ export default class WorldMapScene extends Phaser.Scene {
       return;
     }
 
-    if (roll < stormP + 0.05 + 0.06 && s.day > 10) {
+    if (roll < stormP + 0.095 + 0.05 + 0.06 && s.day > 10) {
       const tribute = Math.floor(s.gold * 0.1);
       this.pauseWithModal(
         '海盜船出現！',
@@ -401,6 +454,7 @@ export default class WorldMapScene extends Phaser.Scene {
     this.hud.setText(
       `${dateText(s.day)}　資金 ${s.gold} 兩　${fleetLabel}　貨艙 ${cargoCount(s)}/${cargoMax(s)}　旗艦 ${s.ship.hull}/${hullMax(s)}\n` +
       `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${crewWarn}${s.crew}/${crewMax(s)}（最低 ${minC}）　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
+      + `　狀態：${statusSummary(s)}`
     );
     this.updateWindHud();
   }

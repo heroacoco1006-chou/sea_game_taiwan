@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, Port, SHIPS, ShipType, shipTypeOf, shipTypeById,
+  GameState, PORTS, Port, ShipType, shipTypeOf, shipTypeById,
   cargoCount, cargoMax, supplyMax, fleetShips, fleetMinCrew, crewMax, FLEET_MAX,
-  saveGame, CANNON_PRICE,
+  saveGame, CANNON_PRICE, availableShipsAtPort, FIGUREHEADS, addInventory, hasInventory,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -21,6 +21,7 @@ export default class ShipyardScene extends Phaser.Scene {
   private buyDetail!: Phaser.GameObjects.Text;
   private listTexts: Map<string, Phaser.GameObjects.Text> = new Map();
   private highlight!: Phaser.GameObjects.Rectangle;
+  private figureheadText!: Phaser.GameObjects.Text;
   private escortObjs: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -68,7 +69,9 @@ export default class ShipyardScene extends Phaser.Scene {
     // ---------- 右側：販售船隻 ----------
     this.add.text(950, 78, '— 販售中的船 —', textStyle(20)).setOrigin(0.5);
     this.highlight = this.add.rectangle(-500, -500, 560, 32, 0xc9b178, 0.55);
-    SHIPS.forEach((t, i) => {
+    const availableShips = availableShipsAtPort(this.port);
+    this.add.text(950, 100, this.shipyardNote(), textStyle(13, '#6b5530')).setOrigin(0.5);
+    availableShips.forEach((t, i) => {
       const y = 104 + i * 34;
       const zone = this.add
         .rectangle(950, y + 13, 560, 30, 0xffffff, 0.001)
@@ -82,9 +85,21 @@ export default class ShipyardScene extends Phaser.Scene {
       );
       this.listTexts.set(t.id, txt);
     });
+    if (availableShips.length === 0) {
+      this.add.text(950, 140, '這座港口沒有可建造的船型。', textStyle(16, '#6b5530')).setOrigin(0.5);
+    }
     this.buyDetail = this.add.text(680, 396, '（點選上方船隻查看詳情）', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 }, lineSpacing: 5 });
     makeButton(this, 820, 520, 260, 50, '換成旗艦（折抵舊旗艦）', () => this.buyShip(false), 16);
     makeButton(this, 1100, 520, 220, 50, '加入艦隊（當僚艦）', () => this.buyShip(true), 16);
+
+    // ---------- 船首像改裝 ----------
+    this.add.text(950, 590, '— 旗艦船首像改裝 —', textStyle(18)).setOrigin(0.5);
+    this.figureheadText = this.add.text(680, 614, '', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 } });
+    FIGUREHEADS.forEach((f, i) => {
+      const x = 760 + (i % 2) * 250;
+      const y = 660 + Math.floor(i / 2) * 38;
+      makeButton(this, x, y, 220, 32, `${f.name} ${f.price}兩`, () => this.installFigurehead(f.id), 13);
+    });
 
     makeButton(this, W / 2, H - 40, 220, 46, '離開（回到街上）', () => {
       saveGame(this.state);
@@ -103,6 +118,11 @@ export default class ShipyardScene extends Phaser.Scene {
       `\n【旗艦】${t.name}（${t.origin}）\n` +
       `船體 ${s.ship.hull}/${t.hullMax}　航速 ${t.speed}　大砲 ${s.ship.cannons}/${t.cannonSlots}\n` +
       `商品艙 ${s.ship.cargoSpace} ＋ 糧水艙 ${s.ship.supplySpace}（總空間 ${t.space}）　折抵價 ${this.tradeInValue()} 兩`
+    );
+    const fig = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
+    this.figureheadText?.setText(
+      `目前船首像：${fig ? fig.name : '（無）'}\n` +
+      '船首像屬於船隻裝備，在造船廠購買與改裝；已買過的船首像會留在背包，可免費換回。'
     );
 
     // 重建僚艦列
@@ -204,6 +224,38 @@ export default class ShipyardScene extends Phaser.Scene {
       `換旗艦：實付 ${swapCost} 兩（原價 ${t.price} − 折抵 ${tradeIn}）\n` +
       `加入艦隊當僚艦：付全額 ${t.price} 兩（僚艦增加總貨艙與火力，但也要更多水手）`
     );
+  }
+
+  private shipyardNote(): string {
+    if (this.port.id === 'tayouan') return '大員是西洋勢力據點，可建造西洋船。';
+    if (this.port.culture === 'han') return '中國港口主要建造戎克船與福船。';
+    if (this.port.culture === 'wa') return '日本港口主要建造朱印船。';
+    if (this.port.id === 'manila') return '馬尼拉可建造西班牙系大型帆船。';
+    if (this.port.id === 'batavia') return '巴達維亞可建造荷蘭笛型船。';
+    if (this.port.id === 'malacca') return '麻六甲可建造葡萄牙與荷蘭系船隻。';
+    return '各地造船廠只提供符合當地技術與勢力的船型。';
+  }
+
+  private installFigurehead(id: string): void {
+    const s = this.state;
+    const f = FIGUREHEADS.find((x) => x.id === id);
+    if (!f) return;
+    if (s.ship.figurehead === id) {
+      toast(this, `【${f.name}】已經裝在旗艦上。`);
+      return;
+    }
+    if (!hasInventory(s, id)) {
+      if (s.gold < f.price) {
+        toast(this, `購買【${f.name}】需要 ${f.price} 兩，資金不足！`);
+        return;
+      }
+      s.gold -= f.price;
+      addInventory(s, id);
+    }
+    s.ship.figurehead = id;
+    saveGame(s);
+    this.refreshFleet();
+    toast(this, `旗艦改裝【${f.name}】完成！`);
   }
 
   /** asEscort=false 換旗艦；true 加入艦隊當僚艦 */
