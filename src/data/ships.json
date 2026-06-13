@@ -1,0 +1,20 @@
+{
+  "ships": [
+    { "id": "junk_small", "name": "小戎克船", "origin": "中國", "price": 500, "space": 60, "speed": 1.0, "hullMax": 100, "cannonSlots": 2, "minCrew": 8, "maxCrew": 20,
+      "desc": "中國沿海最常見的小商船，硬式帆好操作，新手船長的好夥伴。" },
+    { "id": "junk_large", "name": "大戎克船", "origin": "中國", "price": 2500, "space": 100, "speed": 0.95, "hullMax": 140, "cannonSlots": 4, "minCrew": 14, "maxCrew": 35,
+      "desc": "放大版的戎克船，貨裝得多，跑中國—台灣—日本航線的主力。" },
+    { "id": "fuchuan", "name": "福船", "origin": "中國", "price": 5000, "space": 130, "speed": 0.9, "hullMax": 180, "cannonSlots": 6, "minCrew": 18, "maxCrew": 45,
+      "desc": "福建大型帆船，船身高大堅固，鄭家艦隊的招牌戰船。" },
+    { "id": "shuinsen", "name": "朱印船", "origin": "日本", "price": 3000, "space": 90, "speed": 1.05, "hullMax": 120, "cannonSlots": 4, "minCrew": 12, "maxCrew": 30,
+      "desc": "拿著幕府朱印狀跑南洋的日本商船，融合東西方造船技術。" },
+    { "id": "caravel", "name": "卡拉維爾帆船", "origin": "葡萄牙", "price": 3500, "space": 80, "speed": 1.15, "hullMax": 110, "cannonSlots": 4, "minCrew": 10, "maxCrew": 25,
+      "desc": "大航海時代的明星快船，哥倫布的船隊就用它，輕快靈活。" },
+    { "id": "fluyt", "name": "笛型船", "origin": "荷蘭", "price": 6000, "space": 140, "speed": 1.0, "hullMax": 130, "cannonSlots": 2, "minCrew": 12, "maxCrew": 30,
+      "desc": "荷蘭人的祕密武器：超大貨艙卻只要少少的水手，做生意最划算。" },
+    { "id": "carrack", "name": "克拉克帆船", "origin": "葡萄牙", "price": 8000, "space": 150, "speed": 0.85, "hullMax": 200, "cannonSlots": 8, "minCrew": 22, "maxCrew": 55,
+      "desc": "跨洋遠航的大帆船，又能載貨又能作戰，海上的移動城堡。" },
+    { "id": "galleon", "name": "蓋倫帆船", "origin": "西班牙", "price": 12000, "space": 160, "speed": 1.0, "hullMax": 220, "cannonSlots": 10, "minCrew": 26, "maxCrew": 60,
+      "desc": "西班牙寶船艦隊的主力，馬尼拉大帆船貿易就靠它橫渡太平洋。" }
+  ]
+}

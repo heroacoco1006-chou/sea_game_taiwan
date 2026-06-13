@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GameState, PORTS, Port, cargoCount, CARGO_MAX, saveGame, dateText } from '../state';
+import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
 import { COLORS, textStyle } from '../ui';
 
 /**
@@ -135,7 +135,7 @@ export default class PortScene extends Phaser.Scene {
     const H = this.scale.height;
     this.add.rectangle(W / 2, 24, W, 48, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     this.add
-      .text(14, 12, `【${this.port.name}】${this.port.region}　　${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${CARGO_MAX}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(17, '#f2e3bd'))
+      .text(14, 12, `【${this.port.name}】${this.port.region}　　${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(17, '#f2e3bd'))
       .setDepth(101).setScrollFactor(0);
     this.hint = this.add
       .text(W / 2, H - 8, '', textStyle(16, '#fff4d6'))
@@ -280,6 +280,8 @@ export default class PortScene extends Phaser.Scene {
     saveGame(this.state);
     if (b.key === 'trade') {
       this.scene.start('Trade', { portId: this.port.id, door: ret });
+    } else if (b.key === 'shipyard') {
+      this.scene.start('Shipyard', { portId: this.port.id, door: ret });
     } else {
       this.scene.start('Facility', { portId: this.port.id, type: b.key, door: ret });
     }

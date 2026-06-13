@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, LANDS, LABELS, WORLD_W, WORLD_H,
-  cargoCount, CARGO_MAX, HULL_MAX, saveGame, dateText, dateOf,
+  cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
 } from '../state';
@@ -165,7 +165,8 @@ export default class WorldMapScene extends Phaser.Scene {
     if (dx !== 0 || dy !== 0) {
       this.heading = Math.atan2(dy, dx);
       const supplyMod = this.state.food <= 0 || this.state.water <= 0 ? 0.5 : 1;
-      const speed = SHIP_SPEED * windSpeedMod(this.heading, this.wind) * supplyMod * crewSpeedMod(this.state.crew);
+      const speed =
+        SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) * supplyMod * crewSpeedMod(this.state);
       const len = Math.hypot(dx, dy);
       const nx = Phaser.Math.Clamp(this.ship.x + (dx / len) * speed * dt, 10, WORLD_W - 10);
       const ny = Phaser.Math.Clamp(this.ship.y + (dy / len) * speed * dt, 10, WORLD_H - 10);
@@ -300,8 +301,15 @@ export default class WorldMapScene extends Phaser.Scene {
       const tribute = Math.floor(s.gold * 0.1);
       this.pauseWithModal(
         '海盜船出現！',
-        '一艘掛著骷髏旗的快船逼近，對方鳴砲示警！\n\n（正式的海戰系統將在下一階段登場）',
+        '一艘掛著骷髏旗的快船逼近，對方鳴砲示警！\n\n要應戰、破財消災，還是賭運氣逃跑？',
         [
+          {
+            label: '應戰！（進入海戰）',
+            onPick: () => {
+              saveGame(s);
+              this.scene.start('Battle');
+            },
+          },
           {
             label: `交出一成資金（${tribute} 兩）息事寧人`,
             onPick: () => {
@@ -345,9 +353,9 @@ export default class WorldMapScene extends Phaser.Scene {
     }
     const lost = Math.floor(s.gold * 0.3);
     s.gold -= lost;
-    s.ship.hull = 40;
-    s.food = 15;
-    s.water = 15;
+    s.ship.hull = Math.round(hullMax(s) * 0.4);
+    s.food = Math.min(15, s.ship.supplySpace);
+    s.water = Math.min(15, s.ship.supplySpace);
     s.ship.x = nearest.x;
     s.ship.y = nearest.y + 26;
     this.ship.setPosition(s.ship.x, s.ship.y);
@@ -383,9 +391,11 @@ export default class WorldMapScene extends Phaser.Scene {
     const s = this.state;
     const days = sailableDays(s);
     const daysColor = days <= 2 ? '⚠' : '';
+    const type = shipTypeOf(s);
+    const crewWarn = s.crew < type.minCrew ? '⚠' : '';
     this.hud.setText(
-      `${dateText(s.day)}　資金 ${s.gold} 兩　貨艙 ${cargoCount(s)}/${CARGO_MAX}　船體 ${s.ship.hull}/${HULL_MAX}\n` +
-      `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${s.crew} 人　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
+      `${dateText(s.day)}　資金 ${s.gold} 兩　${type.name}　貨艙 ${cargoCount(s)}/${cargoMax(s)}　船體 ${s.ship.hull}/${hullMax(s)}\n` +
+      `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${crewWarn}${s.crew}/${type.maxCrew}（最低 ${type.minCrew}）　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
     );
     this.updateWindHud();
   }

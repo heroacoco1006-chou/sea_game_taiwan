@@ -1,6 +1,7 @@
 import goodsData from './data/goods.json';
 import portsData from './data/ports.json';
 import mapData from './data/map.json';
+import shipsData from './data/ships.json';
 
 export interface Good {
   id: string;
@@ -43,11 +44,50 @@ export interface MarketEvent {
   untilDay: number;
 }
 
+export interface ShipType {
+  id: string;
+  name: string;
+  origin: string;
+  price: number;
+  /** 總空間（固定）＝商品艙＋糧水艙 */
+  space: number;
+  /** 航速倍率 */
+  speed: number;
+  hullMax: number;
+  cannonSlots: number;
+  /** 低於最低水手數航速減半；低於一半變最慢 */
+  minCrew: number;
+  maxCrew: number;
+  desc: string;
+}
+
+/** 運送委託 */
+export interface Quest {
+  goodId: string;
+  qty: number;
+  portId: string;
+  deadlineDay: number;
+  reward: number;
+}
+
+export interface PlayerShip {
+  typeId: string;
+  x: number;
+  y: number;
+  hull: number;
+  /** 已安裝砲數（≤ 船型砲位） */
+  cannons: number;
+  /** 商品艙空間（＝貨艙上限） */
+  cargoSpace: number;
+  /** 糧水艙空間（＝糧上限＝水上限） */
+  supplySpace: number;
+}
+
 export interface GameState {
   version: number;
   gold: number;
   day: number; // 從 1 開始的絕對天數
-  ship: { x: number; y: number; hull: number };
+  ship: PlayerShip;
   cargo: Record<string, number>;
   /** 各貨物目前持有量的總購入成本（算平均成本用） */
   costBasis: Record<string, number>;
@@ -59,6 +99,7 @@ export interface GameState {
   /** 本次出海已航行天數（入港歸零） */
   daysAtSea: number;
   events: MarketEvent[];
+  quest: Quest | null;
 }
 
 export const GOODS: Good[] = goodsData.goods;
@@ -68,30 +109,59 @@ export const LABELS: MapLabel[] = mapData.labels;
 export const WORLD_W = mapData.worldWidth;
 export const WORLD_H = mapData.worldHeight;
 
-export const CARGO_MAX = 30;
-export const HULL_MAX = 100;
-export const SUPPLY_MAX = 30;
-export const CREW_MAX = 30;
-export const CREW_START = 20;
+export const SHIPS: ShipType[] = shipsData.ships;
+export const CREW_START = 16;
 export const START_YEAR = 1624;
+export const CANNON_PRICE = 100;
 
 const SAVE_KEY = 'seagame_save1';
 const START_POS = { x: 1340, y: 1075 }; // 月港外海
 
+export function shipTypeOf(state: GameState): ShipType {
+  return SHIPS.find((t) => t.id === state.ship.typeId) ?? SHIPS[0];
+}
+
+/** 貨艙上限＝商品艙空間 */
+export function cargoMax(state: GameState): number {
+  return state.ship.cargoSpace;
+}
+
+/** 糧／水上限＝糧水艙空間 */
+export function supplyMax(state: GameState): number {
+  return state.ship.supplySpace;
+}
+
+export function hullMax(state: GameState): number {
+  return shipTypeOf(state).hullMax;
+}
+
+export function crewMax(state: GameState): number {
+  return shipTypeOf(state).maxCrew;
+}
+
 export function newGame(): GameState {
+  const type = SHIPS[0]; // 小戎克船
   return {
-    version: 3,
+    version: 4,
     gold: 1000,
     day: 1,
-    ship: { ...START_POS, hull: HULL_MAX },
+    ship: {
+      typeId: type.id,
+      ...START_POS,
+      hull: type.hullMax,
+      cannons: 1,
+      cargoSpace: 30,
+      supplySpace: 30,
+    },
     cargo: {},
     costBasis: {},
-    food: SUPPLY_MAX,
-    water: SUPPLY_MAX,
+    food: 30,
+    water: 30,
     crew: CREW_START,
     fatigue: 0,
     daysAtSea: 0,
     events: [],
+    quest: null,
   };
 }
 
@@ -113,11 +183,15 @@ export function sailableDays(state: GameState): number {
   );
 }
 
-/** 水手不足時的航速倍率（M3 起依各船最低水手數計算） */
-export function crewSpeedMod(crew: number): number {
-  if (crew >= 12) return 1;
-  if (crew >= 6) return 0.75;
-  return 0.5;
+/**
+ * 水手不足時的航速倍率（老闆設計）：
+ * 達最低水手數＝正常；低於最低＝減半；低於最低的一半＝最慢
+ */
+export function crewSpeedMod(state: GameState): number {
+  const min = shipTypeOf(state).minCrew;
+  if (state.crew >= min) return 1;
+  if (state.crew >= Math.ceil(min / 2)) return 0.5;
+  return 0.3;
 }
 
 /** 平均購入成本（無持有回傳 0） */
@@ -135,30 +209,26 @@ export function loadGame(): GameState | null {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return null;
   try {
-    const s = JSON.parse(raw) as Partial<GameState> & { ship?: { x: number; y: number; hull?: number } };
+    const s = JSON.parse(raw) as Partial<GameState> & {
+      ship?: { x?: number; y?: number; hull?: number; typeId?: string };
+    };
     if (typeof s.gold !== 'number' || typeof s.day !== 'number') return null;
-    // 舊版（M1）存檔升級：補上新欄位、座標重設到月港外海（地圖已換）
-    if (!s.version || s.version < 2) {
+    // v3 以前的存檔：保留資金/日期/貨物，船與生存欄位用新預設（地圖/船制已改版）
+    if (!s.version || s.version < 4) {
+      const fresh = newGame();
       return {
-        ...newGame(),
+        ...fresh,
         gold: s.gold,
         day: s.day,
         cargo: s.cargo ?? {},
+        costBasis: (s as Partial<GameState>).costBasis ?? {},
+        crew: (s as Partial<GameState>).crew ?? CREW_START,
+        ship: {
+          ...fresh.ship,
+          x: s.version && s.version >= 2 && s.ship?.x ? s.ship.x : fresh.ship.x,
+          y: s.version && s.version >= 2 && s.ship?.y ? s.ship.y : fresh.ship.y,
+        },
       };
-    }
-    // v2 → v3：補水手/疲勞/成本欄位
-    if (s.version < 3) {
-      return {
-        ...newGame(),
-        ...s,
-        version: 3,
-        costBasis: {},
-        crew: CREW_START,
-        fatigue: 0,
-        daysAtSea: 0,
-        food: Math.min(s.food ?? SUPPLY_MAX, SUPPLY_MAX),
-        water: Math.min(s.water ?? SUPPLY_MAX, SUPPLY_MAX),
-      } as GameState;
     }
     return s as GameState;
   } catch {
@@ -278,6 +348,22 @@ export function refreshMarketEvents(state: GameState): void {
     const g = dearPool[Math.floor(hashNoise(week, 'evg' + i + p.id) * dearPool.length)];
     state.events.push({ portId: p.id, goodId: g, untilDay: state.day + 7 });
   }
+}
+
+// ---------- 委託任務 ----------
+
+const PX_PER_DAY_EST = 220;
+
+/** 產生本日此港的委託內容（同日同港固定） */
+export function questOffer(state: GameState, port: Port): Quest {
+  const candidates = PORTS.filter((p) => p.id !== port.id);
+  const target = candidates[Math.floor(hashNoise(state.day, 'qp' + port.id) * candidates.length)];
+  const good = GOODS[Math.floor(hashNoise(state.day, 'qg' + port.id) * GOODS.length)];
+  const qty = 5 + Math.floor(hashNoise(state.day, 'qq' + port.id) * 8); // 5~12
+  const distDays = Math.ceil(Math.hypot(target.x - port.x, target.y - port.y) / PX_PER_DAY_EST);
+  const deadlineDay = state.day + distDays * 2 + 8;
+  const reward = Math.round(qty * good.basePrice * 0.7 + distDays * 40);
+  return { goodId: good.id, qty, portId: target.id, deadlineDay, reward };
 }
 
 /** 酒館傳聞文字 */

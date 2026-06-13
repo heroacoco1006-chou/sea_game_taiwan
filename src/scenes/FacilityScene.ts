@@ -1,15 +1,14 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, Port, saveGame, dateText, rumorTexts,
-  HULL_MAX, SUPPLY_MAX, CREW_MAX,
+  GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
+  hullMax, supplyMax, crewMax, cargoCount, questOffer,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast } from '../ui';
 
-type FacilityType = 'tavern' | 'inn' | 'harbor' | 'shipyard' | 'office';
+type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
 
 const FOOD_PRICE = 2;
 const WATER_PRICE = 1;
-const REPAIR_PRICE = 2;
 const CREW_PRICE = 5;
 
 /** 對談式設施選單（走進建築後切換到此場景） */
@@ -43,7 +42,6 @@ export default class FacilityScene extends Phaser.Scene {
       tavern: '酒館',
       inn: '旅館',
       harbor: '港務局',
-      shipyard: '造船廠',
       office: this.port.culture === 'han' ? '官府' : '商館',
     };
 
@@ -65,7 +63,7 @@ export default class FacilityScene extends Phaser.Scene {
   private refreshInfo(): void {
     const s = this.state;
     this.info.setText(
-      `${dateText(s.day)}　資金 ${s.gold} 兩　糧 ${s.food}/${SUPPLY_MAX}　水 ${s.water}/${SUPPLY_MAX}　船體 ${s.ship.hull}/${HULL_MAX}　水手 ${s.crew}/${CREW_MAX}　疲勞 ${s.fatigue}/100`
+      `${dateText(s.day)}　資金 ${s.gold} 兩　糧 ${s.food}/${supplyMax(s)}　水 ${s.water}/${supplyMax(s)}　船體 ${s.ship.hull}/${hullMax(s)}　水手 ${s.crew}/${crewMax(s)}　疲勞 ${s.fatigue}/100`
     );
   }
 
@@ -90,7 +88,7 @@ export default class FacilityScene extends Phaser.Scene {
         makeButton(this, W / 2, 420, 360, 54, '休息一晚並存檔（疲勞歸零）', () => {
           s.day += 1;
           s.fatigue = 0;
-          s.ship.hull = Math.min(HULL_MAX, s.ship.hull + 3);
+          s.ship.hull = Math.min(hullMax(s), s.ship.hull + 3);
           saveGame(s);
           this.refreshInfo();
           toast(this, '睡了個好覺！疲勞歸零、進度已存檔（船員順手保養了船，船體+3）');
@@ -109,8 +107,8 @@ export default class FacilityScene extends Phaser.Scene {
           this.buySupply('water', 10);
         });
         makeButton(this, W / 2 + 240, 460, 220, 50, '糧水全部補滿', () => {
-          const needF = SUPPLY_MAX - s.food;
-          const needW = SUPPLY_MAX - s.water;
+          const needF = supplyMax(s) - s.food;
+          const needW = supplyMax(s) - s.water;
           const cost = needF * FOOD_PRICE + needW * WATER_PRICE;
           if (cost === 0) {
             toast(this, '糧水已經是滿的了！');
@@ -121,51 +119,99 @@ export default class FacilityScene extends Phaser.Scene {
             return;
           }
           s.gold -= cost;
-          s.food = SUPPLY_MAX;
-          s.water = SUPPLY_MAX;
+          s.food = supplyMax(s);
+          s.water = supplyMax(s);
           this.refreshInfo();
           toast(this, `補滿了！花費 ${cost} 兩`);
         });
         break;
       }
 
-      case 'shipyard': {
-        this.body.setText(
-          `船匠敲著木槌：「船體每修 1 點收 ${REPAIR_PRICE} 兩。」\n\n（買船、造船、改造的功能，將在下一階段開放——敬請期待！）`
-        );
-        makeButton(this, W / 2, 460, 320, 54, '修理到全滿', () => {
-          const need = HULL_MAX - s.ship.hull;
-          if (need === 0) {
-            toast(this, '船體完好如新，不用修！');
-            return;
-          }
-          const afford = Math.min(need, Math.floor(s.gold / REPAIR_PRICE));
-          if (afford <= 0) {
-            toast(this, '資金不足！');
-            return;
-          }
-          s.gold -= afford * REPAIR_PRICE;
-          s.ship.hull += afford;
-          this.refreshInfo();
-          toast(this, afford === need ? `修好了！花費 ${afford * REPAIR_PRICE} 兩` : `錢只夠修 ${afford} 點`);
-        });
-        break;
-      }
-
       case 'office': {
-        this.body.setText(
-          `${this.port.culture === 'han' ? '官爺' : '商館長'}放下手中的文書，向你介紹這座港口：\n\n「${this.port.desc}」\n\n（接受任務、委託的功能，將在之後的版本開放）`
-        );
+        this.buildOffice();
         break;
       }
     }
   }
 
+  /** 官府／商館：港口介紹＋運送委託 */
+  private buildOffice(): void {
+    const W = this.scale.width;
+    const s = this.state;
+    const head = this.port.culture === 'han' ? '官爺' : '商館長';
+
+    // 逾期失敗檢查
+    if (s.quest && s.day > s.quest.deadlineDay) {
+      s.quest = null;
+      toast(this, '上一件委託超過期限，已經失效了……');
+    }
+
+    if (!s.quest) {
+      const offer = questOffer(s, this.port);
+      const target = PORTS.find((p) => p.id === offer.portId)!;
+      const good = GOODS.find((g) => g.id === offer.goodId)!;
+      this.body.setText(
+        `${head}放下文書：「${this.port.desc}」\n\n「正好有件委託——替我們把【${good.name}×${offer.qty}】送到【${target.name}】（${target.region}），` +
+        `期限 ${dateText(offer.deadlineDay)} 前，酬勞 ${offer.reward} 兩。貨要你自己備齊，如何？」`
+      );
+      makeButton(this, W / 2, 520, 300, 52, '接受委託', () => {
+        s.quest = { ...offer };
+        saveGame(s);
+        this.refreshInfo();
+        toast(this, '接下委託了！備齊貨物送到目的地的官府／商館吧');
+        this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
+      });
+      return;
+    }
+
+    const q = s.quest;
+    const target = PORTS.find((p) => p.id === q.portId)!;
+    const good = GOODS.find((g) => g.id === q.goodId)!;
+    const have = s.cargo[q.goodId] ?? 0;
+
+    if (q.portId === this.port.id) {
+      if (have >= q.qty) {
+        this.body.setText(`${head}清點貨物：「【${good.name}×${q.qty}】一件不少，辛苦了！這是說好的 ${q.reward} 兩。」`);
+        makeButton(this, W / 2, 520, 300, 52, `交付貨物（領 ${q.reward} 兩）`, () => {
+          s.cargo[q.goodId] = have - q.qty;
+          const basis = s.costBasis[q.goodId] ?? 0;
+          s.costBasis[q.goodId] = Math.round(basis * ((have - q.qty) / have));
+          if (s.cargo[q.goodId] === 0) {
+            delete s.cargo[q.goodId];
+            delete s.costBasis[q.goodId];
+          }
+          s.gold += q.reward;
+          s.quest = null;
+          saveGame(s);
+          this.refreshInfo();
+          toast(this, `委託完成！獲得 ${q.reward} 兩`);
+          this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
+        });
+        return;
+      }
+      this.body.setText(
+        `${head}看了看你的貨艙：「【${good.name}】還差 ${q.qty - have} 件呢，備齊了再來吧。期限是 ${dateText(q.deadlineDay)}。」`
+      );
+      return;
+    }
+
+    this.body.setText(
+      `${head}：「${this.port.desc}」\n\n目前的委託：送【${good.name}×${q.qty}】到【${target.name}】（持有 ${have}/${q.qty}），` +
+      `期限 ${dateText(q.deadlineDay)}，酬勞 ${q.reward} 兩。`
+    );
+    makeButton(this, W / 2, 540, 260, 48, '放棄這件委託', () => {
+      s.quest = null;
+      saveGame(s);
+      toast(this, '委託取消了（下次再接吧）');
+      this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
+    }, 17);
+  }
+
   private hireCrew(n: number): void {
     const s = this.state;
-    const can = Math.min(n, CREW_MAX - s.crew, Math.floor(s.gold / CREW_PRICE));
+    const can = Math.min(n, crewMax(s) - s.crew, Math.floor(s.gold / CREW_PRICE));
     if (can <= 0) {
-      toast(this, s.crew >= CREW_MAX ? '船上已經滿員了！' : '資金不足！');
+      toast(this, s.crew >= crewMax(s) ? '船上已經滿員了！' : '資金不足！');
       return;
     }
     s.gold -= can * CREW_PRICE;
@@ -178,9 +224,9 @@ export default class FacilityScene extends Phaser.Scene {
     const s = this.state;
     const price = kind === 'food' ? FOOD_PRICE : WATER_PRICE;
     const cur = s[kind];
-    const can = Math.min(amount, SUPPLY_MAX - cur, Math.floor(s.gold / price));
+    const can = Math.min(amount, supplyMax(s) - cur, Math.floor(s.gold / price));
     if (can <= 0) {
-      toast(this, cur >= SUPPLY_MAX ? '已經滿了！' : '資金不足！');
+      toast(this, cur >= supplyMax(s) ? '已經滿了！' : '資金不足！');
       return;
     }
     s.gold -= can * price;

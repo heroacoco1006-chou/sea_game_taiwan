@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, CARGO_MAX, saveGame, avgCost,
+  GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -178,7 +178,7 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   private changeQty(d: number): void {
-    this.qty = Phaser.Math.Clamp(this.qty + d, 1, CARGO_MAX);
+    this.qty = Phaser.Math.Clamp(this.qty + d, 1, cargoMax(this.state));
     this.qtyText.setText(`${this.qty}`);
   }
 
@@ -190,9 +190,9 @@ export default class TradeScene extends Phaser.Scene {
     }
     const s = this.state;
     const price = priceOf(s, this.port, g.id, s.day);
-    const can = Math.min(CARGO_MAX - cargoCount(s), Math.floor(s.gold / price));
+    const can = Math.min(cargoMax(s) - cargoCount(s), Math.floor(s.gold / price));
     if (can <= 0) {
-      toast(this, cargoCount(s) >= CARGO_MAX ? '貨艙已滿！' : '資金不足！');
+      toast(this, cargoCount(s) >= cargoMax(s) ? '貨艙已滿！' : '資金不足！');
       return;
     }
     this.buy(can);
@@ -220,7 +220,7 @@ export default class TradeScene extends Phaser.Scene {
     }
     const s = this.state;
     const price = priceOf(s, this.port, g.id, s.day);
-    const space = CARGO_MAX - cargoCount(s);
+    const space = cargoMax(s) - cargoCount(s);
     const can = Math.min(qty, space, Math.floor(s.gold / price));
     if (can <= 0) {
       toast(this, space <= 0 ? '貨艙已滿！' : '資金不足！');
@@ -275,6 +275,6 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   private updateFooter(): void {
-    this.footer.setText(`資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${CARGO_MAX}`);
+    this.footer.setText(`資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}`);
   }
 }
