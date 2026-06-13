@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
   hullMax, supplyMax, crewMax, questOffer, sailableDays,
+  currentStoryChapter, completeStoryChapter, storyTargetPort,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -181,13 +182,38 @@ export default class FacilityScene extends Phaser.Scene {
       toast(this, '上一件委託超過期限，已經失效了……');
     }
 
+    const chapter = currentStoryChapter(s);
+    const targetPort = storyTargetPort(chapter);
+    if (chapter && chapter.targetPortId === this.port.id) {
+      this.body.setText(
+        `【主線第 ${chapter.chapter} 章：${chapter.title}】\n` +
+        `年份：${chapter.year}　人物：${chapter.npc}\n\n` +
+        `${chapter.prompt}\n\n目標：${chapter.objective}`
+      );
+      makeButton(this, W / 2, 520, 340, 52, '推進主線', () => {
+        const result = completeStoryChapter(s, this.port);
+        saveGame(s);
+        this.refreshInfo();
+        showModal(this, result.title, result.message, [
+          {
+            label: '記下來',
+            onPick: () => this.scene.restart({ portId: this.port.id, type: this.type, door: this.door }),
+          },
+        ]);
+      });
+      return;
+    }
+
     if (!s.quest) {
       const offer = questOffer(s, this.port);
       const target = PORTS.find((p) => p.id === offer.portId)!;
       const good = GOODS.find((g) => g.id === offer.goodId)!;
+      const storyHint = chapter && targetPort
+        ? `\n\n目前主線：第 ${chapter.chapter} 章「${chapter.title}」；請前往【${targetPort.name}】。`
+        : '\n\n目前可玩的 M4 示範主線已完成，仍可繼續自由貿易與接委託。';
       this.body.setText(
         `${head}放下文書：「${this.port.desc}」\n\n「正好有件委託——替我們把【${good.name}×${offer.qty}】送到【${target.name}】（${target.region}），` +
-        `期限 ${dateText(offer.deadlineDay)} 前，酬勞 ${offer.reward} 兩。貨要你自己備齊，如何？」`
+        `期限 ${dateText(offer.deadlineDay)} 前，酬勞 ${offer.reward} 兩。貨要你自己備齊，如何？」${storyHint}`
       );
       makeButton(this, W / 2, 520, 300, 52, '接受委託', () => {
         s.quest = { ...offer };

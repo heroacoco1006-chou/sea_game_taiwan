@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { newGame, loadGame, hasSave } from '../state';
+import { newGame, loadGame, hasSave, HEROES } from '../state';
+import type { HeroId } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
 export default class TitleScene extends Phaser.Scene {
@@ -28,13 +29,25 @@ export default class TitleScene extends Phaser.Scene {
       .text(width / 2, 265, '— 台灣大航海時代 1600～1662 —', textStyle(22, '#6b5530'))
       .setOrigin(0.5);
 
-    makeButton(this, width / 2, 420, 260, 56, '新 遊 戲', () => {
-      this.registry.set('state', newGame());
-      this.scene.start('WorldMap');
+    this.add.text(width / 2, 350, '選擇主角開始新遊戲', textStyle(18, '#f2e3bd')).setOrigin(0.5);
+    HEROES.forEach((hero, i) => {
+      makeButton(
+        this,
+        width / 2,
+        400 + i * 58,
+        520,
+        48,
+        `${hero.name}（${hero.startYear}・${hero.role}）`,
+        () => {
+          this.registry.set('state', newGame(hero.id as HeroId));
+          this.scene.start('WorldMap');
+        },
+        17
+      );
     });
 
     const canLoad = hasSave();
-    const loadBtn = makeButton(this, width / 2, 495, 260, 56, '繼續航行（讀取）', () => {
+    const loadBtn = makeButton(this, width / 2, 590, 260, 50, '繼續航行（讀取）', () => {
       const s = loadGame();
       if (s) {
         this.registry.set('state', s);
@@ -44,7 +57,7 @@ export default class TitleScene extends Phaser.Scene {
     if (!canLoad) loadBtn.setAlpha(0.45).disableInteractive();
 
     this.add
-      .text(width / 2, 600, 'M2 — 東亞與南洋 22 港・季風航海・走動式港町', textStyle(16, '#9ab8c8'))
+      .text(width / 2, 655, 'M4 — 三主角主線骨架・事件圖鑑・自由航海', textStyle(16, '#9ab8c8'))
       .setOrigin(0.5);
   }
 }

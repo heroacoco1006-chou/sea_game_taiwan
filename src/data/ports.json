@@ -3,8 +3,8 @@
     {
       "id": "tayouan",
       "name": "大員",
-      "x": 1487,
-      "y": 1175,
+      "x": 3569,
+      "y": 2820,
       "region": "台灣",
       "culture": "euro",
       "shipyard": true,
@@ -24,13 +24,14 @@
         "rattan",
         "silk_raw",
         "porcelain"
-      ]
+      ],
+      "modern": "今台南市安平區"
     },
     {
       "id": "keelung",
       "name": "雞籠",
-      "x": 1602,
-      "y": 935,
+      "x": 3845,
+      "y": 2244,
       "region": "台灣",
       "culture": "euro",
       "shipyard": false,
@@ -48,13 +49,14 @@
         "rattan",
         "salt",
         "pottery"
-      ]
+      ],
+      "modern": "今基隆市"
     },
     {
       "id": "tamsui",
       "name": "淡水",
-      "x": 1535,
-      "y": 915,
+      "x": 3684,
+      "y": 2196,
       "region": "台灣",
       "culture": "euro",
       "shipyard": false,
@@ -72,13 +74,14 @@
         "deerskin",
         "wood",
         "rice"
-      ]
+      ],
+      "modern": "今新北市淡水區"
     },
     {
       "id": "ponkan",
       "name": "笨港",
-      "x": 1468,
-      "y": 1090,
+      "x": 3523,
+      "y": 2616,
       "region": "台灣",
       "culture": "han",
       "shipyard": false,
@@ -97,13 +100,14 @@
         "sugar",
         "wood",
         "salt"
-      ]
+      ],
+      "modern": "今雲林縣北港一帶"
     },
     {
       "id": "penghu",
       "name": "澎湖",
-      "x": 1413,
-      "y": 1120,
+      "x": 3391,
+      "y": 2688,
       "region": "澎湖",
       "culture": "han",
       "shipyard": false,
@@ -121,13 +125,14 @@
         "wood",
         "pottery",
         "rattan"
-      ]
+      ],
+      "modern": "今澎湖縣馬公市"
     },
     {
       "id": "yuegang",
       "name": "月港",
-      "x": 1320,
-      "y": 1050,
+      "x": 3168,
+      "y": 2520,
       "region": "中國福建",
       "culture": "han",
       "shipyard": true,
@@ -149,13 +154,14 @@
         "pottery",
         "sugar",
         "cotton"
-      ]
+      ],
+      "modern": "今福建省漳州市龍海月港"
     },
     {
       "id": "anhai",
       "name": "安海",
-      "x": 1380,
-      "y": 990,
+      "x": 3312,
+      "y": 2376,
       "region": "中國福建",
       "culture": "han",
       "shipyard": true,
@@ -175,13 +181,14 @@
         "porcelain",
         "cotton",
         "salt"
-      ]
+      ],
+      "modern": "今福建省泉州市安海鎮"
     },
     {
       "id": "guangzhou",
       "name": "廣州",
-      "x": 1200,
-      "y": 1135,
+      "x": 2880,
+      "y": 2724,
       "region": "中國廣東",
       "culture": "han",
       "shipyard": true,
@@ -203,13 +210,14 @@
         "tea",
         "cotton",
         "sugar"
-      ]
+      ],
+      "modern": "今廣東省廣州市"
     },
     {
       "id": "macau",
       "name": "澳門",
-      "x": 1150,
-      "y": 1170,
+      "x": 2760,
+      "y": 2808,
       "region": "中國廣東",
       "culture": "euro",
       "shipyard": false,
@@ -228,13 +236,14 @@
         "porcelain",
         "silk_cloth",
         "ivory"
-      ]
+      ],
+      "modern": "今澳門"
     },
     {
       "id": "hirado",
       "name": "平戶",
-      "x": 2160,
-      "y": 300,
+      "x": 5184,
+      "y": 720,
       "region": "日本九州",
       "culture": "wa",
       "shipyard": true,
@@ -254,13 +263,14 @@
         "lacquer",
         "pottery",
         "rice"
-      ]
+      ],
+      "modern": "今日本長崎縣平戶市"
     },
     {
       "id": "nagasaki",
       "name": "長崎",
-      "x": 2230,
-      "y": 395,
+      "x": 5352,
+      "y": 948,
       "region": "日本九州",
       "culture": "wa",
       "shipyard": true,
@@ -280,13 +290,14 @@
         "copper",
         "pottery",
         "wine"
-      ]
+      ],
+      "modern": "今日本長崎市"
     },
     {
       "id": "sakai",
       "name": "堺",
-      "x": 2655,
-      "y": 450,
+      "x": 6372,
+      "y": 1080,
       "region": "日本近畿",
       "culture": "wa",
       "shipyard": true,
@@ -306,13 +317,14 @@
         "pottery",
         "rice",
         "wine"
-      ]
+      ],
+      "modern": "今日本大阪府堺市"
     },
     {
       "id": "naha",
       "name": "那霸",
-      "x": 1897,
-      "y": 800,
+      "x": 4553,
+      "y": 1920,
       "region": "琉球王國",
       "culture": "ryu",
       "shipyard": false,
@@ -331,13 +343,14 @@
         "sugar",
         "lacquer",
         "tea"
-      ]
+      ],
+      "modern": "今日本沖繩縣那霸市"
     },
     {
       "id": "manila",
       "name": "馬尼拉",
-      "x": 1668,
-      "y": 1500,
+      "x": 4003,
+      "y": 3600,
       "region": "呂宋",
       "culture": "euro",
       "shipyard": true,
@@ -356,13 +369,14 @@
         "rattan",
         "wine",
         "cotton"
-      ]
+      ],
+      "modern": "今菲律賓馬尼拉"
     },
     {
       "id": "hoian",
       "name": "會安",
-      "x": 1140,
-      "y": 1480,
+      "x": 2736,
+      "y": 3552,
       "region": "安南",
       "culture": "sea",
       "shipyard": false,
@@ -380,13 +394,14 @@
         "rice",
         "sugar",
         "cotton"
-      ]
+      ],
+      "modern": "今越南會安"
     },
     {
       "id": "ayutthaya",
       "name": "阿瑜陀耶",
-      "x": 890,
-      "y": 1860,
+      "x": 2136,
+      "y": 4464,
       "region": "暹羅",
       "culture": "sea",
       "shipyard": false,
@@ -407,13 +422,14 @@
         "deerskin",
         "wood",
         "tin"
-      ]
+      ],
+      "modern": "今泰國大城（阿瑜陀耶）"
     },
     {
       "id": "malacca",
       "name": "麻六甲",
-      "x": 605,
-      "y": 2010,
+      "x": 1452,
+      "y": 4824,
       "region": "馬來半島",
       "culture": "euro",
       "shipyard": true,
@@ -432,13 +448,14 @@
         "pepper",
         "wood",
         "cotton"
-      ]
+      ],
+      "modern": "今馬來西亞馬六甲"
     },
     {
       "id": "batavia",
       "name": "巴達維亞",
-      "x": 960,
-      "y": 2235,
+      "x": 2304,
+      "y": 5364,
       "region": "爪哇",
       "culture": "euro",
       "shipyard": true,
@@ -459,13 +476,14 @@
         "rice",
         "wine",
         "cotton"
-      ]
+      ],
+      "modern": "今印尼雅加達"
     },
     {
       "id": "banten",
       "name": "萬丹",
-      "x": 830,
-      "y": 2250,
+      "x": 1992,
+      "y": 5400,
       "region": "爪哇",
       "culture": "sea",
       "shipyard": false,
@@ -483,13 +501,14 @@
         "rattan",
         "wood",
         "sappan"
-      ]
+      ],
+      "modern": "今印尼萬丹"
     },
     {
       "id": "ambon",
       "name": "安汶",
-      "x": 1700,
-      "y": 2225,
+      "x": 4080,
+      "y": 5340,
       "region": "香料群島",
       "culture": "sea",
       "shipyard": false,
@@ -508,13 +527,14 @@
         "wood",
         "sappan",
         "pottery"
-      ]
+      ],
+      "modern": "今印尼安汶"
     },
     {
       "id": "banda",
       "name": "班達",
-      "x": 1752,
-      "y": 2305,
+      "x": 4205,
+      "y": 5532,
       "region": "香料群島",
       "culture": "sea",
       "shipyard": false,
@@ -533,13 +553,14 @@
         "wood",
         "coral",
         "sappan"
-      ]
+      ],
+      "modern": "今印尼班達群島"
     },
     {
       "id": "ternate",
       "name": "德那第",
-      "x": 1832,
-      "y": 2032,
+      "x": 4397,
+      "y": 4877,
       "region": "香料群島",
       "culture": "sea",
       "shipyard": false,
@@ -557,7 +578,8 @@
         "wood",
         "sappan",
         "coral"
-      ]
+      ],
+      "modern": "今印尼德那第"
     }
   ]
 }

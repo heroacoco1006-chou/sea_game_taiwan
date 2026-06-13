@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
-import { COLORS, textStyle, makeButton } from '../ui';
+import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -159,8 +159,16 @@ export default class PortScene extends Phaser.Scene {
     const W = this.scale.width;
     const H = this.scale.height;
     this.add.rectangle(W / 2, 24, W, 48, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
+    // 左上角港名可點 → 跳出港口介紹
+    const nameT = this.add
+      .text(14, 12, `【${this.port.name}】${this.port.region} ⓘ`, textStyle(17, '#ffe27a'))
+      .setDepth(101).setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+    nameT.on('pointerover', () => nameT.setColor('#fff4c0'));
+    nameT.on('pointerout', () => nameT.setColor('#ffe27a'));
+    nameT.on('pointerdown', () => this.showPortIntro(false));
     this.add
-      .text(14, 12, `【${this.port.name}】${this.port.region}　　${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(17, '#f2e3bd'))
+      .text(14 + nameT.width + 18, 14, `${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(16, '#f2e3bd'))
       .setDepth(101).setScrollFactor(0);
     makeButton(this, W - 62, 24, 96, 34, '資訊', () => {
       saveGame(this.state);
@@ -171,6 +179,24 @@ export default class PortScene extends Phaser.Scene {
       .setOrigin(0.5, 1).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
 
     this.createMinimap();
+
+    // 首次抵達此港 → 自動跳出港口介紹（教育：認識古今地名與時代背景）
+    if (!this.state.visitedPorts.includes(this.port.id)) {
+      this.state.visitedPorts.push(this.port.id);
+      saveGame(this.state);
+      this.showPortIntro(true);
+    }
+  }
+
+  /** 港口介紹彈窗：古名→今地名→所屬勢力→背景說明 */
+  private showPortIntro(firstTime: boolean): void {
+    const p = this.port;
+    const title = firstTime ? `初次抵達・${p.name}` : `${p.name}　港口介紹`;
+    const body = `今地名：${p.modern}\n所屬勢力：${p.region}\n\n${p.desc}`;
+    this.input.keyboard!.enabled = false;
+    showModal(this, title, body, [
+      { label: firstTime ? '開始探索！' : '知道了', onPick: () => { this.input.keyboard!.enabled = true; } },
+    ]);
   }
 
   private addDecorations(style: { roof: number; wall: number }): void {

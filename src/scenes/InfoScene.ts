@@ -3,8 +3,9 @@ import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
+  heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState,
 } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
 type EquipCat = 'weapon' | 'armor' | 'accessory';
@@ -67,6 +68,7 @@ export default class InfoScene extends Phaser.Scene {
     this.drawEquipColumn('armor', '防具', 470, 220, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
     this.drawEquipColumn('accessory', '飾品', 770, 220, ACCESSORIES.map((x) => ({ id: x.id, label: x.name })));
     this.drawConsumables(1080, 220);
+    this.drawStorySummary();
     this.drawBackpackSummary();
   }
 
@@ -88,10 +90,11 @@ export default class InfoScene extends Phaser.Scene {
     this.dyn.push(this.add.text(x, y - 30, '— 消耗品 —', textStyle(19)).setOrigin(0.5));
     CONSUMABLES.forEach((item, i) => {
       const own = this.state.inventory[item.id] ?? 0;
-      const btn = makeButton(this, x, y + 4 + i * 48, 260, 38, `${item.name} x${own}`, () => this.useItem(item.id), 13);
+      const rowY = y + 4 + i * 64;
+      const btn = makeButton(this, x, rowY, 260, 38, `${item.name} x${own}`, () => this.useItem(item.id), 13);
       btn.setAlpha(own > 0 ? 1 : 0.45);
       this.dyn.push(btn);
-      this.dyn.push(this.add.text(x, y + 24 + i * 48, item.desc, { ...textStyle(10, '#6b5530'), wordWrap: { width: 250 }, align: 'center' }).setOrigin(0.5, 0));
+      this.dyn.push(this.add.text(x, rowY + 22, item.desc, { ...textStyle(10, '#6b5530'), wordWrap: { width: 250 }, align: 'center' }).setOrigin(0.5, 0));
     });
   }
 
@@ -100,7 +103,36 @@ export default class InfoScene extends Phaser.Scene {
     const text = entries.length > 0
       ? entries.map(([id, qty]) => `${itemNameById(id)} x${qty}`).join('　')
       : '背包目前是空的。';
-    this.dyn.push(this.add.text(56, 616, `背包：${text}`, { ...textStyle(14, '#5a4a30'), wordWrap: { width: 1040 }, lineSpacing: 5 }));
+    this.dyn.push(this.add.text(56, 626, `背包：${text}`, { ...textStyle(14, '#5a4a30'), wordWrap: { width: 900 }, lineSpacing: 5 }));
+  }
+
+  private drawStorySummary(): void {
+    const hero = heroDefById(this.state.story.heroId);
+    const chapter = currentStoryChapter(this.state);
+    const target = storyTargetPort(chapter);
+    const codex = codexEntriesForState(this.state);
+    const storyLine = chapter
+      ? `主線：${hero.name}（${hero.role}）第 ${chapter.chapter} 章「${chapter.title}」｜目標：前往【${target?.name ?? chapter.targetPortId}】`
+      : `主線：${hero.name}（${hero.role}）目前示範章節已完成`;
+    const codexLine = codex.length > 0
+      ? `圖鑑 ${codex.length} 張：${codex.slice(-5).map((entry) => `【${entry.type}】${entry.title}`).join('、')}`
+      : '圖鑑 0 張：推進主線後會解鎖事件、人物與地點卡。';
+    this.dyn.push(this.add.text(56, 544, `${storyLine}\n${codexLine}`, { ...textStyle(14, '#3f3422'), wordWrap: { width: 1040 }, lineSpacing: 5 }));
+    const btn = makeButton(this, 1140, 568, 170, 38, '查看圖鑑', () => this.showCodex(), 13);
+    btn.setAlpha(codex.length > 0 ? 1 : 0.45);
+    this.dyn.push(btn);
+  }
+
+  private showCodex(): void {
+    const codex = codexEntriesForState(this.state);
+    if (codex.length === 0) {
+      toast(this, '目前還沒有解鎖圖鑑。');
+      return;
+    }
+    const body = codex
+      .map((entry) => `【${entry.type}】${entry.title}\n${entry.body}`)
+      .join('\n\n');
+    showModal(this, `圖鑑（${codex.length}）`, body, [{ label: '知道了', onPick: () => {} }]);
   }
 
   private equip(cat: EquipCat, id: string): void {

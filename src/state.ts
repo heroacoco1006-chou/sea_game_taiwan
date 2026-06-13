@@ -4,6 +4,7 @@ import mapData from './data/map.json';
 import shipsData from './data/ships.json';
 import equipData from './data/equipment.json';
 import matesData from './data/mates.json';
+import storyData from './data/story.json';
 
 export interface Good {
   id: string;
@@ -27,6 +28,8 @@ export interface Port {
   dear: string[];
   /** 本港販售的商品（5~7 種，含特產）；賣出則不限品項 */
   sells: string[];
+  /** 今地名（給港口介紹，特別是古地名港口） */
+  modern: string;
 }
 
 export interface Land {
@@ -113,10 +116,53 @@ export interface ConsumableItem { id: string; name: string; price: number; effec
 
 export type ShopCat = 'weapon' | 'armor' | 'accessory' | 'consumable';
 export type SeaStatusId = 'storm' | 'rats' | 'scurvy' | 'mutiny' | 'homesick';
+export type HeroId = 'lin' | 'peter' | 'chiyo';
 
 export interface SeaStatus {
   id: SeaStatusId;
   days: number;
+}
+
+export interface HeroDef {
+  id: HeroId;
+  name: string;
+  role: string;
+  startYear: number;
+  startPortId: string;
+  startShipTypeId: string;
+  startGold: number;
+  startCrew: number;
+  intro: string;
+  routeFocus: string;
+}
+
+export interface StoryChapter {
+  id: string;
+  heroId: HeroId;
+  chapter: number;
+  title: string;
+  year: number;
+  targetPortId: string;
+  npc: string;
+  objective: string;
+  prompt: string;
+  completion: string;
+  rewardGold: number;
+  codexIds: string[];
+}
+
+export interface CodexEntry {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+}
+
+export interface StoryState {
+  heroId: HeroId;
+  chapter: number;
+  completed: string[];
+  codex: string[];
 }
 
 export interface GameState {
@@ -146,6 +192,10 @@ export interface GameState {
   inventory: Record<string, number>;
   /** 海上持續狀態（每日結算，入港不會自動消失） */
   statuses: SeaStatus[];
+  /** 已造訪過的港口 id（用於首次進港的港口介紹） */
+  visitedPorts: string[];
+  /** M4 主線劇情與圖鑑進度 */
+  story: StoryState;
 }
 
 export const FLEET_MAX = 5; // 含旗艦
@@ -165,8 +215,11 @@ export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
 export const CONSUMABLES: ConsumableItem[] = equipData.consumables;
 export const ROLES: RoleDef[] = matesData.roles;
 export const MATE_DEFS: MateDef[] = matesData.mates;
+export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
+export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
+export const CODEX_ENTRIES: CodexEntry[] = storyData.codex;
 export const CREW_START = 16;
-export const START_YEAR = 1624;
+export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
 
 export const SEA_STATUS_DEFS: Record<SeaStatusId, { name: string; desc: string }> = {
@@ -178,7 +231,31 @@ export const SEA_STATUS_DEFS: Record<SeaStatusId, { name: string; desc: string }
 };
 
 const SAVE_KEY = 'seagame_save1';
-const START_POS = { x: 1340, y: 1075 }; // 月港外海
+const START_POS = { x: 3216, y: 2580 }; // 月港外海（座標 2.4 倍放大後）
+
+function dayForYear(year: number): number {
+  return (year - START_YEAR) * 360 + 1;
+}
+
+function portStartPos(portId: string): { x: number; y: number } {
+  const port = PORTS.find((p) => p.id === portId);
+  if (!port) return START_POS;
+  return { x: port.x, y: port.y + 60 };
+}
+
+function newPlayerShip(typeId: string, pos: { x: number; y: number }): PlayerShip {
+  const type = shipTypeById(typeId);
+  const supply = Math.floor(type.space / 2);
+  return {
+    typeId: type.id,
+    ...pos,
+    hull: type.hullMax,
+    cannons: Math.min(1, type.cannonSlots),
+    cargoSpace: type.space - supply,
+    supplySpace: supply,
+    figurehead: null,
+  };
+}
 
 export function shipTypeById(id: string): ShipType {
   return SHIPS.find((t) => t.id === id) ?? SHIPS[0];
@@ -245,27 +322,25 @@ export function damageFleet(state: GameState, dmg: number): void {
   }
 }
 
-export function newGame(): GameState {
-  const type = SHIPS[0]; // 小戎克船
+export function heroDefById(id: string | undefined): HeroDef {
+  return HEROES.find((h) => h.id === id) ?? HEROES[0];
+}
+
+export function newGame(heroId: HeroId = 'lin'): GameState {
+  const hero = heroDefById(heroId);
+  const pos = portStartPos(hero.startPortId);
+  const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 6,
-    gold: 1000,
-    day: 1,
-    ship: {
-      typeId: type.id,
-      ...START_POS,
-      hull: type.hullMax,
-      cannons: 1,
-      cargoSpace: 30,
-      supplySpace: 30,
-      figurehead: null,
-    },
+    version: 9,
+    gold: hero.startGold,
+    day: dayForYear(hero.startYear),
+    ship,
     escorts: [],
     cargo: {},
     costBasis: {},
-    food: 30,
-    water: 30,
-    crew: CREW_START,
+    food: Math.floor(ship.supplySpace / 2),
+    water: Math.floor(ship.supplySpace / 2),
+    crew: hero.startCrew,
     fatigue: 0,
     daysAtSea: 0,
     events: [],
@@ -274,6 +349,13 @@ export function newGame(): GameState {
     mates: [],
     inventory: {},
     statuses: [],
+    visitedPorts: [],
+    story: {
+      heroId: hero.id,
+      chapter: 1,
+      completed: [],
+      codex: [],
+    },
   };
 }
 
@@ -576,7 +658,8 @@ export function loadGame(): GameState | null {
       return {
         ...fresh,
         gold: s.gold,
-        day: s.day,
+        // v1~v3 的日期原本以 1624 年為第 1 天；M4 改為 1622 年起算，補 2 年保留顯示日期。
+        day: s.day + 720,
         cargo: s.cargo ?? {},
         costBasis: (s as Partial<GameState>).costBasis ?? {},
         crew: (s as Partial<GameState>).crew ?? CREW_START,
@@ -608,7 +691,43 @@ export function loadGame(): GameState | null {
         if ((full.inventory[id] ?? 0) <= 0) full.inventory[id] = 1;
       }
       full.version = 6;
-      return full;
+    }
+    // v6 → v7：補首次進港的港口介紹紀錄
+    if (s.version < 7) {
+      const full = s as GameState;
+      full.visitedPorts = full.visitedPorts ?? [];
+      full.version = 7;
+    }
+    // v7 → v8：地圖已放大 2.4 倍，舊存檔的船座標失效（會卡在地圖角落／陸地），
+    //           將艦隊移到大員外海，玩家讀檔後就停在大員，可直接入港。
+    if (s.version < 8) {
+      const full = s as GameState;
+      const tayouan = PORTS.find((p) => p.id === 'tayouan');
+      if (tayouan) {
+        const px = tayouan.x;
+        const py = tayouan.y + 40;
+        full.ship.x = px;
+        full.ship.y = py;
+        for (const esc of full.escorts ?? []) {
+          esc.x = px;
+          esc.y = py;
+        }
+      }
+      full.version = 8;
+    }
+    // v8 → v9：M4 主線導入，日期基準從 1624 改為 1622，舊檔補 2 年維持原本顯示日期。
+    if (s.version < 9) {
+      const full = s as GameState;
+      full.day += 720;
+      full.story = full.story ?? {
+        heroId: 'lin',
+        chapter: 1,
+        completed: [],
+        codex: [],
+      };
+      full.story.completed = full.story.completed ?? [];
+      full.story.codex = full.story.codex ?? [];
+      full.version = 9;
     }
     return s as GameState;
   } catch {
@@ -622,6 +741,65 @@ export function hasSave(): boolean {
 
 export function cargoCount(state: GameState): number {
   return Object.values(state.cargo).reduce((a, b) => a + b, 0);
+}
+
+// ---------- M4 主線／圖鑑 ----------
+
+export function currentStoryChapter(state: GameState): StoryChapter | undefined {
+  return STORY_CHAPTERS.find(
+    (c) => c.heroId === state.story.heroId && c.chapter === state.story.chapter
+  );
+}
+
+export function storyTargetPort(chapter: StoryChapter | undefined): Port | undefined {
+  return chapter ? PORTS.find((p) => p.id === chapter.targetPortId) : undefined;
+}
+
+export function codexEntriesForState(state: GameState): CodexEntry[] {
+  return state.story.codex
+    .map((id) => CODEX_ENTRIES.find((entry) => entry.id === id))
+    .filter((entry): entry is CodexEntry => Boolean(entry));
+}
+
+export function unlockCodex(state: GameState, ids: string[]): string[] {
+  const unlocked: string[] = [];
+  for (const id of ids) {
+    if (!state.story.codex.includes(id)) {
+      state.story.codex.push(id);
+      const entry = CODEX_ENTRIES.find((x) => x.id === id);
+      unlocked.push(entry?.title ?? id);
+    }
+  }
+  return unlocked;
+}
+
+export function completeStoryChapter(
+  state: GameState,
+  port: Port
+): { ok: boolean; title: string; message: string } {
+  const chapter = currentStoryChapter(state);
+  if (!chapter) {
+    return { ok: false, title: '主線暫告一段落', message: '目前可玩的主線章節已完成，後續章節會在 M4 繼續擴充。' };
+  }
+  if (chapter.targetPortId !== port.id) {
+    const target = storyTargetPort(chapter);
+    return { ok: false, title: chapter.title, message: `目前目標是前往【${target?.name ?? chapter.targetPortId}】。` };
+  }
+
+  state.story.completed.push(chapter.id);
+  const unlocked = unlockCodex(state, chapter.codexIds);
+  if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
+  state.story.chapter += 1;
+
+  const next = currentStoryChapter(state);
+  const nextPort = storyTargetPort(next);
+  const lines = [
+    chapter.completion,
+    chapter.rewardGold > 0 ? `\n獲得 ${chapter.rewardGold} 兩。` : '',
+    unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
+    next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n目前示範章節已完成，後續主線會繼續擴充。',
+  ];
+  return { ok: true, title: `完成：${chapter.title}`, message: lines.filter(Boolean).join('\n') };
 }
 
 // ---------- 日期 ----------

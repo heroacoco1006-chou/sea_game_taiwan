@@ -1,0 +1,182 @@
+{
+  "heroes": [
+    {
+      "id": "lin",
+      "name": "林海生",
+      "role": "漢人海商",
+      "startYear": 1623,
+      "startPortId": "yuegang",
+      "startShipTypeId": "junk_small",
+      "startGold": 1000,
+      "startCrew": 16,
+      "intro": "福建泉州出身的年輕海商，家道因海禁與風暴受挫，正準備從月港重新出海。",
+      "routeFocus": "海商、海禁、鄭氏集團"
+    },
+    {
+      "id": "peter",
+      "name": "彼得・范德堡",
+      "role": "荷蘭 VOC 商務員",
+      "startYear": 1622,
+      "startPortId": "batavia",
+      "startShipTypeId": "fluyt",
+      "startGold": 800,
+      "startCrew": 18,
+      "intro": "阿姆斯特丹來的 VOC 見習商務員，被派往東方尋找能打開中國貿易的新據點。",
+      "routeFocus": "VOC、轉口貿易、荷蘭治台"
+    },
+    {
+      "id": "chiyo",
+      "name": "田中千代",
+      "role": "日本朱印船商人之女",
+      "startYear": 1628,
+      "startPortId": "hirado",
+      "startShipTypeId": "shuinsen",
+      "startGold": 1200,
+      "startCrew": 18,
+      "intro": "平戶商人之女，接手父親留下的朱印船，想重新跑通台灣航線。",
+      "routeFocus": "朱印船、日荷衝突、琉球中介"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "lin_01",
+      "heroId": "lin",
+      "chapter": 1,
+      "title": "月港的出海文書",
+      "year": 1623,
+      "targetPortId": "yuegang",
+      "npc": "月港官吏",
+      "objective": "到月港官府領出海文書，確認第一趟航線。",
+      "prompt": "官吏翻開名冊：「海禁讓許多船商只能偷偷摸摸做生意。你若真要出海，就先學會怎麼在官府、商人與海上勢力之間求生。」",
+      "completion": "你拿到月港出海文書，也明白明末海禁讓合法商人與海盜的界線變得模糊。下一步，去笨港拜訪顏思齊的海商集團。",
+      "rewardGold": 300,
+      "codexIds": ["event_haijin"]
+    },
+    {
+      "id": "lin_02",
+      "heroId": "lin",
+      "chapter": 2,
+      "title": "笨港的海商集團",
+      "year": 1623,
+      "targetPortId": "ponkan",
+      "npc": "顏思齊的部下",
+      "objective": "航行到笨港，在官府／商館接觸顏思齊勢力。",
+      "prompt": "碼頭上的漢人船隊很熱鬧。有人說他們是海商，有人說他們是海盜，但在這個年代，能保護航線的人才有說話的份量。",
+      "completion": "你見識到笨港如何成為漢人海商聚集地，也聽見顏思齊集團正在招攬年輕船長。林海生線的前段主線已開啟。",
+      "rewardGold": 500,
+      "codexIds": ["person_yan_siqi", "place_ponkan"]
+    },
+    {
+      "id": "peter_01",
+      "heroId": "peter",
+      "chapter": 1,
+      "title": "巴達維亞的命令",
+      "year": 1622,
+      "targetPortId": "batavia",
+      "npc": "VOC 商館長",
+      "objective": "在巴達維亞商館領受前往澎湖的任務。",
+      "prompt": "商館長指著海圖：「我們需要一個靠近中國的據點。澎湖看起來合適，但明朝不會輕易答應。」",
+      "completion": "你領到 VOC 的航行命令，也知道荷蘭東印度公司是一個擁有軍事與貿易權力的商業組織。下一站，澎湖。",
+      "rewardGold": 400,
+      "codexIds": ["org_voc"]
+    },
+    {
+      "id": "peter_02",
+      "heroId": "peter",
+      "chapter": 2,
+      "title": "澎湖受挫",
+      "year": 1622,
+      "targetPortId": "penghu",
+      "npc": "明朝通事",
+      "objective": "航行到澎湖，了解荷蘭與明朝的談判困局。",
+      "prompt": "通事搖頭：「澎湖是明朝海防要地，不能讓外國商館長久停留。若要貿易，恐怕得另找地方。」",
+      "completion": "澎湖談判受挫，VOC 開始把目光轉向台灣南部的大員。彼得線的台灣轉口貿易主線已開啟。",
+      "rewardGold": 500,
+      "codexIds": ["event_penghu_1622", "place_penghu"]
+    },
+    {
+      "id": "chiyo_01",
+      "heroId": "chiyo",
+      "chapter": 1,
+      "title": "平戶的朱印船",
+      "year": 1628,
+      "targetPortId": "hirado",
+      "npc": "平戶商人",
+      "objective": "在平戶官府確認朱印船航行許可。",
+      "prompt": "老商人提醒你：「朱印狀是幕府准許出海的憑證。沒有它，日本船到南洋就少了保護。」",
+      "completion": "你整備好父親留下的朱印船，也知道日本商人曾靠朱印狀活躍於台灣與南洋。下一步，前往大員追查父親的舊事。",
+      "rewardGold": 300,
+      "codexIds": ["event_shuinsen"]
+    },
+    {
+      "id": "chiyo_02",
+      "heroId": "chiyo",
+      "chapter": 2,
+      "title": "大員的舊衝突",
+      "year": 1628,
+      "targetPortId": "tayouan",
+      "npc": "日荷通譯",
+      "objective": "航行到大員，打聽濱田彌兵衛事件的前因。",
+      "prompt": "通譯壓低聲音：「日本商人和荷蘭商館互不信任。貨物、稅銀、面子，哪一樣談不好都會變成大事。」",
+      "completion": "你聽到濱田彌兵衛事件的線索，也看見大員已成為日本、漢人與荷蘭人交會的港口。千代線調查主線已開啟。",
+      "rewardGold": 500,
+      "codexIds": ["event_hamada", "place_tayouan"]
+    }
+  ],
+  "codex": [
+    {
+      "id": "event_haijin",
+      "type": "事件",
+      "title": "明末海禁",
+      "body": "海禁是明朝限制民間出海貿易的政策。到了明末，沿海人民仍需要做生意，許多商船就在合法與非法之間活動，形成海商、走私與海盜交錯的時代背景。"
+    },
+    {
+      "id": "person_yan_siqi",
+      "type": "人物",
+      "title": "顏思齊",
+      "body": "顏思齊是 17 世紀初活躍於台灣附近的漢人海商領袖，傳說曾聚眾於笨港一帶。他的故事反映台灣早期漢人移民與海上勢力的關係。"
+    },
+    {
+      "id": "place_ponkan",
+      "type": "地點",
+      "title": "笨港",
+      "body": "笨港大約位於今天雲林北港一帶，是早期台灣西部重要港口。漢人商船、移民與地方聚落在此往來，使它成為台灣開發史上的關鍵地點。"
+    },
+    {
+      "id": "org_voc",
+      "type": "組織",
+      "title": "荷蘭東印度公司（VOC）",
+      "body": "VOC 是 1602 年成立的荷蘭大型貿易公司，擁有商業、外交與軍事權力。它在亞洲建立據點，尋找香料、瓷器、生絲與白銀等貿易利益。"
+    },
+    {
+      "id": "event_penghu_1622",
+      "type": "事件",
+      "title": "1622 年澎湖事件",
+      "body": "1622 年荷蘭人進入澎湖，想靠近中國貿易，但明朝認為澎湖是海防要地，要求荷蘭離開。這件事推動荷蘭轉向大員建立據點。"
+    },
+    {
+      "id": "place_penghu",
+      "type": "地點",
+      "title": "澎湖",
+      "body": "澎湖位在台灣海峽中央，控制福建與台灣之間的航路。因為位置重要，明朝、海商與歐洲人都很重視這裡。"
+    },
+    {
+      "id": "event_shuinsen",
+      "type": "事件",
+      "title": "朱印船貿易",
+      "body": "朱印船是得到日本幕府許可出海的商船，活躍於 17 世紀初。它們往來日本、台灣與東南亞，帶動白銀、生絲、鹿皮等貿易。"
+    },
+    {
+      "id": "event_hamada",
+      "type": "事件",
+      "title": "濱田彌兵衛事件",
+      "body": "1628 年，日本商人濱田彌兵衛與荷蘭大員商館爆發衝突。這件事顯示台灣是多方勢力交會之地，貿易糾紛也可能變成外交事件。"
+    },
+    {
+      "id": "place_tayouan",
+      "type": "地點",
+      "title": "大員",
+      "body": "大員約在今天台南安平一帶。荷蘭人在此建立熱蘭遮城，把台灣南部作為連接中國、日本與東南亞的轉口貿易基地。"
+    }
+  ]
+}
