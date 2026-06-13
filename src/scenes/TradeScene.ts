@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost,
+  GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost, tradeBonus,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -157,7 +157,7 @@ export default class TradeScene extends Phaser.Scene {
 
       const own = this.state.cargo[id] ?? 0;
       const avg = avgCost(this.state, id);
-      const price = priceOf(this.state, this.port, id, this.state.day);
+      const price = this.sellPriceOf(id);
       const diff = price - avg;
       this.leftObjs.push(this.add.text(LEFT_X + 40, y + 8, g.name, textStyle(18)));
       this.leftObjs.push(this.add.text(LEFT_X + 150, y + 8, `×${own}`, textStyle(18)));
@@ -208,7 +208,7 @@ export default class TradeScene extends Phaser.Scene {
     if (!this.port.sells.includes(g.id)) line += '（本港不販售，只收購）';
     if (own > 0) {
       const avg = avgCost(s, g.id);
-      const diff = price - avg;
+      const diff = this.sellPriceOf(g.id) - avg;
       const tag = diff > 0 ? `每件賺 ${diff} 兩` : diff < 0 ? `每件賠 ${-diff} 兩` : '損益兩平';
       line += `　持有 ${own}・均 ${avg} 兩（${tag}）`;
     }
@@ -273,6 +273,11 @@ export default class TradeScene extends Phaser.Scene {
     if (can < qty) toast(this, `只買得起／裝得下 ${can} 件`);
   }
 
+  /** 賣出價（含算盤飾品加成；無算盤時等於市價） */
+  private sellPriceOf(id: string): number {
+    return Math.round(priceOf(this.state, this.port, id, this.state.day) * (1 + tradeBonus(this.state)));
+  }
+
   private sell(qty: number): void {
     if (!this.requireSelected()) return;
     const id = this.selectedId!;
@@ -283,7 +288,7 @@ export default class TradeScene extends Phaser.Scene {
       toast(this, '沒有這項貨物可賣！');
       return;
     }
-    const price = priceOf(s, this.port, id, s.day);
+    const price = this.sellPriceOf(id);
     const basis = s.costBasis[id] ?? 0;
     s.costBasis[id] = Math.round(basis * ((own - can) / own));
     s.gold += price * can;

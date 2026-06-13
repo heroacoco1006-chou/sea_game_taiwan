@@ -2,6 +2,7 @@ import goodsData from './data/goods.json';
 import portsData from './data/ports.json';
 import mapData from './data/map.json';
 import shipsData from './data/ships.json';
+import equipData from './data/equipment.json';
 
 export interface Good {
   id: string;
@@ -100,6 +101,11 @@ export interface Mate {
   role: string | null;
 }
 
+export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
+export interface ArmorItem { id: string; name: string; price: number; defense: number; desc: string; }
+export interface AccessoryItem { id: string; name: string; price: number; effect: string; desc: string; }
+export interface FigureheadItem { id: string; name: string; price: number; effect: string; desc: string; }
+
 export interface GameState {
   version: number;
   gold: number;
@@ -135,6 +141,10 @@ export const WORLD_W = mapData.worldWidth;
 export const WORLD_H = mapData.worldHeight;
 
 export const SHIPS: ShipType[] = shipsData.ships;
+export const WEAPONS: WeaponItem[] = equipData.weapons;
+export const ARMORS: ArmorItem[] = equipData.armors;
+export const ACCESSORIES: AccessoryItem[] = equipData.accessories;
+export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
 export const CREW_START = 16;
 export const START_YEAR = 1624;
 export const CANNON_PRICE = 100;
@@ -271,6 +281,65 @@ export function avgCost(state: GameState, goodId: string): number {
   const own = state.cargo[goodId] ?? 0;
   if (own <= 0) return 0;
   return Math.round((state.costBasis[goodId] ?? 0) / own);
+}
+
+// ---------- 裝備效果 ----------
+
+export function weaponBoard(state: GameState): number {
+  const w = WEAPONS.find((x) => x.id === state.equip.weapon);
+  return w ? w.board : 0;
+}
+
+export function armorDefense(state: GameState): number {
+  const a = ARMORS.find((x) => x.id === state.equip.armor);
+  return a ? a.defense : 0;
+}
+
+function accessoryEffect(state: GameState): string | null {
+  const a = ACCESSORIES.find((x) => x.id === state.equip.accessory);
+  return a ? a.effect : null;
+}
+
+/** 旗艦船首像效果 */
+export function figureheadEffect(state: GameState): string | null {
+  const f = FIGUREHEADS.find((x) => x.id === state.ship.figurehead);
+  return f ? f.effect : null;
+}
+
+/** 航速加成倍率（羅盤＋海龍像） */
+export function gearSpeedMod(state: GameState): number {
+  let b = 1;
+  if (accessoryEffect(state) === 'speed') b += 0.05;
+  if (figureheadEffect(state) === 'speed') b += 0.1;
+  return b;
+}
+
+/** 暴風損害倍率（媽祖像減半） */
+export function stormDamageMod(state: GameState): number {
+  return figureheadEffect(state) === 'storm' ? 0.5 : 1;
+}
+
+/** 海上突襲機率倍率（望遠鏡降低） */
+export function ambushMod(state: GameState): number {
+  return accessoryEffect(state) === 'scout' ? 0.6 : 1;
+}
+
+/** 每日疲勞累積倍率（媽祖護身符＋鳳凰像） */
+export function fatigueMod(state: GameState): number {
+  let m = 1;
+  if (accessoryEffect(state) === 'morale') m -= 0.2;
+  if (figureheadEffect(state) === 'morale') m -= 0.2;
+  return Math.max(0.4, m);
+}
+
+/** 海戰砲擊倍率（獅子像） */
+export function cannonMod(state: GameState): number {
+  return figureheadEffect(state) === 'cannon' ? 1.25 : 1;
+}
+
+/** 交易折扣比例（算盤）：買價×(1−d)、賣價×(1+d) */
+export function tradeBonus(state: GameState): number {
+  return accessoryEffect(state) === 'trade' ? 0.05 : 0;
 }
 
 export function saveGame(state: GameState): void {

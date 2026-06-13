@@ -82,6 +82,7 @@ export default class PortScene extends Phaser.Scene {
       { key: 'tavern', label: '酒館', x: 950, y: 250, w: 200, h: 130 },
       { key: 'inn', label: '旅館', x: 1550, y: 300, w: 210, h: 135 },
       { key: 'office', label: this.port.culture === 'han' ? '官府' : '商館', x: 420, y: 700, w: 210, h: 125 },
+      { key: 'item', label: '道具屋', x: 950, y: 700, w: 200, h: 125 },
     ];
     if (this.port.shipyard) {
       this.buildings.push({ key: 'shipyard', label: '造船廠', x: 1560, y: 700, w: 240, h: 130 });
@@ -274,6 +275,8 @@ export default class PortScene extends Phaser.Scene {
       this.scene.start('Trade', { portId: this.port.id, door: ret });
     } else if (b.key === 'shipyard') {
       this.scene.start('Shipyard', { portId: this.port.id, door: ret });
+    } else if (b.key === 'item') {
+      this.scene.start('ItemShop', { portId: this.port.id, door: ret });
     } else {
       this.scene.start('Facility', { portId: this.port.id, type: b.key, door: ret });
     }

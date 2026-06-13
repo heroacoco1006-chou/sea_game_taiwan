@@ -5,6 +5,7 @@ import {
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
   fleetMinCrew, crewMax,
+  gearSpeedMod, stormDamageMod, ambushMod, fatigueMod,
 } from '../state';
 import { COLORS, textStyle, showModal } from '../ui';
 
@@ -167,7 +168,8 @@ export default class WorldMapScene extends Phaser.Scene {
       this.heading = Math.atan2(dy, dx);
       const supplyMod = this.state.food <= 0 || this.state.water <= 0 ? 0.5 : 1;
       const speed =
-        SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) * supplyMod * crewSpeedMod(this.state);
+        SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) *
+        supplyMod * crewSpeedMod(this.state) * gearSpeedMod(this.state);
       const len = Math.hypot(dx, dy);
       const nx = Phaser.Math.Clamp(this.ship.x + (dx / len) * speed * dt, 10, WORLD_W - 10);
       const ny = Phaser.Math.Clamp(this.ship.y + (dy / len) * speed * dt, 10, WORLD_H - 10);
@@ -236,7 +238,7 @@ export default class WorldMapScene extends Phaser.Scene {
         );
       }
     }
-    s.fatigue = Math.min(100, s.fatigue + fatigueGain);
+    s.fatigue = Math.min(100, s.fatigue + Math.round(fatigueGain * fatigueMod(s)));
 
     // 疲勞滿 100：一名水手倒下
     if (s.fatigue >= 100) {
@@ -261,10 +263,10 @@ export default class WorldMapScene extends Phaser.Scene {
     const s = this.state;
     const { month } = dateOf(s.day);
     const roll = Math.random();
-    const stormP = month >= 7 && month <= 9 ? 0.12 : 0.03;
+    const stormP = (month >= 7 && month <= 9 ? 0.12 : 0.03) * ambushMod(s);
 
     if (roll < stormP) {
-      const dmg = 10 + Math.floor(Math.random() * 15);
+      const dmg = Math.round((10 + Math.floor(Math.random() * 15)) * stormDamageMod(s));
       s.ship.hull = Math.max(0, s.ship.hull - dmg);
       s.food = Math.floor(s.food * 0.85);
       s.water = Math.floor(s.water * 0.85);
