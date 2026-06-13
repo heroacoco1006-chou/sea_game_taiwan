@@ -1,28 +1,28 @@
 {
   "weapons": [
-    { "id": "w_knife", "name": "短刀", "price": 80, "board": 3, "desc": "水手隨身的小刀，聊勝於無。" },
-    { "id": "w_saber", "name": "腰刀", "price": 250, "board": 6, "desc": "明軍制式的腰刀，劈砍俐落。" },
-    { "id": "w_katana", "name": "日本刀", "price": 600, "board": 10, "desc": "鋒利的日本刀，接舷戰的利器。" },
-    { "id": "w_rapier", "name": "西洋劍", "price": 950, "board": 14, "desc": "歐洲劍士的細劍，刺擊快狠。" },
-    { "id": "w_musket", "name": "火繩槍", "price": 1500, "board": 20, "desc": "南蠻傳來的火槍，接舷前一輪齊射震懾敵膽。" }
+    { "id": "w_knife", "name": "短刀", "price": 10000, "board": 3, "desc": "水手隨身的小刀，聊勝於無。" },
+    { "id": "w_saber", "name": "腰刀", "price": 30000, "board": 6, "desc": "明軍制式的腰刀，劈砍俐落。" },
+    { "id": "w_katana", "name": "日本刀", "price": 60000, "board": 10, "desc": "鋒利的日本刀，接舷戰的利器。" },
+    { "id": "w_rapier", "name": "西洋劍", "price": 90000, "board": 14, "desc": "歐洲劍士的細劍，刺擊快狠。" },
+    { "id": "w_musket", "name": "火繩槍", "price": 150000, "board": 20, "desc": "南蠻傳來的火槍，接舷前一輪齊射震懾敵膽。" }
   ],
   "armors": [
-    { "id": "a_cloth", "name": "旅人服", "price": 60, "defense": 2, "desc": "普通的布衣，擋擋風寒。" },
-    { "id": "a_leather", "name": "皮甲", "price": 240, "defense": 5, "desc": "硬皮製的護甲，輕便耐用。" },
-    { "id": "a_brigandine", "name": "綿甲", "price": 520, "defense": 8, "desc": "內襯鐵片的綿甲，明軍水師愛用。" },
-    { "id": "a_nanban", "name": "南蠻胴具足", "price": 900, "defense": 12, "desc": "仿歐洲胸甲打造的日本鎧甲，防護力極佳。" }
+    { "id": "a_cloth", "name": "旅人服", "price": 10000, "defense": 2, "desc": "普通的布衣，擋擋風寒。" },
+    { "id": "a_leather", "name": "皮甲", "price": 30000, "defense": 5, "desc": "硬皮製的護甲，輕便耐用。" },
+    { "id": "a_brigandine", "name": "綿甲", "price": 65000, "defense": 8, "desc": "內襯鐵片的綿甲，明軍水師愛用。" },
+    { "id": "a_nanban", "name": "南蠻胴具足", "price": 120000, "defense": 12, "desc": "仿歐洲胸甲打造的日本鎧甲，防護力極佳。" }
   ],
   "accessories": [
-    { "id": "ac_compass", "name": "羅盤", "price": 180, "effect": "speed", "desc": "精準的航海羅盤，航行更有效率（航速小幅提升）。" },
-    { "id": "ac_telescope", "name": "望遠鏡", "price": 350, "effect": "scout", "desc": "及早發現海上的狀況（暴風與海盜較不易突襲）。" },
-    { "id": "ac_charm", "name": "媽祖護身符", "price": 280, "effect": "morale", "desc": "媽祖保佑，船員安心（疲勞累積減緩）。" },
-    { "id": "ac_abacus", "name": "算盤", "price": 500, "effect": "trade", "desc": "精打細算，買賣更划算（交易價格優惠）。" }
+    { "id": "ac_compass", "name": "羅盤", "price": 30000, "effect": "speed", "desc": "精準的航海羅盤，航行更有效率（航速小幅提升）。" },
+    { "id": "ac_telescope", "name": "望遠鏡", "price": 45000, "effect": "scout", "desc": "及早發現海上的狀況（暴風與海盜較不易突襲）。" },
+    { "id": "ac_charm", "name": "媽祖護身符", "price": 25000, "effect": "morale", "desc": "媽祖保佑，船員安心（疲勞累積減緩）。" },
+    { "id": "ac_abacus", "name": "算盤", "price": 50000, "effect": "trade", "desc": "精打細算，買賣更划算（交易價格優惠）。" }
   ],
   "figureheads": [
-    { "id": "fh_mazu", "name": "媽祖像", "price": 600, "effect": "storm", "desc": "船首的媽祖神像，鎮住風浪（暴風損害減半）。" },
-    { "id": "fh_dragon", "name": "海龍像", "price": 750, "effect": "speed", "desc": "威猛的海龍，劈波斬浪（航速提升）。" },
-    { "id": "fh_lion", "name": "獅子像", "price": 850, "effect": "cannon", "desc": "怒吼的獅子，鼓舞砲手（海戰砲擊威力提升）。" },
-    { "id": "fh_phoenix", "name": "鳳凰像", "price": 700, "effect": "morale", "desc": "祥瑞的鳳凰，安定軍心（船員疲勞減緩）。" }
+    { "id": "fh_mazu", "name": "媽祖像", "price": 100000, "effect": "storm", "desc": "船首的媽祖神像，鎮住風浪（暴風損害減半）。" },
+    { "id": "fh_dragon", "name": "海龍像", "price": 120000, "effect": "speed", "desc": "威猛的海龍，劈波斬浪（航速提升）。" },
+    { "id": "fh_lion", "name": "獅子像", "price": 150000, "effect": "cannon", "desc": "怒吼的獅子，鼓舞砲手（海戰砲擊威力提升）。" },
+    { "id": "fh_phoenix", "name": "鳳凰像", "price": 110000, "effect": "morale", "desc": "祥瑞的鳳凰，安定軍心（船員疲勞減緩）。" }
   ],
   "consumables": [
     { "id": "c_lime", "name": "萊姆", "price": 120, "effect": "cure_scurvy", "desc": "酸甜的水果，能立刻解除壞血病狀態。" },

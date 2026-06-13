@@ -442,10 +442,11 @@ function consumeInventory(state: GameState, id: string): void {
 
 export function shopItemIdsForPort(port: Port): Record<ShopCat, string[]> {
   const isTaiwan = port.region === '台灣' || port.region === '澎湖';
+  const isSpiceIslands = ['ambon', 'banda', 'ternate'].includes(port.id);
   const stock: Record<ShopCat, Set<string>> = {
     weapon: new Set(['w_knife']),
     armor: new Set(['a_cloth']),
-    accessory: new Set(['ac_compass']),
+    accessory: new Set(),
     consumable: new Set(['c_lime']),
   };
   const add = (cat: ShopCat, ids: string[]) => ids.forEach((id) => stock[cat].add(id));
@@ -453,7 +454,7 @@ export function shopItemIdsForPort(port: Port): Record<ShopCat, string[]> {
   if (port.culture === 'han') {
     add('weapon', ['w_saber']);
     add('armor', ['a_brigandine']);
-    add('accessory', ['ac_abacus', 'ac_charm']);
+    add('accessory', ['ac_compass', 'ac_abacus', 'ac_charm']);
     add('consumable', ['c_cat', 'c_ginger']);
   } else if (port.culture === 'wa') {
     add('weapon', ['w_katana']);
@@ -463,11 +464,11 @@ export function shopItemIdsForPort(port: Port): Record<ShopCat, string[]> {
   } else if (port.culture === 'euro') {
     add('weapon', ['w_rapier', 'w_musket']);
     add('armor', ['a_leather']);
-    add('accessory', ['ac_telescope']);
+    add('accessory', ['ac_compass', 'ac_telescope']);
     add('consumable', ['c_prayer']);
   } else {
     add('armor', ['a_leather']);
-    add('accessory', ['ac_charm']);
+    if (!isSpiceIslands) add('accessory', ['ac_compass']);
     add('consumable', ['c_ginger', 'c_mediator']);
   }
 
