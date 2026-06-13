@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, saveGame, dateText, rumorTexts,
-  HULL_MAX, SUPPLY_MAX,
+  HULL_MAX, SUPPLY_MAX, CREW_MAX,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -10,6 +10,7 @@ type FacilityType = 'tavern' | 'inn' | 'harbor' | 'shipyard' | 'office';
 const FOOD_PRICE = 2;
 const WATER_PRICE = 1;
 const REPAIR_PRICE = 2;
+const CREW_PRICE = 5;
 
 /** 對談式設施選單（走進建築後切換到此場景） */
 export default class FacilityScene extends Phaser.Scene {
@@ -64,7 +65,7 @@ export default class FacilityScene extends Phaser.Scene {
   private refreshInfo(): void {
     const s = this.state;
     this.info.setText(
-      `${dateText(s.day)}　資金 ${s.gold} 兩　糧 ${s.food}/${SUPPLY_MAX}　水 ${s.water}/${SUPPLY_MAX}　船體 ${s.ship.hull}/${HULL_MAX}`
+      `${dateText(s.day)}　資金 ${s.gold} 兩　糧 ${s.food}/${SUPPLY_MAX}　水 ${s.water}/${SUPPLY_MAX}　船體 ${s.ship.hull}/${HULL_MAX}　水手 ${s.crew}/${CREW_MAX}　疲勞 ${s.fatigue}/100`
     );
   }
 
@@ -75,21 +76,24 @@ export default class FacilityScene extends Phaser.Scene {
 
     switch (this.type) {
       case 'tavern': {
-        const rumors = rumorTexts(s).map((r) => `🍺 ${r}`).join('\n\n');
+        const rumors = rumorTexts(s).map((r) => `🍺 ${r}`).join('\n');
         this.body.setText(
-          `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n（在酒館雇用航海士的功能，將在之後的版本開放）`
+          `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n碼頭邊有不少想出海討生活的人，每人雇用費 ${CREW_PRICE} 兩。\n（雇用具名的夥伴航海士，將在之後的版本開放）`
         );
+        makeButton(this, W / 2 - 130, 500, 220, 50, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1));
+        makeButton(this, W / 2 + 130, 500, 220, 50, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5));
         break;
       }
 
       case 'inn': {
-        this.body.setText('掌櫃笑著迎上來：「客倌，休息一晚嗎？順便把您的航海日誌收好（存檔）。」');
-        makeButton(this, W / 2, 420, 320, 54, '休息一晚並存檔（免費）', () => {
+        this.body.setText('掌櫃笑著迎上來：「客倌，休息一晚嗎？讓兄弟們好好睡一覺，疲勞全消！順便把您的航海日誌收好（存檔）。」');
+        makeButton(this, W / 2, 420, 360, 54, '休息一晚並存檔（疲勞歸零）', () => {
           s.day += 1;
+          s.fatigue = 0;
           s.ship.hull = Math.min(HULL_MAX, s.ship.hull + 3);
           saveGame(s);
           this.refreshInfo();
-          toast(this, '睡了個好覺！進度已存檔（船員順手保養了船，船體+3）');
+          toast(this, '睡了個好覺！疲勞歸零、進度已存檔（船員順手保養了船，船體+3）');
         });
         break;
       }
@@ -155,6 +159,19 @@ export default class FacilityScene extends Phaser.Scene {
         break;
       }
     }
+  }
+
+  private hireCrew(n: number): void {
+    const s = this.state;
+    const can = Math.min(n, CREW_MAX - s.crew, Math.floor(s.gold / CREW_PRICE));
+    if (can <= 0) {
+      toast(this, s.crew >= CREW_MAX ? '船上已經滿員了！' : '資金不足！');
+      return;
+    }
+    s.gold -= can * CREW_PRICE;
+    s.crew += can;
+    this.refreshInfo();
+    toast(this, `雇了 ${can} 名水手！（水手多船跑得快，但糧食也吃得多）`);
   }
 
   private buySupply(kind: 'food' | 'water', amount: number): void {

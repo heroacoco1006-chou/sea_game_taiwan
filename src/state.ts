@@ -49,8 +49,15 @@ export interface GameState {
   day: number; // 從 1 開始的絕對天數
   ship: { x: number; y: number; hull: number };
   cargo: Record<string, number>;
+  /** 各貨物目前持有量的總購入成本（算平均成本用） */
+  costBasis: Record<string, number>;
   food: number;
   water: number;
+  crew: number;
+  /** 疲勞 0~100，滿了水手減員 */
+  fatigue: number;
+  /** 本次出海已航行天數（入港歸零） */
+  daysAtSea: number;
   events: MarketEvent[];
 }
 
@@ -63,7 +70,9 @@ export const WORLD_H = mapData.worldHeight;
 
 export const CARGO_MAX = 30;
 export const HULL_MAX = 100;
-export const SUPPLY_MAX = 60;
+export const SUPPLY_MAX = 30;
+export const CREW_MAX = 30;
+export const CREW_START = 20;
 export const START_YEAR = 1624;
 
 const SAVE_KEY = 'seagame_save1';
@@ -71,15 +80,51 @@ const START_POS = { x: 1340, y: 1075 }; // 月港外海
 
 export function newGame(): GameState {
   return {
-    version: 2,
+    version: 3,
     gold: 1000,
     day: 1,
     ship: { ...START_POS, hull: HULL_MAX },
     cargo: {},
-    food: 30,
-    water: 30,
+    costBasis: {},
+    food: SUPPLY_MAX,
+    water: SUPPLY_MAX,
+    crew: CREW_START,
+    fatigue: 0,
+    daysAtSea: 0,
     events: [],
   };
+}
+
+/** 每日糧食消耗量（水手越多吃越多） */
+export function foodPerDay(crew: number): number {
+  return Math.max(1, Math.ceil(crew / 5));
+}
+
+/** 每日清水消耗量 */
+export function waterPerDay(crew: number): number {
+  return Math.max(1, Math.ceil(crew / 5));
+}
+
+/** 以目前糧水與水手數估算還能航行幾天 */
+export function sailableDays(state: GameState): number {
+  return Math.min(
+    Math.floor(state.food / foodPerDay(state.crew)),
+    Math.floor(state.water / waterPerDay(state.crew))
+  );
+}
+
+/** 水手不足時的航速倍率（M3 起依各船最低水手數計算） */
+export function crewSpeedMod(crew: number): number {
+  if (crew >= 12) return 1;
+  if (crew >= 6) return 0.75;
+  return 0.5;
+}
+
+/** 平均購入成本（無持有回傳 0） */
+export function avgCost(state: GameState, goodId: string): number {
+  const own = state.cargo[goodId] ?? 0;
+  if (own <= 0) return 0;
+  return Math.round((state.costBasis[goodId] ?? 0) / own);
 }
 
 export function saveGame(state: GameState): void {
@@ -100,6 +145,20 @@ export function loadGame(): GameState | null {
         day: s.day,
         cargo: s.cargo ?? {},
       };
+    }
+    // v2 → v3：補水手/疲勞/成本欄位
+    if (s.version < 3) {
+      return {
+        ...newGame(),
+        ...s,
+        version: 3,
+        costBasis: {},
+        crew: CREW_START,
+        fatigue: 0,
+        daysAtSea: 0,
+        food: Math.min(s.food ?? SUPPLY_MAX, SUPPLY_MAX),
+        water: Math.min(s.water ?? SUPPLY_MAX, SUPPLY_MAX),
+      } as GameState;
     }
     return s as GameState;
   } catch {
