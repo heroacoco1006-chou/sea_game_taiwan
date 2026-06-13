@@ -75,15 +75,16 @@ export default class PortScene extends Phaser.Scene {
     this.add.image(this.dock.x + 230, TOWN_H - 38, 'ship').setScale(1.5);
 
     // 設施建築（分散配置，需走動探索）
+    // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
     this.buildings = [
+      { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 120 },
       { key: 'trade', label: '交易所', x: 380, y: 300, w: 230, h: 140 },
       { key: 'tavern', label: '酒館', x: 950, y: 250, w: 200, h: 130 },
       { key: 'inn', label: '旅館', x: 1550, y: 300, w: 210, h: 135 },
       { key: 'office', label: this.port.culture === 'han' ? '官府' : '商館', x: 420, y: 700, w: 210, h: 125 },
-      { key: 'harbor', label: '港務局', x: 1580, y: 700, w: 200, h: 120 },
     ];
     if (this.port.shipyard) {
-      this.buildings.push({ key: 'shipyard', label: '造船廠', x: 1000, y: 720, w: 240, h: 130 });
+      this.buildings.push({ key: 'shipyard', label: '造船廠', x: 1560, y: 700, w: 240, h: 130 });
     }
 
     const g = this.add.graphics();
@@ -240,24 +241,15 @@ export default class PortScene extends Phaser.Scene {
     }
 
     const door = this.nearDoor();
-    const atDock =
-      this.player.y > TOWN_H - 160 && Math.abs(this.player.x - this.dock.x) < 200;
 
     if (door) {
       this.hint.setText(`按 Enter 進入【${door.label}】`);
-    } else if (atDock) {
-      this.hint.setText('按 Enter 出航');
     } else {
-      this.hint.setText('方向鍵走動或滑鼠點擊目的地｜點建築會自動走過去進入｜到棧橋按 Enter 出航');
+      this.hint.setText('方向鍵走動或滑鼠點擊目的地｜走進碼頭的【港口】即可補給與出航');
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
-      if (door) {
-        this.enterBuilding(door);
-      } else if (atDock) {
-        saveGame(this.state);
-        this.scene.start('WorldMap');
-      }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.ENTER) && door) {
+      this.enterBuilding(door);
     }
 
     const mm = this.registry.get('townMini') as { mx: number; my: number; sx: number; sy: number };

@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
-  hullMax, supplyMax, crewMax, cargoCount, questOffer,
+  hullMax, supplyMax, crewMax, questOffer, sailableDays,
 } from '../state';
-import { textStyle, makeButton, drawPanel, toast } from '../ui';
+import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
 
@@ -41,7 +41,7 @@ export default class FacilityScene extends Phaser.Scene {
     const titles: Record<FacilityType, string> = {
       tavern: '酒館',
       inn: '旅館',
-      harbor: '港務局',
+      harbor: '港口',
       office: this.port.culture === 'han' ? '官府' : '商館',
     };
 
@@ -99,15 +99,15 @@ export default class FacilityScene extends Phaser.Scene {
 
       case 'harbor': {
         this.body.setText(
-          `港務官攤開帳本：「出海前記得補給！糧食一單位 ${FOOD_PRICE} 兩、清水一單位 ${WATER_PRICE} 兩。」\n\n（小知識：大航海時代的船員最怕缺糧缺水，長期吃不到新鮮蔬果會得壞血病！）`
+          `港務官攤開帳本：「歡迎來到${this.port.name}！出海前記得補給——糧食一單位 ${FOOD_PRICE} 兩、清水一單位 ${WATER_PRICE} 兩。準備好了就從這裡啟航吧。」\n\n（小知識：大航海時代的船員最怕缺糧缺水，長期吃不到新鮮蔬果會得壞血病！）`
         );
-        makeButton(this, W / 2 - 240, 460, 220, 50, `糧食 +10（${FOOD_PRICE * 10} 兩）`, () => {
+        makeButton(this, W / 2 - 240, 430, 220, 50, `糧食 +10（${FOOD_PRICE * 10} 兩）`, () => {
           this.buySupply('food', 10);
         });
-        makeButton(this, W / 2, 460, 220, 50, `清水 +10（${WATER_PRICE * 10} 兩）`, () => {
+        makeButton(this, W / 2, 430, 220, 50, `清水 +10（${WATER_PRICE * 10} 兩）`, () => {
           this.buySupply('water', 10);
         });
-        makeButton(this, W / 2 + 240, 460, 220, 50, '糧水全部補滿', () => {
+        makeButton(this, W / 2 + 240, 430, 220, 50, '糧水全部補滿', () => {
           const needF = supplyMax(s) - s.food;
           const needW = supplyMax(s) - s.water;
           const cost = needF * FOOD_PRICE + needW * WATER_PRICE;
@@ -125,6 +125,16 @@ export default class FacilityScene extends Phaser.Scene {
           this.refreshInfo();
           toast(this, `補滿了！花費 ${cost} 兩`);
         });
+        // 出航：整併自原棧橋，玩家在港口直接啟航最直覺
+        makeButton(this, W / 2, 540, 380, 64, '⚓ 啟 航 出 海 ', () => {
+          const days = sailableDays(s);
+          if (days <= 1) {
+            this.confirmLowSupply();
+            return;
+          }
+          saveGame(s);
+          this.scene.start('WorldMap');
+        }, 24);
         break;
       }
 
@@ -133,6 +143,26 @@ export default class FacilityScene extends Phaser.Scene {
         break;
       }
     }
+  }
+
+  /** 補給不足仍想出航時的提醒（仍可選擇硬出航） */
+  private confirmLowSupply(): void {
+    const s = this.state;
+    showModal(
+      this,
+      '糧水快用完了！',
+      `現在的補給大概只夠航行 ${sailableDays(s)} 天，恐怕撐不到下一個港口，半路可能會鬧饑荒。\n\n要先留下來補給，還是硬著頭皮出航？`,
+      [
+        { label: '先留下來補給', onPick: () => {} },
+        {
+          label: '沒關係，啟航！',
+          onPick: () => {
+            saveGame(s);
+            this.scene.start('WorldMap');
+          },
+        },
+      ]
+    );
   }
 
   /** 官府／商館：港口介紹＋運送委託 */
