@@ -9,12 +9,19 @@ import { COLORS, textStyle } from '../ui';
  */
 
 interface Building {
-  key: string; // trade/tavern/inn/harbor/shipyard/office
+  key: string; // trade/tavern/inn/harbor/shipyard/office/item
   label: string;
   x: number;
   y: number;
   w: number;
   h: number;
+}
+
+type FacilityKey = 'trade' | 'tavern' | 'inn' | 'office' | 'item' | 'shipyard';
+
+interface LayoutSlot {
+  x: number;
+  y: number;
 }
 
 const CULTURE_STYLE: Record<string, { roof: number; wall: number; ground: number }> = {
@@ -30,6 +37,34 @@ const TOWN_W = 2000;
 const TOWN_H = 1100;
 const MINI_W = 180;
 const MINI_H = 100;
+
+const FACILITY_SLOTS: LayoutSlot[] = [
+  { x: 320, y: 285 },
+  { x: 720, y: 240 },
+  { x: 1010, y: 245 },
+  { x: 1260, y: 250 },
+  { x: 1660, y: 310 },
+  { x: 315, y: 650 },
+  { x: 1070, y: 610 },
+  { x: 1710, y: 660 },
+  { x: 500, y: 875 },
+  { x: 1480, y: 880 },
+];
+
+const ITEM_SLOTS: LayoutSlot[] = [
+  { x: 1700, y: 710 },
+  { x: 1500, y: 875 },
+  { x: 1760, y: 820 },
+];
+
+const BUILDING_SIZE: Record<FacilityKey, { w: number; h: number }> = {
+  trade: { w: 230, h: 140 },
+  tavern: { w: 200, h: 130 },
+  inn: { w: 210, h: 135 },
+  office: { w: 210, h: 125 },
+  item: { w: 200, h: 125 },
+  shipyard: { w: 240, h: 130 },
+};
 
 export default class PortScene extends Phaser.Scene {
   private port!: Port;
@@ -74,19 +109,7 @@ export default class PortScene extends Phaser.Scene {
     this.add.rectangle(this.dock.x, TOWN_H - 75, 340, 18, 0x6b4a2a);
     this.add.image(this.dock.x + 230, TOWN_H - 38, 'ship').setScale(1.5);
 
-    // 設施建築（分散配置，需走動探索）
-    // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
-    this.buildings = [
-      { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 120 },
-      { key: 'trade', label: '交易所', x: 380, y: 300, w: 230, h: 140 },
-      { key: 'tavern', label: '酒館', x: 950, y: 250, w: 200, h: 130 },
-      { key: 'inn', label: '旅館', x: 1550, y: 300, w: 210, h: 135 },
-      { key: 'office', label: this.port.culture === 'han' ? '官府' : '商館', x: 420, y: 700, w: 210, h: 125 },
-      { key: 'item', label: '道具屋', x: 950, y: 700, w: 200, h: 125 },
-    ];
-    if (this.port.shipyard) {
-      this.buildings.push({ key: 'shipyard', label: '造船廠', x: 1560, y: 700, w: 240, h: 130 });
-    }
+    this.buildings = this.createTownBuildings();
 
     const g = this.add.graphics();
     for (const b of this.buildings) {
@@ -176,6 +199,68 @@ export default class PortScene extends Phaser.Scene {
     for (const [cx, cy] of [[820, 990], [860, 975], [1160, 985]]) {
       g.fillRect(cx, cy, 30, 26);
     }
+  }
+
+  private createTownBuildings(): Building[] {
+    const buildings: Building[] = [
+      // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
+      { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 120 },
+    ];
+    const seed = this.hashPortId(this.port.id);
+    const itemSlot = ITEM_SLOTS[seed % ITEM_SLOTS.length];
+    const usedSlots = new Set<string>([this.slotKey(itemSlot)]);
+    const addFacility = (key: FacilityKey, label: string, slot: LayoutSlot) => {
+      const size = BUILDING_SIZE[key];
+      buildings.push({ key, label, x: slot.x, y: slot.y, w: size.w, h: size.h });
+      usedSlots.add(this.slotKey(slot));
+    };
+
+    // 道具屋固定在右半邊挑安全位置，避免和港口建築、入港落腳處互卡。
+    addFacility('item', '道具屋', itemSlot);
+
+    const labels: Array<{ key: FacilityKey; label: string }> = [
+      { key: 'trade', label: '交易所' },
+      { key: 'tavern', label: '酒館' },
+      { key: 'inn', label: '旅館' },
+      { key: 'office', label: this.port.culture === 'han' ? '官府' : '商館' },
+    ];
+    if (this.port.shipyard) labels.push({ key: 'shipyard', label: '造船廠' });
+
+    const slots = this.shuffledSlots(seed);
+    for (const facility of labels) {
+      const slot = slots.find((candidate) => !usedSlots.has(this.slotKey(candidate)) && !this.wouldOverlap(facility.key, candidate, buildings));
+      if (slot) addFacility(facility.key, facility.label, slot);
+    }
+    return buildings;
+  }
+
+  private shuffledSlots(seed: number): LayoutSlot[] {
+    return [...FACILITY_SLOTS].sort((a, b) => this.slotScore(a, seed) - this.slotScore(b, seed));
+  }
+
+  private slotScore(slot: LayoutSlot, seed: number): number {
+    const xFactor = (seed % 17) + 3;
+    const yFactor = (seed % 23) + 5;
+    return (slot.x * xFactor + slot.y * yFactor + seed) % 997;
+  }
+
+  private slotKey(slot: LayoutSlot): string {
+    return `${slot.x},${slot.y}`;
+  }
+
+  private wouldOverlap(key: FacilityKey, slot: LayoutSlot, buildings: Building[]): boolean {
+    const size = BUILDING_SIZE[key];
+    return buildings.some(
+      (b) => Math.abs(slot.x - b.x) < (size.w + b.w) / 2 + 24 && Math.abs(slot.y - b.y) < (size.h + b.h) / 2 + 48
+    );
+  }
+
+  private hashPortId(portId: string): number {
+    let hash = 0;
+    for (let i = 0; i < portId.length; i += 1) {
+      hash = (hash * 31 + portId.charCodeAt(i)) >>> 0;
+    }
+    return hash;
   }
 
   private createMinimap(): void {
