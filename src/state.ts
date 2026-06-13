@@ -3,6 +3,7 @@ import portsData from './data/ports.json';
 import mapData from './data/map.json';
 import shipsData from './data/ships.json';
 import equipData from './data/equipment.json';
+import matesData from './data/mates.json';
 
 export interface Good {
   id: string;
@@ -101,6 +102,9 @@ export interface Mate {
   role: string | null;
 }
 
+export interface RoleDef { key: string; name: string; desc: string; }
+export interface MateDef { id: string; name: string; from: string; portId: string; fee: number; roles: string[]; desc: string; }
+
 export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
 export interface ArmorItem { id: string; name: string; price: number; defense: number; desc: string; }
 export interface AccessoryItem { id: string; name: string; price: number; effect: string; desc: string; }
@@ -145,6 +149,8 @@ export const WEAPONS: WeaponItem[] = equipData.weapons;
 export const ARMORS: ArmorItem[] = equipData.armors;
 export const ACCESSORIES: AccessoryItem[] = equipData.accessories;
 export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
+export const ROLES: RoleDef[] = matesData.roles;
+export const MATE_DEFS: MateDef[] = matesData.mates;
 export const CREW_START = 16;
 export const START_YEAR = 1624;
 export const CANNON_PRICE = 100;
@@ -306,17 +312,20 @@ export function figureheadEffect(state: GameState): string | null {
   return f ? f.effect : null;
 }
 
-/** 航速加成倍率（羅盤＋海龍像） */
+/** 航速加成倍率（羅盤＋海龍像＋航海長） */
 export function gearSpeedMod(state: GameState): number {
   let b = 1;
   if (accessoryEffect(state) === 'speed') b += 0.05;
   if (figureheadEffect(state) === 'speed') b += 0.1;
+  if (hasRole(state, 'navigator')) b += 0.08;
   return b;
 }
 
-/** 暴風損害倍率（媽祖像減半） */
+/** 暴風損害倍率（媽祖像減半＋航海長再減） */
 export function stormDamageMod(state: GameState): number {
-  return figureheadEffect(state) === 'storm' ? 0.5 : 1;
+  let m = figureheadEffect(state) === 'storm' ? 0.5 : 1;
+  if (hasRole(state, 'navigator')) m *= 0.8;
+  return m;
 }
 
 /** 海上突襲機率倍率（望遠鏡降低） */
@@ -324,22 +333,53 @@ export function ambushMod(state: GameState): number {
   return accessoryEffect(state) === 'scout' ? 0.6 : 1;
 }
 
-/** 每日疲勞累積倍率（媽祖護身符＋鳳凰像） */
+/** 每日疲勞累積倍率（媽祖護身符＋鳳凰像＋水手長） */
 export function fatigueMod(state: GameState): number {
   let m = 1;
   if (accessoryEffect(state) === 'morale') m -= 0.2;
   if (figureheadEffect(state) === 'morale') m -= 0.2;
+  if (hasRole(state, 'boatswain')) m -= 0.2;
   return Math.max(0.4, m);
 }
 
-/** 海戰砲擊倍率（獅子像） */
+/** 海戰砲擊倍率（獅子像＋砲術長） */
 export function cannonMod(state: GameState): number {
-  return figureheadEffect(state) === 'cannon' ? 1.25 : 1;
+  let m = figureheadEffect(state) === 'cannon' ? 1.25 : 1;
+  if (hasRole(state, 'gunner')) m *= 1.2;
+  return m;
 }
 
-/** 交易折扣比例（算盤）：買價×(1−d)、賣價×(1+d) */
+/** 交易折扣比例（算盤飾品＋主計長夥伴）：買價×(1−d)、賣價×(1+d） */
 export function tradeBonus(state: GameState): number {
-  return accessoryEffect(state) === 'trade' ? 0.05 : 0;
+  let d = accessoryEffect(state) === 'trade' ? 0.05 : 0;
+  if (hasRole(state, 'purser')) d += 0.05;
+  return d;
+}
+
+// ---------- 夥伴職位 ----------
+
+export function mateDefById(id: string): MateDef | undefined {
+  return MATE_DEFS.find((m) => m.id === id);
+}
+
+export function roleName(key: string | null): string {
+  if (!key) return '（未指派）';
+  return ROLES.find((r) => r.key === key)?.name ?? key;
+}
+
+/** 是否有夥伴擔任某職位 */
+export function hasRole(state: GameState, roleKey: string): boolean {
+  return state.mates.some((m) => m.role === roleKey);
+}
+
+/** 接舷額外戰力（副隊長） */
+export function boardBonus(state: GameState): number {
+  return hasRole(state, 'vice') ? 8 : 0;
+}
+
+/** 接舷減員是否獲得緩衝（醫師夥伴或重甲） */
+export function reduceCrewLoss(state: GameState): boolean {
+  return hasRole(state, 'surgeon') || armorDefense(state) >= 8;
 }
 
 export function saveGame(state: GameState): void {

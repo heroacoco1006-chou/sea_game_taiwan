@@ -1,0 +1,18 @@
+{
+  "_note": "M3 為夥伴系統框架，先放數位 ★1~2 示範夥伴；建構書 §5-7 的完整 25 位（含歷史名人與專屬招募任務）於 M4 實作。",
+  "roles": [
+    { "key": "vice", "name": "副隊長", "desc": "接舷戰時全隊氣勢提升（接舷戰力 +8）" },
+    { "key": "navigator", "name": "航海長", "desc": "航速提升、暴風損害再減輕" },
+    { "key": "gunner", "name": "砲術長", "desc": "海戰砲擊威力再提升" },
+    { "key": "boatswain", "name": "水手長", "desc": "船員疲勞累積再減緩" },
+    { "key": "purser", "name": "主計長", "desc": "買賣價格再優惠 5%" },
+    { "key": "surgeon", "name": "醫師", "desc": "接舷戰減員緩衝" }
+  ],
+  "mates": [
+    { "id": "ahsui", "name": "陳阿水", "from": "泉州水手", "portId": "yuegang", "fee": 200, "roles": ["vice", "gunner"], "desc": "月港出身的老水手，打過不少海仗，膽大心細。" },
+    { "id": "yusuf", "name": "尤蘇夫", "from": "波斯裔鑑定師", "portId": "malacca", "fee": 350, "roles": ["purser"], "desc": "麻六甲的商品鑑定師，精打細算，過目就知價。" },
+    { "id": "salima", "name": "莎麗瑪", "from": "香料群島嚮導", "portId": "banda", "fee": 400, "roles": ["boatswain"], "desc": "班達群島的女嚮導，熟悉海象與船員調度。" },
+    { "id": "pinto", "name": "平托", "from": "葡萄牙冒險家", "portId": "macau", "fee": 450, "roles": ["navigator"], "desc": "澳門的冒險家，走遍東方海域，識得各條航路。" },
+    { "id": "candidius", "name": "干治士", "from": "荷蘭牧師", "portId": "tayouan", "fee": 400, "roles": ["surgeon"], "desc": "大員的牧師，也懂得照料船員的病痛。" }
+  ]
+}

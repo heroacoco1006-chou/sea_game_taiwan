@@ -81,6 +81,10 @@ export default class FacilityScene extends Phaser.Scene {
         makeButton(this, W / 2 - 240, 510, 210, 50, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1), 16);
         makeButton(this, W / 2, 510, 210, 50, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5), 16);
         makeButton(this, W / 2 + 240, 510, 210, 50, '請大家喝一輪酒', () => this.buyRound(), 16);
+        makeButton(this, W / 2, 580, 320, 50, '結識夥伴（招募・指派職位）', () => {
+          saveGame(s);
+          this.scene.start('Mates', { portId: this.port.id, door: this.door });
+        }, 16);
         break;
       }
 

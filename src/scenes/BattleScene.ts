@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
-  cannonMod, weaponBoard, armorDefense,
+  cannonMod, weaponBoard, boardBonus, reduceCrewLoss,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
@@ -126,14 +126,14 @@ export default class BattleScene extends Phaser.Scene {
       this.enemy.hull -= dmg;
       this.pushLog(`我方齊射！轟出 ${dmg} 點損傷！`);
     } else if (action === 'board') {
-      const myPower = (s.crew + weaponBoard(s) * 1.5) * (0.8 + Math.random() * 0.4);
+      const myPower = (s.crew + weaponBoard(s) * 1.5 + boardBonus(s)) * (0.8 + Math.random() * 0.4);
       const foePower = this.enemy.crew * (0.8 + Math.random() * 0.4);
       if (myPower > foePower) {
         this.pushLog('接舷成功！我方水手氣勢如虹，敵人嚇得舉白旗投降！');
         this.victory(true);
         return;
       }
-      const loss = armorDefense(s) >= 8 ? 1 : 2;
+      const loss = reduceCrewLoss(s) ? 1 : 2;
       s.crew = Math.max(1, s.crew - loss);
       s.fatigue = Math.min(100, s.fatigue + 10);
       this.pushLog(`接舷被打退了！${loss} 名水手掛彩退下（水手 -${loss}、疲勞 +10）`);
