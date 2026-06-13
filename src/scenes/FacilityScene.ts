@@ -76,10 +76,11 @@ export default class FacilityScene extends Phaser.Scene {
       case 'tavern': {
         const rumors = rumorTexts(s).map((r) => `🍺 ${r}`).join('\n');
         this.body.setText(
-          `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n碼頭邊有不少想出海討生活的人，每人雇用費 ${CREW_PRICE} 兩。\n（雇用具名的夥伴航海士，將在之後的版本開放）`
+          `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n碼頭邊有不少想出海討生活的人，每人雇用費 ${CREW_PRICE} 兩（生力軍加入，全隊疲勞也會跟著降）。\n請大家喝一輪酒（每人 1 兩），疲勞 -30！`
         );
-        makeButton(this, W / 2 - 130, 500, 220, 50, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1));
-        makeButton(this, W / 2 + 130, 500, 220, 50, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5));
+        makeButton(this, W / 2 - 240, 510, 210, 50, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1), 16);
+        makeButton(this, W / 2, 510, 210, 50, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5), 16);
+        makeButton(this, W / 2 + 240, 510, 210, 50, '請大家喝一輪酒', () => this.buyRound(), 16);
         break;
       }
 
@@ -215,9 +216,30 @@ export default class FacilityScene extends Phaser.Scene {
       return;
     }
     s.gold -= can * CREW_PRICE;
+    // 生力軍稀釋全隊疲勞（老闆設計）：新疲勞 = 舊疲勞 × 舊人數 ÷ 新人數
+    const before = s.crew;
     s.crew += can;
+    s.fatigue = Math.round((s.fatigue * before) / s.crew);
     this.refreshInfo();
-    toast(this, `雇了 ${can} 名水手！（水手多船跑得快，但糧食也吃得多）`);
+    toast(this, `雇了 ${can} 名水手！精神飽滿的新人讓全隊疲勞降到 ${s.fatigue}`);
+  }
+
+  /** 請水手喝一輪酒：每人 1 兩，疲勞 -30 */
+  private buyRound(): void {
+    const s = this.state;
+    const cost = s.crew;
+    if (s.fatigue <= 0) {
+      toast(this, '大家精神好得很，不用喝啦！');
+      return;
+    }
+    if (s.gold < cost) {
+      toast(this, `請 ${s.crew} 個人喝要 ${cost} 兩，資金不足！`);
+      return;
+    }
+    s.gold -= cost;
+    s.fatigue = Math.max(0, s.fatigue - 30);
+    this.refreshInfo();
+    toast(this, `乾杯——！大家精神都來了（疲勞 -30，花費 ${cost} 兩）`);
   }
 
   private buySupply(kind: 'food' | 'water', amount: number): void {

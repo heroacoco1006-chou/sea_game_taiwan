@@ -4,29 +4,32 @@ import {
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
-const LIST_TOP = 112;
-const ROW_H = 38;
-const COL_X = [70, 660];
-const COL_W = 540;
+const LIST_TOP = 150;
+const ROW_H = 40;
+const LEFT_X = 64;
+const RIGHT_X = 660;
+const COL_W = 552;
 
 /**
- * 交易所：
- * - 滑鼠點選或方向鍵（↑↓←→）選貨
- * - 數量可自調（±1／±10），另有全買／全賣
- * - 顯示平均購入成本與預估損益
+ * 交易所（老闆設計）：
+ * 左欄＝我的貨艙（顯示均價與賺賠），右欄＝本港販售的商品（5~7 種，含特產）。
+ * 買入只能買本港販售的品項；賣出不限品項。
+ * 滑鼠點選或 ↑↓ 選貨、←→ 換欄。
  */
 export default class TradeScene extends Phaser.Scene {
   private port!: Port;
   private door!: { x: number; y: number };
-  private selectedIdx = -1;
+  private side: 'cargo' | 'shop' = 'shop';
+  private cargoIds: string[] = [];
+  private shopIds: string[] = [];
+  private selectedId: string | null = null;
   private qty = 1;
   private highlight!: Phaser.GameObjects.Rectangle;
-  private ownTexts: Map<string, Phaser.GameObjects.Text> = new Map();
+  private leftObjs: Phaser.GameObjects.GameObject[] = [];
   private detailName!: Phaser.GameObjects.Text;
   private detailDesc!: Phaser.GameObjects.Text;
   private qtyText!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
-  private rowPos: { x: number; y: number }[] = [];
 
   constructor() {
     super('Trade');
@@ -36,17 +39,13 @@ export default class TradeScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  private get selected(): Good | null {
-    return this.selectedIdx >= 0 ? GOODS[this.selectedIdx] : null;
-  }
-
   init(data: { portId: string; door: { x: number; y: number } }): void {
     this.port = PORTS.find((p) => p.id === data.portId)!;
     this.door = data.door ?? { x: 640, y: 600 };
-    this.selectedIdx = -1;
+    this.side = 'shop';
+    this.selectedId = null;
     this.qty = 1;
-    this.ownTexts = new Map();
-    this.rowPos = [];
+    this.leftObjs = [];
   }
 
   create(): void {
@@ -57,61 +56,52 @@ export default class TradeScene extends Phaser.Scene {
     drawPanel(this, 40, 20, W - 80, H - 40);
     this.add.text(W / 2, 50, `${this.port.name}・交易所`, textStyle(27)).setOrigin(0.5);
     this.add
-      .text(W / 2, 82, '▼特產便宜　▲缺貨高價｜滑鼠點選或 ↑↓←→ 選貨，調好數量再買賣', textStyle(15, '#6b5530'))
+      .text(W / 2, 82, '左＝我的貨艙（看賺賠）　右＝本港販售（▼特產便宜）｜↑↓選貨、←→換欄、或滑鼠點選', textStyle(14, '#6b5530'))
       .setOrigin(0.5);
+
+    // 欄位標題
+    this.add.text(LEFT_X + COL_W / 2, 118, '📦 我的貨艙', textStyle(20)).setOrigin(0.5);
+    this.add.text(RIGHT_X + COL_W / 2, 118, `🏪 ${this.port.name}販售的商品`, textStyle(20)).setOrigin(0.5);
+    // 中央分隔線
+    const sep = this.add.graphics();
+    sep.lineStyle(2, COLORS.wood, 0.5);
+    sep.lineBetween(W / 2, 108, W / 2, H - 170);
 
     this.highlight = this.add.rectangle(-500, -500, COL_W, ROW_H - 4, 0xc9b178, 0.55);
 
-    GOODS.forEach((g, i) => {
-      const col = i < 12 ? 0 : 1;
-      const x = COL_X[col];
-      const y = LIST_TOP + (i % 12) * ROW_H;
-      this.rowPos.push({ x, y });
-
+    // 右欄：本港販售（固定）
+    this.shopIds = this.port.sells.slice();
+    this.shopIds.forEach((id, i) => {
+      const g = GOODS.find((x) => x.id === id)!;
+      const y = LIST_TOP + i * ROW_H;
       const zone = this.add
-        .rectangle(x + COL_W / 2, y + ROW_H / 2 - 2, COL_W, ROW_H - 4, 0xffffff, 0.001)
+        .rectangle(RIGHT_X + COL_W / 2, y + ROW_H / 2 - 2, COL_W, ROW_H - 4, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true });
-      zone.on('pointerdown', () => this.select(i));
+      zone.on('pointerdown', () => this.select('shop', id));
 
-      const icon = this.add.image(x + 16, y + ROW_H / 2 - 2, `icon_${g.category}`).setScale(0.85);
+      const icon = this.add.image(RIGHT_X + 18, y + ROW_H / 2 - 2, `icon_${g.category}`).setScale(0.9);
       icon.setTint(Phaser.Display.Color.HexStringToColor(g.color).color);
-
-      this.add.text(x + 36, y + 7, g.name, textStyle(18));
-      const price = priceOf(this.state, this.port, g.id, this.state.day);
-      this.add.text(x + 190, y + 7, `${price} 兩`, textStyle(18));
-
-      let mark = '';
-      let markColor = '#3a2a14';
-      if (this.port.cheap.includes(g.id)) {
-        mark = '▼';
-        markColor = '#2a7a3a';
-      } else if (
-        this.port.dear.includes(g.id) ||
-        this.state.events.some((e) => e.portId === this.port.id && e.goodId === g.id && e.untilDay >= this.state.day)
-      ) {
-        mark = '▲';
-        markColor = '#b8362a';
+      this.add.text(RIGHT_X + 40, y + 8, g.name, textStyle(19));
+      const price = priceOf(this.state, this.port, id, this.state.day);
+      this.add.text(RIGHT_X + 210, y + 8, `${price} 兩`, textStyle(19));
+      if (this.port.cheap.includes(id)) {
+        this.add.text(RIGHT_X + 320, y + 8, '▼特產', textStyle(17, '#2a7a3a'));
+      } else if (this.state.events.some((e) => e.portId === this.port.id && e.goodId === id && e.untilDay >= this.state.day)) {
+        this.add.text(RIGHT_X + 320, y + 8, '▲缺貨', textStyle(17, '#b8362a'));
       }
-      if (mark) this.add.text(x + 278, y + 7, mark, textStyle(18, markColor));
-
-      const own = this.add.text(x + 330, y + 7, '', textStyle(16, '#6b5530'));
-      this.ownTexts.set(g.id, own);
-      this.refreshOwn(g.id);
+      const own = this.state.cargo[id] ?? 0;
+      if (own > 0) this.add.text(RIGHT_X + 430, y + 8, `持有 ${own}`, textStyle(16, '#6b5530'));
     });
 
-    // 鍵盤選貨：↑↓ 在同欄移動、←→ 換欄
-    this.input.keyboard!.on('keydown-UP', () => this.moveSelect(-1, 0));
-    this.input.keyboard!.on('keydown-DOWN', () => this.moveSelect(1, 0));
-    this.input.keyboard!.on('keydown-LEFT', () => this.moveSelect(0, -1));
-    this.input.keyboard!.on('keydown-RIGHT', () => this.moveSelect(0, 1));
+    // 左欄：我的貨艙（動態重建）
+    this.rebuildCargoList();
 
     // ----- 下方操作區 -----
     const py = H - 150;
     this.add.rectangle(W / 2, py + 58, W - 120, 118, COLORS.parchmentDark, 0.6);
-    this.detailName = this.add.text(80, py + 10, '（請選擇貨物）', textStyle(21));
-    this.detailDesc = this.add.text(80, py + 44, '', { ...textStyle(15, '#5a4a30'), wordWrap: { width: 520 } });
+    this.detailName = this.add.text(80, py + 10, '（請選擇貨物）', textStyle(20));
+    this.detailDesc = this.add.text(80, py + 44, '', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 520 } });
 
-    // 數量調整
     this.add.text(640, py + 14, '數量', textStyle(18));
     makeButton(this, 712, py + 26, 46, 38, '-10', () => this.changeQty(-10), 15);
     makeButton(this, 762, py + 26, 40, 38, '-1', () => this.changeQty(-1), 15);
@@ -131,50 +121,99 @@ export default class TradeScene extends Phaser.Scene {
       saveGame(this.state);
       this.scene.start('Port', { portId: this.port.id, spawn: this.door });
     }, 18);
+
+    // 鍵盤
+    this.input.keyboard!.on('keydown-UP', () => this.moveSelect(-1));
+    this.input.keyboard!.on('keydown-DOWN', () => this.moveSelect(1));
+    this.input.keyboard!.on('keydown-LEFT', () => this.switchSide('cargo'));
+    this.input.keyboard!.on('keydown-RIGHT', () => this.switchSide('shop'));
   }
 
-  private moveSelect(dRow: number, dCol: number): void {
-    let idx = this.selectedIdx;
-    if (idx < 0) {
-      this.select(0);
+  /** 重建左欄（買賣後持有變動） */
+  private rebuildCargoList(): void {
+    for (const o of this.leftObjs) o.destroy();
+    this.leftObjs = [];
+    const s = this.state;
+    this.cargoIds = GOODS.filter((g) => (s.cargo[g.id] ?? 0) > 0).map((g) => g.id);
+
+    if (this.cargoIds.length === 0) {
+      const t = this.add.text(LEFT_X + COL_W / 2, LIST_TOP + 40, '（貨艙是空的，到右邊採購吧！）', textStyle(17, '#8a7a58')).setOrigin(0.5);
+      this.leftObjs.push(t);
       return;
     }
-    if (dRow !== 0) {
-      const col = Math.floor(idx / 12);
-      let row = (idx % 12) + dRow;
-      row = (row + 12) % 12;
-      idx = col * 12 + row;
-    }
-    if (dCol !== 0) {
-      idx = (idx + 12 * dCol + 24) % 24;
-    }
-    this.select(idx);
+
+    this.cargoIds.forEach((id, i) => {
+      const g = GOODS.find((x) => x.id === id)!;
+      const y = LIST_TOP + i * ROW_H;
+      const zone = this.add
+        .rectangle(LEFT_X + COL_W / 2, y + ROW_H / 2 - 2, COL_W, ROW_H - 4, 0xffffff, 0.001)
+        .setInteractive({ useHandCursor: true });
+      zone.on('pointerdown', () => this.select('cargo', id));
+      this.leftObjs.push(zone);
+
+      const icon = this.add.image(LEFT_X + 18, y + ROW_H / 2 - 2, `icon_${g.category}`).setScale(0.9);
+      icon.setTint(Phaser.Display.Color.HexStringToColor(g.color).color);
+      this.leftObjs.push(icon);
+
+      const own = this.state.cargo[id] ?? 0;
+      const avg = avgCost(this.state, id);
+      const price = priceOf(this.state, this.port, id, this.state.day);
+      const diff = price - avg;
+      this.leftObjs.push(this.add.text(LEFT_X + 40, y + 8, g.name, textStyle(18)));
+      this.leftObjs.push(this.add.text(LEFT_X + 150, y + 8, `×${own}`, textStyle(18)));
+      this.leftObjs.push(this.add.text(LEFT_X + 215, y + 8, `均 ${avg}`, textStyle(16, '#6b5530')));
+      this.leftObjs.push(this.add.text(LEFT_X + 305, y + 8, `此地 ${price}`, textStyle(16)));
+      const tag = diff > 0 ? `賺 ${diff}/件` : diff < 0 ? `賠 ${-diff}/件` : '打平';
+      const color = diff > 0 ? '#1a6a2a' : diff < 0 ? '#a02a20' : '#3a2a14';
+      this.leftObjs.push(this.add.text(LEFT_X + 425, y + 8, tag, textStyle(17, color)));
+    });
   }
 
-  private select(i: number): void {
-    this.selectedIdx = i;
-    const g = GOODS[i];
-    const pos = this.rowPos[i];
-    this.highlight.setPosition(pos.x + COL_W / 2, pos.y + ROW_H / 2 - 2);
+  private switchSide(side: 'cargo' | 'shop'): void {
+    this.side = side;
+    const ids = side === 'cargo' ? this.cargoIds : this.shopIds;
+    if (ids.length > 0) this.select(side, ids[0]);
+  }
+
+  private moveSelect(d: number): void {
+    const ids = this.side === 'cargo' ? this.cargoIds : this.shopIds;
+    if (ids.length === 0) return;
+    if (!this.selectedId) {
+      this.select(this.side, ids[0]);
+      return;
+    }
+    let idx = ids.indexOf(this.selectedId);
+    if (idx < 0) idx = 0;
+    else idx = (idx + d + ids.length) % ids.length;
+    this.select(this.side, ids[idx]);
+  }
+
+  private select(side: 'cargo' | 'shop', id: string): void {
+    this.side = side;
+    this.selectedId = id;
+    const ids = side === 'cargo' ? this.cargoIds : this.shopIds;
+    const idx = ids.indexOf(id);
+    const x = side === 'cargo' ? LEFT_X : RIGHT_X;
+    this.highlight.setPosition(x + COL_W / 2, LIST_TOP + idx * ROW_H + ROW_H / 2 - 2);
     this.refreshDetail();
-    this.detailDesc.setText(g.desc);
   }
 
   private refreshDetail(): void {
-    const g = this.selected;
-    if (!g) return;
+    if (!this.selectedId) return;
+    const g = GOODS.find((x) => x.id === this.selectedId)!;
     const s = this.state;
     const price = priceOf(s, this.port, g.id, s.day);
     const own = s.cargo[g.id] ?? 0;
     let line = `${g.name}　市價 ${price} 兩`;
+    if (!this.port.sells.includes(g.id)) line += '（本港不販售，只收購）';
     if (own > 0) {
       const avg = avgCost(s, g.id);
       const diff = price - avg;
       const tag = diff > 0 ? `每件賺 ${diff} 兩` : diff < 0 ? `每件賠 ${-diff} 兩` : '損益兩平';
-      line += `　｜　持有 ${own} 件・均價 ${avg} 兩（現在賣${tag}）`;
+      line += `　持有 ${own}・均 ${avg} 兩（${tag}）`;
     }
     this.detailName.setText(line);
-    this.detailName.setColor(own > 0 && price - avgCost(s, g.id) > 0 ? '#1a6a2a' : own > 0 && price - avgCost(s, g.id) < 0 ? '#a02a20' : '#3a2a14');
+    this.detailDesc.setText(g.desc);
   }
 
   private changeQty(d: number): void {
@@ -183,13 +222,9 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   private buyAll(): void {
-    const g = this.selected;
-    if (!g) {
-      toast(this, '先選一項貨物！');
-      return;
-    }
+    if (!this.requireSelected()) return;
     const s = this.state;
-    const price = priceOf(s, this.port, g.id, s.day);
+    const price = priceOf(s, this.port, this.selectedId!, s.day);
     const can = Math.min(cargoMax(s) - cargoCount(s), Math.floor(s.gold / price));
     if (can <= 0) {
       toast(this, cargoCount(s) >= cargoMax(s) ? '貨艙已滿！' : '資金不足！');
@@ -199,12 +234,8 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   private sellAll(): void {
-    const g = this.selected;
-    if (!g) {
-      toast(this, '先選一項貨物！');
-      return;
-    }
-    const own = this.state.cargo[g.id] ?? 0;
+    if (!this.requireSelected()) return;
+    const own = this.state.cargo[this.selectedId!] ?? 0;
     if (own <= 0) {
       toast(this, '沒有這項貨物可賣！');
       return;
@@ -212,14 +243,23 @@ export default class TradeScene extends Phaser.Scene {
     this.sell(own);
   }
 
+  private requireSelected(): boolean {
+    if (!this.selectedId) {
+      toast(this, '先點選一項貨物！');
+      return false;
+    }
+    return true;
+  }
+
   private buy(qty: number): void {
-    const g = this.selected;
-    if (!g) {
-      toast(this, '先選一項貨物！');
+    if (!this.requireSelected()) return;
+    const id = this.selectedId!;
+    if (!this.port.sells.includes(id)) {
+      toast(this, `${this.port.name}沒有賣這項商品！（每個港口只賣自己的特產與常備品）`);
       return;
     }
     const s = this.state;
-    const price = priceOf(s, this.port, g.id, s.day);
+    const price = priceOf(s, this.port, id, s.day);
     const space = cargoMax(s) - cargoCount(s);
     const can = Math.min(qty, space, Math.floor(s.gold / price));
     if (can <= 0) {
@@ -227,51 +267,51 @@ export default class TradeScene extends Phaser.Scene {
       return;
     }
     s.gold -= price * can;
-    s.cargo[g.id] = (s.cargo[g.id] ?? 0) + can;
-    s.costBasis[g.id] = (s.costBasis[g.id] ?? 0) + price * can;
-    this.refreshOwn(g.id);
-    this.refreshDetail();
-    this.updateFooter();
+    s.cargo[id] = (s.cargo[id] ?? 0) + can;
+    s.costBasis[id] = (s.costBasis[id] ?? 0) + price * can;
+    this.afterTrade();
     if (can < qty) toast(this, `只買得起／裝得下 ${can} 件`);
   }
 
   private sell(qty: number): void {
-    const g = this.selected;
-    if (!g) {
-      toast(this, '先選一項貨物！');
-      return;
-    }
+    if (!this.requireSelected()) return;
+    const id = this.selectedId!;
     const s = this.state;
-    const own = s.cargo[g.id] ?? 0;
+    const own = s.cargo[id] ?? 0;
     const can = Math.min(qty, own);
     if (can <= 0) {
       toast(this, '沒有這項貨物可賣！');
       return;
     }
-    const price = priceOf(s, this.port, g.id, s.day);
-    // 依比例沖銷成本
-    const basis = s.costBasis[g.id] ?? 0;
-    s.costBasis[g.id] = Math.round(basis * ((own - can) / own));
+    const price = priceOf(s, this.port, id, s.day);
+    const basis = s.costBasis[id] ?? 0;
+    s.costBasis[id] = Math.round(basis * ((own - can) / own));
     s.gold += price * can;
-    s.cargo[g.id] = own - can;
-    if (s.cargo[g.id] === 0) {
-      delete s.cargo[g.id];
-      delete s.costBasis[g.id];
+    s.cargo[id] = own - can;
+    if (s.cargo[id] === 0) {
+      delete s.cargo[id];
+      delete s.costBasis[id];
     }
-    this.refreshOwn(g.id);
-    this.refreshDetail();
-    this.updateFooter();
+    this.afterTrade();
   }
 
-  private refreshOwn(goodId: string): void {
-    const t = this.ownTexts.get(goodId);
-    if (!t) return;
-    const own = this.state.cargo[goodId] ?? 0;
-    if (own > 0) {
-      t.setText(`持有 ${own}（均 ${avgCost(this.state, goodId)} 兩）`);
-    } else {
-      t.setText('');
+  private afterTrade(): void {
+    this.rebuildCargoList();
+    // 賣光後選取可能失效，退回商店側
+    if (this.selectedId && !(this.state.cargo[this.selectedId] ?? 0) && this.side === 'cargo') {
+      if (this.shopIds.includes(this.selectedId)) {
+        this.select('shop', this.selectedId);
+      } else {
+        this.selectedId = null;
+        this.highlight.setPosition(-500, -500);
+        this.detailName.setText('（請選擇貨物）');
+        this.detailDesc.setText('');
+      }
+    } else if (this.selectedId && this.side === 'cargo') {
+      this.select('cargo', this.selectedId);
     }
+    this.refreshDetail();
+    this.updateFooter();
   }
 
   private updateFooter(): void {

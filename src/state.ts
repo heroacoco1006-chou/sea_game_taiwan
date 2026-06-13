@@ -23,6 +23,8 @@ export interface Port {
   desc: string;
   cheap: string[];
   dear: string[];
+  /** 本港販售的商品（5~7 種，含特產）；賣出則不限品項 */
+  sells: string[];
 }
 
 export interface Land {

@@ -1,70 +1,563 @@
 {
   "ports": [
-    { "id": "tayouan", "name": "大員", "x": 1487, "y": 1175, "region": "台灣", "culture": "euro", "shipyard": true,
+    {
+      "id": "tayouan",
+      "name": "大員",
+      "x": 1487,
+      "y": 1175,
+      "region": "台灣",
+      "culture": "euro",
+      "shipyard": true,
       "desc": "荷蘭東印度公司在台灣的據點，熱蘭遮城就在這裡。鹿皮與蔗糖的集散地，東亞貿易的十字路口。",
-      "cheap": ["deerskin", "sugar"], "dear": ["cotton", "pottery"] },
-    { "id": "keelung", "name": "雞籠", "x": 1602, "y": 935, "region": "台灣", "culture": "euro", "shipyard": false,
+      "cheap": [
+        "deerskin",
+        "sugar"
+      ],
+      "dear": [
+        "cotton",
+        "pottery"
+      ],
+      "sells": [
+        "deerskin",
+        "sugar",
+        "rice",
+        "rattan",
+        "silk_raw",
+        "porcelain"
+      ]
+    },
+    {
+      "id": "keelung",
+      "name": "雞籠",
+      "x": 1602,
+      "y": 935,
+      "region": "台灣",
+      "culture": "euro",
+      "shipyard": false,
       "desc": "西班牙人在北台灣建的據點，聖薩爾瓦多城守著港口。附近火山出產硫磺。",
-      "cheap": ["sulfur"], "dear": ["rice", "salt"] },
-    { "id": "tamsui", "name": "淡水", "x": 1535, "y": 915, "region": "台灣", "culture": "euro", "shipyard": false,
+      "cheap": [
+        "sulfur"
+      ],
+      "dear": [
+        "rice",
+        "salt"
+      ],
+      "sells": [
+        "sulfur",
+        "wood",
+        "rattan",
+        "salt",
+        "pottery"
+      ]
+    },
+    {
+      "id": "tamsui",
+      "name": "淡水",
+      "x": 1535,
+      "y": 915,
+      "region": "台灣",
+      "culture": "euro",
+      "shipyard": false,
       "desc": "西班牙人建的聖多明哥城（後來的紅毛城）就在河口山丘上，與原住民交易硫磺和藤。",
-      "cheap": ["sulfur", "rattan"], "dear": ["rice"] },
-    { "id": "ponkan", "name": "笨港", "x": 1468, "y": 1090, "region": "台灣", "culture": "han", "shipyard": false,
+      "cheap": [
+        "sulfur",
+        "rattan"
+      ],
+      "dear": [
+        "rice"
+      ],
+      "sells": [
+        "sulfur",
+        "rattan",
+        "deerskin",
+        "wood",
+        "rice"
+      ]
+    },
+    {
+      "id": "ponkan",
+      "name": "笨港",
+      "x": 1468,
+      "y": 1090,
+      "region": "台灣",
+      "culture": "han",
+      "shipyard": false,
       "desc": "顏思齊與漢人移民開墾的根據地，海商與海盜的天下，鹿皮交易興盛。",
-      "cheap": ["deerskin", "rice"], "dear": ["salt", "wine"] },
-    { "id": "penghu", "name": "澎湖", "x": 1413, "y": 1120, "region": "澎湖", "culture": "han", "shipyard": false,
+      "cheap": [
+        "deerskin",
+        "rice"
+      ],
+      "dear": [
+        "salt",
+        "wine"
+      ],
+      "sells": [
+        "deerskin",
+        "rice",
+        "sugar",
+        "wood",
+        "salt"
+      ]
+    },
+    {
+      "id": "penghu",
+      "name": "澎湖",
+      "x": 1413,
+      "y": 1120,
+      "region": "澎湖",
+      "culture": "han",
+      "shipyard": false,
       "desc": "台灣海峽中的島群，漁民曬鹽捕魚，媽祖宮香火鼎盛。荷蘭人曾兩度想佔領這裡。",
-      "cheap": ["salt"], "dear": ["wood", "wine"] },
-    { "id": "yuegang", "name": "月港", "x": 1320, "y": 1050, "region": "中國福建", "culture": "han", "shipyard": true,
+      "cheap": [
+        "salt"
+      ],
+      "dear": [
+        "wood",
+        "wine"
+      ],
+      "sells": [
+        "salt",
+        "rice",
+        "wood",
+        "pottery",
+        "rattan"
+      ]
+    },
+    {
+      "id": "yuegang",
+      "name": "月港",
+      "x": 1320,
+      "y": 1050,
+      "region": "中國福建",
+      "culture": "han",
+      "shipyard": true,
       "desc": "明朝唯一合法的民間海外貿易港，福建商人都從這裡出海。生絲、瓷器又多又便宜。",
-      "cheap": ["silk_raw", "porcelain", "tea"], "dear": ["silver", "pepper"] },
-    { "id": "anhai", "name": "安海", "x": 1380, "y": 990, "region": "中國福建", "culture": "han", "shipyard": true,
+      "cheap": [
+        "silk_raw",
+        "porcelain",
+        "tea"
+      ],
+      "dear": [
+        "silver",
+        "pepper"
+      ],
+      "sells": [
+        "silk_raw",
+        "porcelain",
+        "tea",
+        "silk_cloth",
+        "pottery",
+        "sugar",
+        "cotton"
+      ]
+    },
+    {
+      "id": "anhai",
+      "name": "安海",
+      "x": 1380,
+      "y": 990,
+      "region": "中國福建",
+      "culture": "han",
+      "shipyard": true,
       "desc": "鄭芝龍的大本營，鄭家船隊控制著台海貿易，掛鄭家旗號的船才能平安通行。",
-      "cheap": ["silk_cloth", "tea"], "dear": ["silver", "sappan"] },
-    { "id": "guangzhou", "name": "廣州", "x": 1200, "y": 1135, "region": "中國廣東", "culture": "han", "shipyard": true,
+      "cheap": [
+        "silk_cloth",
+        "tea"
+      ],
+      "dear": [
+        "silver",
+        "sappan"
+      ],
+      "sells": [
+        "silk_cloth",
+        "tea",
+        "silk_raw",
+        "porcelain",
+        "cotton",
+        "salt"
+      ]
+    },
+    {
+      "id": "guangzhou",
+      "name": "廣州",
+      "x": 1200,
+      "y": 1135,
+      "region": "中國廣東",
+      "culture": "han",
+      "shipyard": true,
       "desc": "華南第一大港，珠江上商船雲集，絲綢與陶瓷的大產地。",
-      "cheap": ["silk_cloth", "pottery", "salt"], "dear": ["ivory", "pepper"] },
-    { "id": "macau", "name": "澳門", "x": 1150, "y": 1170, "region": "中國廣東", "culture": "euro", "shipyard": false,
+      "cheap": [
+        "silk_cloth",
+        "pottery",
+        "salt"
+      ],
+      "dear": [
+        "ivory",
+        "pepper"
+      ],
+      "sells": [
+        "silk_cloth",
+        "pottery",
+        "salt",
+        "porcelain",
+        "tea",
+        "cotton",
+        "sugar"
+      ]
+    },
+    {
+      "id": "macau",
+      "name": "澳門",
+      "x": 1150,
+      "y": 1170,
+      "region": "中國廣東",
+      "culture": "euro",
+      "shipyard": false,
       "desc": "葡萄牙人租居的小半島，大三巴教堂高高聳立，是歐洲貨物進中國的門戶。",
-      "cheap": ["wine"], "dear": ["clove", "nutmeg", "ivory"] },
-    { "id": "hirado", "name": "平戶", "x": 2160, "y": 300, "region": "日本九州", "culture": "wa", "shipyard": true,
+      "cheap": [
+        "wine"
+      ],
+      "dear": [
+        "clove",
+        "nutmeg",
+        "ivory"
+      ],
+      "sells": [
+        "wine",
+        "cotton",
+        "porcelain",
+        "silk_cloth",
+        "ivory"
+      ]
+    },
+    {
+      "id": "hirado",
+      "name": "平戶",
+      "x": 2160,
+      "y": 300,
+      "region": "日本九州",
+      "culture": "wa",
+      "shipyard": true,
       "desc": "日本對外貿易的大門，荷蘭與英國商館林立，華商領袖李旦也住在這裡。",
-      "cheap": ["silver", "copper"], "dear": ["silk_raw", "silk_cloth", "deerskin"] },
-    { "id": "nagasaki", "name": "長崎", "x": 2230, "y": 395, "region": "日本九州", "culture": "wa", "shipyard": true,
+      "cheap": [
+        "silver",
+        "copper"
+      ],
+      "dear": [
+        "silk_raw",
+        "silk_cloth",
+        "deerskin"
+      ],
+      "sells": [
+        "silver",
+        "copper",
+        "lacquer",
+        "pottery",
+        "rice"
+      ]
+    },
+    {
+      "id": "nagasaki",
+      "name": "長崎",
+      "x": 2230,
+      "y": 395,
+      "region": "日本九州",
+      "culture": "wa",
+      "shipyard": true,
       "desc": "幕府直轄的貿易港，鎖國後扇形的人工島「出島」成為日本唯一的對外窗口。",
-      "cheap": ["silver", "lacquer"], "dear": ["silk_raw", "sugar", "sappan"] },
-    { "id": "sakai", "name": "堺", "x": 2655, "y": 450, "region": "日本近畿", "culture": "wa", "shipyard": true,
+      "cheap": [
+        "silver",
+        "lacquer"
+      ],
+      "dear": [
+        "silk_raw",
+        "sugar",
+        "sappan"
+      ],
+      "sells": [
+        "silver",
+        "lacquer",
+        "copper",
+        "pottery",
+        "wine"
+      ]
+    },
+    {
+      "id": "sakai",
+      "name": "堺",
+      "x": 2655,
+      "y": 450,
+      "region": "日本近畿",
+      "culture": "wa",
+      "shipyard": true,
       "desc": "大阪旁的商人自治城市，鐵砲與刀劍的產地，豪商輩出。",
-      "cheap": ["copper", "lacquer"], "dear": ["silk_cloth", "porcelain"] },
-    { "id": "naha", "name": "那霸", "x": 1897, "y": 800, "region": "琉球王國", "culture": "ryu", "shipyard": false,
+      "cheap": [
+        "copper",
+        "lacquer"
+      ],
+      "dear": [
+        "silk_cloth",
+        "porcelain"
+      ],
+      "sells": [
+        "copper",
+        "lacquer",
+        "silver",
+        "pottery",
+        "rice",
+        "wine"
+      ]
+    },
+    {
+      "id": "naha",
+      "name": "那霸",
+      "x": 1897,
+      "y": 800,
+      "region": "琉球王國",
+      "culture": "ryu",
+      "shipyard": false,
       "desc": "琉球王國的門戶，首里城俯瞰港口。靠著轉口貿易，小小王國連結中國、日本與南洋。",
-      "cheap": ["coral", "wine"], "dear": ["silk_cloth", "tea"] },
-    { "id": "manila", "name": "馬尼拉", "x": 1668, "y": 1500, "region": "呂宋", "culture": "euro", "shipyard": true,
+      "cheap": [
+        "coral",
+        "wine"
+      ],
+      "dear": [
+        "silk_cloth",
+        "tea"
+      ],
+      "sells": [
+        "coral",
+        "wine",
+        "sugar",
+        "lacquer",
+        "tea"
+      ]
+    },
+    {
+      "id": "manila",
+      "name": "馬尼拉",
+      "x": 1668,
+      "y": 1500,
+      "region": "呂宋",
+      "culture": "euro",
+      "shipyard": true,
       "desc": "西班牙人的東方首府，大帆船每年載著墨西哥白銀橫渡太平洋來換中國絲綢。",
-      "cheap": ["silver"], "dear": ["silk_raw", "porcelain", "cotton"] },
-    { "id": "hoian", "name": "會安", "x": 1140, "y": 1480, "region": "安南", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "silver"
+      ],
+      "dear": [
+        "silk_raw",
+        "porcelain",
+        "cotton"
+      ],
+      "sells": [
+        "silver",
+        "sugar",
+        "rattan",
+        "wine",
+        "cotton"
+      ]
+    },
+    {
+      "id": "hoian",
+      "name": "會安",
+      "x": 1140,
+      "y": 1480,
+      "region": "安南",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "越南中部的國際商港，日本人町與唐人街隔橋相望，蘇木與陶器的集散地。",
-      "cheap": ["sappan", "pottery"], "dear": ["copper"] },
-    { "id": "ayutthaya", "name": "阿瑜陀耶", "x": 890, "y": 1860, "region": "暹羅", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "sappan",
+        "pottery"
+      ],
+      "dear": [
+        "copper"
+      ],
+      "sells": [
+        "sappan",
+        "pottery",
+        "rice",
+        "sugar",
+        "cotton"
+      ]
+    },
+    {
+      "id": "ayutthaya",
+      "name": "阿瑜陀耶",
+      "x": 890,
+      "y": 1860,
+      "region": "暹羅",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "暹羅王國的水上首都，山田長政率領的日本人町就在城外，鹿皮與象牙的產地。",
-      "cheap": ["sappan", "ivory", "rice"], "dear": ["silver", "porcelain"] },
-    { "id": "malacca", "name": "麻六甲", "x": 605, "y": 2010, "region": "馬來半島", "culture": "euro", "shipyard": true,
+      "cheap": [
+        "sappan",
+        "ivory",
+        "rice"
+      ],
+      "dear": [
+        "silver",
+        "porcelain"
+      ],
+      "sells": [
+        "sappan",
+        "ivory",
+        "rice",
+        "deerskin",
+        "wood",
+        "tin"
+      ]
+    },
+    {
+      "id": "malacca",
+      "name": "麻六甲",
+      "x": 605,
+      "y": 2010,
+      "region": "馬來半島",
+      "culture": "euro",
+      "shipyard": true,
       "desc": "控制東西航路咽喉的要塞港，葡萄牙人從這裡轉運香料，後來被荷蘭人奪走。",
-      "cheap": ["tin", "rattan"], "dear": ["porcelain", "tea"] },
-    { "id": "batavia", "name": "巴達維亞", "x": 960, "y": 2235, "region": "爪哇", "culture": "euro", "shipyard": true,
+      "cheap": [
+        "tin",
+        "rattan"
+      ],
+      "dear": [
+        "porcelain",
+        "tea"
+      ],
+      "sells": [
+        "tin",
+        "rattan",
+        "pepper",
+        "wood",
+        "cotton"
+      ]
+    },
+    {
+      "id": "batavia",
+      "name": "巴達維亞",
+      "x": 960,
+      "y": 2235,
+      "region": "爪哇",
+      "culture": "euro",
+      "shipyard": true,
       "desc": "荷蘭東印度公司的亞洲總部，運河縱橫像個小阿姆斯特丹，華人甲必丹協助管理市政。",
-      "cheap": ["pepper", "clove"], "dear": ["silver", "silk_raw", "porcelain"] },
-    { "id": "banten", "name": "萬丹", "x": 830, "y": 2250, "region": "爪哇", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "pepper",
+        "clove"
+      ],
+      "dear": [
+        "silver",
+        "silk_raw",
+        "porcelain"
+      ],
+      "sells": [
+        "pepper",
+        "clove",
+        "nutmeg",
+        "rice",
+        "wine",
+        "cotton"
+      ]
+    },
+    {
+      "id": "banten",
+      "name": "萬丹",
+      "x": 830,
+      "y": 2250,
+      "region": "爪哇",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "爪哇西部的胡椒王國，各國商船擠滿港口搶購胡椒。",
-      "cheap": ["pepper"], "dear": ["rice", "cotton"] },
-    { "id": "ambon", "name": "安汶", "x": 1700, "y": 2225, "region": "香料群島", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "pepper"
+      ],
+      "dear": [
+        "rice",
+        "cotton"
+      ],
+      "sells": [
+        "pepper",
+        "rice",
+        "rattan",
+        "wood",
+        "sappan"
+      ]
+    },
+    {
+      "id": "ambon",
+      "name": "安汶",
+      "x": 1700,
+      "y": 2225,
+      "region": "香料群島",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "丁香的故鄉之一，荷蘭人為了獨佔香料，在這裡建了堅固的堡壘。",
-      "cheap": ["clove"], "dear": ["rice", "salt", "cotton"] },
-    { "id": "banda", "name": "班達", "x": 1752, "y": 2305, "region": "香料群島", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "clove"
+      ],
+      "dear": [
+        "rice",
+        "salt",
+        "cotton"
+      ],
+      "sells": [
+        "clove",
+        "rattan",
+        "wood",
+        "sappan",
+        "pottery"
+      ]
+    },
+    {
+      "id": "banda",
+      "name": "班達",
+      "x": 1752,
+      "y": 2305,
+      "region": "香料群島",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "全世界唯一出產肉豆蔻的群島！各國為了爭奪這裡的香料打得不可開交。",
-      "cheap": ["nutmeg"], "dear": ["rice", "salt", "wine"] },
-    { "id": "ternate", "name": "德那第", "x": 1832, "y": 2032, "region": "香料群島", "culture": "sea", "shipyard": false,
+      "cheap": [
+        "nutmeg"
+      ],
+      "dear": [
+        "rice",
+        "salt",
+        "wine"
+      ],
+      "sells": [
+        "nutmeg",
+        "rattan",
+        "wood",
+        "coral",
+        "sappan"
+      ]
+    },
+    {
+      "id": "ternate",
+      "name": "德那第",
+      "x": 1832,
+      "y": 2032,
+      "region": "香料群島",
+      "culture": "sea",
+      "shipyard": false,
       "desc": "火山島上的丁香蘇丹國，西班牙與荷蘭都想控制這裡的香料貿易。",
-      "cheap": ["clove"], "dear": ["rice", "porcelain"] }
+      "cheap": [
+        "clove"
+      ],
+      "dear": [
+        "rice",
+        "porcelain"
+      ],
+      "sells": [
+        "clove",
+        "rattan",
+        "wood",
+        "sappan",
+        "coral"
+      ]
+    }
   ]
 }
