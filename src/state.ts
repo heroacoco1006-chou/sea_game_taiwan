@@ -83,13 +83,30 @@ export interface PlayerShip {
   cargoSpace: number;
   /** 糧水艙空間（＝糧上限＝水上限） */
   supplySpace: number;
+  /** 船首像 id（提升能力），無則 null */
+  figurehead: string | null;
+}
+
+/** 個人裝備（主角） */
+export interface Equip {
+  weapon: string | null;
+  armor: string | null;
+  accessory: string | null;
+}
+
+/** 已招募的夥伴與其職位 */
+export interface Mate {
+  id: string;
+  role: string | null;
 }
 
 export interface GameState {
   version: number;
   gold: number;
   day: number; // 從 1 開始的絕對天數
-  ship: PlayerShip;
+  ship: PlayerShip; // 旗艦
+  /** 僚艦（最多 4 艘，與旗艦共 5 艘） */
+  escorts: PlayerShip[];
   cargo: Record<string, number>;
   /** 各貨物目前持有量的總購入成本（算平均成本用） */
   costBasis: Record<string, number>;
@@ -102,7 +119,13 @@ export interface GameState {
   daysAtSea: number;
   events: MarketEvent[];
   quest: Quest | null;
+  /** 主角個人裝備 */
+  equip: Equip;
+  /** 已招募的夥伴 */
+  mates: Mate[];
 }
+
+export const FLEET_MAX = 5; // 含旗艦
 
 export const GOODS: Good[] = goodsData.goods;
 export const PORTS: Port[] = portsData.ports;
@@ -119,32 +142,75 @@ export const CANNON_PRICE = 100;
 const SAVE_KEY = 'seagame_save1';
 const START_POS = { x: 1340, y: 1075 }; // 月港外海
 
+export function shipTypeById(id: string): ShipType {
+  return SHIPS.find((t) => t.id === id) ?? SHIPS[0];
+}
+
+/** 旗艦船型 */
 export function shipTypeOf(state: GameState): ShipType {
-  return SHIPS.find((t) => t.id === state.ship.typeId) ?? SHIPS[0];
+  return shipTypeById(state.ship.typeId);
 }
 
-/** 貨艙上限＝商品艙空間 */
+/** 全艦隊（旗艦＋僚艦） */
+export function fleetShips(state: GameState): PlayerShip[] {
+  return [state.ship, ...state.escorts];
+}
+
+/** 貨艙上限＝全艦隊商品艙加總 */
 export function cargoMax(state: GameState): number {
-  return state.ship.cargoSpace;
+  return fleetShips(state).reduce((sum, sh) => sum + sh.cargoSpace, 0);
 }
 
-/** 糧／水上限＝糧水艙空間 */
+/** 糧／水上限＝全艦隊糧水艙加總 */
 export function supplyMax(state: GameState): number {
-  return state.ship.supplySpace;
+  return fleetShips(state).reduce((sum, sh) => sum + sh.supplySpace, 0);
 }
 
+/** 旗艦船體上限（旅館保養、旗艦修理用） */
 export function hullMax(state: GameState): number {
   return shipTypeOf(state).hullMax;
 }
 
+/** 水手上限＝全艦隊各船型 maxCrew 加總 */
 export function crewMax(state: GameState): number {
-  return shipTypeOf(state).maxCrew;
+  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).maxCrew, 0);
+}
+
+/** 全艦隊最低水手需求（各船 minCrew 加總） */
+export function fleetMinCrew(state: GameState): number {
+  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).minCrew, 0);
+}
+
+/** 全艦隊總砲數（海戰火力） */
+export function fleetCannons(state: GameState): number {
+  return fleetShips(state).reduce((sum, sh) => sum + sh.cannons, 0);
+}
+
+/** 全艦隊現有船體總和 */
+export function fleetHull(state: GameState): number {
+  return fleetShips(state).reduce((sum, sh) => sum + sh.hull, 0);
+}
+
+/** 全艦隊船體上限總和 */
+export function fleetHullMax(state: GameState): number {
+  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).hullMax, 0);
+}
+
+/** 對全艦隊造成傷害（按各船血量比例分攤，每船至少留 1） */
+export function damageFleet(state: GameState, dmg: number): void {
+  const ships = fleetShips(state);
+  const total = fleetHull(state);
+  if (total <= 0) return;
+  for (const sh of ships) {
+    const share = Math.round(dmg * (sh.hull / total));
+    sh.hull = Math.max(1, sh.hull - share);
+  }
 }
 
 export function newGame(): GameState {
   const type = SHIPS[0]; // 小戎克船
   return {
-    version: 4,
+    version: 5,
     gold: 1000,
     day: 1,
     ship: {
@@ -154,7 +220,9 @@ export function newGame(): GameState {
       cannons: 1,
       cargoSpace: 30,
       supplySpace: 30,
+      figurehead: null,
     },
+    escorts: [],
     cargo: {},
     costBasis: {},
     food: 30,
@@ -164,6 +232,8 @@ export function newGame(): GameState {
     daysAtSea: 0,
     events: [],
     quest: null,
+    equip: { weapon: null, armor: null, accessory: null },
+    mates: [],
   };
 }
 
@@ -190,7 +260,7 @@ export function sailableDays(state: GameState): number {
  * 達最低水手數＝正常；低於最低＝減半；低於最低的一半＝最慢
  */
 export function crewSpeedMod(state: GameState): number {
-  const min = shipTypeOf(state).minCrew;
+  const min = fleetMinCrew(state);
   if (state.crew >= min) return 1;
   if (state.crew >= Math.ceil(min / 2)) return 0.5;
   return 0.3;
@@ -231,6 +301,18 @@ export function loadGame(): GameState | null {
           y: s.version && s.version >= 2 && s.ship?.y ? s.ship.y : fresh.ship.y,
         },
       };
+    }
+    // v4 → v5：補艦隊／裝備／夥伴欄位
+    if (s.version < 5) {
+      const full = s as GameState;
+      full.escorts = full.escorts ?? [];
+      full.equip = full.equip ?? { weapon: null, armor: null, accessory: null };
+      full.mates = full.mates ?? [];
+      if (full.ship && (full.ship as PlayerShip).figurehead === undefined) {
+        (full.ship as PlayerShip).figurehead = null;
+      }
+      full.version = 5;
+      return full;
     }
     return s as GameState;
   } catch {

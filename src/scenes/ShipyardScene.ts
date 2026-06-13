@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, Port, SHIPS, ShipType, shipTypeOf, cargoCount,
-  hullMax, supplyMax, crewMax, saveGame, CANNON_PRICE,
+  GameState, PORTS, Port, SHIPS, ShipType, shipTypeOf, shipTypeById,
+  cargoCount, cargoMax, supplyMax, fleetShips, fleetMinCrew, crewMax, FLEET_MAX,
+  saveGame, CANNON_PRICE,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -9,8 +10,8 @@ const REPAIR_PRICE = 2;
 const REFIT_FEE = 10;
 
 /**
- * 造船廠：買船（折抵舊船）、船艙配比改造（老闆設計：總空間固定，
- * 商品艙↔糧水艙互調）、加裝大砲、修理。
+ * 造船廠：艦隊管理（旗艦＋最多 4 僚艦）、買船（換旗艦或加入艦隊）、
+ * 船艙配比改造（總空間固定，商品艙↔糧水艙互調）、加砲、修理全艦隊。
  */
 export default class ShipyardScene extends Phaser.Scene {
   private port!: Port;
@@ -20,6 +21,7 @@ export default class ShipyardScene extends Phaser.Scene {
   private buyDetail!: Phaser.GameObjects.Text;
   private listTexts: Map<string, Phaser.GameObjects.Text> = new Map();
   private highlight!: Phaser.GameObjects.Rectangle;
+  private escortObjs: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('Shipyard');
@@ -34,9 +36,10 @@ export default class ShipyardScene extends Phaser.Scene {
     this.door = data.door ?? { x: 640, y: 600 };
     this.selectedType = null;
     this.listTexts = new Map();
+    this.escortObjs = [];
   }
 
-  /** 舊船折抵價：船價 6 成＋大砲半價 */
+  /** 旗艦折抵價：船價 6 成＋大砲半價 */
   private tradeInValue(): number {
     const s = this.state;
     const type = shipTypeOf(s);
@@ -48,64 +51,78 @@ export default class ShipyardScene extends Phaser.Scene {
     const H = this.scale.height;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 30, 16, W - 60, H - 32);
-    this.add.text(W / 2, 44, `${this.port.name}・造船廠`, textStyle(26)).setOrigin(0.5);
+    this.add.text(W / 2, 40, `${this.port.name}・造船廠`, textStyle(26)).setOrigin(0.5);
 
-    // ---------- 左側：我的船 ----------
-    this.add.rectangle(330, 392, 560, 620, COLORS.parchmentDark, 0.45);
-    this.add.text(330, 100, '— 我的船 —', textStyle(20)).setOrigin(0.5);
-    this.myPanel = this.add.text(70, 124, '', { ...textStyle(17), lineSpacing: 7 });
+    // ---------- 左側：我的艦隊 ----------
+    this.add.rectangle(330, 392, 580, 660, COLORS.parchmentDark, 0.45);
+    this.add.text(330, 78, '— 我的艦隊 —', textStyle(20)).setOrigin(0.5);
+    this.myPanel = this.add.text(60, 100, '', { ...textStyle(16), lineSpacing: 6 });
 
-    // 船艙配比（商品艙 ↔ 糧水艙）
-    this.add.text(70, 354, '船艙改造（總空間固定，兩邊互調，每次 10 兩）', textStyle(16, '#6b5530'));
-    makeButton(this, 180, 404, 200, 44, '商品艙 +5（糧水 -5）', () => this.refit(5), 14);
-    makeButton(this, 420, 404, 200, 44, '糧水艙 +5（商品 -5）', () => this.refit(-5), 14);
-
-    makeButton(this, 180, 466, 200, 44, `加裝大砲（${CANNON_PRICE} 兩）`, () => this.buyCannon(), 15);
-    makeButton(this, 420, 466, 200, 44, `修理全滿（${REPAIR_PRICE} 兩/點）`, () => this.repair(), 15);
+    // 船艙改造（旗艦）
+    this.add.text(60, 442, '旗艦船艙改造（總空間固定，兩邊互調，每次 10 兩）', textStyle(14, '#6b5530'));
+    makeButton(this, 175, 486, 200, 42, '商品艙 +5（糧水 -5）', () => this.refit(5), 14);
+    makeButton(this, 410, 486, 200, 42, '糧水艙 +5（商品 -5）', () => this.refit(-5), 14);
+    makeButton(this, 175, 540, 200, 42, `旗艦加砲（${CANNON_PRICE} 兩）`, () => this.buyCannon(), 14);
+    makeButton(this, 410, 540, 200, 42, `修理全艦隊（${REPAIR_PRICE} 兩/點）`, () => this.repairFleet(), 14);
 
     // ---------- 右側：販售船隻 ----------
-    this.add.text(950, 100, '— 販售中的船 —', textStyle(20)).setOrigin(0.5);
-    this.highlight = this.add.rectangle(-500, -500, 560, 34, 0xc9b178, 0.55);
+    this.add.text(950, 78, '— 販售中的船 —', textStyle(20)).setOrigin(0.5);
+    this.highlight = this.add.rectangle(-500, -500, 560, 32, 0xc9b178, 0.55);
     SHIPS.forEach((t, i) => {
-      const y = 128 + i * 36;
+      const y = 104 + i * 34;
       const zone = this.add
-        .rectangle(950, y + 14, 560, 32, 0xffffff, 0.001)
+        .rectangle(950, y + 13, 560, 30, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.selectShip(t));
-      const owned = this.state.ship.typeId === t.id ? '（現役）' : '';
+      const owned = this.state.ship.typeId === t.id ? '（旗艦）' : '';
       const txt = this.add.text(
         680, y,
-        `${t.name}${owned}　${t.price} 兩｜空間${t.space}｜速度${t.speed}｜砲位${t.cannonSlots}｜水手${t.minCrew}~${t.maxCrew}`,
-        textStyle(15)
+        `${t.name}${owned}　${t.price} 兩｜空間${t.space}｜速${t.speed}｜砲${t.cannonSlots}｜水手${t.minCrew}~${t.maxCrew}`,
+        textStyle(14)
       );
       this.listTexts.set(t.id, txt);
     });
-    this.buyDetail = this.add.text(680, 446, '（點選上方船隻查看詳情）', { ...textStyle(15, '#5a4a30'), wordWrap: { width: 540 }, lineSpacing: 6 });
-    makeButton(this, 950, 600, 300, 50, '購買選定的船', () => this.buyShip(), 18);
+    this.buyDetail = this.add.text(680, 396, '（點選上方船隻查看詳情）', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 }, lineSpacing: 5 });
+    makeButton(this, 820, 520, 260, 50, '換成旗艦（折抵舊旗艦）', () => this.buyShip(false), 16);
+    makeButton(this, 1100, 520, 220, 50, '加入艦隊（當僚艦）', () => this.buyShip(true), 16);
 
-    makeButton(this, W / 2, H - 46, 220, 48, '離開（回到街上）', () => {
+    makeButton(this, W / 2, H - 40, 220, 46, '離開（回到街上）', () => {
       saveGame(this.state);
       this.scene.start('Port', { portId: this.port.id, spawn: this.door });
     });
 
-    this.refreshMyShip();
+    this.refreshFleet();
   }
 
-  private refreshMyShip(): void {
+  private refreshFleet(): void {
     const s = this.state;
     const t = shipTypeOf(s);
     this.myPanel.setText(
-      `${t.name}（${t.origin}）\n` +
-      `資金 ${s.gold} 兩\n` +
-      `船體 ${s.ship.hull}/${t.hullMax}　航速 ${t.speed}\n` +
-      `總空間 ${t.space} ＝ 商品艙 ${s.ship.cargoSpace}（已裝 ${cargoCount(s)}）＋ 糧水艙 ${s.ship.supplySpace}\n` +
-      `大砲 ${s.ship.cannons}/${t.cannonSlots} 門\n` +
-      `水手 ${s.crew}/${t.maxCrew}（最低需求 ${t.minCrew} 人）\n` +
-      `舊船折抵價 ${this.tradeInValue()} 兩`
+      `資金 ${s.gold} 兩　　水手 ${s.crew}/${crewMax(s)}（全隊最低需 ${fleetMinCrew(s)}）\n` +
+      `艦隊共 ${fleetShips(s).length}/${FLEET_MAX} 艘　　總貨艙 ${cargoCount(s)}/${cargoMax(s)}　總糧水艙 ${supplyMax(s)}\n` +
+      `\n【旗艦】${t.name}（${t.origin}）\n` +
+      `船體 ${s.ship.hull}/${t.hullMax}　航速 ${t.speed}　大砲 ${s.ship.cannons}/${t.cannonSlots}\n` +
+      `商品艙 ${s.ship.cargoSpace} ＋ 糧水艙 ${s.ship.supplySpace}（總空間 ${t.space}）　折抵價 ${this.tradeInValue()} 兩`
     );
+
+    // 重建僚艦列
+    for (const o of this.escortObjs) o.destroy();
+    this.escortObjs = [];
+    const top = 300;
+    const titleT = this.add.text(60, top, s.escorts.length > 0 ? '【僚艦】' : '【僚艦】尚無（可在右側「加入艦隊」購買）', textStyle(15, '#6b5530'));
+    this.escortObjs.push(titleT);
+
+    s.escorts.forEach((esc, i) => {
+      const et = shipTypeById(esc.typeId);
+      const y = top + 26 + i * 32;
+      const label = this.add.text(60, y, `僚艦${i + 1}：${et.name}　體 ${esc.hull}/${et.hullMax}　砲 ${esc.cannons}　艙 ${esc.cargoSpace}`, textStyle(14));
+      const promote = makeButton(this, 470, y + 8, 90, 30, '升旗艦', () => this.promoteEscort(i), 13);
+      const sell = makeButton(this, 565, y + 8, 70, 30, '賣出', () => this.sellEscort(i), 13);
+      this.escortObjs.push(label, promote, sell);
+    });
   }
 
-  /** 船艙互調：dir>0 商品艙+5、dir<0 糧水艙+5 */
+  /** 船艙互調：dir>0 商品艙+5、dir<0 糧水艙+5（旗艦） */
   private refit(dir: number): void {
     const s = this.state;
     if (s.gold < REFIT_FEE) {
@@ -115,7 +132,8 @@ export default class ShipyardScene extends Phaser.Scene {
     const dc = dir > 0 ? 5 : -5;
     const newCargo = s.ship.cargoSpace + dc;
     const newSupply = s.ship.supplySpace - dc;
-    if (newCargo < cargoCount(s)) {
+    // 旗艦商品艙縮小時，須確認全艦隊仍裝得下現有貨
+    if (cargoMax(s) - s.ship.cargoSpace + newCargo < cargoCount(s)) {
       toast(this, '商品艙不能小於目前裝載的貨物量！先賣掉一些貨');
       return;
     }
@@ -126,17 +144,17 @@ export default class ShipyardScene extends Phaser.Scene {
     s.gold -= REFIT_FEE;
     s.ship.cargoSpace = newCargo;
     s.ship.supplySpace = newSupply;
-    s.food = Math.min(s.food, newSupply);
-    s.water = Math.min(s.water, newSupply);
-    this.refreshMyShip();
-    toast(this, dir > 0 ? '商品艙加大了！（能載更多貨，但航程變短）' : '糧水艙加大了！（航程變長，但載貨變少）');
+    s.food = Math.min(s.food, supplyMax(s));
+    s.water = Math.min(s.water, supplyMax(s));
+    this.refreshFleet();
+    toast(this, dir > 0 ? '商品艙加大了！（能載更多貨，但糧水艙變小）' : '糧水艙加大了！（航程變長，但載貨變少）');
   }
 
   private buyCannon(): void {
     const s = this.state;
     const t = shipTypeOf(s);
     if (s.ship.cannons >= t.cannonSlots) {
-      toast(this, '砲位已經滿了！想要更多砲位就換大船');
+      toast(this, '旗艦砲位已滿！想要更多砲就換大船或加僚艦');
       return;
     }
     if (s.gold < CANNON_PRICE) {
@@ -145,15 +163,16 @@ export default class ShipyardScene extends Phaser.Scene {
     }
     s.gold -= CANNON_PRICE;
     s.ship.cannons += 1;
-    this.refreshMyShip();
+    this.refreshFleet();
     toast(this, `裝上第 ${s.ship.cannons} 門砲！海戰火力更強了`);
   }
 
-  private repair(): void {
+  private repairFleet(): void {
     const s = this.state;
-    const need = hullMax(s) - s.ship.hull;
+    let need = 0;
+    for (const sh of fleetShips(s)) need += shipTypeById(sh.typeId).hullMax - sh.hull;
     if (need === 0) {
-      toast(this, '船體完好如新，不用修！');
+      toast(this, '全艦隊船體都完好如新！');
       return;
     }
     const afford = Math.min(need, Math.floor(s.gold / REPAIR_PRICE));
@@ -162,33 +181,70 @@ export default class ShipyardScene extends Phaser.Scene {
       return;
     }
     s.gold -= afford * REPAIR_PRICE;
-    s.ship.hull += afford;
-    this.refreshMyShip();
-    toast(this, afford === need ? `修好了！花費 ${afford * REPAIR_PRICE} 兩` : `錢只夠修 ${afford} 點`);
+    let budget = afford;
+    for (const sh of fleetShips(s)) {
+      const d = shipTypeById(sh.typeId).hullMax - sh.hull;
+      const fix = Math.min(d, budget);
+      sh.hull += fix;
+      budget -= fix;
+      if (budget <= 0) break;
+    }
+    this.refreshFleet();
+    toast(this, afford === need ? `全艦隊修好了！花費 ${afford * REPAIR_PRICE} 兩` : `錢只夠修 ${afford} 點`);
   }
 
   private selectShip(t: ShipType): void {
     this.selectedType = t;
     const txt = this.listTexts.get(t.id)!;
-    this.highlight.setPosition(950, txt.y + 14);
+    this.highlight.setPosition(950, txt.y + 13);
     const tradeIn = this.tradeInValue();
-    const cost = Math.max(0, t.price - tradeIn);
+    const swapCost = Math.max(0, t.price - tradeIn);
     this.buyDetail.setText(
       `${t.name}（${t.origin}）：${t.desc}\n` +
-      `價格 ${t.price} 兩，舊船折抵 ${tradeIn} 兩 → 實付 ${cost} 兩\n` +
-      `買船後：船艙預設對半分配，可再改造；水手與糧水超過上限的部分須先處理。`
+      `換旗艦：實付 ${swapCost} 兩（原價 ${t.price} − 折抵 ${tradeIn}）\n` +
+      `加入艦隊當僚艦：付全額 ${t.price} 兩（僚艦增加總貨艙與火力，但也要更多水手）`
     );
   }
 
-  private buyShip(): void {
+  /** asEscort=false 換旗艦；true 加入艦隊當僚艦 */
+  private buyShip(asEscort: boolean): void {
     const s = this.state;
     const t = this.selectedType;
     if (!t) {
       toast(this, '先點選一艘船！');
       return;
     }
+    const half = Math.floor(t.space / 2);
+
+    if (asEscort) {
+      if (fleetShips(s).length >= FLEET_MAX) {
+        toast(this, `艦隊最多 ${FLEET_MAX} 艘了！`);
+        return;
+      }
+      if (s.gold < t.price) {
+        toast(this, `購買僚艦要 ${t.price} 兩，資金不足！`);
+        return;
+      }
+      s.gold -= t.price;
+      s.escorts.push({
+        typeId: t.id,
+        x: s.ship.x,
+        y: s.ship.y,
+        hull: t.hullMax,
+        cannons: Math.min(1, t.cannonSlots),
+        cargoSpace: half,
+        supplySpace: t.space - half,
+        figurehead: null,
+      });
+      saveGame(s);
+      this.refreshFleet();
+      toast(this, `【${t.name}】加入艦隊當僚艦！記得多雇水手（最低需求變高了）`);
+      return;
+    }
+
+    // 換旗艦
     if (t.id === s.ship.typeId) {
-      toast(this, '這就是你現在的船啊！');
+      toast(this, '這就是你現在的旗艦啊！');
       return;
     }
     const cost = Math.max(0, t.price - this.tradeInValue());
@@ -196,23 +252,56 @@ export default class ShipyardScene extends Phaser.Scene {
       toast(this, `實付要 ${cost} 兩，資金不足！`);
       return;
     }
-    const defaultCargo = Math.floor(t.space / 2);
-    if (cargoCount(s) > defaultCargo) {
-      toast(this, '貨太多了，新船的商品艙裝不下！先賣掉一些貨');
+    // 換旗艦後總貨艙會變動，確認裝得下
+    const newFlagCargo = half;
+    if (cargoMax(s) - s.ship.cargoSpace + newFlagCargo < cargoCount(s)) {
+      toast(this, '貨太多了，新旗艦裝不下！先賣掉一些貨');
       return;
     }
     s.gold -= cost;
     s.ship.typeId = t.id;
     s.ship.hull = t.hullMax;
     s.ship.cannons = Math.min(s.ship.cannons, t.cannonSlots);
-    s.ship.cargoSpace = defaultCargo;
-    s.ship.supplySpace = t.space - defaultCargo;
-    s.crew = Math.min(s.crew, t.maxCrew);
-    s.food = Math.min(s.food, s.ship.supplySpace);
-    s.water = Math.min(s.water, s.ship.supplySpace);
+    s.ship.cargoSpace = newFlagCargo;
+    s.ship.supplySpace = t.space - newFlagCargo;
+    s.ship.figurehead = null;
+    s.crew = Math.min(s.crew, crewMax(s));
+    s.food = Math.min(s.food, supplyMax(s));
+    s.water = Math.min(s.water, supplyMax(s));
     saveGame(s);
-    this.refreshMyShip();
     this.scene.restart({ portId: this.port.id, door: this.door });
-    toast(this, `恭喜入手【${t.name}】！記得檢查水手數和糧水`);
+    toast(this, `恭喜入手【${t.name}】當旗艦！記得檢查水手數和糧水`);
+  }
+
+  private promoteEscort(idx: number): void {
+    const s = this.state;
+    const flag = s.ship;
+    const esc = s.escorts[idx];
+    esc.x = flag.x;
+    esc.y = flag.y;
+    s.ship = esc;
+    s.escorts[idx] = flag;
+    saveGame(s);
+    this.scene.restart({ portId: this.port.id, door: this.door });
+    toast(this, `${shipTypeById(esc.typeId).name} 升為旗艦！`);
+  }
+
+  private sellEscort(idx: number): void {
+    const s = this.state;
+    const esc = s.escorts[idx];
+    const et = shipTypeById(esc.typeId);
+    const newCargoMax = cargoMax(s) - esc.cargoSpace;
+    if (cargoCount(s) > newCargoMax) {
+      toast(this, '賣掉這艘船貨艙會不夠裝！先賣掉一些貨');
+      return;
+    }
+    const gain = Math.round(et.price * 0.6 + esc.cannons * CANNON_PRICE * 0.5);
+    s.gold += gain;
+    s.escorts.splice(idx, 1);
+    s.food = Math.min(s.food, supplyMax(s));
+    s.water = Math.min(s.water, supplyMax(s));
+    saveGame(s);
+    this.refreshFleet();
+    toast(this, `賣掉【${et.name}】，得 ${gain} 兩`);
   }
 }

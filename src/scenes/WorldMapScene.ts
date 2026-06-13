@@ -4,6 +4,7 @@ import {
   cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
+  fleetMinCrew, crewMax,
 } from '../state';
 import { COLORS, textStyle, showModal } from '../ui';
 
@@ -392,10 +393,12 @@ export default class WorldMapScene extends Phaser.Scene {
     const days = sailableDays(s);
     const daysColor = days <= 2 ? '⚠' : '';
     const type = shipTypeOf(s);
-    const crewWarn = s.crew < type.minCrew ? '⚠' : '';
+    const minC = fleetMinCrew(s);
+    const crewWarn = s.crew < minC ? '⚠' : '';
+    const fleetLabel = s.escorts.length > 0 ? `${type.name}＋僚艦${s.escorts.length}（共${1 + s.escorts.length}艘）` : type.name;
     this.hud.setText(
-      `${dateText(s.day)}　資金 ${s.gold} 兩　${type.name}　貨艙 ${cargoCount(s)}/${cargoMax(s)}　船體 ${s.ship.hull}/${hullMax(s)}\n` +
-      `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${crewWarn}${s.crew}/${type.maxCrew}（最低 ${type.minCrew}）　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
+      `${dateText(s.day)}　資金 ${s.gold} 兩　${fleetLabel}　貨艙 ${cargoCount(s)}/${cargoMax(s)}　旗艦 ${s.ship.hull}/${hullMax(s)}\n` +
+      `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${crewWarn}${s.crew}/${crewMax(s)}（最低 ${minC}）　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
     );
     this.updateWindHud();
   }

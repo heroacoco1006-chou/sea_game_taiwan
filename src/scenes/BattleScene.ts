@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
-import { GameState, shipTypeOf, hullMax, saveGame, PORTS } from '../state';
+import {
+  GameState, shipTypeOf, saveGame, PORTS,
+  fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
+} from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
 interface Enemy {
@@ -90,7 +93,8 @@ export default class BattleScene extends Phaser.Scene {
   private refreshPanels(): void {
     const s = this.state;
     const t = shipTypeOf(s);
-    this.myText.setText(`我方：${t.name}\n船體 ${Math.max(0, s.ship.hull)}/${t.hullMax}\n大砲 ${s.ship.cannons} 門　水手 ${s.crew} 人`);
+    const fleetName = s.escorts.length > 0 ? `${t.name}艦隊（${1 + s.escorts.length}艘）` : t.name;
+    this.myText.setText(`我方：${fleetName}\n船體 ${Math.max(0, fleetHull(s))}/${fleetHullMax(s)}\n大砲 ${fleetCannons(s)} 門　水手 ${s.crew} 人`);
     this.foeText.setText(`敵方：${this.enemy.name}\n船體 ${Math.max(0, this.enemy.hull)}/${this.enemy.hullMax}\n大砲 ${this.enemy.cannons} 門　船員 ${this.enemy.crew} 人`);
   }
 
@@ -117,7 +121,7 @@ export default class BattleScene extends Phaser.Scene {
     const s = this.state;
 
     if (action === 'cannon') {
-      const dmg = Math.round((s.ship.cannons * 7 + s.crew / 4) * (0.8 + Math.random() * 0.4));
+      const dmg = Math.round((fleetCannons(s) * 7 + s.crew / 4) * (0.8 + Math.random() * 0.4));
       this.enemy.hull -= dmg;
       this.pushLog(`我方齊射！轟出 ${dmg} 點損傷！`);
     } else if (action === 'board') {
@@ -158,10 +162,10 @@ export default class BattleScene extends Phaser.Scene {
       }
       const s2 = this.state;
       const dmg = Math.round((this.enemy.cannons * 7 + this.enemy.crew / 4) * (0.8 + Math.random() * 0.4));
-      s2.ship.hull -= dmg;
+      damageFleet(s2, dmg);
       this.pushLog(`敵方反擊！我方船體受損 ${dmg} 點！`);
       this.refreshPanels();
-      if (s2.ship.hull <= 0) {
+      if (fleetHull(s2) <= fleetShips(s2).length) {
         this.defeat();
         return;
       }
@@ -191,7 +195,9 @@ export default class BattleScene extends Phaser.Scene {
     }
     const lost = Math.floor(s.gold * 0.3);
     s.gold -= lost;
-    s.ship.hull = Math.round(hullMax(s) * 0.4);
+    for (const sh of fleetShips(s)) {
+      sh.hull = Math.round(shipTypeById(sh.typeId).hullMax * 0.4);
+    }
     s.food = Math.min(s.food, 10);
     s.water = Math.min(s.water, 10);
     s.ship.x = nearest.x;

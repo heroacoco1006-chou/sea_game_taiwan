@@ -6,6 +6,16 @@
 
 ---
 
+## [2026-06-13] 開發 | M3 下半之一：艦隊系統
+
+- 完成事項：
+  - state 升版 v5，加 escorts/equip/mates/figurehead 欄位（一次備齊 M3 下半所有欄位）；v4→v5 自動升級
+  - 艦隊 helper：fleetShips/cargoMax/supplyMax/crewMax/fleetMinCrew/fleetCannons/fleetHull/fleetHullMax/damageFleet（全部改艦隊加總）
+  - 造船廠艦隊管理：買船可「換旗艦」或「加入艦隊當僚艦」（最多 5 艘）、升旗艦、賣僚艦、修理全艦隊
+  - 僚艦加總貨艙/糧水艙/水手上限/最低水手/海戰火力；海戰傷害按各船比例分攤
+  - HUD 顯示艦隊資訊；實測買/升/賣僚艦、海戰加總、v5 存檔、v4 升級皆通過；打包通過
+- 待追蹤：M3 下半之二（裝備系統＋夥伴職位框架）
+
 ## [2026-06-13] 開發 | 港口出航整併（老闆回饋）
 
 - 完成事項：
