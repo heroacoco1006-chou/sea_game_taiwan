@@ -145,10 +145,19 @@ export interface StoryChapter {
   targetPortId: string;
   npc: string;
   objective: string;
+  requirements?: StoryRequirements;
   prompt: string;
   completion: string;
   rewardGold: number;
   codexIds: string[];
+}
+
+export interface StoryRequirements {
+  cargo?: Array<{
+    goodId: string;
+    qty: number;
+    consume?: boolean;
+  }>;
 }
 
 export interface CodexEntry {
@@ -755,6 +764,41 @@ export function storyTargetPort(chapter: StoryChapter | undefined): Port | undef
   return chapter ? PORTS.find((p) => p.id === chapter.targetPortId) : undefined;
 }
 
+export function storyRequirementText(chapter: StoryChapter | undefined): string {
+  if (!chapter?.requirements?.cargo?.length) return '條件：抵達指定港口即可推進。';
+  const parts = chapter.requirements.cargo.map((req) => {
+    const good = GOODS.find((g) => g.id === req.goodId);
+    return `${req.consume ? '交付' : '持有'}【${good?.name ?? req.goodId}×${req.qty}】`;
+  });
+  return `條件：${parts.join('、')}。`;
+}
+
+function storyRequirementError(state: GameState, chapter: StoryChapter): string | null {
+  for (const req of chapter.requirements?.cargo ?? []) {
+    const have = state.cargo[req.goodId] ?? 0;
+    if (have < req.qty) {
+      const good = GOODS.find((g) => g.id === req.goodId);
+      return `還缺【${good?.name ?? req.goodId}×${req.qty - have}】。${storyRequirementText(chapter)}`;
+    }
+  }
+  return null;
+}
+
+function consumeStoryRequirements(state: GameState, chapter: StoryChapter): void {
+  for (const req of chapter.requirements?.cargo ?? []) {
+    if (!req.consume) continue;
+    const have = state.cargo[req.goodId] ?? 0;
+    const left = Math.max(0, have - req.qty);
+    const basis = state.costBasis[req.goodId] ?? 0;
+    state.cargo[req.goodId] = left;
+    state.costBasis[req.goodId] = have > 0 ? Math.round(basis * (left / have)) : 0;
+    if (left <= 0) {
+      delete state.cargo[req.goodId];
+      delete state.costBasis[req.goodId];
+    }
+  }
+}
+
 export function codexEntriesForState(state: GameState): CodexEntry[] {
   return state.story.codex
     .map((id) => CODEX_ENTRIES.find((entry) => entry.id === id))
@@ -785,7 +829,14 @@ export function completeStoryChapter(
     const target = storyTargetPort(chapter);
     return { ok: false, title: chapter.title, message: `目前目標是前往【${target?.name ?? chapter.targetPortId}】。` };
   }
+  const requirementError = storyRequirementError(state, chapter);
+  if (requirementError) {
+    return { ok: false, title: chapter.title, message: requirementError };
+  }
 
+  consumeStoryRequirements(state, chapter);
+  const beforeDay = state.day;
+  state.day = Math.max(state.day, dayForYear(chapter.year));
   state.story.completed.push(chapter.id);
   const unlocked = unlockCodex(state, chapter.codexIds);
   if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
@@ -795,6 +846,8 @@ export function completeStoryChapter(
   const nextPort = storyTargetPort(next);
   const lines = [
     chapter.completion,
+    state.day > beforeDay ? `\n劇情時間推進到 ${dateText(state.day)}。` : '',
+    chapter.requirements?.cargo?.some((req) => req.consume) ? `\n${storyRequirementText(chapter)}已完成。` : '',
     chapter.rewardGold > 0 ? `\n獲得 ${chapter.rewardGold} 兩。` : '',
     unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n目前示範章節已完成，後續主線會繼續擴充。',

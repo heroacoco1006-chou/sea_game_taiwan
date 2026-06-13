@@ -3,7 +3,7 @@ import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
-  heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState,
+  heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState, storyRequirementText,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -114,10 +114,11 @@ export default class InfoScene extends Phaser.Scene {
     const storyLine = chapter
       ? `主線：${hero.name}（${hero.role}）第 ${chapter.chapter} 章「${chapter.title}」｜目標：前往【${target?.name ?? chapter.targetPortId}】`
       : `主線：${hero.name}（${hero.role}）目前示範章節已完成`;
+    const reqLine = chapter ? storyRequirementText(chapter) : '';
     const codexLine = codex.length > 0
       ? `圖鑑 ${codex.length} 張：${codex.slice(-5).map((entry) => `【${entry.type}】${entry.title}`).join('、')}`
       : '圖鑑 0 張：推進主線後會解鎖事件、人物與地點卡。';
-    this.dyn.push(this.add.text(56, 544, `${storyLine}\n${codexLine}`, { ...textStyle(14, '#3f3422'), wordWrap: { width: 1040 }, lineSpacing: 5 }));
+    this.dyn.push(this.add.text(56, 536, `${storyLine}\n${reqLine}\n${codexLine}`, { ...textStyle(14, '#3f3422'), wordWrap: { width: 940 }, lineSpacing: 5 }));
     const btn = makeButton(this, 1140, 568, 170, 38, '查看圖鑑', () => this.showCodex(), 13);
     btn.setAlpha(codex.length > 0 ? 1 : 0.45);
     this.dyn.push(btn);

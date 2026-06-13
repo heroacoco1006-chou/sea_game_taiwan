@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
   hullMax, supplyMax, crewMax, questOffer, sailableDays,
-  currentStoryChapter, completeStoryChapter, storyTargetPort,
+  currentStoryChapter, completeStoryChapter, storyTargetPort, storyRequirementText,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -188,7 +188,7 @@ export default class FacilityScene extends Phaser.Scene {
       this.body.setText(
         `【主線第 ${chapter.chapter} 章：${chapter.title}】\n` +
         `年份：${chapter.year}　人物：${chapter.npc}\n\n` +
-        `${chapter.prompt}\n\n目標：${chapter.objective}`
+        `${chapter.prompt}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}`
       );
       makeButton(this, W / 2, 520, 340, 52, '推進主線', () => {
         const result = completeStoryChapter(s, this.port);

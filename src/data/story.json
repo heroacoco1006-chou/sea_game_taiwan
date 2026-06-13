@@ -67,6 +67,37 @@
       "codexIds": ["person_yan_siqi", "place_ponkan"]
     },
     {
+      "id": "lin_03",
+      "heroId": "lin",
+      "chapter": 3,
+      "title": "安海的鄭芝龍",
+      "year": 1624,
+      "targetPortId": "anhai",
+      "npc": "鄭芝龍的帳房",
+      "objective": "帶 5 件生絲到安海，作為拜訪鄭芝龍船隊的見面禮。",
+      "requirements": {
+        "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
+      },
+      "prompt": "帳房看著你的貨單：「鄭家的船不只打仗，也靠貿易養活水手。若你連一趟生絲買賣都辦不好，就別談加入大船隊。」",
+      "completion": "你交出生絲，換來鄭芝龍船隊的航路消息。你開始明白，海上勢力能壯大，是因為他們掌握了貨物流通與保護航線的能力。",
+      "rewardGold": 700,
+      "codexIds": ["person_zheng_zhilong", "trade_silk"]
+    },
+    {
+      "id": "lin_04",
+      "heroId": "lin",
+      "chapter": 4,
+      "title": "顏思齊之後",
+      "year": 1625,
+      "targetPortId": "ponkan",
+      "npc": "笨港老船頭",
+      "objective": "回到笨港，了解顏思齊病逝後海商集團的變化。",
+      "prompt": "老船頭嘆口氣：「顏大哥走了，船隊不能散。鄭芝龍懂買賣、懂打仗，也懂得和官府談條件，大家都在看他下一步怎麼走。」",
+      "completion": "你看見海商集團的權力開始轉移，鄭芝龍逐漸成為台海新霸主。林海生線下一段將進入招撫與海戰的抉擇。",
+      "rewardGold": 600,
+      "codexIds": ["event_zheng_rise"]
+    },
+    {
       "id": "peter_01",
       "heroId": "peter",
       "chapter": 1,
@@ -95,6 +126,43 @@
       "codexIds": ["event_penghu_1622", "place_penghu"]
     },
     {
+      "id": "peter_03",
+      "heroId": "peter",
+      "chapter": 3,
+      "title": "轉進大員建城",
+      "year": 1624,
+      "targetPortId": "tayouan",
+      "npc": "荷蘭工程監督",
+      "objective": "帶 5 件木材到大員，協助商館準備建城材料。",
+      "requirements": {
+        "cargo": [{ "goodId": "wood", "qty": 5, "consume": true }]
+      },
+      "prompt": "工程監督指著沙洲：「這裡不是澎湖，卻靠近中國、日本與南洋。若城牆站得住，商船就會來。」",
+      "completion": "木材被送往工地，大員的荷蘭據點逐漸成形。你見證 VOC 從澎湖受挫後，改在台灣南部建立長期基地。",
+      "rewardGold": 800,
+      "codexIds": ["event_zeelandia", "place_tayouan"]
+    },
+    {
+      "id": "peter_04",
+      "heroId": "peter",
+      "chapter": 4,
+      "title": "鹿皮與蔗糖航線",
+      "year": 1625,
+      "targetPortId": "batavia",
+      "npc": "VOC 會計員",
+      "objective": "帶 5 件鹿皮與 5 件蔗糖回巴達維亞，驗證台灣轉口貿易的價值。",
+      "requirements": {
+        "cargo": [
+          { "goodId": "deerskin", "qty": 5, "consume": true },
+          { "goodId": "sugar", "qty": 5, "consume": true }
+        ]
+      },
+      "prompt": "會計員推了推眼鏡：「大員若只能蓋城，還不算成功。鹿皮能賣到日本，蔗糖能賣到南洋，帳本上看得出它的價值。」",
+      "completion": "你交付鹿皮與蔗糖，證明台灣不只是停船點，也是把中國、日本與南洋貨物串起來的轉口站。",
+      "rewardGold": 900,
+      "codexIds": ["trade_deerskin", "trade_sugar"]
+    },
+    {
       "id": "chiyo_01",
       "heroId": "chiyo",
       "chapter": 1,
@@ -121,6 +189,40 @@
       "completion": "你聽到濱田彌兵衛事件的線索，也看見大員已成為日本、漢人與荷蘭人交會的港口。千代線調查主線已開啟。",
       "rewardGold": 500,
       "codexIds": ["event_hamada", "place_tayouan"]
+    },
+    {
+      "id": "chiyo_03",
+      "heroId": "chiyo",
+      "chapter": 3,
+      "title": "白銀換生絲",
+      "year": 1629,
+      "targetPortId": "yuegang",
+      "npc": "月港牙行商人",
+      "objective": "帶 3 件白銀到月港，打聽中日生絲貿易。",
+      "requirements": {
+        "cargo": [{ "goodId": "silver", "qty": 3, "consume": true }]
+      },
+      "prompt": "牙行商人壓低聲音：「日本白銀人人要，中國生絲人人搶。台灣航線之所以熱鬧，就是因為這兩樣貨能互相牽起來。」",
+      "completion": "你用白銀換來生絲貨源與情報，明白台灣航線連接日本白銀與中國生絲，是朱印船商人最重視的買賣。",
+      "rewardGold": 700,
+      "codexIds": ["trade_silver", "trade_silk"]
+    },
+    {
+      "id": "chiyo_04",
+      "heroId": "chiyo",
+      "chapter": 4,
+      "title": "琉球的轉手航路",
+      "year": 1630,
+      "targetPortId": "naha",
+      "npc": "琉球通事",
+      "objective": "帶 5 件生絲到那霸，了解日本鎖國壓力下的轉手貿易。",
+      "requirements": {
+        "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
+      },
+      "prompt": "通事說：「若日本的門越關越緊，商人就得找別的路。琉球夾在中國、日本、南洋之間，常常替大家傳話，也替貨物找路。」",
+      "completion": "你把生絲交給琉球商人，理解琉球在東亞貿易中的中介角色。千代線下一段將面對鎖國令收緊後的選擇。",
+      "rewardGold": 800,
+      "codexIds": ["place_naha", "event_sakoku_pressure"]
     }
   ],
   "codex": [
@@ -177,6 +279,60 @@
       "type": "地點",
       "title": "大員",
       "body": "大員約在今天台南安平一帶。荷蘭人在此建立熱蘭遮城，把台灣南部作為連接中國、日本與東南亞的轉口貿易基地。"
+    },
+    {
+      "id": "person_zheng_zhilong",
+      "type": "人物",
+      "title": "鄭芝龍",
+      "body": "鄭芝龍是明末台海重要海上勢力領袖，曾在福建、日本與台灣之間活動。他既是商人也是武裝首領，後來接受明朝招撫，掌握龐大的海上貿易網。"
+    },
+    {
+      "id": "event_zheng_rise",
+      "type": "事件",
+      "title": "鄭芝龍崛起",
+      "body": "顏思齊去世後，鄭芝龍逐漸成為台海海商集團的核心人物。他能整合船隊、貿易與武力，也能和明朝官府交涉，影響後來鄭氏集團的發展。"
+    },
+    {
+      "id": "event_zeelandia",
+      "type": "事件",
+      "title": "熱蘭遮城建立",
+      "body": "1624 年後，荷蘭人在大員建立熱蘭遮城。這座城是 VOC 在台灣南部的政治與貿易中心，也讓台灣成為東亞海上貿易的重要轉運點。"
+    },
+    {
+      "id": "trade_deerskin",
+      "type": "貿易品",
+      "title": "鹿皮",
+      "body": "17 世紀台灣鹿群很多，鹿皮可賣到日本製作武士甲冑內襯。荷蘭人在台灣經營鹿皮貿易，也因此和原住民部落、漢人獵戶產生密切關係。"
+    },
+    {
+      "id": "trade_sugar",
+      "type": "貿易品",
+      "title": "蔗糖",
+      "body": "荷蘭時期台灣南部開始發展甘蔗種植與製糖。蔗糖能賣到日本與南洋，是台灣逐漸成為出口基地的重要商品之一。"
+    },
+    {
+      "id": "trade_silk",
+      "type": "貿易品",
+      "title": "生絲",
+      "body": "生絲是中國重要出口品，日本商人與歐洲商館都很想取得。台灣位在中國與日本之間，因此常被當作生絲轉口貿易的中繼點。"
+    },
+    {
+      "id": "trade_silver",
+      "type": "貿易品",
+      "title": "白銀",
+      "body": "白銀在 17 世紀是國際貿易中常用的支付工具。日本銀礦產量高，商人常用白銀購買中國生絲，形成中日貿易的重要循環。"
+    },
+    {
+      "id": "place_naha",
+      "type": "地點",
+      "title": "那霸",
+      "body": "那霸是琉球王國的重要港口。琉球位在中國、日本與東南亞之間，常扮演轉手貿易與外交中介角色。"
+    },
+    {
+      "id": "event_sakoku_pressure",
+      "type": "事件",
+      "title": "鎖國壓力",
+      "body": "17 世紀上半，日本幕府逐步限制海外往來，後來形成鎖國政策。這讓日本商人出海越來越困難，也使琉球、荷蘭等中介管道更加重要。"
     }
   ]
 }
