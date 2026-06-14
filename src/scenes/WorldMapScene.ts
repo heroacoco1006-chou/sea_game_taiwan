@@ -16,7 +16,9 @@ const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
 const PORT_RADIUS = 34;
 const DISCOVERY_RADIUS = 52;
+const SCENERY_HINT_RADIUS = 180;
 const EXPLORE_RADIUS = 58;
+const EXPLORE_REVEAL_RADIUS = 180;
 const PIRATE_RADIUS = 64;
 const MINIMAP_W = 220;
 const MINIMAP_H = 165;
@@ -40,6 +42,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }> = [];
   private pirateMarker: Phaser.GameObjects.Image | null = null;
   private nearDiscovery: DiscoveryEntry | null = null;
+  private nearbySceneryHint: DiscoveryEntry | null = null;
   private nearExplorePoint: ExplorationPoint | null = null;
   private nearPirate = false;
 
@@ -91,12 +94,11 @@ export default class WorldMapScene extends Phaser.Scene {
       this.add.text(p.x, p.y + 20, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setShadow(1, 1, '#000', 2);
     }
 
-    this.createExplorationMarkers();
-
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
     this.ship = this.add.image(this.state.ship.x, this.state.ship.y, 'ship').setDepth(10);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.ship, true, 0.12, 0.12);
+    this.createExplorationMarkers();
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,ENTER') as typeof this.keys;
@@ -130,14 +132,15 @@ export default class WorldMapScene extends Phaser.Scene {
     for (const entry of DISCOVERIES.filter((d) => d.kind === 'scenery' && typeof d.x === 'number' && typeof d.y === 'number')) {
       const icon = this.add.image(entry.x!, entry.y!, 'marker_telescope').setDepth(9).setScale(0.85).setAlpha(0.92);
       icon.setInteractive({ useHandCursor: true });
+      icon.setVisible(false);
       icon.on('pointerdown', () => this.tryDiscoverScenery(entry));
       this.discoveryMarkers.push({ entry, icon });
     }
 
     for (const point of EXPLORATION_POINTS) {
-      const icon = this.add.image(point.x, point.y, 'marker_explore').setDepth(8).setAlpha(0.88);
+      const icon = this.add.image(point.x, point.y, 'marker_question').setDepth(8).setAlpha(0.82);
       const label = this.add
-        .text(point.x, point.y + 24, point.name, textStyle(13, '#fff4d6'))
+        .text(point.x, point.y + 24, '？', textStyle(16, '#fff4d6'))
         .setOrigin(0.5)
         .setDepth(8)
         .setShadow(1, 1, '#000', 2);
@@ -253,15 +256,18 @@ export default class WorldMapScene extends Phaser.Scene {
         break;
       }
     }
+    this.refreshExplorationMarkers();
     this.nearDiscovery = this.findNearDiscovery();
+    this.nearbySceneryHint = this.findNearbySceneryHint();
     this.nearExplorePoint = this.findNearExplorePoint();
     this.nearPirate = this.isNearPirateMarker();
 
     let hint = '方向鍵或 WASD 航行｜留意糧水與風向｜靠近港口按 Enter 入港';
     if (this.nearPort) hint = `按 Enter 進入【${this.nearPort.name}】`;
     else if (this.nearPirate) hint = '按 Enter 討伐海盜';
-    else if (this.nearDiscovery) hint = `按 Enter 用望遠鏡觀察【${this.nearDiscovery.title}】`;
-    else if (this.nearExplorePoint) hint = `按 Enter 探索【${this.nearExplorePoint.name}】`;
+    else if (this.nearDiscovery) hint = `按 Enter 觀察【${this.nearDiscovery.title}】`;
+    else if (this.nearExplorePoint) hint = `按 Enter 探索【${this.explorationPointLabel(this.nearExplorePoint)}】`;
+    else if (this.nearbySceneryHint) hint = '附近海岸似乎有值得觀察的景物，再靠近一點看看。';
     this.hint.setText(hint);
 
     if (this.nearPort && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
@@ -276,21 +282,27 @@ export default class WorldMapScene extends Phaser.Scene {
       else if (this.nearExplorePoint) this.tryExplorePoint(this.nearExplorePoint);
     }
 
-    this.refreshExplorationMarkers();
   }
 
   private refreshExplorationMarkers(): void {
     const found = new Set(this.state.story.codex);
     for (const marker of this.discoveryMarkers) {
-      marker.icon.setVisible(!found.has(marker.entry.id));
+      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!);
+      marker.icon.setVisible(!found.has(marker.entry.id) && dist <= DISCOVERY_RADIUS);
     }
     for (const marker of this.exploreMarkers) {
       const activeQuest = this.state.quest?.type === 'exploration' && this.state.quest.pointId === marker.point.id && !this.state.quest.completed;
       const hasNewFind = marker.point.discoveries.some((id) => !found.has(id));
       const visible = activeQuest || hasNewFind;
+      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.point.x, marker.point.y);
+      if (visible && dist <= EXPLORE_REVEAL_RADIUS) this.revealExplorationPoint(marker.point.id);
+      const known = activeQuest || this.isExplorationPointKnown(marker.point);
       marker.icon.setVisible(visible);
       marker.label.setVisible(visible);
-      marker.icon.setAlpha(activeQuest ? 1 : 0.75);
+      marker.icon.setTexture(known ? 'marker_explore' : 'marker_question');
+      marker.icon.setAlpha(activeQuest ? 1 : known ? 0.88 : 0.68);
+      marker.label.setText(known ? marker.point.name : '？');
+      marker.label.setFontSize(known ? 13 : 16);
     }
     if (this.pirateMarker) {
       const q = this.state.quest;
@@ -298,10 +310,37 @@ export default class WorldMapScene extends Phaser.Scene {
     }
   }
 
+  private isExplorationPointKnown(point: ExplorationPoint): boolean {
+    return (
+      this.state.discoveredExplorationPoints.includes(point.id) ||
+      point.discoveries.some((id) => this.state.story.codex.includes(id))
+    );
+  }
+
+  private revealExplorationPoint(pointId: string): void {
+    if (this.state.discoveredExplorationPoints.includes(pointId)) return;
+    this.state.discoveredExplorationPoints.push(pointId);
+    saveGame(this.state);
+  }
+
+  private explorationPointLabel(point: ExplorationPoint): string {
+    return this.isExplorationPointKnown(point) ? point.name : '可疑地點';
+  }
+
   private findNearDiscovery(): DiscoveryEntry | null {
     for (const marker of this.discoveryMarkers) {
       if (!marker.icon.visible) continue;
       if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!) <= DISCOVERY_RADIUS) {
+        return marker.entry;
+      }
+    }
+    return null;
+  }
+
+  private findNearbySceneryHint(): DiscoveryEntry | null {
+    for (const marker of this.discoveryMarkers) {
+      if (this.state.story.codex.includes(marker.entry.id)) continue;
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!) <= SCENERY_HINT_RADIUS) {
         return marker.entry;
       }
     }
@@ -345,7 +384,9 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private tryExplorePoint(point: ExplorationPoint): void {
     if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, point.x, point.y) > EXPLORE_RADIUS) {
-      this.pauseWithModal('還太遠', '再靠近探索點，才能派人上岸調查。', [{ label: '繼續航行', onPick: () => {} }]);
+      this.pauseWithModal('還太遠', '那裡看起來有些可疑，但還看不清楚。再靠近一點，才能確認地點並派人上岸調查。', [
+        { label: '繼續航行', onPick: () => {} },
+      ]);
       return;
     }
     const nextDiscovery = point.discoveries.find((id) => !this.state.story.codex.includes(id));

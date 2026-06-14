@@ -267,6 +267,8 @@ export interface GameState {
   statuses: SeaStatus[];
   /** 已造訪過的港口 id（用於首次進港的港口介紹） */
   visitedPorts: string[];
+  /** 已靠近確認過的探索點 id（未確認前世界地圖只顯示問號） */
+  discoveredExplorationPoints: string[];
   /** M4 主線劇情與圖鑑進度 */
   story: StoryState;
   /** 造船廠建造中的船 */
@@ -417,7 +419,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 11,
+    version: 12,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -436,6 +438,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     inventory: {},
     statuses: [],
     visitedPorts: [],
+    discoveredExplorationPoints: [],
     story: {
       heroId: hero.id,
       chapter: 1,
@@ -830,6 +833,12 @@ export function loadGame(): GameState | null {
         full.quest = { ...(oldQuest as Omit<DeliveryQuest, 'type'>), type: 'delivery' };
       }
       full.version = 11;
+    }
+    // v11 → v12：探索點改為問號揭露，需要記錄已確認探索點。
+    if (s.version < 12) {
+      const full = s as GameState;
+      full.discoveredExplorationPoints = full.discoveredExplorationPoints ?? [];
+      full.version = 12;
     }
     return s as GameState;
   } catch {

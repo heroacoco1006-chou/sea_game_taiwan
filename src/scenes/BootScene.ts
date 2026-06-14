@@ -91,6 +91,20 @@ export default class BootScene extends Phaser.Scene {
       g.fillCircle(17, 17, 4);
     });
 
+    mk('marker_question', (g) => {
+      g.fillStyle(0xf2e3bd, 1);
+      g.fillCircle(17, 17, 15);
+      g.lineStyle(2, 0x3a2a14, 1);
+      g.strokeCircle(17, 17, 13);
+      g.fillStyle(0x3a2a14, 1);
+      g.fillCircle(17, 25, 2);
+      g.lineStyle(3, 0x3a2a14, 1);
+      g.beginPath();
+      g.arc(17, 13, 6, Math.PI * 1.08, Math.PI * 2.2);
+      g.strokePath();
+      g.lineBetween(20, 17, 17, 21);
+    });
+
     mk('marker_pirate', (g) => {
       g.fillStyle(0x2b1b14, 1);
       g.fillCircle(17, 17, 15);
