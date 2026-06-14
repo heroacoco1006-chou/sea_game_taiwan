@@ -27,6 +27,7 @@ export default class BattleScene extends Phaser.Scene {
   private foeText!: Phaser.GameObjects.Text;
   private buttons: Phaser.GameObjects.Container[] = [];
   private busy = false;
+  private questCombat = false;
 
   constructor() {
     super('Battle');
@@ -36,12 +37,14 @@ export default class BattleScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(): void {
+  init(data?: { questCombat?: boolean }): void {
     const s = this.state;
+    this.questCombat = Boolean(data?.questCombat);
     // 敵人規模隨遊戲天數成長
-    if (s.day < 60) {
+    const tier = s.quest?.type === 'combat' ? s.quest.enemyTier : s.day < 60 ? 1 : s.day < 180 ? 2 : 3;
+    if (tier <= 1) {
       this.enemy = { name: '海盜小船', hull: 60, hullMax: 60, cannons: 2, crew: 10, loot: 120 + Math.floor(Math.random() * 120) };
-    } else if (s.day < 180) {
+    } else if (tier <= 2) {
       this.enemy = { name: '海盜戎克船', hull: 110, hullMax: 110, cannons: 4, crew: 20, loot: 250 + Math.floor(Math.random() * 250) };
     } else {
       this.enemy = { name: '海盜頭目的快船', hull: 160, hullMax: 160, cannons: 6, crew: 32, loot: 500 + Math.floor(Math.random() * 400) };
@@ -180,8 +183,11 @@ export default class BattleScene extends Phaser.Scene {
     const s = this.state;
     const loot = boarded ? Math.round(this.enemy.loot * 1.5) : this.enemy.loot;
     s.gold += loot;
+    if (this.questCombat && s.quest?.type === 'combat') {
+      s.quest.completed = true;
+    }
     this.refreshPanels();
-    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}`);
+    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}`);
   }
 
   private defeat(): void {

@@ -3,6 +3,7 @@ import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
   hullMax, supplyMax, crewMax, questOffer, sailableDays,
   currentStoryChapter, completeStoryChapter, storyTargetPort, storyRequirementText,
+  questProgressText, questTitle, explorationPointById, unlockCodex,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -205,14 +206,28 @@ export default class FacilityScene extends Phaser.Scene {
 
     if (!s.quest) {
       const offer = questOffer(s, this.port);
-      const target = PORTS.find((p) => p.id === offer.portId)!;
-      const good = GOODS.find((g) => g.id === offer.goodId)!;
+      let offerText = '';
+      if (offer.type === 'delivery') {
+        const target = PORTS.find((p) => p.id === offer.portId)!;
+        const good = GOODS.find((g) => g.id === offer.goodId)!;
+        offerText =
+          `正好有件採購委託——替我們把【${good.name}×${offer.qty}】送到【${target.name}】（${target.region}），` +
+          `期限 ${dateText(offer.deadlineDay)} 前，酬勞 ${offer.reward} 兩。貨要你自己備齊，如何？`;
+      } else if (offer.type === 'combat') {
+        offerText =
+          `正好有件海戰委託——${offer.title}。接下後，海上會出現骷髏標記；靠近標記後應戰，勝利再回來領 ${offer.reward} 兩。` +
+          `期限是 ${dateText(offer.deadlineDay)}。`;
+      } else {
+        const point = explorationPointById(offer.pointId);
+        offerText =
+          `正好有件探險委託——前往【${point?.name ?? offer.pointId}】調查。探索會消耗糧食與清水，可能發現風景、物種或寶物。` +
+          `完成後回來領 ${offer.reward} 兩，期限是 ${dateText(offer.deadlineDay)}。`;
+      }
       const storyHint = chapter && targetPort
         ? `\n\n目前主線：第 ${chapter.chapter} 章「${chapter.title}」；請前往【${targetPort.name}】。`
         : '\n\n目前可玩的 M4 示範主線已完成，仍可繼續自由貿易與接委託。';
       this.body.setText(
-        `${head}放下文書：「${this.port.desc}」\n\n「正好有件委託——替我們把【${good.name}×${offer.qty}】送到【${target.name}】（${target.region}），` +
-        `期限 ${dateText(offer.deadlineDay)} 前，酬勞 ${offer.reward} 兩。貨要你自己備齊，如何？」${storyHint}`
+        `${head}放下文書：「${this.port.desc}」\n\n「${offerText}」${storyHint}`
       );
       makeButton(this, W / 2, 520, 300, 52, '接受委託', () => {
         s.quest = { ...offer };
@@ -225,11 +240,9 @@ export default class FacilityScene extends Phaser.Scene {
     }
 
     const q = s.quest;
-    const target = PORTS.find((p) => p.id === q.portId)!;
-    const good = GOODS.find((g) => g.id === q.goodId)!;
-    const have = s.cargo[q.goodId] ?? 0;
-
-    if (q.portId === this.port.id) {
+    if (q.type === 'delivery' && q.portId === this.port.id) {
+      const good = GOODS.find((g) => g.id === q.goodId)!;
+      const have = s.cargo[q.goodId] ?? 0;
       if (have >= q.qty) {
         this.body.setText(`${head}清點貨物：「【${good.name}×${q.qty}】一件不少，辛苦了！這是說好的 ${q.reward} 兩。」`);
         makeButton(this, W / 2, 520, 300, 52, `交付貨物（領 ${q.reward} 兩）`, () => {
@@ -255,9 +268,22 @@ export default class FacilityScene extends Phaser.Scene {
       return;
     }
 
+    if ((q.type === 'combat' || q.type === 'exploration') && q.originPortId === this.port.id && q.completed) {
+      this.body.setText(`${head}翻開委託簿：「${questTitle(q)}已經完成了。辛苦你跑這一趟，這是說好的 ${q.reward} 兩。」`);
+      makeButton(this, W / 2, 520, 300, 52, `回報委託（領 ${q.reward} 兩）`, () => {
+        s.gold += q.reward;
+        const unlocked = unlockCodex(s, q.codexIds);
+        s.quest = null;
+        saveGame(s);
+        this.refreshInfo();
+        toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}`);
+        this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
+      });
+      return;
+    }
+
     this.body.setText(
-      `${head}：「${this.port.desc}」\n\n目前的委託：送【${good.name}×${q.qty}】到【${target.name}】（持有 ${have}/${q.qty}），` +
-      `期限 ${dateText(q.deadlineDay)}，酬勞 ${q.reward} 兩。`
+      `${head}：「${this.port.desc}」\n\n目前的委託：\n${questProgressText(s, q)}`
     );
     makeButton(this, W / 2, 540, 260, 48, '放棄這件委託', () => {
       s.quest = null;

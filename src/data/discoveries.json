@@ -1,0 +1,464 @@
+{
+  "discoveries": [
+    {
+      "id": "view_qingshui_cliff",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "清水斷崖",
+      "body": "清水斷崖位在台灣東岸，高山幾乎直接落入太平洋。從海上望去，能感受到台灣東部海岸陡峭壯觀，也能理解航行時為什麼要小心風浪。",
+      "x": 3885,
+      "y": 2420,
+      "rewardGold": 80
+    },
+    {
+      "id": "view_taiwan_west_lagoons",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "台灣西南潟湖",
+      "body": "大員附近有沙洲、潟湖與淺海，適合船隻停靠，也讓荷蘭人在這裡建立據點。這種地形是台灣南部早期港口發展的重要條件。",
+      "x": 3560,
+      "y": 2800,
+      "rewardGold": 60
+    },
+    {
+      "id": "view_penghu_basalt",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "澎湖玄武岩",
+      "body": "澎湖有許多火山岩地形，柱狀玄武岩像一排排石柱立在海邊。它提醒玩家，島嶼不只有港口，也有獨特的地質故事。",
+      "x": 3390,
+      "y": 2650,
+      "rewardGold": 60
+    },
+    {
+      "id": "view_quanzhou_mazu",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "泉州媽祖廟",
+      "body": "福建海商出海前常祭拜媽祖，祈求平安。媽祖信仰隨著移民與商船傳到台灣、澎湖與東南亞，是航海文化的一部分。",
+      "x": 3300,
+      "y": 2360,
+      "rewardGold": 60
+    },
+    {
+      "id": "view_yuegang_river",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "月港河道",
+      "body": "月港是明代重要民間海外貿易港。河道連接內地市場與海船，讓福建貨物能走向台灣、日本與南洋。",
+      "x": 3160,
+      "y": 2490,
+      "rewardGold": 60
+    },
+    {
+      "id": "view_macau_church",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "澳門大三巴",
+      "body": "澳門是葡萄牙人在中國沿海的重要據點。教堂、商館與港口讓這裡成為歐洲貨物進入東亞的窗口之一。",
+      "x": 2760,
+      "y": 2765,
+      "rewardGold": 70
+    },
+    {
+      "id": "view_nagasaki_dejima",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "長崎出島",
+      "body": "出島是長崎港內的人工島。日本鎖國後，荷蘭商人主要透過這裡與日本貿易，使長崎成為重要的對外窗口。",
+      "x": 5355,
+      "y": 980,
+      "rewardGold": 70
+    },
+    {
+      "id": "view_hirado_trading_post",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "平戶商館",
+      "body": "平戶曾有荷蘭、英國與華人商人活動，是日本對外貿易的重要港口。朱印船時代，許多商人從這裡出海。",
+      "x": 5210,
+      "y": 810,
+      "rewardGold": 70
+    },
+    {
+      "id": "view_shuri_castle",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "首里城",
+      "body": "首里城是琉球王國的政治中心。琉球夾在中國、日本與南洋之間，靠著外交與轉口貿易維持自己的位置。",
+      "x": 4550,
+      "y": 1880,
+      "rewardGold": 70
+    },
+    {
+      "id": "view_manila_walls",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "馬尼拉城牆",
+      "body": "西班牙人在馬尼拉建立城牆城市，讓它成為跨太平洋大帆船貿易的中心。墨西哥白銀也從這裡流入亞洲市場。",
+      "x": 4000,
+      "y": 3560,
+      "rewardGold": 80
+    },
+    {
+      "id": "view_hoian_bridge",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "會安日本橋",
+      "body": "會安曾有日本人町與唐人街。日本橋象徵不同商人社群在同一座港口城市中往來、交易與生活。",
+      "x": 2735,
+      "y": 3515,
+      "rewardGold": 70
+    },
+    {
+      "id": "view_malacca_strait",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "麻六甲海峽",
+      "body": "麻六甲海峽連接印度洋與南海，是東西方船隊必經的航路。控制這裡，就能影響香料、絲綢與白銀的流動。",
+      "x": 1450,
+      "y": 4770,
+      "rewardGold": 90
+    },
+    {
+      "id": "view_batavia_canal",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "巴達維亞運河",
+      "body": "巴達維亞是 VOC 在亞洲的總部。荷蘭人挖運河、建倉庫，把這裡變成管理東南亞貿易的重要城市。",
+      "x": 2300,
+      "y": 5315,
+      "rewardGold": 80
+    },
+    {
+      "id": "view_banten_pepper",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "萬丹胡椒市集",
+      "body": "萬丹以胡椒聞名，許多國家的商船都想在這裡買到香料。市集反映出東南亞港口的熱鬧與競爭。",
+      "x": 1990,
+      "y": 5360,
+      "rewardGold": 80
+    },
+    {
+      "id": "view_banda_islands",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "班達群島",
+      "body": "班達群島是肉豆蔻的重要產地。這種香料在歐洲非常昂貴，也讓各國勢力為了控制產地而競爭。",
+      "x": 4205,
+      "y": 5495,
+      "rewardGold": 90
+    },
+    {
+      "id": "geo_yushan",
+      "kind": "geography",
+      "type": "地理",
+      "title": "玉山",
+      "body": "玉山是台灣最高的山。遊戲中以現代名稱教學，提醒玩家台灣不只有海港，內陸高山也是重要地理特色。"
+    },
+    {
+      "id": "geo_alishan",
+      "kind": "geography",
+      "type": "地理",
+      "title": "阿里山森林",
+      "body": "阿里山一帶有高山森林與豐富生物。以遊戲探索呈現，可以讓玩家理解台灣地形從海岸到高山變化很大。"
+    },
+    {
+      "id": "geo_unzen",
+      "kind": "geography",
+      "type": "地理",
+      "title": "雲仙火山",
+      "body": "雲仙位於日本九州，附近有火山與溫泉地形。港口城市的背後，也有山地、火山與內陸交通。"
+    },
+    {
+      "id": "geo_java_volcano",
+      "kind": "geography",
+      "type": "地理",
+      "title": "爪哇火山",
+      "body": "爪哇有許多火山，火山灰讓土地肥沃。肥沃土地支持稻米、胡椒與城市發展。"
+    },
+    {
+      "id": "culture_siraya",
+      "kind": "culture",
+      "type": "文化",
+      "title": "西拉雅平原社",
+      "body": "西拉雅族群生活在台灣西南平原。遊戲中的描述以交流與互助為主，避免把原住民族寫成單純的危險或障礙。"
+    },
+    {
+      "id": "culture_mazu",
+      "kind": "culture",
+      "type": "文化",
+      "title": "媽祖信仰",
+      "body": "媽祖是沿海居民與海商常祭拜的海神。信仰跟著移民、商船與港口網絡傳播到台灣與東南亞。"
+    },
+    {
+      "id": "culture_ming_court",
+      "kind": "culture",
+      "type": "文化",
+      "title": "明末朝貢秩序",
+      "body": "明朝用朝貢與海禁管理對外關係，但民間貿易需求很強。這種制度與現實需求的拉扯，是大航海時代東亞的重要背景。"
+    },
+    {
+      "id": "culture_korean_seowon",
+      "kind": "culture",
+      "type": "文化",
+      "title": "朝鮮書院文化",
+      "body": "朝鮮王朝重視儒學教育，書院是地方士人讀書與講學的地方。這能補足東亞文化圈的學習面向。"
+    },
+    {
+      "id": "culture_sakai_merchants",
+      "kind": "culture",
+      "type": "文化",
+      "title": "堺商人",
+      "body": "堺是日本重要商業城市，商人與工匠活躍。鐵砲、刀劍與貿易讓它在戰國到江戶初期很有影響力。"
+    },
+    {
+      "id": "view_sakai_workshops",
+      "kind": "scenery",
+      "type": "風景",
+      "title": "堺工坊街",
+      "body": "堺的工坊與商家讓城市充滿手工業氣息。這裡可以理解日本商人如何支撐海上貿易與城市經濟。"
+    },
+    {
+      "id": "place_forbidden_city",
+      "kind": "place",
+      "type": "地點",
+      "title": "紫禁城",
+      "body": "紫禁城是明清皇宮。遊戲中把它作為內陸遠行發現，讓玩家知道沿海貿易也連著帝國的政治中心。"
+    },
+    {
+      "id": "place_hanyang",
+      "kind": "place",
+      "type": "地點",
+      "title": "漢陽城",
+      "body": "漢陽是朝鮮王朝都城，也就是今日首爾一帶。它讓遊戲地圖的東亞範圍不只停在中國、日本與台灣。"
+    },
+    {
+      "id": "sp_swinhoe_frog",
+      "kind": "species",
+      "type": "物種",
+      "title": "斯文豪氏樹蛙",
+      "body": "斯文豪氏樹蛙是台灣常見的樹蛙之一。名稱是現代分類，遊戲用它教玩家認識台灣生物多樣性。"
+    },
+    {
+      "id": "sp_taiwan_blue_magpie",
+      "kind": "species",
+      "type": "物種",
+      "title": "台灣藍鵲",
+      "body": "台灣藍鵲羽色鮮明，常成群活動。牠是台灣特有鳥類之一，適合放在山林探索圖鑑中。"
+    },
+    {
+      "id": "sp_mikado_pheasant",
+      "kind": "species",
+      "type": "物種",
+      "title": "帝雉",
+      "body": "帝雉生活在台灣中高海拔山區。遊戲使用現代名稱，幫助玩家記得台灣高山也有獨特動物。"
+    },
+    {
+      "id": "sp_taiwan_macaque",
+      "kind": "species",
+      "type": "物種",
+      "title": "台灣獼猴",
+      "body": "台灣獼猴是台灣唯一原生猴類。牠們常在山林活動，是探索台灣東部與中部時可能觀察到的動物。"
+    },
+    {
+      "id": "sp_sika_deer",
+      "kind": "species",
+      "type": "物種",
+      "title": "梅花鹿",
+      "body": "17 世紀台灣鹿群很多，鹿皮是重要貿易品。梅花鹿讓玩家把生物、狩獵與貿易連在一起理解。"
+    },
+    {
+      "id": "sp_taiwan_black_bear",
+      "kind": "species",
+      "type": "物種",
+      "title": "台灣黑熊",
+      "body": "台灣黑熊生活在山林，是台灣大型哺乳動物。探索時發現牠，代表玩家深入了較難到達的山地環境。"
+    },
+    {
+      "id": "sp_formosan_salmon",
+      "kind": "species",
+      "type": "物種",
+      "title": "櫻花鉤吻鮭",
+      "body": "櫻花鉤吻鮭是台灣冷水溪流中的珍貴魚類。名稱是現代分類，遊戲中用來說明高山溪流生態。"
+    },
+    {
+      "id": "sp_taiwan_salamander",
+      "kind": "species",
+      "type": "物種",
+      "title": "台灣山椒魚",
+      "body": "台灣山椒魚生活在涼爽潮濕的高山環境。牠提醒玩家，台灣高山有和海港完全不同的生態。"
+    },
+    {
+      "id": "sp_lanyu_scops_owl",
+      "kind": "species",
+      "type": "物種",
+      "title": "蘭嶼角鴞",
+      "body": "蘭嶼角鴞是台灣離島特色鳥類。後續若新增蘭嶼或東部海域任務，可把它放入更完整的探索線。"
+    },
+    {
+      "id": "sp_green_turtle",
+      "kind": "species",
+      "type": "物種",
+      "title": "綠蠵龜",
+      "body": "綠蠵龜會在海中長距離移動，也會到沙灘產卵。它適合連結海岸、島嶼與保育教育。"
+    },
+    {
+      "id": "sp_red_crowned_crane",
+      "kind": "species",
+      "type": "物種",
+      "title": "丹頂鶴",
+      "body": "丹頂鶴分布在東北亞濕地，是東亞文化中常見的鳥類意象。遊戲可用它介紹朝鮮與東北亞環境。"
+    },
+    {
+      "id": "sp_japanese_macaque",
+      "kind": "species",
+      "type": "物種",
+      "title": "日本獼猴",
+      "body": "日本獼猴能適應寒冷山區，也常出現在日本山林故事中。雲仙山路探索可觀察牠們的活動。"
+    },
+    {
+      "id": "sp_ryukyu_flying_fox",
+      "kind": "species",
+      "type": "物種",
+      "title": "琉球狐蝠",
+      "body": "琉球狐蝠是大型果蝠，和島嶼森林關係密切。牠讓琉球探索不只停在港口與城堡。"
+    },
+    {
+      "id": "sp_ryukyu_kingfisher",
+      "kind": "species",
+      "type": "物種",
+      "title": "琉球翠鳥",
+      "body": "琉球翠鳥代表島嶼鳥類的特色。遊戲可用它說明小島也有自己的生態環境。"
+    },
+    {
+      "id": "sp_korean_tiger",
+      "kind": "species",
+      "type": "物種",
+      "title": "朝鮮虎",
+      "body": "朝鮮虎曾出現在朝鮮半島山林與民間故事中。遊戲描述時以遠望與傳聞為主，不做血腥狩獵。"
+    },
+    {
+      "id": "sp_koi",
+      "kind": "species",
+      "type": "物種",
+      "title": "錦鯉",
+      "body": "錦鯉是人工培育與觀賞文化的一部分。它可以放在日本城市或庭園相關探索中。"
+    },
+    {
+      "id": "sp_giant_salamander",
+      "kind": "species",
+      "type": "物種",
+      "title": "大鯢",
+      "body": "大鯢是大型兩棲動物，生活在乾淨溪流中。牠能讓玩家理解河川環境的重要。"
+    },
+    {
+      "id": "sp_orangutan",
+      "kind": "species",
+      "type": "物種",
+      "title": "紅毛猩猩",
+      "body": "紅毛猩猩生活在東南亞森林。牠提醒玩家，香料航路附近也有非常豐富的熱帶森林生態。"
+    },
+    {
+      "id": "sp_hornbill",
+      "kind": "species",
+      "type": "物種",
+      "title": "犀鳥",
+      "body": "犀鳥有巨大的嘴與盔突，是熱帶森林醒目的鳥類。牠常出現在東南亞森林探索中。"
+    },
+    {
+      "id": "sp_bird_of_paradise",
+      "kind": "species",
+      "type": "物種",
+      "title": "天堂鳥",
+      "body": "天堂鳥以華麗羽毛聞名，分布在新幾內亞與周邊地區。香料群島探索可用牠引出東方島嶼的自然多樣性。"
+    },
+    {
+      "id": "sp_javan_rhino",
+      "kind": "species",
+      "type": "物種",
+      "title": "爪哇犀牛",
+      "body": "爪哇犀牛是東南亞大型動物。遊戲中用遠距觀察呈現，讓探索有驚喜但不鼓勵狩獵。"
+    },
+    {
+      "id": "sp_komodo_dragon",
+      "kind": "species",
+      "type": "物種",
+      "title": "科摩多巨蜥",
+      "body": "科摩多巨蜥生活在印尼部分島嶼。雖不在主要港口旁，但可作為後續高難度探險任務的物種。"
+    },
+    {
+      "id": "sp_sumatran_tiger",
+      "kind": "species",
+      "type": "物種",
+      "title": "蘇門答臘虎",
+      "body": "蘇門答臘虎是熱帶森林的大型貓科動物。遊戲可用腳印或傳聞方式呈現，避免血腥內容。"
+    },
+    {
+      "id": "sp_tarsier",
+      "kind": "species",
+      "type": "物種",
+      "title": "眼鏡猴",
+      "body": "眼鏡猴眼睛很大，夜間活動。牠適合出現在東南亞島嶼夜間探索事件中。"
+    },
+    {
+      "id": "sp_coconut_crab",
+      "kind": "species",
+      "type": "物種",
+      "title": "椰子蟹",
+      "body": "椰子蟹是大型陸寄居蟹，能爬樹取食。牠能讓海島探索多一點有趣的自然觀察。"
+    },
+    {
+      "id": "sp_sea_turtle",
+      "kind": "species",
+      "type": "物種",
+      "title": "海龜",
+      "body": "海龜會在大海中長距離遷徙，也和沙灘、珊瑚礁生態有關。牠適合連結航海與保育教育。"
+    },
+    {
+      "id": "sp_coral_reef_fish",
+      "kind": "species",
+      "type": "物種",
+      "title": "珊瑚礁魚群",
+      "body": "珊瑚礁魚群色彩豐富，代表熱帶海域的生態。玩家靠近島嶼時可透過探索認識海下世界。"
+    },
+    {
+      "id": "sp_clove_tree",
+      "kind": "species",
+      "type": "物種",
+      "title": "丁香樹",
+      "body": "丁香是香料群島的重要植物，乾燥花苞可作香料。它讓玩家知道香料不是憑空來的，而是來自特定植物。"
+    },
+    {
+      "id": "sp_nutmeg_tree",
+      "kind": "species",
+      "type": "物種",
+      "title": "肉豆蔻樹",
+      "body": "肉豆蔻原產地很集中，曾是歐洲人爭奪的昂貴香料。班達群島因此成為世界貿易競爭的焦點。"
+    },
+    {
+      "id": "sp_banteng_pepper",
+      "kind": "species",
+      "type": "物種",
+      "title": "胡椒藤",
+      "body": "胡椒藤結出的果實曬乾後就是胡椒。萬丹、爪哇等地的胡椒貿易，讓東南亞港口非常熱鬧。"
+    },
+    {
+      "id": "tr_mazu_amulet",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "海商護符",
+      "body": "這枚護符代表海商出航前祈求平安的習俗。它目前作為探索寶物圖鑑，後續可改成任務獎勵或飾品。",
+      "rewardGold": 150
+    },
+    {
+      "id": "tr_merchant_abacus",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "堺商人的小算盤",
+      "body": "小算盤象徵商人精打細算的能力。它可作為早期探索寶物，讓玩家感覺探險也能幫助貿易。",
+      "rewardGold": 180
+    }
+  ]
+}

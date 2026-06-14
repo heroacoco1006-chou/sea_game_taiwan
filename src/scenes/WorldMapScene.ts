@@ -7,12 +7,17 @@ import {
   fleetMinCrew, crewMax,
   gearSpeedMod, stormDamageMod, ambushMod, fatigueMod, statusSpeedMod,
   addSeaStatus, hasSeaStatus, statusSummary,
+  EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
+  unlockCodex,
 } from '../state';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
 const PORT_RADIUS = 34;
+const DISCOVERY_RADIUS = 52;
+const EXPLORE_RADIUS = 58;
+const PIRATE_RADIUS = 64;
 const MINIMAP_W = 220;
 const MINIMAP_H = 165;
 
@@ -31,6 +36,12 @@ export default class WorldMapScene extends Phaser.Scene {
   private wind!: Wind;
   private heading = 0;
   private paused = false; // 事件對話框出現時暫停航行
+  private discoveryMarkers: Array<{ entry: DiscoveryEntry; icon: Phaser.GameObjects.Image }> = [];
+  private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }> = [];
+  private pirateMarker: Phaser.GameObjects.Image | null = null;
+  private nearDiscovery: DiscoveryEntry | null = null;
+  private nearExplorePoint: ExplorationPoint | null = null;
+  private nearPirate = false;
 
   constructor() {
     super('WorldMap');
@@ -80,6 +91,8 @@ export default class WorldMapScene extends Phaser.Scene {
       this.add.text(p.x, p.y + 20, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setShadow(1, 1, '#000', 2);
     }
 
+    this.createExplorationMarkers();
+
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
     this.ship = this.add.image(this.state.ship.x, this.state.ship.y, 'ship').setDepth(10);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -107,6 +120,41 @@ export default class WorldMapScene extends Phaser.Scene {
     this.wind = windOf(this.state.day);
     refreshMarketEvents(this.state);
     this.updateHud();
+  }
+
+  private createExplorationMarkers(): void {
+    this.discoveryMarkers = [];
+    this.exploreMarkers = [];
+    this.pirateMarker = null;
+
+    for (const entry of DISCOVERIES.filter((d) => d.kind === 'scenery' && typeof d.x === 'number' && typeof d.y === 'number')) {
+      const icon = this.add.image(entry.x!, entry.y!, 'marker_telescope').setDepth(9).setScale(0.85).setAlpha(0.92);
+      icon.setInteractive({ useHandCursor: true });
+      icon.on('pointerdown', () => this.tryDiscoverScenery(entry));
+      this.discoveryMarkers.push({ entry, icon });
+    }
+
+    for (const point of EXPLORATION_POINTS) {
+      const icon = this.add.image(point.x, point.y, 'marker_explore').setDepth(8).setAlpha(0.88);
+      const label = this.add
+        .text(point.x, point.y + 24, point.name, textStyle(13, '#fff4d6'))
+        .setOrigin(0.5)
+        .setDepth(8)
+        .setShadow(1, 1, '#000', 2);
+      icon.setInteractive({ useHandCursor: true });
+      icon.on('pointerdown', () => this.tryExplorePoint(point));
+      this.exploreMarkers.push({ point, icon, label });
+    }
+
+    const q = this.state.quest;
+    if (q?.type === 'combat' && !q.completed) {
+      this.pirateMarker = this.add.image(q.targetX, q.targetY, 'marker_pirate').setDepth(9).setScale(1.1);
+      this.add.text(q.targetX, q.targetY + 28, '海盜', textStyle(14, '#fff4d6')).setOrigin(0.5).setDepth(9).setShadow(1, 1, '#000', 2);
+      this.pirateMarker.setInteractive({ useHandCursor: true });
+      this.pirateMarker.on('pointerdown', () => this.tryStartQuestBattle());
+    }
+
+    this.refreshExplorationMarkers();
   }
 
   // ----- 羅盤（含風向箭頭） -----
@@ -205,11 +253,16 @@ export default class WorldMapScene extends Phaser.Scene {
         break;
       }
     }
-    this.hint.setText(
-      this.nearPort
-        ? `按 Enter 進入【${this.nearPort.name}】`
-        : '方向鍵或 WASD 航行｜留意糧水與風向｜靠近港口按 Enter 入港'
-    );
+    this.nearDiscovery = this.findNearDiscovery();
+    this.nearExplorePoint = this.findNearExplorePoint();
+    this.nearPirate = this.isNearPirateMarker();
+
+    let hint = '方向鍵或 WASD 航行｜留意糧水與風向｜靠近港口按 Enter 入港';
+    if (this.nearPort) hint = `按 Enter 進入【${this.nearPort.name}】`;
+    else if (this.nearPirate) hint = '按 Enter 討伐海盜';
+    else if (this.nearDiscovery) hint = `按 Enter 用望遠鏡觀察【${this.nearDiscovery.title}】`;
+    else if (this.nearExplorePoint) hint = `按 Enter 探索【${this.nearExplorePoint.name}】`;
+    this.hint.setText(hint);
 
     if (this.nearPort && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
       // 入港：航行天數歸零、疲勞稍降（上岸喘口氣）
@@ -217,7 +270,175 @@ export default class WorldMapScene extends Phaser.Scene {
       this.state.fatigue = Math.max(0, this.state.fatigue - 10);
       saveGame(this.state);
       this.scene.start('Port', { portId: this.nearPort.id });
+    } else if (!this.nearPort && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
+      if (this.nearPirate) this.tryStartQuestBattle();
+      else if (this.nearDiscovery) this.tryDiscoverScenery(this.nearDiscovery);
+      else if (this.nearExplorePoint) this.tryExplorePoint(this.nearExplorePoint);
     }
+
+    this.refreshExplorationMarkers();
+  }
+
+  private refreshExplorationMarkers(): void {
+    const found = new Set(this.state.story.codex);
+    for (const marker of this.discoveryMarkers) {
+      marker.icon.setVisible(!found.has(marker.entry.id));
+    }
+    for (const marker of this.exploreMarkers) {
+      const activeQuest = this.state.quest?.type === 'exploration' && this.state.quest.pointId === marker.point.id && !this.state.quest.completed;
+      const hasNewFind = marker.point.discoveries.some((id) => !found.has(id));
+      const visible = activeQuest || hasNewFind;
+      marker.icon.setVisible(visible);
+      marker.label.setVisible(visible);
+      marker.icon.setAlpha(activeQuest ? 1 : 0.75);
+    }
+    if (this.pirateMarker) {
+      const q = this.state.quest;
+      this.pirateMarker.setVisible(Boolean(q?.type === 'combat' && !q.completed));
+    }
+  }
+
+  private findNearDiscovery(): DiscoveryEntry | null {
+    for (const marker of this.discoveryMarkers) {
+      if (!marker.icon.visible) continue;
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!) <= DISCOVERY_RADIUS) {
+        return marker.entry;
+      }
+    }
+    return null;
+  }
+
+  private findNearExplorePoint(): ExplorationPoint | null {
+    for (const marker of this.exploreMarkers) {
+      if (!marker.icon.visible) continue;
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.point.x, marker.point.y) <= EXPLORE_RADIUS) {
+        return marker.point;
+      }
+    }
+    return null;
+  }
+
+  private isNearPirateMarker(): boolean {
+    const q = this.state.quest;
+    if (q?.type !== 'combat' || q.completed) return false;
+    return Phaser.Math.Distance.Between(this.ship.x, this.ship.y, q.targetX, q.targetY) <= PIRATE_RADIUS;
+  }
+
+  private tryDiscoverScenery(entry: DiscoveryEntry): void {
+    if (this.state.story.codex.includes(entry.id)) return;
+    if (typeof entry.x === 'number' && Phaser.Math.Distance.Between(this.ship.x, this.ship.y, entry.x, entry.y ?? this.ship.y) > DISCOVERY_RADIUS) {
+      this.pauseWithModal('還太遠', '再靠近一點，瞭望手才看得清楚。', [{ label: '繼續航行', onPick: () => {} }]);
+      return;
+    }
+    const unlocked = unlockCodex(this.state, [entry.id]);
+    const reward = entry.rewardGold ?? 60;
+    this.state.gold += reward;
+    saveGame(this.state);
+    this.refreshExplorationMarkers();
+    this.updateHud();
+    this.pauseWithModal(
+      `發現風景：${entry.title}`,
+      `${entry.body}\n\n解鎖圖鑑：${unlocked.join('、')}\n獲得記錄獎金 ${reward} 兩。`,
+      [{ label: '記下來', onPick: () => {} }]
+    );
+  }
+
+  private tryExplorePoint(point: ExplorationPoint): void {
+    if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, point.x, point.y) > EXPLORE_RADIUS) {
+      this.pauseWithModal('還太遠', '再靠近探索點，才能派人上岸調查。', [{ label: '繼續航行', onPick: () => {} }]);
+      return;
+    }
+    const nextDiscovery = point.discoveries.find((id) => !this.state.story.codex.includes(id));
+    const q = this.state.quest;
+    const questActive = q?.type === 'exploration' && q.pointId === point.id && !q.completed;
+    if (!nextDiscovery && !questActive) {
+      this.pauseWithModal(
+        point.name,
+        `這裡已經調查過了。\n\n${point.hint}`,
+        [{ label: '回到船上', onPick: () => {} }]
+      );
+      return;
+    }
+    this.pauseWithModal(
+      `探索：${point.name}`,
+      `${point.hint}\n\n本次探索需要 ${point.baseDays} 天，消耗糧食 ${point.cost.food}、清水 ${point.cost.water}。`,
+      [
+        { label: '先準備一下', onPick: () => {} },
+        {
+          label: '開始探索',
+          onPick: () => this.resolveExploration(point, nextDiscovery),
+        },
+      ]
+    );
+  }
+
+  private resolveExploration(point: ExplorationPoint, discoveryId: string | undefined): void {
+    const s = this.state;
+    if (s.food < point.cost.food || s.water < point.cost.water) {
+      this.pauseWithModal(
+        '補給不足',
+        `探索需要糧食 ${point.cost.food}、清水 ${point.cost.water}。\n\n目前糧食 ${s.food}、清水 ${s.water}，先回港補給比較安全。`,
+        [{ label: '回到船上', onPick: () => {} }]
+      );
+      return;
+    }
+
+    s.food -= point.cost.food;
+    s.water -= point.cost.water;
+    s.day += point.baseDays;
+    s.daysAtSea += point.baseDays;
+    s.fatigue = Math.min(100, s.fatigue + point.difficulty * 8);
+    refreshMarketEvents(s);
+
+    const eventText = this.explorationEventText(point);
+    const unlockedIds = discoveryId ? [discoveryId] : [];
+    const unlocked = unlockCodex(s, unlockedIds);
+    const found = discoveryId ? DISCOVERIES.find((entry) => entry.id === discoveryId) : undefined;
+    const reward = found?.rewardGold ?? (found ? 80 + point.difficulty * 40 : 0);
+    if (reward > 0) s.gold += reward;
+
+    const q = s.quest;
+    if (q?.type === 'exploration' && q.pointId === point.id) {
+      q.completed = true;
+      q.codexIds = [...new Set([...q.codexIds, ...unlockedIds])];
+    }
+
+    saveGame(s);
+    this.refreshExplorationMarkers();
+    this.updateHud();
+    const resultLines = [
+      eventText,
+      found ? `\n發現：${found.title}\n${found.body}` : '\n這次沒有新的重大發現，但完成了地點調查。',
+      unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
+      reward > 0 ? `\n獲得記錄獎金 ${reward} 兩。` : '',
+      q?.type === 'exploration' && q.pointId === point.id ? '\n探險委託已完成，回接任務的官府／商館領賞。' : '',
+    ];
+    this.pauseWithModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), [
+      { label: '記下來', onPick: () => {} },
+    ]);
+  }
+
+  private explorationEventText(point: ExplorationPoint): string {
+    const eventId = point.events[Math.floor(Math.random() * point.events.length)] ?? 'landmark';
+    const eventTexts: Record<string, string> = {
+      aid_indigenous: '地方社群提供山路與水源消息，隊伍少走了許多冤枉路。',
+      aid_local: '當地居民指點路線，還提醒哪些地方要避開危險。',
+      lost: '隊伍一度迷路，多花了時間才找到回到海邊的路。',
+      wildlife: '隊伍在林間發現動物足跡，大家放慢腳步仔細觀察。',
+      landmark: '瞭望手和書記合作，把地形與地標畫進航海筆記。',
+      forest: '濃密森林讓行動變慢，但也增加了找到植物與鳥類的機會。',
+      cold_mountain: '山上雲霧很重，隊伍放慢速度前進，避免有人受寒。',
+    };
+    return eventTexts[eventId] ?? '隊伍完成調查，把一路看到的事情寫進航海筆記。';
+  }
+
+  private tryStartQuestBattle(): void {
+    if (!this.isNearPirateMarker()) {
+      this.pauseWithModal('還太遠', '再靠近骷髏標記，才能攔截海盜船。', [{ label: '繼續航行', onPick: () => {} }]);
+      return;
+    }
+    saveGame(this.state);
+    this.scene.start('Battle', { questCombat: true });
   }
 
   // ----- 一天結束：消耗補給、疲勞累積、換風、擲事件 -----

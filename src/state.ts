@@ -5,6 +5,8 @@ import shipsData from './data/ships.json';
 import equipData from './data/equipment.json';
 import matesData from './data/mates.json';
 import storyData from './data/story.json';
+import explorationData from './data/exploration_points.json';
+import discoveriesData from './data/discoveries.json';
 
 export interface Good {
   id: string;
@@ -68,14 +70,44 @@ export interface ShipType {
   desc: string;
 }
 
-/** 運送委託 */
-export interface Quest {
+/** 採購／運送委託 */
+export interface DeliveryQuest {
+  type: 'delivery';
   goodId: string;
   qty: number;
   portId: string;
   deadlineDay: number;
   reward: number;
+  originPortId?: string;
 }
+
+/** 海戰委託：接取後世界地圖會出現海盜標記 */
+export interface CombatQuest {
+  type: 'combat';
+  title: string;
+  originPortId: string;
+  targetX: number;
+  targetY: number;
+  deadlineDay: number;
+  reward: number;
+  enemyTier: number;
+  completed: boolean;
+  codexIds: string[];
+}
+
+/** 探索委託：前往探索點調查 */
+export interface ExplorationQuest {
+  type: 'exploration';
+  title: string;
+  originPortId: string;
+  pointId: string;
+  deadlineDay: number;
+  reward: number;
+  completed: boolean;
+  codexIds: string[];
+}
+
+export type Quest = DeliveryQuest | CombatQuest | ExplorationQuest;
 
 export interface PlayerShip {
   typeId: string;
@@ -178,6 +210,27 @@ export interface CodexEntry {
   body: string;
 }
 
+export interface DiscoveryEntry extends CodexEntry {
+  kind: 'scenery' | 'species' | 'treasure' | 'geography' | 'culture' | 'place';
+  x?: number;
+  y?: number;
+  rewardGold?: number;
+}
+
+export interface ExplorationPoint {
+  id: string;
+  name: string;
+  region: string;
+  x: number;
+  y: number;
+  difficulty: number;
+  baseDays: number;
+  cost: { food: number; water: number };
+  discoveries: string[];
+  events: string[];
+  hint: string;
+}
+
 export interface StoryState {
   heroId: HeroId;
   chapter: number;
@@ -239,7 +292,9 @@ export const ROLES: RoleDef[] = matesData.roles;
 export const MATE_DEFS: MateDef[] = matesData.mates;
 export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
 export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
-export const CODEX_ENTRIES: CodexEntry[] = storyData.codex;
+export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
+export const EXPLORATION_POINTS: ExplorationPoint[] = explorationData.points as ExplorationPoint[];
+export const CODEX_ENTRIES: CodexEntry[] = [...(storyData.codex as CodexEntry[]), ...DISCOVERIES];
 export const CREW_START = 16;
 export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
@@ -362,7 +417,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 10,
+    version: 11,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -767,6 +822,15 @@ export function loadGame(): GameState | null {
       full.shipOrders = full.shipOrders ?? [];
       full.version = 10;
     }
+    // v10 → v11：支線委託從單一運貨任務擴為採購／海戰／探索三分流。
+    if (s.version < 11) {
+      const full = s as GameState & { quest: Quest | (Omit<DeliveryQuest, 'type'> & { type?: string }) | null };
+      const oldQuest = full.quest;
+      if (oldQuest && typeof oldQuest === 'object' && !('type' in oldQuest)) {
+        full.quest = { ...(oldQuest as Omit<DeliveryQuest, 'type'>), type: 'delivery' };
+      }
+      full.version = 11;
+    }
     return s as GameState;
   } catch {
     return null;
@@ -994,8 +1058,22 @@ export function refreshMarketEvents(state: GameState): void {
 
 const PX_PER_DAY_EST = 220;
 
-/** 產生本日此港的委託內容（同日同港固定） */
-export function questOffer(state: GameState, port: Port): Quest {
+function pirateAreaForPort(port: Port): { name: string; x: number; y: number } {
+  if (port.region.includes('日本')) return { name: '日本近海', x: 5400, y: 1220 };
+  if (port.region === '琉球王國') return { name: '琉球航路', x: 4480, y: 2050 };
+  if (port.region === '台灣' || port.region === '澎湖' || port.region.includes('福建')) {
+    return { name: '台灣海峽', x: 3440, y: 2640 };
+  }
+  if (port.region.includes('廣東')) return { name: '珠江口外海', x: 2820, y: 3020 };
+  if (port.region === '呂宋') return { name: '呂宋西岸', x: 3900, y: 3400 };
+  if (port.region === '安南') return { name: '安南外海', x: 2820, y: 3820 };
+  if (port.region === '暹羅' || port.region === '馬來半島') return { name: '麻六甲航路', x: 1600, y: 4700 };
+  if (port.region === '爪哇') return { name: '巽他海峽', x: 2150, y: 5200 };
+  if (port.region === '香料群島') return { name: '香料群島外海', x: 4240, y: 5240 };
+  return { name: '近海航路', x: port.x, y: port.y + 120 };
+}
+
+function deliveryQuestOffer(state: GameState, port: Port): DeliveryQuest {
   const candidates = PORTS.filter((p) => p.id !== port.id);
   const target = candidates[Math.floor(hashNoise(state.day, 'qp' + port.id) * candidates.length)];
   const good = GOODS[Math.floor(hashNoise(state.day, 'qg' + port.id) * GOODS.length)];
@@ -1003,7 +1081,82 @@ export function questOffer(state: GameState, port: Port): Quest {
   const distDays = Math.ceil(Math.hypot(target.x - port.x, target.y - port.y) / PX_PER_DAY_EST);
   const deadlineDay = state.day + distDays * 2 + 8;
   const reward = Math.round(qty * good.basePrice * 0.7 + distDays * 40);
-  return { goodId: good.id, qty, portId: target.id, deadlineDay, reward };
+  return { type: 'delivery', goodId: good.id, qty, portId: target.id, deadlineDay, reward, originPortId: port.id };
+}
+
+function combatQuestOffer(state: GameState, port: Port): CombatQuest {
+  const area = pirateAreaForPort(port);
+  const distDays = Math.max(1, Math.ceil(Math.hypot(area.x - port.x, area.y - port.y) / PX_PER_DAY_EST));
+  const tier = state.day < 120 ? 1 : state.day < 300 ? 2 : 3;
+  return {
+    type: 'combat',
+    title: `討伐${area.name}海盜`,
+    originPortId: port.id,
+    targetX: area.x,
+    targetY: area.y,
+    deadlineDay: state.day + distDays * 2 + 10,
+    reward: 700 + tier * 300 + distDays * 60,
+    enemyTier: tier,
+    completed: false,
+    codexIds: [],
+  };
+}
+
+function explorationQuestOffer(state: GameState, port: Port): ExplorationQuest {
+  const nearby = EXPLORATION_POINTS.filter((point) => Math.hypot(point.x - port.x, point.y - port.y) <= 1900);
+  const pool = nearby.length > 0 ? nearby : EXPLORATION_POINTS;
+  const point = pool[Math.floor(hashNoise(state.day, 'qx' + port.id) * pool.length)];
+  const distDays = Math.max(1, Math.ceil(Math.hypot(point.x - port.x, point.y - port.y) / PX_PER_DAY_EST));
+  const reward = 450 + point.difficulty * 260 + distDays * 35;
+  return {
+    type: 'exploration',
+    title: `調查${point.name}`,
+    originPortId: port.id,
+    pointId: point.id,
+    deadlineDay: state.day + distDays * 2 + 14,
+    reward,
+    completed: false,
+    codexIds: [],
+  };
+}
+
+/** 產生本日此港的委託內容（同日同港固定），採購／海戰／探索三分流 */
+export function questOffer(state: GameState, port: Port): Quest {
+  const roll = hashNoise(state.day, 'qt' + port.id);
+  if (roll < 0.45) return deliveryQuestOffer(state, port);
+  if (roll < 0.7) return combatQuestOffer(state, port);
+  return explorationQuestOffer(state, port);
+}
+
+export function explorationPointById(id: string): ExplorationPoint | undefined {
+  return EXPLORATION_POINTS.find((point) => point.id === id);
+}
+
+export function discoveryById(id: string): DiscoveryEntry | undefined {
+  return DISCOVERIES.find((entry) => entry.id === id);
+}
+
+export function questTitle(q: Quest): string {
+  if (q.type === 'delivery') {
+    const target = PORTS.find((p) => p.id === q.portId);
+    const good = GOODS.find((g) => g.id === q.goodId);
+    return `採購：${good?.name ?? q.goodId}送往${target?.name ?? q.portId}`;
+  }
+  return q.title;
+}
+
+export function questProgressText(state: GameState, q: Quest): string {
+  if (q.type === 'delivery') {
+    const target = PORTS.find((p) => p.id === q.portId);
+    const good = GOODS.find((g) => g.id === q.goodId);
+    const have = state.cargo[q.goodId] ?? 0;
+    return `採購任務：送【${good?.name ?? q.goodId}×${q.qty}】到【${target?.name ?? q.portId}】\n持有：${have}/${q.qty}　期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩`;
+  }
+  if (q.type === 'combat') {
+    return `海戰任務：${q.title}\n前往海上骷髏標記，擊退海盜後回到接任務的官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已討伐，回報中' : '尚未討伐'}`;
+  }
+  const point = explorationPointById(q.pointId);
+  return `探險任務：${q.title}\n前往【${point?.name ?? q.pointId}】探索，完成後回到接任務的官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已完成，回報中' : '尚未完成'}`;
 }
 
 /** 酒館傳聞文字 */

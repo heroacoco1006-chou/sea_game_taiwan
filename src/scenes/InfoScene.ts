@@ -4,7 +4,7 @@ import {
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
   heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState, storyRequirementText,
-  dateText, GOODS, PORTS, MATE_DEFS, ROLES, mateDefById, roleName,
+  dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -121,14 +121,10 @@ export default class InfoScene extends Phaser.Scene {
     this.addWrapped(290, 130, storyText, 840, 17);
 
     if (s.quest) {
-      const q = s.quest;
-      const targetPort = PORTS.find((p) => p.id === q.portId);
-      const good = GOODS.find((g) => g.id === q.goodId);
-      const have = s.cargo[q.goodId] ?? 0;
       this.addWrapped(
         290,
         310,
-        `委託任務：送【${good?.name ?? q.goodId}×${q.qty}】到【${targetPort?.name ?? q.portId}】\n持有：${have}/${q.qty}　期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩`,
+        questProgressText(s, s.quest),
         840,
         16,
         '#5a4a30'

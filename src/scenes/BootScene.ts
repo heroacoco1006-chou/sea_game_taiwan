@@ -10,6 +10,7 @@ export default class BootScene extends Phaser.Scene {
     this.makeShipTexture();
     this.makePortTexture();
     this.makePlayerTexture();
+    this.makeMapMarkerTextures();
     this.makeGoodsIcons();
     this.scene.start('Title');
   }
@@ -60,6 +61,47 @@ export default class BootScene extends Phaser.Scene {
     g.fillRect(9, 20, 3, 4);
     g.generateTexture('player', 16, 24);
     g.destroy();
+  }
+
+  /** 世界地圖任務／探索標記（M4 先用程式圖示，M5 再換正式美術） */
+  private makeMapMarkerTextures(): void {
+    const mk = (key: string, draw: (g: Phaser.GameObjects.Graphics) => void): void => {
+      const g = this.add.graphics();
+      draw(g);
+      g.generateTexture(key, 34, 34);
+      g.destroy();
+    };
+
+    mk('marker_telescope', (g) => {
+      g.fillStyle(0xf2e3bd, 1);
+      g.fillCircle(17, 17, 15);
+      g.lineStyle(3, 0x3a2a14, 1);
+      g.strokeCircle(14, 14, 7);
+      g.lineBetween(19, 19, 27, 27);
+      g.fillStyle(0x3a2a14, 1);
+      g.fillCircle(14, 14, 2);
+    });
+
+    mk('marker_explore', (g) => {
+      g.fillStyle(0xf2e3bd, 1);
+      g.fillCircle(17, 17, 15);
+      g.lineStyle(2, 0x2f6b3f, 1);
+      g.strokeTriangle(17, 5, 27, 25, 7, 25);
+      g.fillStyle(0x2f6b3f, 1);
+      g.fillCircle(17, 17, 4);
+    });
+
+    mk('marker_pirate', (g) => {
+      g.fillStyle(0x2b1b14, 1);
+      g.fillCircle(17, 17, 15);
+      g.fillStyle(0xf2e3bd, 1);
+      g.fillCircle(13, 14, 3);
+      g.fillCircle(21, 14, 3);
+      g.fillTriangle(17, 18, 13, 23, 21, 23);
+      g.lineStyle(2, 0xf2e3bd, 1);
+      g.lineBetween(9, 27, 25, 7);
+      g.lineBetween(9, 7, 25, 27);
+    });
   }
 
   /**
