@@ -93,7 +93,7 @@ export default class WorldMapScene extends Phaser.Scene {
     const H = this.scale.height;
     this.add.rectangle(W / 2, 34, W, 68, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     this.hud = this.add.text(14, 8, '', { ...textStyle(17, '#f2e3bd'), lineSpacing: 6 }).setDepth(101).setScrollFactor(0);
-    makeButton(this, W - 62, 34, 96, 36, '資訊', () => {
+    makeButton(this, W - 62, 34, 96, 36, '選單', () => {
       saveGame(this.state);
       this.scene.start('Info', { from: 'WorldMap' });
     }, 15).setDepth(102).setScrollFactor(0);

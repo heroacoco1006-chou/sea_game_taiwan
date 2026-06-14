@@ -92,6 +92,17 @@ export interface PlayerShip {
   figurehead: string | null;
 }
 
+/** 造船廠建造中的船 */
+export interface ShipOrder {
+  id: string;
+  typeId: string;
+  portId: string;
+  mode: 'flagship' | 'escort';
+  orderedDay: number;
+  readyDay: number;
+  paid: number;
+}
+
 /** 個人裝備（主角） */
 export interface Equip {
   weapon: string | null;
@@ -205,6 +216,8 @@ export interface GameState {
   visitedPorts: string[];
   /** M4 主線劇情與圖鑑進度 */
   story: StoryState;
+  /** 造船廠建造中的船 */
+  shipOrders: ShipOrder[];
 }
 
 export const FLEET_MAX = 5; // 含旗艦
@@ -252,7 +265,7 @@ function portStartPos(portId: string): { x: number; y: number } {
   return { x: port.x, y: port.y + 60 };
 }
 
-function newPlayerShip(typeId: string, pos: { x: number; y: number }): PlayerShip {
+export function newPlayerShip(typeId: string, pos: { x: number; y: number }): PlayerShip {
   const type = shipTypeById(typeId);
   const supply = Math.floor(type.space / 2);
   return {
@@ -268,6 +281,15 @@ function newPlayerShip(typeId: string, pos: { x: number; y: number }): PlayerShi
 
 export function shipTypeById(id: string): ShipType {
   return SHIPS.find((t) => t.id === id) ?? SHIPS[0];
+}
+
+/** 建造天數：小船 3 天，大型船最多 30 天。 */
+export function shipBuildDays(type: ShipType): number {
+  const minPrice = Math.min(...SHIPS.map((s) => s.price));
+  const maxPrice = Math.max(...SHIPS.map((s) => s.price));
+  if (maxPrice <= minPrice) return 3;
+  const ratio = (type.price - minPrice) / (maxPrice - minPrice);
+  return Math.max(3, Math.min(30, Math.round(3 + ratio * 27)));
 }
 
 /** 旗艦船型 */
@@ -340,7 +362,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 9,
+    version: 10,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -365,6 +387,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
       completed: [],
       codex: [],
     },
+    shipOrders: [],
   };
 }
 
@@ -737,6 +760,12 @@ export function loadGame(): GameState | null {
       full.story.completed = full.story.completed ?? [];
       full.story.codex = full.story.codex ?? [];
       full.version = 9;
+    }
+    // v9 → v10：造船廠改為先建造、到期取船。
+    if (s.version < 10) {
+      const full = s as GameState;
+      full.shipOrders = full.shipOrders ?? [];
+      full.version = 10;
     }
     return s as GameState;
   } catch {

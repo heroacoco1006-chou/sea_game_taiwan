@@ -42,7 +42,7 @@ export default class ItemShopScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 30, 16, W - 60, H - 32);
     this.add.text(W / 2, 44, `${this.port.name}・道具屋`, textStyle(26)).setOrigin(0.5);
-    this.add.text(W / 2, 76, '點選商品購買後會放進背包；換裝請按右上角【資訊】進入背包頁。船首像請到造船廠改裝。', textStyle(14, '#6b5530')).setOrigin(0.5);
+    this.add.text(W / 2, 76, '點選商品購買後會放進背包；換裝請按右上角【選單】進入裝備頁。船首像請到造船廠改裝。', textStyle(14, '#6b5530')).setOrigin(0.5);
 
     const stock = shopItemIdsForPort(this.port);
     const cols: Array<{ cat: Cat; title: string; rows: Row[]; x: number }> = [

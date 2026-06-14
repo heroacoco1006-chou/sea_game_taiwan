@@ -236,7 +236,7 @@ export default class InfoScene extends Phaser.Scene {
       this.dyn.push(btn);
     });
     if (s.escorts.length === 0) {
-      this.addWrapped(300, 202, '目前沒有僚艦。可到造船廠購買船隻加入艦隊。', 840, 15, '#5a4a30');
+      this.addWrapped(300, 202, '目前沒有僚艦。可到造船廠建造船隻，完工後取船加入艦隊。', 840, 15, '#5a4a30');
     }
 
     this.dyn.push(this.add.text(300, 390, '— 夥伴職位 —', textStyle(18)));
@@ -270,7 +270,7 @@ export default class InfoScene extends Phaser.Scene {
     codex.forEach((entry, i) => {
       const col = i < 9 ? 0 : 1;
       const row = i % 9;
-      const btn = makeButton(this, 405 + col * 250, 130 + row * 42, 220, 34, `【${entry.type}】${entry.title}`, () => {
+      const btn = makeButton(this, 392 + col * 232, 130 + row * 42, 208, 34, `【${entry.type}】${entry.title}`, () => {
         this.codexId = entry.id;
         this.render();
       }, 12);
@@ -278,7 +278,18 @@ export default class InfoScene extends Phaser.Scene {
       this.dyn.push(btn);
     });
     const selected = codex.find((entry) => entry.id === this.codexId) ?? codex[0];
-    this.addWrapped(810, 130, `【${selected.type}】${selected.title}\n\n${selected.body}`, 330, 17);
+    this.dyn.push(this.add.rectangle(960, 370, 390, 476, COLORS.parchment, 0.55));
+    const detail = this.add.text(
+      780,
+      142,
+      `【${selected.type}】${selected.title}\n\n${selected.body}`,
+      { ...textStyle(16), wordWrap: { width: 360 }, lineSpacing: 7 }
+    );
+    while (detail.height > 432 && Number.parseInt(String(detail.style.fontSize), 10) > 13) {
+      const next = Number.parseInt(String(detail.style.fontSize), 10) - 1;
+      detail.setFontSize(next);
+    }
+    this.dyn.push(detail);
   }
 
   private equip(cat: EquipCat, id: string | null): void {

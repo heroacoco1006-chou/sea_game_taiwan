@@ -170,7 +170,7 @@ export default class PortScene extends Phaser.Scene {
     this.add
       .text(14 + nameT.width + 18, 14, `${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(16, '#f2e3bd'))
       .setDepth(101).setScrollFactor(0);
-    makeButton(this, W - 62, 24, 96, 34, '資訊', () => {
+    makeButton(this, W - 62, 24, 96, 34, '選單', () => {
       saveGame(this.state);
       this.scene.start('Info', { from: 'Port', portId: this.port.id, spawn: { x: this.player.x, y: this.player.y } });
     }, 15).setDepth(102).setScrollFactor(0);

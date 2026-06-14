@@ -11,6 +11,7 @@ type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
 const FOOD_PRICE = 2;
 const WATER_PRICE = 1;
 const CREW_PRICE = 5;
+const INN_DAY_PRICE = 100;
 
 /** 對談式設施選單（走進建築後切換到此場景） */
 export default class FacilityScene extends Phaser.Scene {
@@ -90,15 +91,13 @@ export default class FacilityScene extends Phaser.Scene {
       }
 
       case 'inn': {
-        this.body.setText('掌櫃笑著迎上來：「客倌，休息一晚嗎？讓兄弟們好好睡一覺，疲勞全消！順便把您的航海日誌收好（存檔）。」');
-        makeButton(this, W / 2, 420, 360, 54, '休息一晚並存檔（疲勞歸零）', () => {
-          s.day += 1;
-          s.fatigue = 0;
-          s.ship.hull = Math.min(hullMax(s), s.ship.hull + 3);
-          saveGame(s);
-          this.refreshInfo();
-          toast(this, '睡了個好覺！疲勞歸零、進度已存檔（船員順手保養了船，船體+3）');
-        });
+        this.body.setText(
+          `掌櫃笑著迎上來：「客倌，住下來歇歇吧。一天 ${INN_DAY_PRICE} 兩，可以讓時間往前走，也方便等待造船廠完工。休息後疲勞歸零，船員也會順手保養旗艦。」\n\n選擇逗留天數後會自動存檔。`
+        );
+        makeButton(this, W / 2 - 270, 420, 190, 52, `逗留 1 天（${INN_DAY_PRICE} 兩）`, () => this.stayAtInn(1), 15);
+        makeButton(this, W / 2 - 90, 420, 170, 52, `3 天（${INN_DAY_PRICE * 3} 兩）`, () => this.stayAtInn(3), 15);
+        makeButton(this, W / 2 + 90, 420, 170, 52, `7 天（${INN_DAY_PRICE * 7} 兩）`, () => this.stayAtInn(7), 15);
+        makeButton(this, W / 2 + 270, 420, 170, 52, `30 天（${INN_DAY_PRICE * 30} 兩）`, () => this.stayAtInn(30), 15);
         break;
       }
 
@@ -300,6 +299,22 @@ export default class FacilityScene extends Phaser.Scene {
     s.fatigue = Math.max(0, s.fatigue - 30);
     this.refreshInfo();
     toast(this, `乾杯——！大家精神都來了（疲勞 -30，花費 ${cost} 兩）`);
+  }
+
+  private stayAtInn(days: number): void {
+    const s = this.state;
+    const cost = days * INN_DAY_PRICE;
+    if (s.gold < cost) {
+      toast(this, `逗留 ${days} 天需要 ${cost} 兩，資金不足！`);
+      return;
+    }
+    s.gold -= cost;
+    s.day += days;
+    s.fatigue = 0;
+    s.ship.hull = Math.min(hullMax(s), s.ship.hull + 3 * days);
+    saveGame(s);
+    this.refreshInfo();
+    toast(this, `逗留 ${days} 天，花費 ${cost} 兩。疲勞歸零，日期已推進。`);
   }
 
   private buySupply(kind: 'food' | 'water', amount: number): void {
