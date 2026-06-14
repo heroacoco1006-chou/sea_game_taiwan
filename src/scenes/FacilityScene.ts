@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
   hullMax, supplyMax, crewMax, questOffersForPort, sailableDays,
-  currentStoryChapter, completeStoryChapter, storyTargetPort, storyRequirementText,
+  currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
@@ -185,21 +185,24 @@ export default class FacilityScene extends Phaser.Scene {
     const chapter = currentStoryChapter(s);
     const targetPort = storyTargetPort(chapter);
     if (chapter && chapter.targetPortId === this.port.id) {
+      const teaser = storyChapterTeaser(s.story.heroId, chapter.chapter);
       this.body.setText(
         `【主線第 ${chapter.chapter} 章：${chapter.title}】\n` +
         `年份：${chapter.year}　人物：${chapter.npc}\n\n` +
-        `${chapter.prompt}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}`
+        `${teaser}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}`
       );
-      makeButton(this, W / 2, 520, 340, 52, '推進主線', () => {
-        const result = completeStoryChapter(s, this.port);
-        saveGame(s);
-        this.refreshInfo();
-        showModal(this, result.title, result.message, [
-          {
-            label: '記下來',
-            onPick: () => this.scene.restart({ portId: this.port.id, type: this.type, door: this.door }),
-          },
-        ]);
+      makeButton(this, W / 2, 520, 340, 52, '推進主線（看劇情）', () => {
+        const check = storyAdvanceCheck(s, this.port);
+        if (!check.ok) {
+          showModal(this, chapter.title, check.message, [{ label: '知道了', onPick: () => {} }]);
+          return;
+        }
+        // 播放完整對話，播完由 StoryScene 結算獎勵與圖鑑
+        this.scene.start('Story', {
+          heroId: s.story.heroId,
+          chapter: chapter.chapter,
+          ret: { portId: this.port.id, type: this.type, door: this.door },
+        });
       });
       return;
     }

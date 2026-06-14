@@ -7,6 +7,20 @@
 
 ---
 
+## [2026-06-14] 開發 | 操作者：小航 | M4 主線劇情接進多段劇情播放器
+
+- 背景：老闆指示推進 M4 主線劇本；三線各 10 章 Markdown 劇本已寫好但未接進遊戲。老闆選擇「三條線一次全接完」。
+- 完成事項：
+  - 新增 `src/story/parseStory.ts`：用 `?raw` 載入 `data/story/*.md`，解析成 chapter→對話行（旁白／心聲／角色對白＋動作／目標／場景／圖鑑解鎖）；三線各 10 章共 30 章、32 張圖鑑全部解析成功。
+  - 新增 `src/scenes/StoryScene.ts`：仿大航海2 下方對話框播放器，說話者名牌、主角名牌金色、點畫面／Enter 前進、圖鑑金框卡、跳過本章；播完呼叫 `completeStoryChapter` 結算。
+  - `state.ts`：圖鑑來源改為劇本解析（`ALL_STORY_CODEX`）＋探索發現；新增 `storyAdvanceCheck`（非變動前置檢查）、`storyChapterTeaser`（取首句旁白當引言）、`getChapterScript` 轉出；`completeStoryChapter` 改用劇本圖鑑 id 解鎖、結算文字程式化。
+  - `story.json`：精簡為進度骨架（id/港口/貨物/年份/NPC/目標/獎勵），三線各補到 10 章；移除 codex 陣列與 prompt/completion/codexIds。`StoryChapter` 型別同步精簡。
+  - `FacilityScene`：「推進主線（看劇情）」改為先檢查條件→啟動 StoryScene；引言改用劇本首句旁白。
+  - `main.ts` 註冊 StoryScene、掛 `window.__story`；新增 `src/vite-env.d.ts` 供 `?raw` 型別。
+  - 修正：對話框文字加 `useAdvancedWrap` 讓中文自動換行；圖鑑分類器改為事件優先（避免「鄭芝龍崛起」被歸人物）。
+- 驗證：`npm run build`（36 模組）通過；瀏覽器以 `window.__state/__story` 實測三線第 1 章從頭播到完成、章節推進、圖鑑解鎖、發獎金；lin 第 3 章貨物門檻（缺生絲擋下、足量放行、錯港提示）正常；圖鑑換行正確（截圖確認）。
+- 待追蹤：M4 餘下夥伴專屬任務（25 位）與人物圖鑑；M5 為對話框補角色立繪／場景背景。
+
 ## [2026-06-14] 開發 | 操作者：小航 | 存讀檔改為 10 格自由選擇
 
 - 背景：老闆要測試三位主角的不同劇情，原本單一存檔不夠用；要求把存檔擴為 10 格，玩家可自由選存讀檔位置。

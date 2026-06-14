@@ -5,6 +5,19 @@
 
 ---
 
+## [2026-06-14] M4 主線劇情播放器與劇本驅動架構
+
+- 背景：把三線各 10 章 Markdown 劇本接進遊戲；老闆選「三條線一次全接完」。
+- 記憶（已實作，後續開發須沿用）：
+  - **劇本是對白與圖鑑的唯一來源**：`src/data/story/*.md`（lin/peter/chiyo 各 10 章）。要改對白或圖鑑內文就改 MD，不要寫死在程式或 story.json。解析器在 `src/story/parseStory.ts`（用 Vite `?raw` 載入）。
+  - **MD 標記規格**（新增章節務必沿用，否則解析不到）：`## 第N章　標題（年份）`、`〔旁白〕`、`〔心聲〕`、`〔角色名〕（動作）「對白」`、`▸目標：`、`### 場景名`、`✦ 圖鑑【標題】：內文`、`→ 下一章`。
+  - **圖鑑（CODEX）改為劇本驅動**：`CODEX_ENTRIES = ALL_STORY_CODEX(解析自 MD ✦) + DISCOVERIES`；圖鑑 id 由解析器自動生成 `codex_{hero}_{章}_{序}`，章節完成時由 `completeStoryChapter` 用 `chapterCodexIds()` 解鎖。不要再回去用 story.json 的 codex 陣列。
+  - **story.json 只剩進度骨架**：每章 = id/heroId/chapter/title/year/targetPortId/npc/objective/requirements?/rewardGold。已移除 prompt/completion/codexIds 與 codex 陣列；`StoryChapter` 型別同步精簡。年份(year)用來在完成時推進遊戲日期。
+  - **播放流程**：官府／商館 `FacilityScene` →「推進主線（看劇情）」→ `storyAdvanceCheck`（檢查目標港＋貨物，不變動狀態）→ 啟動 `StoryScene`（場景 key `Story`）播完整對話 → 播完才 `completeStoryChapter` 結算獎勵／圖鑑／年份。新增劇情入口請重用 StoryScene，傳 `{heroId,chapter,ret:{portId,type,door}}`。
+  - **中文換行**：Phaser 文字框顯示中文長句要加 `wordWrap:{ useAdvancedWrap:true }`，否則無空白不會斷行（StoryScene、InfoScene 圖鑑都已用）。
+  - 偵錯掛鉤新增 `window.__story`（parseStory 模組）。
+- 影響：後續補夥伴任務劇情、或主線指定探索點／寶物，都沿用「MD 劇本＋StoryScene 播放器＋story.json 骨架」這套；M5 在 StoryScene 對話框上方留白處加角色立繪與場景背景。
+
 ## [2026-06-14] 存讀檔改為 10 格自由選擇
 
 - 背景：要測試三位主角的不同劇情，原本單一存檔不夠用；老闆要求改成 10 格、玩家可自由選存讀檔位置。

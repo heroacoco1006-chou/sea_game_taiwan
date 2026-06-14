@@ -47,10 +47,7 @@
       "targetPortId": "yuegang",
       "npc": "月港官吏",
       "objective": "到月港官府領出海文書，確認第一趟航線。",
-      "prompt": "官吏翻開名冊：「海禁讓許多船商只能偷偷摸摸做生意。你若真要出海，就先學會怎麼在官府、商人與海上勢力之間求生。」",
-      "completion": "你拿到月港出海文書，也明白明末海禁讓合法商人與海盜的界線變得模糊。下一步，去笨港拜訪顏思齊的海商集團。",
-      "rewardGold": 300,
-      "codexIds": ["event_haijin"]
+      "rewardGold": 300
     },
     {
       "id": "lin_02",
@@ -61,10 +58,7 @@
       "targetPortId": "ponkan",
       "npc": "顏思齊的部下",
       "objective": "航行到笨港，在官府／商館接觸顏思齊勢力。",
-      "prompt": "碼頭上的漢人船隊很熱鬧。有人說他們是海商，有人說他們是海盜，但在這個年代，能保護航線的人才有說話的份量。",
-      "completion": "你見識到笨港如何成為漢人海商聚集地，也聽見顏思齊集團正在招攬年輕船長。林海生線的前段主線已開啟。",
-      "rewardGold": 500,
-      "codexIds": ["person_yan_siqi", "place_ponkan"]
+      "rewardGold": 500
     },
     {
       "id": "lin_03",
@@ -73,15 +67,12 @@
       "title": "安海的鄭芝龍",
       "year": 1624,
       "targetPortId": "anhai",
-      "npc": "鄭芝龍的帳房",
+      "npc": "鄭家帳房",
       "objective": "帶 5 件生絲到安海，作為拜訪鄭芝龍船隊的見面禮。",
       "requirements": {
         "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
       },
-      "prompt": "帳房看著你的貨單：「鄭家的船不只打仗，也靠貿易養活水手。若你連一趟生絲買賣都辦不好，就別談加入大船隊。」",
-      "completion": "你交出生絲，換來鄭芝龍船隊的航路消息。你開始明白，海上勢力能壯大，是因為他們掌握了貨物流通與保護航線的能力。",
-      "rewardGold": 700,
-      "codexIds": ["person_zheng_zhilong", "trade_silk"]
+      "rewardGold": 700
     },
     {
       "id": "lin_04",
@@ -92,10 +83,73 @@
       "targetPortId": "ponkan",
       "npc": "笨港老船頭",
       "objective": "回到笨港，了解顏思齊病逝後海商集團的變化。",
-      "prompt": "老船頭嘆口氣：「顏大哥走了，船隊不能散。鄭芝龍懂買賣、懂打仗，也懂得和官府談條件，大家都在看他下一步怎麼走。」",
-      "completion": "你看見海商集團的權力開始轉移，鄭芝龍逐漸成為台海新霸主。林海生線下一段將進入招撫與海戰的抉擇。",
-      "rewardGold": 600,
-      "codexIds": ["event_zheng_rise"]
+      "rewardGold": 600
+    },
+    {
+      "id": "lin_05",
+      "heroId": "lin",
+      "chapter": 5,
+      "title": "招撫的抉擇",
+      "year": 1628,
+      "targetPortId": "anhai",
+      "npc": "鄭芝龍",
+      "objective": "航行到安海，面對鄭芝龍接受招撫的抉擇。",
+      "rewardGold": 1000
+    },
+    {
+      "id": "lin_06",
+      "heroId": "lin",
+      "chapter": 6,
+      "title": "料羅灣的砲聲",
+      "year": 1633,
+      "targetPortId": "anhai",
+      "npc": "鄭芝龍",
+      "objective": "航行到安海，參與料羅灣海戰。",
+      "rewardGold": 1200
+    },
+    {
+      "id": "lin_07",
+      "heroId": "lin",
+      "chapter": 7,
+      "title": "台海的霸主",
+      "year": 1637,
+      "targetPortId": "tayouan",
+      "npc": "大員老船工",
+      "objective": "航行到大員，看見鄭氏海上霸權的另一面。",
+      "rewardGold": 1400
+    },
+    {
+      "id": "lin_08",
+      "heroId": "lin",
+      "chapter": 8,
+      "title": "改朝換代",
+      "year": 1646,
+      "targetPortId": "anhai",
+      "npc": "鄭芝龍",
+      "objective": "航行到安海，面對明清易代的抉擇。",
+      "rewardGold": 1600
+    },
+    {
+      "id": "lin_09",
+      "heroId": "lin",
+      "chapter": 9,
+      "title": "國姓爺的旗",
+      "year": 1647,
+      "targetPortId": "ponkan",
+      "npc": "鄭成功",
+      "objective": "航行到笨港，追隨焚袍起兵的鄭成功。",
+      "rewardGold": 1800
+    },
+    {
+      "id": "lin_10",
+      "heroId": "lin",
+      "chapter": 10,
+      "title": "熱蘭遮城",
+      "year": 1661,
+      "targetPortId": "tayouan",
+      "npc": "何斌",
+      "objective": "航行到大員，見證收復熱蘭遮城。",
+      "rewardGold": 2200
     },
     {
       "id": "peter_01",
@@ -106,10 +160,7 @@
       "targetPortId": "batavia",
       "npc": "VOC 商館長",
       "objective": "在巴達維亞商館領受前往澎湖的任務。",
-      "prompt": "商館長指著海圖：「我們需要一個靠近中國的據點。澎湖看起來合適，但明朝不會輕易答應。」",
-      "completion": "你領到 VOC 的航行命令，也知道荷蘭東印度公司是一個擁有軍事與貿易權力的商業組織。下一站，澎湖。",
-      "rewardGold": 400,
-      "codexIds": ["org_voc"]
+      "rewardGold": 400
     },
     {
       "id": "peter_02",
@@ -120,10 +171,7 @@
       "targetPortId": "penghu",
       "npc": "明朝通事",
       "objective": "航行到澎湖，了解荷蘭與明朝的談判困局。",
-      "prompt": "通事搖頭：「澎湖是明朝海防要地，不能讓外國商館長久停留。若要貿易，恐怕得另找地方。」",
-      "completion": "澎湖談判受挫，VOC 開始把目光轉向台灣南部的大員。彼得線的台灣轉口貿易主線已開啟。",
-      "rewardGold": 500,
-      "codexIds": ["event_penghu_1622", "place_penghu"]
+      "rewardGold": 500
     },
     {
       "id": "peter_03",
@@ -137,10 +185,7 @@
       "requirements": {
         "cargo": [{ "goodId": "wood", "qty": 5, "consume": true }]
       },
-      "prompt": "工程監督指著沙洲：「這裡不是澎湖，卻靠近中國、日本與南洋。若城牆站得住，商船就會來。」",
-      "completion": "木材被送往工地，大員的荷蘭據點逐漸成形。你見證 VOC 從澎湖受挫後，改在台灣南部建立長期基地。",
-      "rewardGold": 800,
-      "codexIds": ["event_zeelandia", "place_tayouan"]
+      "rewardGold": 800
     },
     {
       "id": "peter_04",
@@ -157,10 +202,73 @@
           { "goodId": "sugar", "qty": 5, "consume": true }
         ]
       },
-      "prompt": "會計員推了推眼鏡：「大員若只能蓋城，還不算成功。鹿皮能賣到日本，蔗糖能賣到南洋，帳本上看得出它的價值。」",
-      "completion": "你交付鹿皮與蔗糖，證明台灣不只是停船點，也是把中國、日本與南洋貨物串起來的轉口站。",
-      "rewardGold": 900,
-      "codexIds": ["trade_deerskin", "trade_sugar"]
+      "rewardGold": 900
+    },
+    {
+      "id": "peter_05",
+      "heroId": "peter",
+      "chapter": 5,
+      "title": "濱田彌兵衛事件",
+      "year": 1628,
+      "targetPortId": "tayouan",
+      "npc": "荷蘭商館長",
+      "objective": "航行到大員，面對濱田彌兵衛事件。",
+      "rewardGold": 1000
+    },
+    {
+      "id": "peter_06",
+      "heroId": "peter",
+      "chapter": 6,
+      "title": "驅逐西班牙",
+      "year": 1642,
+      "targetPortId": "keelung",
+      "npc": "荷蘭軍官",
+      "objective": "航行到雞籠，隨艦隊驅逐西班牙人。",
+      "rewardGold": 1200
+    },
+    {
+      "id": "peter_07",
+      "heroId": "peter",
+      "chapter": 7,
+      "title": "贌社與王田",
+      "year": 1645,
+      "targetPortId": "tayouan",
+      "npc": "干治士牧師",
+      "objective": "航行到大員，了解贌社與王田制度。",
+      "rewardGold": 1400
+    },
+    {
+      "id": "peter_08",
+      "heroId": "peter",
+      "chapter": 8,
+      "title": "郭懷一事件",
+      "year": 1652,
+      "targetPortId": "tayouan",
+      "npc": "荷蘭軍官",
+      "objective": "航行到大員，面對郭懷一事件。",
+      "rewardGold": 1600
+    },
+    {
+      "id": "peter_09",
+      "heroId": "peter",
+      "chapter": 9,
+      "title": "風雨將至",
+      "year": 1659,
+      "targetPortId": "tayouan",
+      "npc": "情報官",
+      "objective": "航行到大員，察覺鄭成功渡海的威脅。",
+      "rewardGold": 1800
+    },
+    {
+      "id": "peter_10",
+      "heroId": "peter",
+      "chapter": 10,
+      "title": "熱蘭遮城的最後",
+      "year": 1661,
+      "targetPortId": "tayouan",
+      "npc": "末代長官揆一",
+      "objective": "航行到大員，見證熱蘭遮城落幕。",
+      "rewardGold": 2200
     },
     {
       "id": "chiyo_01",
@@ -169,12 +277,9 @@
       "title": "平戶的朱印船",
       "year": 1628,
       "targetPortId": "hirado",
-      "npc": "平戶商人",
+      "npc": "平戶老商人",
       "objective": "在平戶官府確認朱印船航行許可。",
-      "prompt": "老商人提醒你：「朱印狀是幕府准許出海的憑證。沒有它，日本船到南洋就少了保護。」",
-      "completion": "你整備好父親留下的朱印船，也知道日本商人曾靠朱印狀活躍於台灣與南洋。下一步，前往大員追查父親的舊事。",
-      "rewardGold": 300,
-      "codexIds": ["event_shuinsen"]
+      "rewardGold": 300
     },
     {
       "id": "chiyo_02",
@@ -185,10 +290,7 @@
       "targetPortId": "tayouan",
       "npc": "日荷通譯",
       "objective": "航行到大員，打聽濱田彌兵衛事件的前因。",
-      "prompt": "通譯壓低聲音：「日本商人和荷蘭商館互不信任。貨物、稅銀、面子，哪一樣談不好都會變成大事。」",
-      "completion": "你聽到濱田彌兵衛事件的線索，也看見大員已成為日本、漢人與荷蘭人交會的港口。千代線調查主線已開啟。",
-      "rewardGold": 500,
-      "codexIds": ["event_hamada", "place_tayouan"]
+      "rewardGold": 500
     },
     {
       "id": "chiyo_03",
@@ -202,10 +304,7 @@
       "requirements": {
         "cargo": [{ "goodId": "silver", "qty": 3, "consume": true }]
       },
-      "prompt": "牙行商人壓低聲音：「日本白銀人人要，中國生絲人人搶。台灣航線之所以熱鬧，就是因為這兩樣貨能互相牽起來。」",
-      "completion": "你用白銀換來生絲貨源與情報，明白台灣航線連接日本白銀與中國生絲，是朱印船商人最重視的買賣。",
-      "rewardGold": 700,
-      "codexIds": ["trade_silver", "trade_silk"]
+      "rewardGold": 700
     },
     {
       "id": "chiyo_04",
@@ -219,120 +318,73 @@
       "requirements": {
         "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
       },
-      "prompt": "通事說：「若日本的門越關越緊，商人就得找別的路。琉球夾在中國、日本、南洋之間，常常替大家傳話，也替貨物找路。」",
-      "completion": "你把生絲交給琉球商人，理解琉球在東亞貿易中的中介角色。千代線下一段將面對鎖國令收緊後的選擇。",
-      "rewardGold": 800,
-      "codexIds": ["place_naha", "event_sakoku_pressure"]
-    }
-  ],
-  "codex": [
-    {
-      "id": "event_haijin",
-      "type": "事件",
-      "title": "明末海禁",
-      "body": "海禁是明朝限制民間出海貿易的政策。到了明末，沿海人民仍需要做生意，許多商船就在合法與非法之間活動，形成海商、走私與海盜交錯的時代背景。"
+      "rewardGold": 800
     },
     {
-      "id": "person_yan_siqi",
-      "type": "人物",
-      "title": "顏思齊",
-      "body": "顏思齊是 17 世紀初活躍於台灣附近的漢人海商領袖，傳說曾聚眾於笨港一帶。他的故事反映台灣早期漢人移民與海上勢力的關係。"
+      "id": "chiyo_05",
+      "heroId": "chiyo",
+      "chapter": 5,
+      "title": "父親的真相",
+      "year": 1632,
+      "targetPortId": "tayouan",
+      "npc": "老通譯",
+      "objective": "航行到大員，查明父親當年的真相。",
+      "rewardGold": 1000
     },
     {
-      "id": "place_ponkan",
-      "type": "地點",
-      "title": "笨港",
-      "body": "笨港大約位於今天雲林北港一帶，是早期台灣西部重要港口。漢人商船、移民與地方聚落在此往來，使它成為台灣開發史上的關鍵地點。"
+      "id": "chiyo_06",
+      "heroId": "chiyo",
+      "chapter": 6,
+      "title": "鎖國令",
+      "year": 1635,
+      "targetPortId": "hirado",
+      "npc": "平戶老商人",
+      "objective": "航行到平戶，面對幕府的鎖國令。",
+      "rewardGold": 1200
     },
     {
-      "id": "org_voc",
-      "type": "組織",
-      "title": "荷蘭東印度公司（VOC）",
-      "body": "VOC 是 1602 年成立的荷蘭大型貿易公司，擁有商業、外交與軍事權力。它在亞洲建立據點，尋找香料、瓷器、生絲與白銀等貿易利益。"
+      "id": "chiyo_07",
+      "heroId": "chiyo",
+      "chapter": 7,
+      "title": "出島的窗口",
+      "year": 1641,
+      "targetPortId": "nagasaki",
+      "npc": "出島荷蘭商館員",
+      "objective": "航行到長崎，在出島延續貿易。",
+      "rewardGold": 1400
     },
     {
-      "id": "event_penghu_1622",
-      "type": "事件",
-      "title": "1622 年澎湖事件",
-      "body": "1622 年荷蘭人進入澎湖，想靠近中國貿易，但明朝認為澎湖是海防要地，要求荷蘭離開。這件事推動荷蘭轉向大員建立據點。"
+      "id": "chiyo_08",
+      "heroId": "chiyo",
+      "chapter": 8,
+      "title": "異鄉的朋友",
+      "year": 1645,
+      "targetPortId": "nagasaki",
+      "npc": "異鄉商友",
+      "objective": "航行到長崎，與異鄉的朋友相聚。",
+      "rewardGold": 1600
     },
     {
-      "id": "place_penghu",
-      "type": "地點",
-      "title": "澎湖",
-      "body": "澎湖位在台灣海峽中央，控制福建與台灣之間的航路。因為位置重要，明朝、海商與歐洲人都很重視這裡。"
+      "id": "chiyo_09",
+      "heroId": "chiyo",
+      "chapter": 9,
+      "title": "故人的消息",
+      "year": 1659,
+      "targetPortId": "nagasaki",
+      "npc": "漢人海商",
+      "objective": "航行到長崎，聽聞故人的消息。",
+      "rewardGold": 1800
     },
     {
-      "id": "event_shuinsen",
-      "type": "事件",
-      "title": "朱印船貿易",
-      "body": "朱印船是得到日本幕府許可出海的商船，活躍於 17 世紀初。它們往來日本、台灣與東南亞，帶動白銀、生絲、鹿皮等貿易。"
-    },
-    {
-      "id": "event_hamada",
-      "type": "事件",
-      "title": "濱田彌兵衛事件",
-      "body": "1628 年，日本商人濱田彌兵衛與荷蘭大員商館爆發衝突。這件事顯示台灣是多方勢力交會之地，貿易糾紛也可能變成外交事件。"
-    },
-    {
-      "id": "place_tayouan",
-      "type": "地點",
-      "title": "大員",
-      "body": "大員約在今天台南安平一帶。荷蘭人在此建立熱蘭遮城，把台灣南部作為連接中國、日本與東南亞的轉口貿易基地。"
-    },
-    {
-      "id": "person_zheng_zhilong",
-      "type": "人物",
-      "title": "鄭芝龍",
-      "body": "鄭芝龍是明末台海重要海上勢力領袖，曾在福建、日本與台灣之間活動。他既是商人也是武裝首領，後來接受明朝招撫，掌握龐大的海上貿易網。"
-    },
-    {
-      "id": "event_zheng_rise",
-      "type": "事件",
-      "title": "鄭芝龍崛起",
-      "body": "顏思齊去世後，鄭芝龍逐漸成為台海海商集團的核心人物。他能整合船隊、貿易與武力，也能和明朝官府交涉，影響後來鄭氏集團的發展。"
-    },
-    {
-      "id": "event_zeelandia",
-      "type": "事件",
-      "title": "熱蘭遮城建立",
-      "body": "1624 年後，荷蘭人在大員建立熱蘭遮城。這座城是 VOC 在台灣南部的政治與貿易中心，也讓台灣成為東亞海上貿易的重要轉運點。"
-    },
-    {
-      "id": "trade_deerskin",
-      "type": "貿易品",
-      "title": "鹿皮",
-      "body": "17 世紀台灣鹿群很多，鹿皮可賣到日本製作武士甲冑內襯。荷蘭人在台灣經營鹿皮貿易，也因此和原住民部落、漢人獵戶產生密切關係。"
-    },
-    {
-      "id": "trade_sugar",
-      "type": "貿易品",
-      "title": "蔗糖",
-      "body": "荷蘭時期台灣南部開始發展甘蔗種植與製糖。蔗糖能賣到日本與南洋，是台灣逐漸成為出口基地的重要商品之一。"
-    },
-    {
-      "id": "trade_silk",
-      "type": "貿易品",
-      "title": "生絲",
-      "body": "生絲是中國重要出口品，日本商人與歐洲商館都很想取得。台灣位在中國與日本之間，因此常被當作生絲轉口貿易的中繼點。"
-    },
-    {
-      "id": "trade_silver",
-      "type": "貿易品",
-      "title": "白銀",
-      "body": "白銀在 17 世紀是國際貿易中常用的支付工具。日本銀礦產量高，商人常用白銀購買中國生絲，形成中日貿易的重要循環。"
-    },
-    {
-      "id": "place_naha",
-      "type": "地點",
-      "title": "那霸",
-      "body": "那霸是琉球王國的重要港口。琉球位在中國、日本與東南亞之間，常扮演轉手貿易與外交中介角色。"
-    },
-    {
-      "id": "event_sakoku_pressure",
-      "type": "事件",
-      "title": "鎖國壓力",
-      "body": "17 世紀上半，日本幕府逐步限制海外往來，後來形成鎖國政策。這讓日本商人出海越來越困難，也使琉球、荷蘭等中介管道更加重要。"
+      "id": "chiyo_10",
+      "heroId": "chiyo",
+      "chapter": 10,
+      "title": "見證落幕",
+      "year": 1661,
+      "targetPortId": "tayouan",
+      "npc": "老通譯",
+      "objective": "航行到大員，見證大時代的落幕。",
+      "rewardGold": 2200
     }
   ]
 }

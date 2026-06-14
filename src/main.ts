@@ -12,7 +12,9 @@ import MatesScene from './scenes/MatesScene';
 import BattleScene from './scenes/BattleScene';
 import GameOverScene from './scenes/GameOverScene';
 import SaveSlotScene from './scenes/SaveSlotScene';
+import StoryScene from './scenes/StoryScene';
 import * as state from './state';
+import * as story from './story/parseStory';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -24,9 +26,10 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene],
+  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene, StoryScene],
 });
 
 // 偵錯掛鉤（供自動化測試）
 (window as unknown as Record<string, unknown>).__game = game;
 (window as unknown as Record<string, unknown>).__state = state;
+(window as unknown as Record<string, unknown>).__story = story;

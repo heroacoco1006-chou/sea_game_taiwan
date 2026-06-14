@@ -7,6 +7,9 @@ import matesData from './data/mates.json';
 import storyData from './data/story.json';
 import explorationData from './data/exploration_points.json';
 import discoveriesData from './data/discoveries.json';
+import { ALL_STORY_CODEX, chapterCodexIds, getChapterScript } from './story/parseStory';
+export { getChapterScript } from './story/parseStory';
+export type { ParsedChapter, StoryLine } from './story/parseStory';
 
 export interface Good {
   id: string;
@@ -189,10 +192,8 @@ export interface StoryChapter {
   npc: string;
   objective: string;
   requirements?: StoryRequirements;
-  prompt: string;
-  completion: string;
   rewardGold: number;
-  codexIds: string[];
+  // 對白與圖鑑解鎖內容來自 data/story/*.md（見 src/story/parseStory.ts）
 }
 
 export interface StoryRequirements {
@@ -306,7 +307,8 @@ export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
 export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
 export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
 export const EXPLORATION_POINTS: ExplorationPoint[] = explorationData.points as ExplorationPoint[];
-export const CODEX_ENTRIES: CodexEntry[] = [...(storyData.codex as CodexEntry[]), ...DISCOVERIES];
+// 圖鑑 = 主線劇本解析出的圖鑑（唯一來源：data/story/*.md）＋ 探索發現
+export const CODEX_ENTRIES: CodexEntry[] = [...(ALL_STORY_CODEX as CodexEntry[]), ...DISCOVERIES];
 export const CREW_START = 16;
 export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
@@ -1072,6 +1074,27 @@ export function unlockCodex(state: GameState, ids: string[]): string[] {
   return unlocked;
 }
 
+/** 章節前導文字：取劇本第一句旁白當作官府／商館的引言。 */
+export function storyChapterTeaser(heroId: string, chapter: number): string {
+  const script = getChapterScript(heroId, chapter);
+  if (!script) return '';
+  const intro = script.lines.find((l) => l.kind === 'narration') ?? script.lines.find((l) => l.kind === 'inner');
+  return intro?.text ?? '';
+}
+
+/** 不改動狀態的前置檢查：目前主線章節能否在這個港口推進。 */
+export function storyAdvanceCheck(state: GameState, port: Port): { ok: boolean; message: string } {
+  const chapter = currentStoryChapter(state);
+  if (!chapter) return { ok: false, message: '主線章節已全部完成。' };
+  if (chapter.targetPortId !== port.id) {
+    const target = storyTargetPort(chapter);
+    return { ok: false, message: `目前目標是前往【${target?.name ?? chapter.targetPortId}】。` };
+  }
+  const requirementError = storyRequirementError(state, chapter);
+  if (requirementError) return { ok: false, message: requirementError };
+  return { ok: true, message: '' };
+}
+
 export function completeStoryChapter(
   state: GameState,
   port: Port
@@ -1093,19 +1116,19 @@ export function completeStoryChapter(
   const beforeDay = state.day;
   state.day = Math.max(state.day, dayForYear(chapter.year));
   state.story.completed.push(chapter.id);
-  const unlocked = unlockCodex(state, chapter.codexIds);
+  const unlocked = unlockCodex(state, chapterCodexIds(chapter.heroId, chapter.chapter));
   if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
   state.story.chapter += 1;
 
   const next = currentStoryChapter(state);
   const nextPort = storyTargetPort(next);
   const lines = [
-    chapter.completion,
-    state.day > beforeDay ? `\n劇情時間推進到 ${dateText(state.day)}。` : '',
-    chapter.requirements?.cargo?.some((req) => req.consume) ? `\n${storyRequirementText(chapter)}已完成。` : '',
-    chapter.rewardGold > 0 ? `\n獲得 ${chapter.rewardGold} 兩。` : '',
-    unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
-    next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n目前示範章節已完成，後續主線會繼續擴充。',
+    `第 ${chapter.chapter} 章「${chapter.title}」完成。`,
+    state.day > beforeDay ? `劇情時間推進到 ${dateText(state.day)}。` : '',
+    chapter.requirements?.cargo?.some((req) => req.consume) ? `${storyRequirementText(chapter)}已完成。` : '',
+    chapter.rewardGold > 0 ? `獲得 ${chapter.rewardGold} 兩。` : '',
+    unlocked.length > 0 ? `解鎖圖鑑：${unlocked.join('、')}` : '',
+    next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];
   return { ok: true, title: `完成：${chapter.title}`, message: lines.filter(Boolean).join('\n') };
 }
