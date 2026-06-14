@@ -16,7 +16,11 @@
     { "id": "ac_compass", "name": "羅盤", "price": 30000, "effect": "speed", "desc": "精準的航海羅盤，航行更有效率（航速小幅提升）。" },
     { "id": "ac_telescope", "name": "望遠鏡", "price": 45000, "effect": "scout", "desc": "及早發現海上的狀況（暴風與海盜較不易突襲）。" },
     { "id": "ac_charm", "name": "媽祖護身符", "price": 25000, "effect": "morale", "desc": "媽祖保佑，船員安心（疲勞累積減緩）。" },
-    { "id": "ac_abacus", "name": "算盤", "price": 50000, "effect": "trade", "desc": "精打細算，買賣更划算（交易價格優惠）。" }
+    { "id": "ac_abacus", "name": "算盤", "price": 50000, "effect": "trade", "desc": "精打細算，買賣更划算（交易價格優惠）。" },
+    { "id": "tr_mazu_amulet", "name": "海商護符", "price": 35000, "effect": "morale", "desc": "探索取得的護符，能安定船員心情（疲勞累積減緩）。" },
+    { "id": "tr_merchant_abacus", "name": "堺商人的小算盤", "price": 70000, "effect": "trade", "desc": "堺商人留下的小算盤，適合精算買賣（交易價格優惠）。" },
+    { "id": "tr_old_compass", "name": "古航海羅盤", "price": 85000, "effect": "speed", "desc": "帶著歲月痕跡的羅盤，能幫助判斷航向（航速小幅提升）。" },
+    { "id": "tr_seafarer_telescope", "name": "異國望遠鏡", "price": 95000, "effect": "scout", "desc": "探索取得的望遠鏡，能更早看見海上異狀（突襲較不易發生）。" }
   ],
   "figureheads": [
     { "id": "fh_mazu", "name": "媽祖像", "price": 100000, "effect": "storm", "desc": "船首的媽祖神像，鎮住風浪（暴風損害減半）。" },

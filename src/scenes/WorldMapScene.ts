@@ -8,7 +8,8 @@ import {
   gearSpeedMod, stormDamageMod, ambushMod, fatigueMod, statusSpeedMod,
   addSeaStatus, hasSeaStatus, statusSummary,
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
-  unlockCodex,
+  unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
+  recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
@@ -402,7 +403,7 @@ export default class WorldMapScene extends Phaser.Scene {
     }
     this.pauseWithModal(
       `探索：${point.name}`,
-      `${point.hint}\n\n本次探索需要 ${point.baseDays} 天，消耗糧食 ${point.cost.food}、清水 ${point.cost.water}。`,
+      `${point.hint}\n\n本次探索需要 ${explorationCostForState(this.state, point).days} 天，消耗糧食 ${explorationCostForState(this.state, point).food}、清水 ${explorationCostForState(this.state, point).water}。\n發現率約 ${Math.round(explorationFindChance(this.state, point) * 100)}%。探險嚮導、書記、望遠鏡會提高發現率；醫師可降低疲勞。`,
       [
         { label: '先準備一下', onPick: () => {} },
         {
@@ -415,28 +416,34 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private resolveExploration(point: ExplorationPoint, discoveryId: string | undefined): void {
     const s = this.state;
-    if (s.food < point.cost.food || s.water < point.cost.water) {
+    const cost = explorationCostForState(s, point);
+    if (s.food < cost.food || s.water < cost.water) {
       this.pauseWithModal(
         '補給不足',
-        `探索需要糧食 ${point.cost.food}、清水 ${point.cost.water}。\n\n目前糧食 ${s.food}、清水 ${s.water}，先回港補給比較安全。`,
+        `探索需要糧食 ${cost.food}、清水 ${cost.water}。\n\n目前糧食 ${s.food}、清水 ${s.water}，先回港補給比較安全。`,
         [{ label: '回到船上', onPick: () => {} }]
       );
       return;
     }
 
-    s.food -= point.cost.food;
-    s.water -= point.cost.water;
-    s.day += point.baseDays;
-    s.daysAtSea += point.baseDays;
-    s.fatigue = Math.min(100, s.fatigue + point.difficulty * 8);
+    s.food -= cost.food;
+    s.water -= cost.water;
+    s.day += cost.days;
+    s.daysAtSea += cost.days;
+    s.fatigue = Math.min(100, s.fatigue + explorationFatigueGain(s, point));
     refreshMarketEvents(s);
 
     const eventText = this.explorationEventText(point);
-    const unlockedIds = discoveryId ? [discoveryId] : [];
+    const chance = explorationFindChance(s, point);
+    const attempt = recordExplorationAttempt(s, point.id);
+    const foundThisTime = Boolean(discoveryId) && Math.random() < chance;
+    const unlockedIds = discoveryId && foundThisTime ? [discoveryId] : [];
     const unlocked = unlockCodex(s, unlockedIds);
-    const found = discoveryId ? DISCOVERIES.find((entry) => entry.id === discoveryId) : undefined;
+    const found = discoveryId && foundThisTime ? DISCOVERIES.find((entry) => entry.id === discoveryId) : undefined;
     const reward = found?.rewardGold ?? (found ? 80 + point.difficulty * 40 : 0);
     if (reward > 0) s.gold += reward;
+    const rewardItemId = found?.kind === 'treasure' ? found.rewardItemId ?? found.id : undefined;
+    if (rewardItemId) addInventory(s, rewardItemId);
 
     const q = s.quest;
     if (q?.type === 'exploration' && q.pointId === point.id) {
@@ -449,9 +456,10 @@ export default class WorldMapScene extends Phaser.Scene {
     this.updateHud();
     const resultLines = [
       eventText,
-      found ? `\n發現：${found.title}\n${found.body}` : '\n這次沒有新的重大發現，但完成了地點調查。',
+      found ? `\n發現：${found.title}\n${found.body}` : `\n這次完成了地點調查，但沒有新的重大發現。下次再探索，發現機會會稍微提高。（第 ${attempt} 次調查）`,
       unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
       reward > 0 ? `\n獲得記錄獎金 ${reward} 兩。` : '',
+      rewardItemId ? `\n取得寶物：${itemNameById(rewardItemId)}，已放入背包。` : '',
       q?.type === 'exploration' && q.pointId === point.id ? '\n探險委託已完成，回接任務的官府／商館領賞。' : '',
     ];
     this.pauseWithModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), [

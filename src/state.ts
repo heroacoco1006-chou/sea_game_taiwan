@@ -215,6 +215,7 @@ export interface DiscoveryEntry extends CodexEntry {
   x?: number;
   y?: number;
   rewardGold?: number;
+  rewardItemId?: string;
 }
 
 export interface ExplorationPoint {
@@ -271,8 +272,17 @@ export interface GameState {
   discoveredExplorationPoints: string[];
   /** M4 主線劇情與圖鑑進度 */
   story: StoryState;
+  /** 探索紀錄：完成探索次數與本輪商館任務候選 */
+  exploration: ExplorationState;
   /** 造船廠建造中的船 */
   shipOrders: ShipOrder[];
+}
+
+export interface ExplorationState {
+  attempts: Record<string, number>;
+  questOfferDay: number;
+  questOfferPortId: string | null;
+  questOffers: Quest[];
 }
 
 export const FLEET_MAX = 5; // 含旗艦
@@ -419,7 +429,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 12,
+    version: 13,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -444,6 +454,12 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
       chapter: 1,
       completed: [],
       codex: [],
+    },
+    exploration: {
+      attempts: {},
+      questOfferDay: 0,
+      questOfferPortId: null,
+      questOffers: [],
     },
     shipOrders: [],
   };
@@ -595,8 +611,37 @@ export function itemNameById(id: string): string {
     ACCESSORIES.find((x) => x.id === id)?.name ??
     FIGUREHEADS.find((x) => x.id === id)?.name ??
     CONSUMABLES.find((x) => x.id === id)?.name ??
+    DISCOVERIES.find((x) => x.id === id || x.rewardItemId === id)?.title ??
     id
   );
+}
+
+export function itemDescById(id: string): string {
+  return (
+    WEAPONS.find((x) => x.id === id)?.desc ??
+    ARMORS.find((x) => x.id === id)?.desc ??
+    ACCESSORIES.find((x) => x.id === id)?.desc ??
+    FIGUREHEADS.find((x) => x.id === id)?.desc ??
+    CONSUMABLES.find((x) => x.id === id)?.desc ??
+    DISCOVERIES.find((x) => x.id === id || x.rewardItemId === id)?.body ??
+    ''
+  );
+}
+
+export function isTreasureItem(id: string): boolean {
+  return DISCOVERIES.some((x) => x.kind === 'treasure' && (x.id === id || x.rewardItemId === id));
+}
+
+export function itemSellValueById(id: string): number {
+  const equipPrice =
+    WEAPONS.find((x) => x.id === id)?.price ??
+    ARMORS.find((x) => x.id === id)?.price ??
+    ACCESSORIES.find((x) => x.id === id)?.price ??
+    FIGUREHEADS.find((x) => x.id === id)?.price;
+  if (equipPrice) return Math.max(100, Math.round(equipPrice * 0.45));
+  const discovery = DISCOVERIES.find((x) => x.id === id || x.rewardItemId === id);
+  if (discovery?.rewardGold) return Math.max(80, discovery.rewardGold);
+  return 100;
 }
 
 export function addInventory(state: GameState, id: string, qty = 1): void {
@@ -610,6 +655,14 @@ export function hasInventory(state: GameState, id: string): boolean {
 function consumeInventory(state: GameState, id: string): void {
   state.inventory[id] = Math.max(0, (state.inventory[id] ?? 0) - 1);
   if (state.inventory[id] <= 0) delete state.inventory[id];
+}
+
+export function sellInventoryItem(state: GameState, id: string): string {
+  if (!hasInventory(state, id)) return `背包裡沒有【${itemNameById(id)}】。`;
+  const value = itemSellValueById(id);
+  consumeInventory(state, id);
+  state.gold += value;
+  return `賣出【${itemNameById(id)}】，獲得 ${value} 兩。`;
 }
 
 export function shopItemIdsForPort(port: Port): Record<ShopCat, string[]> {
@@ -839,6 +892,21 @@ export function loadGame(): GameState | null {
       const full = s as GameState;
       full.discoveredExplorationPoints = full.discoveredExplorationPoints ?? [];
       full.version = 12;
+    }
+    // v12 → v13：補探索次數與商館多任務候選紀錄。
+    if (s.version < 13) {
+      const full = s as GameState;
+      full.exploration = full.exploration ?? {
+        attempts: {},
+        questOfferDay: 0,
+        questOfferPortId: null,
+        questOffers: [],
+      };
+      full.exploration.attempts = full.exploration.attempts ?? {};
+      full.exploration.questOffers = full.exploration.questOffers ?? [];
+      full.exploration.questOfferDay = full.exploration.questOfferDay ?? 0;
+      full.exploration.questOfferPortId = full.exploration.questOfferPortId ?? null;
+      full.version = 13;
     }
     return s as GameState;
   } catch {
@@ -1093,6 +1161,17 @@ function deliveryQuestOffer(state: GameState, port: Port): DeliveryQuest {
   return { type: 'delivery', goodId: good.id, qty, portId: target.id, deadlineDay, reward, originPortId: port.id };
 }
 
+function deliveryQuestOfferAt(state: GameState, port: Port, slot: number): DeliveryQuest {
+  const candidates = PORTS.filter((p) => p.id !== port.id);
+  const target = candidates[Math.floor(hashNoise(state.day + slot * 11, 'qp' + port.id + slot) * candidates.length)];
+  const good = GOODS[Math.floor(hashNoise(state.day + slot * 13, 'qg' + port.id + slot) * GOODS.length)];
+  const qty = 5 + Math.floor(hashNoise(state.day + slot * 17, 'qq' + port.id + slot) * 8);
+  const distDays = Math.ceil(Math.hypot(target.x - port.x, target.y - port.y) / PX_PER_DAY_EST);
+  const deadlineDay = state.day + distDays * 2 + 8;
+  const reward = Math.round(qty * good.basePrice * 0.7 + distDays * 40);
+  return { type: 'delivery', goodId: good.id, qty, portId: target.id, deadlineDay, reward, originPortId: port.id };
+}
+
 function combatQuestOffer(state: GameState, port: Port): CombatQuest {
   const area = pirateAreaForPort(port);
   const distDays = Math.max(1, Math.ceil(Math.hypot(area.x - port.x, area.y - port.y) / PX_PER_DAY_EST));
@@ -1103,6 +1182,28 @@ function combatQuestOffer(state: GameState, port: Port): CombatQuest {
     originPortId: port.id,
     targetX: area.x,
     targetY: area.y,
+    deadlineDay: state.day + distDays * 2 + 10,
+    reward: 700 + tier * 300 + distDays * 60,
+    enemyTier: tier,
+    completed: false,
+    codexIds: [],
+  };
+}
+
+function combatQuestOfferAt(state: GameState, port: Port, slot: number): CombatQuest {
+  const area = pirateAreaForPort(port);
+  const offsetX = (hashNoise(state.day + slot, 'piratex' + port.id) - 0.5) * 180;
+  const offsetY = (hashNoise(state.day + slot, 'piratey' + port.id) - 0.5) * 180;
+  const targetX = Math.max(20, Math.min(WORLD_W - 20, area.x + offsetX));
+  const targetY = Math.max(20, Math.min(WORLD_H - 20, area.y + offsetY));
+  const distDays = Math.max(1, Math.ceil(Math.hypot(targetX - port.x, targetY - port.y) / PX_PER_DAY_EST));
+  const tier = state.day < 120 ? 1 : state.day < 300 ? 2 : 3;
+  return {
+    type: 'combat',
+    title: `討伐${area.name}海盜`,
+    originPortId: port.id,
+    targetX,
+    targetY,
     deadlineDay: state.day + distDays * 2 + 10,
     reward: 700 + tier * 300 + distDays * 60,
     enemyTier: tier,
@@ -1129,12 +1230,86 @@ function explorationQuestOffer(state: GameState, port: Port): ExplorationQuest {
   };
 }
 
+function explorationQuestOfferAt(state: GameState, port: Port, slot: number): ExplorationQuest {
+  const nearby = EXPLORATION_POINTS.filter((point) => Math.hypot(point.x - port.x, point.y - port.y) <= 1900);
+  const pool = nearby.length > 0 ? nearby : EXPLORATION_POINTS;
+  const point = pool[Math.floor(hashNoise(state.day + slot * 19, 'qx' + port.id + slot) * pool.length)];
+  const distDays = Math.max(1, Math.ceil(Math.hypot(point.x - port.x, point.y - port.y) / PX_PER_DAY_EST));
+  const reward = 450 + point.difficulty * 260 + distDays * 35;
+  return {
+    type: 'exploration',
+    title: `調查${point.name}`,
+    originPortId: port.id,
+    pointId: point.id,
+    deadlineDay: state.day + distDays * 2 + 14,
+    reward,
+    completed: false,
+    codexIds: [],
+  };
+}
+
 /** 產生本日此港的委託內容（同日同港固定），採購／海戰／探索三分流 */
 export function questOffer(state: GameState, port: Port): Quest {
   const roll = hashNoise(state.day, 'qt' + port.id);
   if (roll < 0.45) return deliveryQuestOffer(state, port);
   if (roll < 0.7) return combatQuestOffer(state, port);
   return explorationQuestOffer(state, port);
+}
+
+export function questOffersForPort(state: GameState, port: Port): Quest[] {
+  const cache = state.exploration;
+  if (
+    cache.questOfferDay === state.day &&
+    cache.questOfferPortId === port.id &&
+    cache.questOffers.length === 3
+  ) {
+    return cache.questOffers;
+  }
+  const offers = [
+    deliveryQuestOfferAt(state, port, 0),
+    combatQuestOfferAt(state, port, 1),
+    explorationQuestOfferAt(state, port, 2),
+  ];
+  const start = Math.floor(hashNoise(state.day, 'qorder' + port.id) * offers.length);
+  const ordered = [...offers.slice(start), ...offers.slice(0, start)];
+  cache.questOfferDay = state.day;
+  cache.questOfferPortId = port.id;
+  cache.questOffers = ordered;
+  return ordered;
+}
+
+export function explorationAttemptCount(state: GameState, pointId: string): number {
+  return state.exploration.attempts[pointId] ?? 0;
+}
+
+export function recordExplorationAttempt(state: GameState, pointId: string): number {
+  const next = explorationAttemptCount(state, pointId) + 1;
+  state.exploration.attempts[pointId] = next;
+  return next;
+}
+
+export function explorationFindChance(state: GameState, point: ExplorationPoint): number {
+  const base = point.difficulty <= 1 ? 0.72 : point.difficulty === 2 ? 0.58 : 0.44;
+  const guide = hasRole(state, 'guide') ? 0.16 : 0;
+  const scholar = hasRole(state, 'scholar') ? 0.08 : 0;
+  const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
+  const retry = Math.min(0.2, explorationAttemptCount(state, point.id) * 0.05);
+  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry));
+}
+
+export function explorationCostForState(state: GameState, point: ExplorationPoint): { food: number; water: number; days: number } {
+  const guideMod = hasRole(state, 'guide') ? 0.75 : 1;
+  const days = Math.max(1, Math.round(point.baseDays * guideMod));
+  return {
+    food: Math.max(1, Math.ceil(point.cost.food * guideMod)),
+    water: Math.max(1, Math.ceil(point.cost.water * guideMod)),
+    days,
+  };
+}
+
+export function explorationFatigueGain(state: GameState, point: ExplorationPoint): number {
+  const surgeonMod = hasRole(state, 'surgeon') ? 0.7 : 1;
+  return Math.round(point.difficulty * 8 * surgeonMod);
 }
 
 export function explorationPointById(id: string): ExplorationPoint | undefined {

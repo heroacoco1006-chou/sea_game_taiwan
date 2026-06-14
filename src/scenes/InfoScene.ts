@@ -5,6 +5,7 @@ import {
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
   heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState, storyRequirementText,
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
+  itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -169,7 +170,7 @@ export default class InfoScene extends Phaser.Scene {
 
   private drawBackpack(): void {
     this.addTitle('背包');
-    this.addWrapped(290, 112, '背包只列出沒有被裝備的個人道具、未裝在旗艦上的船首像，以及可使用的消耗道具。', 840, 15, '#5a4a30');
+    this.addWrapped(290, 112, '背包列出沒有被裝備的個人道具、未裝在旗艦上的船首像、可使用的消耗道具，以及探險找到的寶物。', 840, 15, '#5a4a30');
 
     const entries = this.backpackEntries();
     if (entries.length === 0) {
@@ -178,9 +179,14 @@ export default class InfoScene extends Phaser.Scene {
     entries.forEach((entry, i) => {
       const y = 170 + i * 44;
       const item = CONSUMABLES.find((x) => x.id === entry.id);
-      this.addWrapped(300, y, `${itemNameById(entry.id)} x${entry.qty}${item ? `：${item.desc}` : ''}`, 600, 15);
+      const desc = itemDescById(entry.id);
+      this.addWrapped(300, y, `${itemNameById(entry.id)} x${entry.qty}${desc ? `：${desc}` : ''}`, 600, 15);
       if (item) {
         const btn = makeButton(this, 1035, y + 10, 140, 34, '使用', () => this.useItem(item.id), 14);
+        this.dyn.push(btn);
+      } else if (isTreasureItem(entry.id)) {
+        const value = itemSellValueById(entry.id);
+        const btn = makeButton(this, 1035, y + 10, 150, 34, `賣出 ${value}兩`, () => this.sellItem(entry.id), 13);
         this.dyn.push(btn);
       }
     });
@@ -320,6 +326,13 @@ export default class InfoScene extends Phaser.Scene {
 
   private useItem(id: string): void {
     const msg = useConsumable(this.state, id);
+    saveGame(this.state);
+    this.render();
+    toast(this, msg);
+  }
+
+  private sellItem(id: string): void {
+    const msg = sellInventoryItem(this.state, id);
     saveGame(this.state);
     this.render();
     toast(this, msg);

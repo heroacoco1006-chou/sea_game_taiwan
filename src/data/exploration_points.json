@@ -22,7 +22,7 @@
       "difficulty": 3,
       "baseDays": 3,
       "cost": { "food": 9, "water": 9 },
-      "discoveries": ["geo_yushan", "sp_mikado_pheasant", "sp_taiwan_black_bear"],
+      "discoveries": ["geo_yushan", "sp_mikado_pheasant", "sp_taiwan_black_bear", "tr_old_compass"],
       "events": ["lost", "cold_mountain", "landmark"],
       "hint": "從內陸山路遠望高山雲海，路程辛苦但收穫珍貴。"
     },
@@ -74,7 +74,7 @@
       "difficulty": 3,
       "baseDays": 3,
       "cost": { "food": 10, "water": 10 },
-      "discoveries": ["place_forbidden_city", "culture_ming_court", "sp_giant_salamander"],
+      "discoveries": ["place_forbidden_city", "culture_ming_court", "sp_giant_salamander", "tr_seafarer_telescope"],
       "events": ["lost", "landmark"],
       "hint": "由沿海港口接內陸遠行任務，觀察明末朝貢與宮城制度。"
     },
@@ -139,7 +139,7 @@
       "difficulty": 2,
       "baseDays": 2,
       "cost": { "food": 7, "water": 7 },
-      "discoveries": ["geo_java_volcano", "sp_javan_rhino", "sp_banteng_pepper"],
+      "discoveries": ["geo_java_volcano", "sp_javan_rhino", "sp_banteng_pepper", "tr_coral_specimen"],
       "events": ["lost", "wildlife", "landmark"],
       "hint": "爪哇火山讓土地肥沃，也讓胡椒與稻米貿易興盛。"
     },
@@ -152,7 +152,7 @@
       "difficulty": 3,
       "baseDays": 3,
       "cost": { "food": 9, "water": 9 },
-      "discoveries": ["view_banda_islands", "sp_bird_of_paradise", "sp_nutmeg_tree", "sp_clove_tree"],
+      "discoveries": ["view_banda_islands", "sp_bird_of_paradise", "sp_nutmeg_tree", "sp_clove_tree", "tr_spice_specimen"],
       "events": ["lost", "wildlife", "forest"],
       "hint": "肉豆蔻與丁香讓香料群島成為各國爭奪的焦點。"
     }

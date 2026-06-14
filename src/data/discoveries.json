@@ -450,7 +450,8 @@
       "type": "寶物",
       "title": "海商護符",
       "body": "這枚護符代表海商出航前祈求平安的習俗。它目前作為探索寶物圖鑑，後續可改成任務獎勵或飾品。",
-      "rewardGold": 150
+      "rewardGold": 150,
+      "rewardItemId": "tr_mazu_amulet"
     },
     {
       "id": "tr_merchant_abacus",
@@ -458,7 +459,42 @@
       "type": "寶物",
       "title": "堺商人的小算盤",
       "body": "小算盤象徵商人精打細算的能力。它可作為早期探索寶物，讓玩家感覺探險也能幫助貿易。",
-      "rewardGold": 180
+      "rewardGold": 180,
+      "rewardItemId": "tr_merchant_abacus"
+    },
+    {
+      "id": "tr_old_compass",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "古航海羅盤",
+      "body": "這個羅盤刻著不同海域的簡單記號，代表水手長年累積的經驗。它可以裝備，也能賣給收藏航海器具的人。",
+      "rewardGold": 220,
+      "rewardItemId": "tr_old_compass"
+    },
+    {
+      "id": "tr_seafarer_telescope",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "異國望遠鏡",
+      "body": "這支望遠鏡從遠方商船流入亞洲港口，能讓瞭望手更早看見海岸、礁石或船影。它可以裝備，也能賣出換錢。",
+      "rewardGold": 260,
+      "rewardItemId": "tr_seafarer_telescope"
+    },
+    {
+      "id": "tr_spice_specimen",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "香料標本盒",
+      "body": "木盒裡整齊放著丁香、肉豆蔻與胡椒標本。它沒有裝備效果，但商館很願意用高價收購。",
+      "rewardGold": 650
+    },
+    {
+      "id": "tr_coral_specimen",
+      "kind": "treasure",
+      "type": "寶物",
+      "title": "珊瑚標本",
+      "body": "這是一小段色澤漂亮的珊瑚標本，能說明熱帶海域的自然特色。它適合賣給收藏家或交給任務委託人。",
+      "rewardGold": 520
     }
   ]
 }
