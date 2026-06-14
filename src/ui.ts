@@ -58,7 +58,13 @@ export function makeButton(
     bg.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, 6);
   };
   draw(false);
-  const txt = scene.add.text(0, 0, label, textStyle(fontSize)).setOrigin(0.5);
+  const txt = scene.add
+    .text(0, 0, label, { ...textStyle(fontSize), align: 'center', wordWrap: { width: w - 14 } })
+    .setOrigin(0.5);
+  while ((txt.width > w - 14 || txt.height > h - 8) && fontSize > 10) {
+    fontSize -= 1;
+    txt.setFontSize(fontSize);
+  }
   const c = scene.add.container(x, y, [bg, txt]);
   c.setSize(w, h);
   c.setInteractive({ useHandCursor: true });
@@ -81,8 +87,9 @@ export function showModal(
   choices: ModalChoice[]
 ): Phaser.GameObjects.Container {
   const cam = scene.cameras.main;
-  const w = 640;
-  const h = 240 + choices.length * 64;
+  const w = Math.min(820, cam.width - 80);
+  const buttonH = choices.length * 58;
+  const h = Math.min(cam.height - 80, 220 + buttonH);
   const cx = cam.width / 2;
   const cy = cam.height / 2;
 
@@ -93,12 +100,28 @@ export function showModal(
   panel.fillStyle(COLORS.parchment, 1);
   panel.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, 8);
 
-  const titleT = scene.add.text(cx, cy - h / 2 + 40, title, textStyle(28)).setOrigin(0.5);
+  const titleT = scene.add
+    .text(cx, cy - h / 2 + 36, title, { ...textStyle(26), align: 'center', wordWrap: { width: w - 80 } })
+    .setOrigin(0.5);
+  const bodyY = cy - h / 2 + 78;
+  const bodyH = h - buttonH - 112;
   const bodyT = scene.add
-    .text(cx, cy - h / 2 + 80, body, { ...textStyle(19), wordWrap: { width: w - 80 }, lineSpacing: 6 })
+    .text(cx, bodyY, body, { ...textStyle(18), align: 'center', wordWrap: { width: w - 90 }, lineSpacing: 6 })
     .setOrigin(0.5, 0);
+  while (bodyT.height > bodyH && Number.parseInt(String(bodyT.style.fontSize), 10) > 13) {
+    const next = Number.parseInt(String(bodyT.style.fontSize), 10) - 1;
+    bodyT.setFontSize(next);
+  }
+  let clip: Phaser.GameObjects.Graphics | null = null;
+  if (bodyT.height > bodyH) {
+    clip = scene.add.graphics();
+    clip.fillStyle(0xffffff, 1);
+    clip.fillRect(cx - w / 2 + 40, bodyY, w - 80, bodyH);
+    clip.setVisible(false);
+    bodyT.setMask(clip.createGeometryMask());
+  }
 
-  const parts: Phaser.GameObjects.GameObject[] = [dim, panel, titleT, bodyT];
+  const parts: Phaser.GameObjects.GameObject[] = clip ? [dim, panel, titleT, bodyT, clip] : [dim, panel, titleT, bodyT];
   const container = scene.add.container(0, 0, parts);
   container.setDepth(2000);
   container.setScrollFactor(0);
@@ -107,9 +130,9 @@ export function showModal(
     const btn = makeButton(
       scene,
       cx,
-      cy + h / 2 - (choices.length - i) * 64 + 8,
-      w - 160,
-      52,
+      cy + h / 2 - (choices.length - i) * 58 - 2,
+      Math.min(w - 160, 520),
+      46,
       c.label,
       () => {
         container.destroy();

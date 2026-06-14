@@ -4,7 +4,7 @@ import {
   cargoCount, cargoMax, supplyMax, fleetShips, fleetMinCrew, crewMax, FLEET_MAX,
   saveGame, CANNON_PRICE, availableShipsAtPort, FIGUREHEADS, addInventory, hasInventory,
 } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
 const REPAIR_PRICE = 2;
 const REFIT_FEE = 10;
@@ -92,14 +92,10 @@ export default class ShipyardScene extends Phaser.Scene {
     makeButton(this, 820, 520, 260, 50, '換成旗艦（折抵舊旗艦）', () => this.buyShip(false), 16);
     makeButton(this, 1100, 520, 220, 50, '加入艦隊（當僚艦）', () => this.buyShip(true), 16);
 
-    // ---------- 船首像改裝 ----------
-    this.add.text(950, 590, '— 旗艦船首像改裝 —', textStyle(18)).setOrigin(0.5);
-    this.figureheadText = this.add.text(680, 614, '', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 } });
-    FIGUREHEADS.forEach((f, i) => {
-      const x = 760 + (i % 2) * 250;
-      const y = 660 + Math.floor(i / 2) * 38;
-      makeButton(this, x, y, 220, 32, `${f.name} ${f.price}兩`, () => this.installFigurehead(f.id), 13);
-    });
+    // ---------- 船艦改造 ----------
+    this.add.text(950, 592, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
+    this.figureheadText = this.add.text(690, 620, '', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 520 }, lineSpacing: 4 });
+    makeButton(this, 1060, 650, 190, 44, '船艦改造', () => this.showRefitMenu(), 17);
 
     makeButton(this, W / 2, H - 40, 220, 46, '離開（回到街上）', () => {
       saveGame(this.state);
@@ -121,8 +117,7 @@ export default class ShipyardScene extends Phaser.Scene {
     );
     const fig = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
     this.figureheadText?.setText(
-      `目前船首像：${fig ? fig.name : '（無）'}\n` +
-      '船首像屬於船隻裝備，在造船廠購買與改裝；已買過的船首像會留在背包，可免費換回。'
+      `目前船首像：${fig ? fig.name : '（無）'}\n之後船首像、裝甲、船帆與砲種都會集中在這裡改造。`
     );
 
     // 重建僚艦列
@@ -256,6 +251,31 @@ export default class ShipyardScene extends Phaser.Scene {
     saveGame(s);
     this.refreshFleet();
     toast(this, `旗艦改裝【${f.name}】完成！`);
+  }
+
+  private showRefitMenu(): void {
+    showModal(this, '船艦改造', '選擇要改造的船艦裝備類型。', [
+      { label: '船首像', onPick: () => this.showFigureheadMenu() },
+      { label: '裝甲（後續開放）', onPick: () => toast(this, '裝甲改造會在後續版本加入。') },
+      { label: '船帆（後續開放）', onPick: () => toast(this, '船帆改造會在後續版本加入。') },
+      { label: '大砲種類（後續開放）', onPick: () => toast(this, '大砲種類改造會在後續版本加入。') },
+      { label: '取消', onPick: () => {} },
+    ]);
+  }
+
+  private showFigureheadMenu(): void {
+    showModal(
+      this,
+      '船首像改裝',
+      '船首像屬於船隻裝備，在造船廠購買與改裝；已買過的船首像會留在背包，可免費換回。',
+      [
+        ...FIGUREHEADS.map((f) => ({
+          label: `${f.name}　${hasInventory(this.state, f.id) ? '已持有' : `${f.price} 兩`}`,
+          onPick: () => this.installFigurehead(f.id),
+        })),
+        { label: '取消', onPick: () => {} },
+      ]
+    );
   }
 
   /** asEscort=false 換旗艦；true 加入艦隊當僚艦 */

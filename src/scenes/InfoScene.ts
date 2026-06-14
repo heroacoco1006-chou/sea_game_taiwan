@@ -4,16 +4,29 @@ import {
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
   heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState, storyRequirementText,
+  dateText, GOODS, PORTS, MATE_DEFS, ROLES, mateDefById, roleName,
 } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
 type EquipCat = 'weapon' | 'armor' | 'accessory';
+type InfoTab = 'quest' | 'equipment' | 'backpack' | 'character' | 'fleet' | 'codex';
+
+const TABS: Array<{ key: InfoTab; label: string }> = [
+  { key: 'quest', label: '任務' },
+  { key: 'equipment', label: '裝備' },
+  { key: 'backpack', label: '背包' },
+  { key: 'character', label: '人物資訊' },
+  { key: 'fleet', label: '船隊資訊' },
+  { key: 'codex', label: '圖鑑' },
+];
 
 export default class InfoScene extends Phaser.Scene {
   private from: ReturnTarget = 'WorldMap';
   private portId?: string;
   private spawn?: { x: number; y: number };
+  private tab: InfoTab = 'quest';
+  private codexId?: string;
   private dyn: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -28,6 +41,8 @@ export default class InfoScene extends Phaser.Scene {
     this.from = data.from ?? 'WorldMap';
     this.portId = data.portId;
     this.spawn = data.spawn;
+    this.tab = 'quest';
+    this.codexId = undefined;
     this.dyn = [];
   }
 
@@ -36,8 +51,7 @@ export default class InfoScene extends Phaser.Scene {
     const H = this.scale.height;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 24, 16, W - 48, H - 32);
-    this.add.text(W / 2, 42, '資訊・背包', textStyle(26)).setOrigin(0.5);
-    this.render();
+    this.add.text(W / 2, 42, '資訊選單', textStyle(26)).setOrigin(0.5);
 
     makeButton(this, W - 145, H - 44, 220, 46, '離開（回到遊戲）', () => {
       saveGame(this.state);
@@ -47,104 +61,235 @@ export default class InfoScene extends Phaser.Scene {
         this.scene.start('WorldMap');
       }
     });
+
+    this.render();
   }
 
   private render(): void {
     for (const obj of this.dyn) obj.destroy();
     this.dyn = [];
-    const s = this.state;
-    const flag = shipTypeOf(s);
-    const figurehead = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
-    const lines = [
-      `資金 ${s.gold} 兩　貨艙 ${cargoCount(s)}/${cargoMax(s)}　糧 ${s.food}/${supplyMax(s)}　水 ${s.water}/${supplyMax(s)}`,
-      `水手 ${s.crew}/${crewMax(s)}（全隊最低 ${fleetMinCrew(s)}）　疲勞 ${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
-      `旗艦：${flag.name}（${flag.origin}）　船體 ${s.ship.hull}/${flag.hullMax}　大砲 ${s.ship.cannons}/${flag.cannonSlots}　船首像：${figurehead?.name ?? '（無）'}`,
-      `艦隊：${fleetShips(s).map((ship, i) => `${i === 0 ? '旗艦' : `僚艦${i}`} ${shipTypeById(ship.typeId).name}`).join('、')}`,
-      '船首像屬於船隻裝備，請到造船廠購買與改裝。',
-    ];
-    this.dyn.push(this.add.text(56, 82, lines.join('\n'), { ...textStyle(15), lineSpacing: 6 }));
 
-    this.drawEquipColumn('weapon', '武器', 170, 220, WEAPONS.map((x) => ({ id: x.id, label: `${x.name} 接舷+${x.board}` })));
-    this.drawEquipColumn('armor', '防具', 470, 220, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
-    this.drawEquipColumn('accessory', '飾品', 770, 220, ACCESSORIES.map((x) => ({ id: x.id, label: x.name })));
-    this.drawConsumables(1080, 220);
-    this.drawStorySummary();
-    this.drawBackpackSummary();
+    this.dyn.push(this.add.rectangle(145, 370, 190, 560, COLORS.parchmentDark, 0.5));
+    TABS.forEach((tab, i) => {
+      const btn = makeButton(this, 145, 118 + i * 62, 150, 46, tab.label, () => {
+        this.tab = tab.key;
+        this.render();
+      }, 17);
+      if (tab.key === this.tab) btn.setAlpha(0.7);
+      this.dyn.push(btn);
+    });
+
+    this.dyn.push(this.add.rectangle(730, 370, 930, 560, COLORS.parchmentDark, 0.38));
+    switch (this.tab) {
+      case 'quest':
+        this.drawQuest();
+        break;
+      case 'equipment':
+        this.drawEquipment();
+        break;
+      case 'backpack':
+        this.drawBackpack();
+        break;
+      case 'character':
+        this.drawCharacter();
+        break;
+      case 'fleet':
+        this.drawFleet();
+        break;
+      case 'codex':
+        this.drawCodex();
+        break;
+    }
+  }
+
+  private addTitle(text: string): void {
+    this.dyn.push(this.add.text(730, 88, text, textStyle(23)).setOrigin(0.5));
+  }
+
+  private addWrapped(x: number, y: number, text: string, width = 860, size = 16, color = '#3a2a14'): void {
+    this.dyn.push(this.add.text(x, y, text, { ...textStyle(size, color), wordWrap: { width }, lineSpacing: 6 }));
+  }
+
+  private drawQuest(): void {
+    this.addTitle('任務');
+    const s = this.state;
+    const chapter = currentStoryChapter(s);
+    const target = storyTargetPort(chapter);
+    const storyText = chapter
+      ? `主線第 ${chapter.chapter} 章：${chapter.title}\n目標港口：${target?.name ?? chapter.targetPortId}\n任務內容：${chapter.objective}\n${storyRequirementText(chapter)}`
+      : '目前可玩的主線章節已完成，後續 M4 會繼續擴充。';
+    this.addWrapped(290, 130, storyText, 840, 17);
+
+    if (s.quest) {
+      const q = s.quest;
+      const targetPort = PORTS.find((p) => p.id === q.portId);
+      const good = GOODS.find((g) => g.id === q.goodId);
+      const have = s.cargo[q.goodId] ?? 0;
+      this.addWrapped(
+        290,
+        310,
+        `委託任務：送【${good?.name ?? q.goodId}×${q.qty}】到【${targetPort?.name ?? q.portId}】\n持有：${have}/${q.qty}　期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩`,
+        840,
+        16,
+        '#5a4a30'
+      );
+    } else {
+      this.addWrapped(290, 310, '目前沒有接支線委託。可到官府／商館接運貨任務。', 840, 16, '#5a4a30');
+    }
+  }
+
+  private drawEquipment(): void {
+    this.addTitle('裝備');
+    const s = this.state;
+    this.addWrapped(
+      290,
+      116,
+      `目前裝備：武器 ${s.equip.weapon ? itemNameById(s.equip.weapon) : '（無）'}　防具 ${s.equip.armor ? itemNameById(s.equip.armor) : '（無）'}　飾品 ${s.equip.accessory ? itemNameById(s.equip.accessory) : '（無）'}\n船首像與船隻裝備請到造船廠的「船艦改造」。`,
+      840,
+      15,
+      '#5a4a30'
+    );
+    this.drawEquipColumn('weapon', '武器', 410, 230, WEAPONS.map((x) => ({ id: x.id, label: `${x.name} 接舷+${x.board}` })));
+    this.drawEquipColumn('armor', '防具', 710, 230, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
+    this.drawEquipColumn('accessory', '飾品', 1010, 230, ACCESSORIES.map((x) => ({ id: x.id, label: x.name })));
   }
 
   private drawEquipColumn(cat: EquipCat, title: string, x: number, y: number, rows: Array<{ id: string; label: string }>): void {
     const current = this.state.equip[cat];
-    this.dyn.push(this.add.text(x, y - 30, `— ${title} —`, textStyle(19)).setOrigin(0.5));
-    this.dyn.push(this.add.text(x, y - 4, `目前：${current ? itemNameById(current) : '（無）'}`, textStyle(14, '#6b5530')).setOrigin(0.5));
+    this.dyn.push(this.add.text(x, y - 42, `— ${title} —`, textStyle(19)).setOrigin(0.5));
+    const off = makeButton(this, x, y - 10, 220, 34, current ? '卸下目前裝備' : '目前未裝備', () => this.equip(cat, null), 13);
+    off.setAlpha(current ? 1 : 0.45);
+    this.dyn.push(off);
+
     rows.forEach((row, i) => {
       const own = this.state.inventory[row.id] ?? 0;
       const equipped = current === row.id;
-      const label = own > 0 ? `${row.label}${equipped ? '（裝備中）' : ''}` : `${row.label}（未持有）`;
-      const btn = makeButton(this, x, y + 38 + i * 42, 255, 34, label, () => this.equip(cat, row.id), 12);
+      const label = own > 0 ? `${equipped ? '✓ ' : ''}${row.label}` : `${row.label}（未持有）`;
+      const btn = makeButton(this, x, y + 34 + i * 42, 255, 34, label, () => this.equip(cat, row.id), 12);
       btn.setAlpha(own > 0 ? 1 : 0.45);
       this.dyn.push(btn);
     });
   }
 
-  private drawConsumables(x: number, y: number): void {
-    this.dyn.push(this.add.text(x, y - 30, '— 消耗品 —', textStyle(19)).setOrigin(0.5));
-    CONSUMABLES.forEach((item, i) => {
-      const own = this.state.inventory[item.id] ?? 0;
-      const rowY = y + 4 + i * 64;
-      const btn = makeButton(this, x, rowY, 260, 38, `${item.name} x${own}`, () => this.useItem(item.id), 13);
-      btn.setAlpha(own > 0 ? 1 : 0.45);
-      this.dyn.push(btn);
-      this.dyn.push(this.add.text(x, rowY + 22, item.desc, { ...textStyle(10, '#6b5530'), wordWrap: { width: 250 }, align: 'center' }).setOrigin(0.5, 0));
+  private drawBackpack(): void {
+    this.addTitle('背包');
+    this.addWrapped(290, 112, '背包只列出沒有被裝備的個人道具、未裝在旗艦上的船首像，以及可使用的消耗道具。', 840, 15, '#5a4a30');
+
+    const entries = this.backpackEntries();
+    if (entries.length === 0) {
+      this.addWrapped(300, 170, '背包目前是空的。', 840, 17);
+    }
+    entries.forEach((entry, i) => {
+      const y = 170 + i * 44;
+      const item = CONSUMABLES.find((x) => x.id === entry.id);
+      this.addWrapped(300, y, `${itemNameById(entry.id)} x${entry.qty}${item ? `：${item.desc}` : ''}`, 600, 15);
+      if (item) {
+        const btn = makeButton(this, 1035, y + 10, 140, 34, '使用', () => this.useItem(item.id), 14);
+        this.dyn.push(btn);
+      }
     });
   }
 
-  private drawBackpackSummary(): void {
-    const entries = Object.entries(this.state.inventory).filter(([, qty]) => qty > 0);
-    const text = entries.length > 0
-      ? entries.map(([id, qty]) => `${itemNameById(id)} x${qty}`).join('　')
-      : '背包目前是空的。';
-    this.dyn.push(this.add.text(56, 626, `背包：${text}`, { ...textStyle(14, '#5a4a30'), wordWrap: { width: 900 }, lineSpacing: 5 }));
+  private backpackEntries(): Array<{ id: string; qty: number }> {
+    const equipped = [this.state.equip.weapon, this.state.equip.armor, this.state.equip.accessory, this.state.ship.figurehead]
+      .filter(Boolean) as string[];
+    const used = new Map<string, number>();
+    equipped.forEach((id) => used.set(id, (used.get(id) ?? 0) + 1));
+    return Object.entries(this.state.inventory)
+      .map(([id, qty]) => ({ id, qty: qty - (used.get(id) ?? 0) }))
+      .filter((entry) => entry.qty > 0);
   }
 
-  private drawStorySummary(): void {
-    const hero = heroDefById(this.state.story.heroId);
-    const chapter = currentStoryChapter(this.state);
-    const target = storyTargetPort(chapter);
-    const codex = codexEntriesForState(this.state);
-    const storyLine = chapter
-      ? `主線：${hero.name}（${hero.role}）第 ${chapter.chapter} 章「${chapter.title}」｜目標：前往【${target?.name ?? chapter.targetPortId}】`
-      : `主線：${hero.name}（${hero.role}）目前示範章節已完成`;
-    const reqLine = chapter ? storyRequirementText(chapter) : '';
-    const codexLine = codex.length > 0
-      ? `圖鑑 ${codex.length} 張：${codex.slice(-5).map((entry) => `【${entry.type}】${entry.title}`).join('、')}`
-      : '圖鑑 0 張：推進主線後會解鎖事件、人物與地點卡。';
-    this.dyn.push(this.add.text(56, 536, `${storyLine}\n${reqLine}\n${codexLine}`, { ...textStyle(14, '#3f3422'), wordWrap: { width: 940 }, lineSpacing: 5 }));
-    const btn = makeButton(this, 1140, 568, 170, 38, '查看圖鑑', () => this.showCodex(), 13);
-    btn.setAlpha(codex.length > 0 ? 1 : 0.45);
-    this.dyn.push(btn);
+  private drawCharacter(): void {
+    this.addTitle('人物資訊');
+    const s = this.state;
+    const hero = heroDefById(s.story.heroId);
+    const lines = [
+      `${hero.name}（${hero.role}）`,
+      hero.intro,
+      `目前日期：${dateText(s.day)}　資金：${s.gold} 兩`,
+      `水手：${s.crew}/${crewMax(s)}　疲勞：${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
+      `主線方向：${hero.routeFocus}`,
+      `已招募夥伴：${s.mates.length} 位`,
+    ];
+    this.addWrapped(300, 130, lines.join('\n'), 820, 17);
   }
 
-  private showCodex(): void {
-    const codex = codexEntriesForState(this.state);
-    if (codex.length === 0) {
-      toast(this, '目前還沒有解鎖圖鑑。');
+  private drawFleet(): void {
+    this.addTitle('船隊資訊');
+    const s = this.state;
+    const flag = shipTypeOf(s);
+    const figurehead = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
+    this.addWrapped(
+      290,
+      112,
+      `艦隊 ${fleetShips(s).length}/5 艘　貨艙 ${cargoCount(s)}/${cargoMax(s)}　糧水艙 ${supplyMax(s)}　水手 ${s.crew}/${crewMax(s)}（最低 ${fleetMinCrew(s)}）\n旗艦：${flag.name}　船體 ${s.ship.hull}/${flag.hullMax}　大砲 ${s.ship.cannons}/${flag.cannonSlots}　船首像：${figurehead?.name ?? '（無）'}`,
+      840,
+      15
+    );
+
+    s.escorts.forEach((ship, i) => {
+      const type = shipTypeById(ship.typeId);
+      const y = 202 + i * 44;
+      this.addWrapped(300, y, `僚艦${i + 1}：${type.name}　船體 ${ship.hull}/${type.hullMax}　艙 ${ship.cargoSpace}/${ship.supplySpace}　砲 ${ship.cannons}`, 560, 14);
+      const btn = makeButton(this, 1000, y + 10, 160, 34, '升為旗艦', () => this.promoteEscort(i), 14);
+      this.dyn.push(btn);
+    });
+    if (s.escorts.length === 0) {
+      this.addWrapped(300, 202, '目前沒有僚艦。可到造船廠購買船隻加入艦隊。', 840, 15, '#5a4a30');
+    }
+
+    this.dyn.push(this.add.text(300, 390, '— 夥伴職位 —', textStyle(18)));
+    if (s.mates.length === 0) {
+      this.addWrapped(300, 426, '尚未招募夥伴。可到酒館結識夥伴。', 840, 15, '#5a4a30');
       return;
     }
-    const body = codex
-      .map((entry) => `【${entry.type}】${entry.title}\n${entry.body}`)
-      .join('\n\n');
-    showModal(this, `圖鑑（${codex.length}）`, body, [{ label: '知道了', onPick: () => {} }]);
+    s.mates.slice(0, 5).forEach((mate, i) => {
+      const def = mateDefById(mate.id);
+      if (!def) return;
+      const y = 424 + i * 48;
+      this.addWrapped(300, y, `${def.name}：${roleName(mate.role)}`, 230, 14);
+      def.roles.forEach((roleKey, j) => {
+        const role = ROLES.find((r) => r.key === roleKey);
+        const btn = makeButton(this, 580 + j * 105, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);
+        this.dyn.push(btn);
+      });
+      const off = makeButton(this, 580 + def.roles.length * 105, y + 10, 82, 32, '不指派', () => this.assignRole(mate.id, null), 12);
+      this.dyn.push(off);
+    });
   }
 
-  private equip(cat: EquipCat, id: string): void {
-    if ((this.state.inventory[id] ?? 0) <= 0) {
+  private drawCodex(): void {
+    this.addTitle('圖鑑');
+    const codex = codexEntriesForState(this.state);
+    if (codex.length === 0) {
+      this.addWrapped(300, 130, '目前還沒有解鎖圖鑑。推進主線後會解鎖事件、人物、地點與貿易品卡。', 840, 17);
+      return;
+    }
+    if (!this.codexId || !codex.some((entry) => entry.id === this.codexId)) this.codexId = codex[0].id;
+    codex.forEach((entry, i) => {
+      const col = i < 9 ? 0 : 1;
+      const row = i % 9;
+      const btn = makeButton(this, 405 + col * 250, 130 + row * 42, 220, 34, `【${entry.type}】${entry.title}`, () => {
+        this.codexId = entry.id;
+        this.render();
+      }, 12);
+      if (entry.id === this.codexId) btn.setAlpha(0.7);
+      this.dyn.push(btn);
+    });
+    const selected = codex.find((entry) => entry.id === this.codexId) ?? codex[0];
+    this.addWrapped(810, 130, `【${selected.type}】${selected.title}\n\n${selected.body}`, 330, 17);
+  }
+
+  private equip(cat: EquipCat, id: string | null): void {
+    if (id && (this.state.inventory[id] ?? 0) <= 0) {
       toast(this, '背包裡沒有這件道具，先到道具屋購買。');
       return;
     }
     this.state.equip[cat] = id;
     saveGame(this.state);
     this.render();
-    toast(this, `已裝備【${itemNameById(id)}】。`);
+    toast(this, id ? `已裝備【${itemNameById(id)}】。` : '已卸下裝備。');
   }
 
   private useItem(id: string): void {
@@ -152,5 +297,32 @@ export default class InfoScene extends Phaser.Scene {
     saveGame(this.state);
     this.render();
     toast(this, msg);
+  }
+
+  private promoteEscort(idx: number): void {
+    const s = this.state;
+    const flag = s.ship;
+    const esc = s.escorts[idx];
+    esc.x = flag.x;
+    esc.y = flag.y;
+    s.ship = esc;
+    s.escorts[idx] = flag;
+    saveGame(s);
+    this.render();
+    toast(this, `${shipTypeById(esc.typeId).name} 升為旗艦。`);
+  }
+
+  private assignRole(mateId: string, roleKey: string | null): void {
+    const s = this.state;
+    if (roleKey) {
+      for (const mate of s.mates) {
+        if (mate.role === roleKey && mate.id !== mateId) mate.role = null;
+      }
+    }
+    const mate = s.mates.find((m) => m.id === mateId);
+    if (mate) mate.role = roleKey;
+    saveGame(s);
+    this.render();
+    toast(this, roleKey ? `已指派為${roleName(roleKey)}。` : '已取消職位。');
   }
 }

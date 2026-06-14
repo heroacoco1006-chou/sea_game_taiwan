@@ -99,8 +99,8 @@ export default class TradeScene extends Phaser.Scene {
     // ----- 下方操作區 -----
     const py = H - 150;
     this.add.rectangle(W / 2, py + 58, W - 120, 118, COLORS.parchmentDark, 0.6);
-    this.detailName = this.add.text(80, py + 10, '（請選擇貨物）', textStyle(20));
-    this.detailDesc = this.add.text(80, py + 44, '', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 520 } });
+    this.detailName = this.add.text(80, py + 8, '（請選擇貨物）', { ...textStyle(17), wordWrap: { width: 510 }, lineSpacing: 4 });
+    this.detailDesc = this.add.text(80, py + 54, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 510 }, lineSpacing: 4 });
 
     this.add.text(640, py + 14, '數量', textStyle(18));
     makeButton(this, 712, py + 26, 46, 38, '-10', () => this.changeQty(-10), 15);
@@ -114,7 +114,7 @@ export default class TradeScene extends Phaser.Scene {
     makeButton(this, 1000, py + 74, 84, 40, '全買', () => this.buyAll(), 18);
     makeButton(this, 1094, py + 74, 84, 40, '全賣', () => this.sellAll(), 18);
 
-    this.footer = this.add.text(640, py + 74, '', textStyle(18)).setOrigin(0, 0);
+    this.footer = this.add.text(640, py + 74, '', { ...textStyle(17), wordWrap: { width: 300 } }).setOrigin(0, 0);
     this.updateFooter();
 
     makeButton(this, W - 150, 52, 170, 44, '離開交易所', () => {
