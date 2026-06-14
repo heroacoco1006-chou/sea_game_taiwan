@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-06-14] 開發 | 操作者：小航 | 存讀檔改為 10 格自由選擇
+
+- 背景：老闆要測試三位主角的不同劇情，原本單一存檔不夠用；要求把存檔擴為 10 格，玩家可自由選存讀檔位置。
+- 完成事項：
+  - `src/state.ts`：單一存檔改為 10 格槽位（`SAVE_SLOT_COUNT=10`），新增「作用中格子」概念，自動存檔都寫到作用中格子。
+  - 新增 `getActiveSlot`／`setActiveSlot`／`hasAnySave`／`listSaveSlots`／`saveSlotInfo`／`deleteSave`；`saveGame`／`loadGame`／`hasSave` 改為可帶 slot 參數（預設作用中格子）。
+  - 舊版單一存檔 `seagame_save1` 在載入時自動搬到第 1 格，只搬一次，玩家進度不遺失。
+  - 新增 `src/scenes/SaveSlotScene.ts`：10 格存讀檔選擇畫面，支援 new／load／save 三模式，顯示各格主角／日期／資金／章節摘要，含覆蓋確認與刪除確認。
+  - 接線：標題畫面選主角後先挑存檔位置才開始、「繼續航行」進讀檔選單；資訊選單新增「存檔到…（選位置）」；GameOver 新增「讀取其他存檔」；`main.ts` 註冊新場景。
+  - `vite.config.ts`：埠號改讀 `PORT` 環境變數（預設 5173），方便預覽工具與既有 dev server 並存。
+- 驗證：`npm run build`（tsc + vite build）通過；瀏覽器以 `window.__state` 實測 10 格存／讀／刪、作用中格子切換、舊存檔遷移、SaveSlot 畫面正確列出三位主角摘要、點「讀取」可載入並進入世界地圖。
+- 待追蹤：接著推進 M4（Markdown 主線劇本接多段劇情播放器）。
+
 ## [2026-06-14] 開發 | 操作者：Codex | 完成探索系統基礎閉環
 
 - 完成事項：

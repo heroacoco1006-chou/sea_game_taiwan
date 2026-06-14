@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { newGame, loadGame, hasSave, HEROES } from '../state';
+import { hasAnySave, HEROES } from '../state';
 import type { HeroId } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
@@ -39,20 +39,16 @@ export default class TitleScene extends Phaser.Scene {
         48,
         `${hero.name}（${hero.startYear}・${hero.role}）`,
         () => {
-          this.registry.set('state', newGame(hero.id as HeroId));
-          this.scene.start('WorldMap');
+          // 選好主角後，挑一格存檔位置再開始（10 格可自由選擇）
+          this.scene.start('SaveSlot', { mode: 'new', heroId: hero.id as HeroId, ret: { scene: 'Title' } });
         },
         17
       );
     });
 
-    const canLoad = hasSave();
+    const canLoad = hasAnySave();
     const loadBtn = makeButton(this, width / 2, 590, 260, 50, '繼續航行（讀取）', () => {
-      const s = loadGame();
-      if (s) {
-        this.registry.set('state', s);
-        this.scene.start('WorldMap');
-      }
+      this.scene.start('SaveSlot', { mode: 'load', ret: { scene: 'Title' } });
     });
     if (!canLoad) loadBtn.setAlpha(0.45).disableInteractive();
 

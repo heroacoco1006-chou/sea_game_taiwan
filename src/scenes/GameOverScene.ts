@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { loadGame, hasSave } from '../state';
+import { loadGame, hasSave, hasAnySave } from '../state';
 import { textStyle, makeButton, drawPanel } from '../ui';
 
 /** 水手全滅：可從上次存檔點繼續（教育：航海是高風險的事業） */
@@ -25,7 +25,7 @@ export default class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     if (hasSave()) {
-      makeButton(this, W / 2, 520, 320, 56, '從上次存檔點繼續', () => {
+      makeButton(this, W / 2, 500, 320, 56, '從上次存檔點繼續', () => {
         const s = loadGame();
         if (s) {
           this.registry.set('state', s);
@@ -33,7 +33,12 @@ export default class GameOverScene extends Phaser.Scene {
         }
       });
     }
-    makeButton(this, W / 2, 595, 320, 56, '回到標題畫面', () => {
+    if (hasAnySave()) {
+      makeButton(this, W / 2, 565, 320, 56, '讀取其他存檔', () => {
+        this.scene.start('SaveSlot', { mode: 'load', ret: { scene: 'Title' } });
+      });
+    }
+    makeButton(this, W / 2, 630, 320, 56, '回到標題畫面', () => {
       this.scene.start('Title');
     });
   }

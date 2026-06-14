@@ -63,6 +63,15 @@ export default class InfoScene extends Phaser.Scene {
       }
     });
 
+    // 存檔到指定格：玩家可把目前進度存到 10 格的任一格（方便分開測試三位主角）
+    makeButton(this, 190, H - 44, 220, 46, '存檔到…（選位置）', () => {
+      saveGame(this.state);
+      this.scene.start('SaveSlot', {
+        mode: 'save',
+        ret: { scene: this.from, portId: this.portId, spawn: this.spawn },
+      });
+    });
+
     this.render();
   }
 

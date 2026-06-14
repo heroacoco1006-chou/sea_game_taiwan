@@ -319,7 +319,13 @@ export const SEA_STATUS_DEFS: Record<SeaStatusId, { name: string; desc: string }
   homesick: { name: '思鄉病', desc: '長期離岸讓船員低落，疲勞增加。可用生薑藥湯緩解。' },
 };
 
-const SAVE_KEY = 'seagame_save1';
+/** 存檔槽位總數：玩家可自由選擇 10 個位置存讀檔（方便分別測試三位主角的劇情） */
+export const SAVE_SLOT_COUNT = 10;
+const LEGACY_SAVE_KEY = 'seagame_save1'; // 舊版單一存檔，會自動搬到第 1 格
+const ACTIVE_SLOT_KEY = 'seagame_active_slot'; // 目前正在玩的格子（自動存檔會寫到這格）
+function slotKey(slot: number): string {
+  return `seagame_save_slot${slot}`;
+}
 const START_POS = { x: 3216, y: 2580 }; // 月港外海（座標 2.4 倍放大後）
 
 function dayForYear(year: number): number {
@@ -783,13 +789,49 @@ export function useConsumable(state: GameState, itemId: string): string {
   return `使用了【${item.name}】。`;
 }
 
-export function saveGame(state: GameState): void {
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+/** 把舊版單一存檔（seagame_save1）搬到第 1 格（index 0），只搬一次。 */
+function migrateLegacySave(): void {
+  try {
+    const legacy = localStorage.getItem(LEGACY_SAVE_KEY);
+    if (!legacy) return;
+    if (!localStorage.getItem(slotKey(0))) {
+      localStorage.setItem(slotKey(0), legacy);
+    }
+    localStorage.removeItem(LEGACY_SAVE_KEY);
+  } catch {
+    /* localStorage 不可用時略過 */
+  }
+}
+migrateLegacySave();
+
+/** 目前作用中的存檔格（0 起算）；自動存檔都寫到這一格。 */
+export function getActiveSlot(): number {
+  const raw = localStorage.getItem(ACTIVE_SLOT_KEY);
+  const n = raw ? Number.parseInt(raw, 10) : 0;
+  return Number.isInteger(n) && n >= 0 && n < SAVE_SLOT_COUNT ? n : 0;
 }
 
-export function loadGame(): GameState | null {
-  const raw = localStorage.getItem(SAVE_KEY);
+export function setActiveSlot(slot: number): void {
+  if (slot >= 0 && slot < SAVE_SLOT_COUNT) localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
+}
+
+/** 存檔到指定格（預設為作用中的格子）；存到哪格，之後的自動存檔就跟到哪格。 */
+export function saveGame(state: GameState, slot: number = getActiveSlot()): void {
+  setActiveSlot(slot);
+  localStorage.setItem(slotKey(slot), JSON.stringify(state));
+}
+
+/** 讀取指定格（預設為作用中的格子）；含舊存檔升級。 */
+export function loadGame(slot: number = getActiveSlot()): GameState | null {
+  const raw = localStorage.getItem(slotKey(slot));
   if (!raw) return null;
+  const s = migrateSave(raw);
+  if (s) setActiveSlot(slot);
+  return s;
+}
+
+/** 把存檔字串解析並升級到最新版本；解析失敗回 null。 */
+function migrateSave(raw: string): GameState | null {
   try {
     const s = JSON.parse(raw) as Partial<GameState> & {
       ship?: { x?: number; y?: number; hull?: number; typeId?: string };
@@ -914,8 +956,51 @@ export function loadGame(): GameState | null {
   }
 }
 
-export function hasSave(): boolean {
-  return loadGame() !== null;
+/** 指定格（預設作用中格子）是否有存檔。 */
+export function hasSave(slot: number = getActiveSlot()): boolean {
+  return localStorage.getItem(slotKey(slot)) !== null;
+}
+
+/** 是否有任何一格存在存檔。 */
+export function hasAnySave(): boolean {
+  for (let i = 0; i < SAVE_SLOT_COUNT; i++) {
+    if (localStorage.getItem(slotKey(i))) return true;
+  }
+  return false;
+}
+
+/** 單一存檔格的摘要資訊（給存讀檔選單顯示）。 */
+export interface SaveSlotInfo {
+  slot: number;
+  exists: boolean;
+  heroName?: string;
+  date?: string;
+  gold?: number;
+  chapter?: number;
+}
+
+export function saveSlotInfo(slot: number): SaveSlotInfo {
+  const raw = localStorage.getItem(slotKey(slot));
+  if (!raw) return { slot, exists: false };
+  const s = migrateSave(raw);
+  if (!s) return { slot, exists: false };
+  const hero = heroDefById(s.story?.heroId);
+  return {
+    slot,
+    exists: true,
+    heroName: hero?.name,
+    date: dateText(s.day),
+    gold: s.gold,
+    chapter: s.story?.chapter,
+  };
+}
+
+export function listSaveSlots(): SaveSlotInfo[] {
+  return Array.from({ length: SAVE_SLOT_COUNT }, (_, i) => saveSlotInfo(i));
+}
+
+export function deleteSave(slot: number): void {
+  localStorage.removeItem(slotKey(slot));
 }
 
 export function cargoCount(state: GameState): number {
