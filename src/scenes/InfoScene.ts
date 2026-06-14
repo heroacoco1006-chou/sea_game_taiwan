@@ -282,14 +282,33 @@ export default class InfoScene extends Phaser.Scene {
     const detail = this.add.text(
       780,
       142,
-      `【${selected.type}】${selected.title}\n\n${selected.body}`,
-      { ...textStyle(16), wordWrap: { width: 360 }, lineSpacing: 7 }
+      `【${selected.type}】${selected.title}\n\n${this.wrapCodexBody(selected.body)}`,
+      { ...textStyle(16), wordWrap: { width: 350, useAdvancedWrap: true }, lineSpacing: 7 }
     );
     while (detail.height > 432 && Number.parseInt(String(detail.style.fontSize), 10) > 13) {
       const next = Number.parseInt(String(detail.style.fontSize), 10) - 1;
       detail.setFontSize(next);
     }
     this.dyn.push(detail);
+  }
+
+  private wrapCodexBody(text: string): string {
+    return text
+      .split('\n')
+      .map((paragraph) => {
+        const out: string[] = [];
+        let line = '';
+        for (const ch of paragraph) {
+          line += ch;
+          if (line.length >= 19 || '。！？；'.includes(ch)) {
+            out.push(line);
+            line = '';
+          }
+        }
+        if (line) out.push(line);
+        return out.join('\n');
+      })
+      .join('\n');
   }
 
   private equip(cat: EquipCat, id: string | null): void {

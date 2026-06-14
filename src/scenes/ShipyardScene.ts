@@ -55,6 +55,10 @@ export default class ShipyardScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 30, 16, W - 60, H - 32);
     this.add.text(W / 2, 40, `${this.port.name}・造船廠`, textStyle(26)).setOrigin(0.5);
+    makeButton(this, W - 150, 44, 220, 44, '離開（回到街上）', () => {
+      saveGame(this.state);
+      this.scene.start('Port', { portId: this.port.id, spawn: this.door });
+    }, 17);
 
     // ---------- 左側：我的艦隊 ----------
     this.add.rectangle(330, 392, 580, 660, COLORS.parchmentDark, 0.45);
@@ -95,16 +99,11 @@ export default class ShipyardScene extends Phaser.Scene {
     makeButton(this, 1100, 520, 220, 50, '建造僚艦', () => this.orderShip(true), 16);
 
     // ---------- 船艦改造 ----------
-    this.add.text(950, 592, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
-    this.ordersText = this.add.text(690, 618, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260 }, lineSpacing: 4 });
-    this.figureheadText = this.add.text(980, 618, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260 }, lineSpacing: 4 });
-    makeButton(this, 820, 650, 220, 44, '建造進度／取船', () => this.showOrderMenu(), 16);
-    makeButton(this, 1100, 650, 220, 44, '船艦改造', () => this.showRefitMenu(), 17);
-
-    makeButton(this, W / 2, H - 40, 220, 46, '離開（回到街上）', () => {
-      saveGame(this.state);
-      this.scene.start('Port', { portId: this.port.id, spawn: this.door });
-    });
+    this.add.text(950, 586, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
+    this.ordersText = this.add.text(690, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
+    this.figureheadText = this.add.text(980, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
+    makeButton(this, 820, 682, 220, 38, '建造進度／取船', () => this.showOrderMenu(), 15);
+    makeButton(this, 1100, 682, 220, 38, '船艦改造', () => this.showRefitMenu(), 16);
 
     this.refreshFleet();
   }
