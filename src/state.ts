@@ -152,7 +152,29 @@ export interface Mate {
 }
 
 export interface RoleDef { key: string; name: string; desc: string; }
-export interface MateDef { id: string; name: string; from: string; portId: string; fee: number; roles: string[]; desc: string; }
+export interface MateRequirement {
+  heroIds?: HeroId[];
+  minChapter?: number;
+  maxChapter?: number;
+  gold?: number;
+  cargo?: Array<{ goodId: string; qty: number }>;
+  discoveredExplorationPoints?: string[];
+  codexIds?: string[];
+}
+export interface MateDef {
+  id: string;
+  name: string;
+  from: string;
+  portId: string;
+  fee: number;
+  star: number;
+  history: string;
+  roles: string[];
+  desc: string;
+  questTitle: string;
+  requirement?: MateRequirement;
+  codexBody: string;
+}
 
 export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
 export interface ArmorItem { id: string; name: string; price: number; defense: number; desc: string; }
@@ -302,13 +324,19 @@ export const ACCESSORIES: AccessoryItem[] = equipData.accessories;
 export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
 export const CONSUMABLES: ConsumableItem[] = equipData.consumables;
 export const ROLES: RoleDef[] = matesData.roles;
-export const MATE_DEFS: MateDef[] = matesData.mates;
+export const MATE_DEFS: MateDef[] = matesData.mates as MateDef[];
 export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
 export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
 export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
 export const EXPLORATION_POINTS: ExplorationPoint[] = explorationData.points as ExplorationPoint[];
-// 圖鑑 = 主線劇本解析出的圖鑑（唯一來源：data/story/*.md）＋ 探索發現
-export const CODEX_ENTRIES: CodexEntry[] = [...(ALL_STORY_CODEX as CodexEntry[]), ...DISCOVERIES];
+export const MATE_CODEX_ENTRIES: CodexEntry[] = MATE_DEFS.map((mate) => ({
+  id: `mate_${mate.id}`,
+  type: '人物',
+  title: mate.name,
+  body: mate.codexBody,
+}));
+// 圖鑑 = 主線劇本解析出的圖鑑（唯一來源：data/story/*.md）＋ 探索發現＋招募夥伴
+export const CODEX_ENTRIES: CodexEntry[] = [...(ALL_STORY_CODEX as CodexEntry[]), ...DISCOVERIES, ...MATE_CODEX_ENTRIES];
 export const CREW_START = 16;
 export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
@@ -590,9 +618,53 @@ export function mateDefById(id: string): MateDef | undefined {
   return MATE_DEFS.find((m) => m.id === id);
 }
 
+export function mateCodexId(id: string): string {
+  return `mate_${id}`;
+}
+
 export function roleName(key: string | null): string {
   if (!key) return '（未指派）';
   return ROLES.find((r) => r.key === key)?.name ?? key;
+}
+
+export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boolean; lines: string[] } {
+  const req = def.requirement;
+  const lines: string[] = [];
+  if (!req) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
+
+  if (req.heroIds?.length && !req.heroIds.includes(state.story.heroId)) {
+    const names = req.heroIds.map((id) => heroDefById(id).name).join('／');
+    lines.push(`主角線限定：${names}。`);
+  }
+  if (req.minChapter && state.story.chapter < req.minChapter) {
+    lines.push(`主線進度不足：需要第 ${req.minChapter} 章以後。`);
+  }
+  if (req.maxChapter && state.story.chapter > req.maxChapter) {
+    lines.push(`時機已過：需在第 ${req.maxChapter} 章以前完成。`);
+  }
+  if (req.gold && state.gold < req.gold) {
+    lines.push(`資金不足：需要身上至少 ${req.gold} 兩。`);
+  }
+  for (const cargo of req.cargo ?? []) {
+    const have = state.cargo[cargo.goodId] ?? 0;
+    if (have < cargo.qty) {
+      const good = GOODS.find((g) => g.id === cargo.goodId);
+      lines.push(`貨物不足：需要【${good?.name ?? cargo.goodId}×${cargo.qty}】。`);
+    }
+  }
+  for (const pointId of req.discoveredExplorationPoints ?? []) {
+    if (!state.discoveredExplorationPoints.includes(pointId)) {
+      const point = EXPLORATION_POINTS.find((p) => p.id === pointId);
+      lines.push(`尚未確認探索點：${point?.name ?? pointId}。`);
+    }
+  }
+  for (const codexId of req.codexIds ?? []) {
+    if (!state.story.codex.includes(codexId)) {
+      const entry = CODEX_ENTRIES.find((x) => x.id === codexId);
+      lines.push(`尚未解鎖圖鑑：${entry?.title ?? codexId}。`);
+    }
+  }
+  return { ok: lines.length === 0, lines: lines.length ? lines : ['條件已達成。'] };
 }
 
 /** 是否有夥伴擔任某職位 */
