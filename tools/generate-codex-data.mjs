@@ -246,5 +246,5 @@ const out = {
 };
 
 fs.writeFileSync(path.join(root, 'src', 'data', 'codex.json'), `${JSON.stringify(out, null, 2)}\n`, 'utf8');
-fs.writeFileSync(path.join(root, 'src', 'data', 'codex.md'), codexMarkdown(allEntries), 'utf8');
+fs.writeFileSync(path.join(root, 'src', 'data', 'codex_圖鑑資料庫.md'), codexMarkdown(allEntries), 'utf8');
 console.log(`Wrote ${allEntries.length} codex entries.`);

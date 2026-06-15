@@ -9,13 +9,13 @@
 
 - 背景：老闆希望圖鑑不要把所有類型混在一起，未解鎖項目以 `???` 保留收集感，並擴寫說明讓小朋友能理解歷史、人文與自然背景。
 - 記憶（已實作）：
-  - 新增 `src/data/codex.json` 作為圖鑑主資料檔，並新增 `src/data/codex.md` 作為人工校對版；目前 120 筆，每筆含 `category`、`short`、`body`、`whyImportant`、`kidNote`、`unlockHint`。
+  - 新增 `src/data/codex.json` 作為圖鑑主資料檔，並新增 `src/data/codex_圖鑑資料庫.md` 作為人工校對版；目前 120 筆，每筆含 `category`、`short`、`body`、`whyImportant`、`kidNote`、`unlockHint`。
   - 圖鑑分類為：歷史事件、人物、地點與建築、勢力與制度、貿易品與產業、船隻與航海、自然地理、生物、寶物與裝備。
-  - `CODEX_ENTRIES` 現在以 `codex.json` 為準；主線 Markdown、探索與夥伴仍只負責解鎖 id。後續要改圖鑑文字、分類或閱讀提示，需同步 `src/data/codex.json` 與 `src/data/codex.md`。
+  - `CODEX_ENTRIES` 現在以 `codex.json` 為準；主線 Markdown、探索與夥伴仍只負責解鎖 id。後續要改圖鑑文字、分類或閱讀提示，需同步 `src/data/codex.json` 與 `src/data/codex_圖鑑資料庫.md`。
   - 圖鑑 UI 改為分類瀏覽，未解鎖項目顯示 `???`；點選項目後才開啟獨立說明頁，已解鎖項目顯示摘要、完整說明、重要性與閱讀提示，長文用實際換行後的行數分頁，避免超框。
   - 圖鑑說明頁採左文右圖預留版面；右半邊暫留給 M5 美術階段加入人物、地圖、物種、事件或物品插圖。
-  - `tools/generate-codex-data.mjs` 可從現有資料重建 `codex.json` 與 `codex.md`；如果已人工精修圖鑑資料，重跑前要小心不要覆蓋精修內容。
-- 影響：小航或 Codex 後續新增主線、探索、夥伴任務時，需同步在 `codex.json`/`codex.md` 補對應 id；不要再把長篇圖鑑文字分散寫在 Markdown、discoveries 或 mates 裡。
+  - `tools/generate-codex-data.mjs` 可從現有資料重建 `codex.json` 與 `codex_圖鑑資料庫.md`；如果已人工精修圖鑑資料，重跑前要小心不要覆蓋精修內容。
+- 影響：小航或 Codex 後續新增主線、探索、夥伴任務時，需同步在 `codex.json`/`codex_圖鑑資料庫.md` 補對應 id；不要再把長篇圖鑑文字分散寫在 Markdown、discoveries 或 mates 裡。
 
 ## [2026-06-15] M4 25 位夥伴基礎招募與人物圖鑑
 

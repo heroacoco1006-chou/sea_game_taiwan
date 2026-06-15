@@ -7,6 +7,14 @@
 
 ---
 
+## [2026-06-15] 文件 | 操作者：Codex | 圖鑑 Markdown 校對檔改名
+
+- 背景：老闆希望圖鑑資料庫 Markdown 檔名更直覺，同時保留 `codex` 前綴方便與 `codex.json` 交互索引。
+- 完成事項：
+  - `src/data/codex.md` 改名為 `src/data/codex_圖鑑資料庫.md`。
+  - 更新 `tools/generate-codex-data.mjs`，之後重建圖鑑會輸出 `codex_圖鑑資料庫.md`。
+  - 同步更新建構書、`status.md`、`memory.md` 中的檔名與維護說明。
+
 ## [2026-06-15] 修正 | 操作者：Codex | 圖鑑長文改行數分頁並預留插圖區
 
 - 背景：老闆指出圖鑑說明頁遇到較長文字時仍會超出底部；右半邊目前空白，後續可規劃搭配圖案讓說明更生動。
