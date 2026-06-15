@@ -1,5 +1,5 @@
 {
-  "_note": "M4 夥伴系統：25 位具名夥伴。低星夥伴可直接或小條件招募；高星夥伴先以資料化條件代表專屬任務門檻，後續可再接 StoryScene 多段劇情。",
+  "_note": "M4 夥伴系統：25 位具名夥伴。低星夥伴可直接或小條件招募；★4～5 夥伴使用 questStages 表示多段專屬任務鏈，後續可再接 StoryScene 劇情演出。",
   "roles": [
     { "key": "vice", "name": "副隊長", "desc": "接舷戰時全隊氣勢提升（接舷戰力 +8）" },
     { "key": "navigator", "name": "航海長", "desc": "航速提升、暴風損害再減輕" },
@@ -25,6 +25,12 @@
       "desc": "白髮老舵手，熟記南洋航路。遊戲中為架空登場，圖鑑會註明真實年代。",
       "questTitle": "三寶太監的航海圖",
       "requirement": { "minChapter": 8, "discoveredExplorationPoints": ["exp_forbidden_city", "exp_sakai_route", "exp_moluccas_forest"] },
+      "questStages": [
+        { "title": "聽聞三寶舊圖", "desc": "主線推進到後期，才會聽到老航海家與古海圖的傳聞。", "requirement": { "minChapter": 8 } },
+        { "title": "紫禁城殘頁", "desc": "前往北京附近探索，確認明代遠洋檔案的線索。", "requirement": { "discoveredExplorationPoints": ["exp_forbidden_city"] } },
+        { "title": "堺商人抄本", "desc": "在日本堺附近尋找商人收藏的海圖抄本。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } },
+        { "title": "香料群島航路", "desc": "抵達摩鹿加森林，補上南洋航路的最後一段。", "requirement": { "discoveredExplorationPoints": ["exp_moluccas_forest"] } }
+      ],
       "codexBody": "鄭和是明代著名航海人物，史實年代為 1371–1433，早於本遊戲主時代。本遊戲讓他以傳奇老航海家的方式架空登場，用來帶出明代遠洋航海與海圖知識。"
     },
     {
@@ -39,6 +45,10 @@
       "desc": "曾在澎湖與荷蘭人交涉的明朝將領，熟悉水師軍務。",
       "questTitle": "澎湖退紅毛",
       "requirement": { "minChapter": 4, "gold": 3000 },
+      "questStages": [
+        { "title": "備妥水師軍需", "desc": "累積足夠資金，證明船隊有能力支援沿海防務。", "requirement": { "gold": 3000 } },
+        { "title": "主線接觸澎湖局勢", "desc": "主線進度到中期後，沈有容才願意談澎湖防務。", "requirement": { "minChapter": 4 } }
+      ],
       "codexBody": "沈有容是明朝水師將領，曾在澎湖勸退荷蘭人。透過他可以理解明朝沿海防務，以及澎湖在台灣海峽中的戰略位置。"
     },
     {
@@ -53,6 +63,10 @@
       "desc": "在暹羅活躍的日本武士商人，懂得指揮也懂外交。",
       "questTitle": "日本人町的危機",
       "requirement": { "minChapter": 5, "gold": 2500 },
+      "questStages": [
+        { "title": "抵達暹羅商圈", "desc": "主線推進到能理解東南亞日本人町局勢的階段。", "requirement": { "minChapter": 5 } },
+        { "title": "籌措救援資金", "desc": "準備協助日本人町商人與武士維持秩序的資金。", "requirement": { "gold": 2500 } }
+      ],
       "codexBody": "山田長政是活躍於暹羅阿瑜陀耶的日本人，代表朱印船時代日本人在東南亞建立聚落與商業網絡的歷史。"
     },
     {
@@ -67,6 +81,10 @@
       "desc": "人稱 Captain China 的平戶華商，熟悉中日貿易與商館交涉。",
       "questTitle": "平戶華商的帳冊",
       "requirement": { "minChapter": 4, "gold": 5000 },
+      "questStages": [
+        { "title": "取得平戶商圈信任", "desc": "主線中期後，李旦才會讓玩家接觸真正的商帳。", "requirement": { "minChapter": 4 } },
+        { "title": "證明資本實力", "desc": "準備足夠資金，才能協助整理跨港帳冊與信用往來。", "requirement": { "gold": 5000 } }
+      ],
       "codexBody": "李旦是 17 世紀初活躍於平戶的華商領袖，參與中國、日本、東南亞之間的海上貿易，是理解東亞民間商網的重要人物。"
     },
     {
@@ -81,6 +99,10 @@
       "desc": "熟悉日本與台灣航線的朱印船船長，行事強硬但重情義。",
       "questTitle": "朱印船的舊約",
       "requirement": { "heroIds": ["chiyo"], "minChapter": 5 },
+      "questStages": [
+        { "title": "千代線限定", "desc": "濱田彌兵衛只會信任同屬朱印船脈絡的千代。", "requirement": { "heroIds": ["chiyo"] } },
+        { "title": "追查舊約", "desc": "主線推進到日荷衝突浮現後，才能談朱印船舊約。", "requirement": { "minChapter": 5 } }
+      ],
       "codexBody": "濱田彌兵衛與 1628 年大員日荷衝突有關。遊戲以他帶出朱印船商人、荷蘭 VOC 與台灣之間的緊張關係。"
     },
     {
@@ -95,6 +117,10 @@
       "desc": "英國人威廉・亞當斯的日本名，遊戲中以航海顧問傳聞登場。",
       "questTitle": "按針的海圖",
       "requirement": { "minChapter": 4, "discoveredExplorationPoints": ["exp_sakai_route"] },
+      "questStages": [
+        { "title": "聽見按針傳聞", "desc": "主線中期後，港口才會流傳英國航海顧問留下海圖的消息。", "requirement": { "minChapter": 4 } },
+        { "title": "堺商人古道", "desc": "探索堺商人古道，尋找海圖轉抄與航海器具線索。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } }
+      ],
       "codexBody": "三浦按針本名威廉・亞當斯，是到日本服務德川家康的英國航海家。史實中他卒於 1620 年，本遊戲為教學需要作架空演出。"
     },
     {
@@ -109,6 +135,10 @@
       "desc": "華南海域有名的海盜首領，熟悉海上突襲與船隊士氣。",
       "questTitle": "海盜首領的試探",
       "requirement": { "minChapter": 6, "gold": 4000 },
+      "questStages": [
+        { "title": "闖出海上名聲", "desc": "主線推進到後期，劉香才會把玩家視為值得試探的船隊。", "requirement": { "minChapter": 6 } },
+        { "title": "準備談判本錢", "desc": "備妥資金，才能處理海盜勢力要求的補給、情報與贖價談判。", "requirement": { "gold": 4000 } }
+      ],
       "codexBody": "劉香是明末華南海域的重要海盜勢力之一。遊戲中呈現海商與海盜界線模糊的時代，但不美化掠奪。"
     },
     {
@@ -123,6 +153,10 @@
       "desc": "熟悉琉球王國與東亞朝貢秩序，擅長交涉。",
       "questTitle": "琉球的尊嚴",
       "requirement": { "minChapter": 5, "discoveredExplorationPoints": ["exp_ryukyu_shuri"] },
+      "questStages": [
+        { "title": "理解琉球處境", "desc": "主線推進後，玩家才會接觸琉球在中日之間的壓力。", "requirement": { "minChapter": 5 } },
+        { "title": "首里線索", "desc": "探索琉球首里一帶，確認王國重臣留下的政治線索。", "requirement": { "discoveredExplorationPoints": ["exp_ryukyu_shuri"] } }
+      ],
       "codexBody": "謝名親方是琉球史中的重要人物。本遊戲以架空方式讓他出現，帶出琉球在中日之間的中介地位。"
     },
     {
@@ -299,6 +333,10 @@
       "desc": "笨港海商集團首領。林海生線可在前期短暫邀請，避免違背史實時間。",
       "questTitle": "笨港義旗",
       "requirement": { "heroIds": ["lin"], "minChapter": 2, "maxChapter": 3 },
+      "questStages": [
+        { "title": "林海生線限定", "desc": "顏思齊是林海生線前期的海商引路人，其他主角線不招募。", "requirement": { "heroIds": ["lin"] } },
+        { "title": "笨港義旗時機", "desc": "必須在林線第 2 至第 3 章之間邀請，過後會依史實淡出。", "requirement": { "minChapter": 2, "maxChapter": 3 } }
+      ],
       "codexBody": "顏思齊是明末活躍於台灣笨港一帶的海商首領。遊戲中保留他 1625 年病逝的史實，因此只能在林海生線前期短暫同行。"
     },
     {
@@ -313,6 +351,10 @@
       "desc": "台海貿易的支配者。為避免劇情矛盾，只在千代線以客座方式加入。",
       "questTitle": "平戶舊識",
       "requirement": { "heroIds": ["chiyo"], "minChapter": 6 },
+      "questStages": [
+        { "title": "千代線限定", "desc": "鄭芝龍在其他路線是統帥或交涉對象，只能在千代線以平戶舊識客座加入。", "requirement": { "heroIds": ["chiyo"] } },
+        { "title": "平戶舊識重逢", "desc": "千代主線推進到第 6 章後，才有足夠信任談短期同行。", "requirement": { "minChapter": 6 } }
+      ],
       "codexBody": "鄭芝龍是 17 世紀台海最重要的海上勢力之一，曾接受明朝招撫，後來在明清變局中降清。不同主角線對他的立場不同。"
     },
     {
@@ -327,6 +369,10 @@
       "desc": "反清復明勢力領袖，林海生線後期可客座同行；千代線則作少年鄭森架空演出。",
       "questTitle": "國姓爺的信任",
       "requirement": { "heroIds": ["lin", "chiyo"], "minChapter": 9 },
+      "questStages": [
+        { "title": "可同行路線", "desc": "鄭成功可在林線後期或千代線架空演出中短期同行；彼得線維持主線對手定位。", "requirement": { "heroIds": ["lin", "chiyo"] } },
+        { "title": "終局前的信任", "desc": "必須推進到第 9 章以後，才符合國姓爺登場的時機。", "requirement": { "minChapter": 9 } }
+      ],
       "codexBody": "鄭成功是明鄭勢力領袖，1661–1662 年攻下熱蘭遮城。遊戲中依主角線不同，呈現他作為盟友、少年記憶或對手的不同面向。"
     },
     {
@@ -355,6 +401,10 @@
       "desc": "青年水師將領，熟悉砲戰與船隊紀律。圖鑑會說明後來降清與 1683 年攻台。",
       "questTitle": "降將的本事",
       "requirement": { "heroIds": ["lin", "peter"], "minChapter": 6 },
+      "questStages": [
+        { "title": "可接觸路線", "desc": "施琅在林線與彼得線可用不同立場接觸；千代線暫不開放。", "requirement": { "heroIds": ["lin", "peter"] } },
+        { "title": "水師本事", "desc": "主線第 6 章後，玩家才有足夠海戰經驗判斷他的能力。", "requirement": { "minChapter": 6 } }
+      ],
       "codexBody": "施琅早年曾在鄭氏勢力中活動，後來降清，並在 1683 年率軍攻台。遊戲中要清楚標明他的後續史實，避免只看到單一立場。"
     }
   ]

@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-15] 開發 | 操作者：Codex | 高星夥伴專屬任務鏈資料化
+
+- 背景：老闆要求先完成 M4 剩餘第一項「夥伴專屬任務深化」，並把 M4 未完成項目逐項寫入 `status.md` 方便接手追蹤。
+- 完成事項：
+  - `status.md` 新增「M4 剩餘細項追蹤」，拆成主線劇情、任務三分流、探索系統、夥伴 NPC、圖鑑系統、M4 驗收六組勾選清單。
+  - `src/data/mates.json` 為 ★4～5 夥伴新增 `questStages` 專屬任務鏈，包含線別、章節、探索點、資金等分段條件。
+  - `state.ts` 新增 `MateQuestStage` 與 `mateQuestStageStatuses()`，並把未完成的任務段落納入招募條件。
+  - `MatesScene` 右側候選人物顯示任務進度 `x/y`；查看條件時逐段列出已完成／未完成與缺少條件。
+- 待追蹤：本次完成任務鏈資料化與酒館進度顯示；後續可把 ★4～5 夥伴每段任務接上 `StoryScene` 多段劇情演出與客座離隊機制。
+- 驗證：`npm run build` 通過；資料檢查 25 位夥伴有效，12 位 ★4～5 夥伴皆有 `questStages`；`tools/generate-codex-data.mjs` 可正常重建 120 筆圖鑑。
+
 ## [2026-06-15] 文件 | 操作者：Codex | 圖鑑 Markdown 校對檔改名
 
 - 背景：老闆希望圖鑑資料庫 Markdown 檔名更直覺，同時保留 `codex` 前綴方便與 `codex.json` 交互索引。

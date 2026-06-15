@@ -162,6 +162,11 @@ export interface MateRequirement {
   discoveredExplorationPoints?: string[];
   codexIds?: string[];
 }
+export interface MateQuestStage {
+  title: string;
+  desc: string;
+  requirement?: MateRequirement;
+}
 export interface MateDef {
   id: string;
   name: string;
@@ -174,6 +179,7 @@ export interface MateDef {
   desc: string;
   questTitle: string;
   requirement?: MateRequirement;
+  questStages?: MateQuestStage[];
   codexBody: string;
 }
 
@@ -640,10 +646,9 @@ export function roleName(key: string | null): string {
   return ROLES.find((r) => r.key === key)?.name ?? key;
 }
 
-export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boolean; lines: string[] } {
-  const req = def.requirement;
+function mateRequirementLines(state: GameState, req: MateRequirement | undefined): string[] {
   const lines: string[] = [];
-  if (!req) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
+  if (!req) return lines;
 
   if (req.heroIds?.length && !req.heroIds.includes(state.story.heroId)) {
     const names = req.heroIds.map((id) => heroDefById(id).name).join('／');
@@ -677,6 +682,29 @@ export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boo
       lines.push(`尚未解鎖圖鑑：${entry?.title ?? codexId}。`);
     }
   }
+  return lines;
+}
+
+export function mateQuestStageStatuses(state: GameState, def: MateDef): Array<{ title: string; desc: string; ok: boolean; lines: string[] }> {
+  return (def.questStages ?? []).map((stage) => {
+    const lines = mateRequirementLines(state, stage.requirement);
+    return {
+      title: stage.title,
+      desc: stage.desc,
+      ok: lines.length === 0,
+      lines,
+    };
+  });
+}
+
+export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boolean; lines: string[] } {
+  const req = def.requirement;
+  const stageStatuses = mateQuestStageStatuses(state, def);
+  const lines = mateRequirementLines(state, req);
+  for (const stage of stageStatuses) {
+    if (!stage.ok) lines.push(`專屬任務未完成：${stage.title}。`);
+  }
+  if (!req && stageStatuses.length === 0) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
   return { ok: lines.length === 0, lines: lines.length ? lines : ['條件已達成。'] };
 }
 

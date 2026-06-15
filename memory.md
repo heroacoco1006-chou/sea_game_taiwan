@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-15] M4 高星夥伴專屬任務鏈
+
+- 背景：老闆希望 M4 剩餘進度可逐項追蹤，並先完成「夥伴專屬任務深化」。
+- 記憶（已實作）：
+  - `src/data/mates.json` 的 ★4～5 夥伴新增 `questStages`，每段含 `title`、`desc`、`requirement`，用來表達多段專屬任務鏈。
+  - `state.ts` 新增 `MateQuestStage` 與 `mateQuestStageStatuses()`；`mateRequirementStatus()` 會把未完成的專屬任務段落納入招募條件。
+  - `MatesScene` 右側候選清單會顯示任務進度 `x/y`；查看條件時會列出每段任務的完成狀態與缺少條件。
+  - 這一版先完成「任務鏈資料化＋酒館進度顯示」。下一步若要做劇情演出，應沿用現有 `StoryScene`，把 `questStages` 對應到專屬劇情文本或任務事件，不要重做招募 UI。
+- 影響：新增高星夥伴或修改專屬任務時，優先改 `mates.json` 的 `questStages`；同時更新 `status.md` 的 M4 細項追蹤。
+
 ## [2026-06-15] 圖鑑主資料檔與分類 UI
 
 - 背景：老闆希望圖鑑不要把所有類型混在一起，未解鎖項目以 `???` 保留收集感，並擴寫說明讓小朋友能理解歷史、人文與自然背景。

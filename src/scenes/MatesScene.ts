@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, MATE_DEFS, ROLES, mateDefById, roleName, saveGame,
-  mateRequirementStatus, unlockCodex, mateCodexId,
+  mateRequirementStatus, mateQuestStageStatuses, unlockCodex, mateCodexId,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -102,9 +102,11 @@ export default class MatesScene extends Phaser.Scene {
       const y = 150 + i * 92;
       const roleNames = def.roles.map((rk) => roleName(rk)).join('／');
       const status = mateRequirementStatus(s, def);
+      const stages = mateQuestStageStatuses(s, def);
+      const stageText = stages.length ? `｜任務 ${stages.filter((stage) => stage.ok).length}/${stages.length}` : '';
       this.dyn.push(this.add.text(680, y, `${def.name} ★${def.star}（${def.from}）`, textStyle(17)));
       this.dyn.push(this.add.text(680, y + 26, def.desc, { ...textStyle(12, '#5a4a30'), wordWrap: { width: 410, useAdvancedWrap: true } }));
-      this.dyn.push(this.add.text(680, y + 54, `可任：${roleNames}｜${def.questTitle}`, { ...textStyle(13, status.ok ? '#6b5530' : '#9a4a2a'), wordWrap: { width: 430, useAdvancedWrap: true } }));
+      this.dyn.push(this.add.text(680, y + 54, `可任：${roleNames}｜${def.questTitle}${stageText}`, { ...textStyle(13, status.ok ? '#6b5530' : '#9a4a2a'), wordWrap: { width: 430, useAdvancedWrap: true } }));
       const label = status.ok ? (def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入') : '查看條件';
       const btn = makeButton(this, 1130, y + 34, 150, 42, label, () => {
         if (status.ok) this.recruit(def.id);
@@ -146,10 +148,18 @@ export default class MatesScene extends Phaser.Scene {
     const def = mateDefById(id);
     if (!def) return;
     const status = mateRequirementStatus(this.state, def);
+    const stages = mateQuestStageStatuses(this.state, def);
+    const stageText = stages.length
+      ? `\n\n專屬任務進度：\n${stages.map((stage, i) => {
+          const marker = stage.ok ? '✓' : '□';
+          const detail = stage.ok ? '已完成' : stage.lines.join('、');
+          return `${marker} ${i + 1}. ${stage.title}\n　${stage.desc}\n　${detail}`;
+        }).join('\n')}`
+      : '';
     showModal(
       this,
       def.questTitle,
-      `${def.name}（${def.history}）\n\n${def.desc}\n\n加入條件：\n${status.lines.map((line) => `・${line}`).join('\n')}`,
+      `${def.name}（${def.history}）\n\n${def.desc}${stageText}\n\n加入條件：\n${status.lines.map((line) => `・${line}`).join('\n')}`,
       [{ label: '知道了', onPick: () => {} }]
     );
   }
