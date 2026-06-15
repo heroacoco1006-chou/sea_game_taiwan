@@ -32,6 +32,7 @@ export default class InfoScene extends Phaser.Scene {
   private codexId?: string;
   private codexPage = 0;
   private codexDetailPage = 0;
+  private codexDetailOpen = false;
   private dyn: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -51,6 +52,7 @@ export default class InfoScene extends Phaser.Scene {
     this.codexId = undefined;
     this.codexPage = 0;
     this.codexDetailPage = 0;
+    this.codexDetailOpen = false;
     this.dyn = [];
   }
 
@@ -294,6 +296,7 @@ export default class InfoScene extends Phaser.Scene {
         this.codexId = undefined;
         this.codexPage = 0;
         this.codexDetailPage = 0;
+        this.codexDetailOpen = false;
         this.render();
       }, 11);
       if (cat.id === this.codexCategory) btn.setAlpha(0.72);
@@ -307,38 +310,42 @@ export default class InfoScene extends Phaser.Scene {
       return;
     }
 
-    const pageSize = 8;
+    const pageSize = 12;
     const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
     this.codexPage = Math.min(this.codexPage, pageCount - 1);
     const visible = entries.slice(this.codexPage * pageSize, this.codexPage * pageSize + pageSize);
-    if (!this.codexId || !entries.some((entry) => entry.id === this.codexId)) {
-      this.codexId = visible.find((entry) => entry.unlocked)?.id ?? visible[0].id;
+    if (this.codexId && !entries.some((entry) => entry.id === this.codexId)) {
+      this.codexId = undefined;
       this.codexDetailPage = 0;
+      this.codexDetailOpen = false;
     }
     visible.forEach((entry, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
       const label = entry.unlocked ? entry.title : '???';
-      const btn = makeButton(this, 475, 286 + i * 38, 350, 32, label, () => {
+      const btn = makeButton(this, 475 + col * 410, 300 + row * 44, 350, 34, label, () => {
         this.codexId = entry.id;
         this.codexDetailPage = 0;
+        this.codexDetailOpen = true;
         this.render();
       }, 12);
-      if (entry.id === this.codexId) btn.setAlpha(0.7);
-      if (!entry.unlocked) btn.setAlpha(entry.id === this.codexId ? 0.7 : 0.55);
+      if (!entry.unlocked) btn.setAlpha(0.55);
       this.dyn.push(btn);
     });
 
     if (pageCount > 1) {
-      this.dyn.push(makeButton(this, 385, 602, 110, 32, '上一頁', () => { this.codexPage = Math.max(0, this.codexPage - 1); this.codexId = undefined; this.render(); }, 12));
-      this.dyn.push(this.add.text(475, 602, `${this.codexPage + 1}/${pageCount}`, textStyle(13)).setOrigin(0.5));
-      this.dyn.push(makeButton(this, 565, 602, 110, 32, '下一頁', () => { this.codexPage = Math.min(pageCount - 1, this.codexPage + 1); this.codexId = undefined; this.render(); }, 12));
+      this.dyn.push(makeButton(this, 580, 602, 110, 32, '上一頁', () => { this.codexPage = Math.max(0, this.codexPage - 1); this.codexId = undefined; this.codexDetailOpen = false; this.render(); }, 12));
+      this.dyn.push(this.add.text(730, 602, `${this.codexPage + 1}/${pageCount}`, textStyle(13)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 880, 602, 110, 32, '下一頁', () => { this.codexPage = Math.min(pageCount - 1, this.codexPage + 1); this.codexId = undefined; this.codexDetailOpen = false; this.render(); }, 12));
     }
 
-    const selected = entries.find((entry) => entry.id === this.codexId) ?? entries[0];
-    this.drawCodexDetail(selected);
+    const selected = entries.find((entry) => entry.id === this.codexId);
+    if (selected && this.codexDetailOpen) this.drawCodexDetail(selected);
   }
 
   private drawCodexDetail(selected: CodexListEntry): void {
-    this.dyn.push(this.add.rectangle(960, 372, 430, 492, COLORS.parchment, 0.55));
+    this.dyn.push(this.add.rectangle(730, 370, 930, 570, 0x3a2a14, 0.24));
+    this.dyn.push(drawPanel(this, 285, 105, 890, 540));
     const title = selected.unlocked ? `【${selected.type}】${selected.title}` : `【${selected.type}】???`;
     const body = selected.unlocked
       ? [
@@ -348,19 +355,24 @@ export default class InfoScene extends Phaser.Scene {
           selected.kidNote ? `閱讀提示：${selected.kidNote}` : '',
         ].filter(Boolean).join('\n\n')
       : `尚未發現這筆圖鑑。\n\n提示：${selected.unlockHint ?? '繼續推進主線、探索地圖或結識夥伴，就有機會解鎖。'}`;
-    const pages = this.splitCodexPages(body, selected.unlocked ? 230 : 180);
+    const pages = this.splitCodexPages(body, selected.unlocked ? 260 : 180);
     this.codexDetailPage = Math.min(this.codexDetailPage, pages.length - 1);
     const detail = this.add.text(
-      765,
-      142,
+      320,
+      145,
       `${title}\n\n${this.wrapCodexBody(pages[this.codexDetailPage] ?? '')}`,
-      { ...textStyle(15), wordWrap: { width: 390, useAdvancedWrap: true }, lineSpacing: 7 }
+      { ...textStyle(16), wordWrap: { width: 820, useAdvancedWrap: true }, lineSpacing: 8 }
     );
     this.dyn.push(detail);
+    this.dyn.push(makeButton(this, 1065, 135, 120, 34, '返回圖鑑', () => {
+      this.codexDetailOpen = false;
+      this.codexDetailPage = 0;
+      this.render();
+    }, 13));
     if (pages.length > 1) {
-      this.dyn.push(makeButton(this, 880, 622, 100, 32, '上段', () => { this.codexDetailPage = Math.max(0, this.codexDetailPage - 1); this.render(); }, 12));
-      this.dyn.push(this.add.text(960, 622, `${this.codexDetailPage + 1}/${pages.length}`, textStyle(13)).setOrigin(0.5));
-      this.dyn.push(makeButton(this, 1040, 622, 100, 32, '下段', () => { this.codexDetailPage = Math.min(pages.length - 1, this.codexDetailPage + 1); this.render(); }, 12));
+      this.dyn.push(makeButton(this, 600, 615, 100, 32, '上段', () => { this.codexDetailPage = Math.max(0, this.codexDetailPage - 1); this.render(); }, 12));
+      this.dyn.push(this.add.text(730, 615, `${this.codexDetailPage + 1}/${pages.length}`, textStyle(13)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 860, 615, 100, 32, '下段', () => { this.codexDetailPage = Math.min(pages.length - 1, this.codexDetailPage + 1); this.render(); }, 12));
     }
   }
 

@@ -186,6 +186,59 @@ for (const entry of allEntries) {
   seen.add(entry.id);
 }
 
+function mdText(value) {
+  return String(value ?? '').replace(/\r\n/g, '\n').trim();
+}
+
+function codexMarkdown(entries) {
+  const lines = [
+    '---',
+    'title: 大航海福爾摩沙圖鑑資料庫',
+    'type: data',
+    'tags: [sea_game, codex, 圖鑑, 教育資料]',
+    'updated: 2026-06-15',
+    'author: Codex',
+    'status: draft',
+    '---',
+    '',
+    '# 大航海福爾摩沙圖鑑資料庫',
+    '',
+    '> 本檔是圖鑑資料的 Markdown 校對版，方便逐條比對歷史、人文與自然說明。',
+    '> 遊戲執行時仍讀取 `src/data/codex.json`；若校訂本檔內容，需同步回 `codex.json`。',
+    '',
+    '## 分類總覽',
+    '',
+  ];
+  for (const cat of categories) {
+    const count = entries.filter((entry) => entry.category === cat.id).length;
+    lines.push(`- **${cat.label}**（${cat.id}）：${cat.desc}（${count} 筆）`);
+  }
+  lines.push('');
+
+  for (const cat of categories) {
+    const items = entries.filter((entry) => entry.category === cat.id);
+    lines.push(`## ${cat.label}`, '');
+    lines.push(`> ${cat.desc}`, '');
+    for (const entry of items) {
+      lines.push(`### ${entry.title}`, '');
+      lines.push(`- id：\`${entry.id}\``);
+      lines.push(`- 類型：${entry.type}`);
+      lines.push(`- 來源：${entry.source}`);
+      lines.push(`- 解鎖提示：${entry.unlockHint}`);
+      lines.push('');
+      lines.push('#### 摘要', '');
+      lines.push(mdText(entry.short), '');
+      lines.push('#### 完整說明', '');
+      lines.push(mdText(entry.body), '');
+      lines.push('#### 為什麼重要', '');
+      lines.push(mdText(entry.whyImportant), '');
+      lines.push('#### 閱讀提示', '');
+      lines.push(mdText(entry.kidNote), '');
+    }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
 const out = {
   _note: '圖鑑主資料。主線、探索、夥伴只負責解鎖 id；分類、完整說明與提示以本檔為準。',
   categories,
@@ -193,4 +246,5 @@ const out = {
 };
 
 fs.writeFileSync(path.join(root, 'src', 'data', 'codex.json'), `${JSON.stringify(out, null, 2)}\n`, 'utf8');
+fs.writeFileSync(path.join(root, 'src', 'data', 'codex.md'), codexMarkdown(allEntries), 'utf8');
 console.log(`Wrote ${allEntries.length} codex entries.`);
