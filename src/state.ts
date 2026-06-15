@@ -7,7 +7,8 @@ import matesData from './data/mates.json';
 import storyData from './data/story.json';
 import explorationData from './data/exploration_points.json';
 import discoveriesData from './data/discoveries.json';
-import { ALL_STORY_CODEX, chapterCodexIds, getChapterScript } from './story/parseStory';
+import codexData from './data/codex.json';
+import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
@@ -228,9 +229,26 @@ export interface StoryRequirements {
 
 export interface CodexEntry {
   id: string;
+  category?: string;
   type: string;
   title: string;
+  short?: string;
   body: string;
+  whyImportant?: string;
+  kidNote?: string;
+  relatedIds?: string[];
+  unlockHint?: string;
+  source?: string;
+}
+
+export interface CodexCategory {
+  id: string;
+  label: string;
+  desc: string;
+}
+
+export interface CodexListEntry extends CodexEntry {
+  unlocked: boolean;
 }
 
 export interface DiscoveryEntry extends CodexEntry {
@@ -329,14 +347,9 @@ export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
 export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
 export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
 export const EXPLORATION_POINTS: ExplorationPoint[] = explorationData.points as ExplorationPoint[];
-export const MATE_CODEX_ENTRIES: CodexEntry[] = MATE_DEFS.map((mate) => ({
-  id: `mate_${mate.id}`,
-  type: '人物',
-  title: mate.name,
-  body: mate.codexBody,
-}));
-// 圖鑑 = 主線劇本解析出的圖鑑（唯一來源：data/story/*.md）＋ 探索發現＋招募夥伴
-export const CODEX_ENTRIES: CodexEntry[] = [...(ALL_STORY_CODEX as CodexEntry[]), ...DISCOVERIES, ...MATE_CODEX_ENTRIES];
+export const CODEX_CATEGORIES: CodexCategory[] = codexData.categories as CodexCategory[];
+// 圖鑑主資料在 data/codex.json；主線、探索、夥伴只負責解鎖 id。
+export const CODEX_ENTRIES: CodexEntry[] = codexData.entries as CodexEntry[];
 export const CREW_START = 16;
 export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
@@ -1132,6 +1145,22 @@ export function codexEntriesForState(state: GameState): CodexEntry[] {
   return state.story.codex
     .map((id) => CODEX_ENTRIES.find((entry) => entry.id === id))
     .filter((entry): entry is CodexEntry => Boolean(entry));
+}
+
+export function codexEntriesForCategory(state: GameState, categoryId: string): CodexListEntry[] {
+  const unlocked = new Set(state.story.codex);
+  return CODEX_ENTRIES
+    .filter((entry) => (entry.category ?? entry.type) === categoryId)
+    .map((entry) => ({ ...entry, unlocked: unlocked.has(entry.id) }));
+}
+
+export function firstUnlockedCodexCategory(state: GameState): string {
+  const unlocked = new Set(state.story.codex);
+  return (
+    CODEX_CATEGORIES.find((cat) => CODEX_ENTRIES.some((entry) => entry.category === cat.id && unlocked.has(entry.id)))?.id ??
+    CODEX_CATEGORIES[0]?.id ??
+    ''
+  );
 }
 
 export function unlockCodex(state: GameState, ids: string[]): string[] {

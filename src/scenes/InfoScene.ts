@@ -3,9 +3,10 @@ import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
-  heroDefById, currentStoryChapter, storyTargetPort, codexEntriesForState, storyRequirementText,
+  heroDefById, currentStoryChapter, storyTargetPort, storyRequirementText,
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
+  CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -27,7 +28,10 @@ export default class InfoScene extends Phaser.Scene {
   private portId?: string;
   private spawn?: { x: number; y: number };
   private tab: InfoTab = 'quest';
+  private codexCategory = '';
   private codexId?: string;
+  private codexPage = 0;
+  private codexDetailPage = 0;
   private dyn: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -43,7 +47,10 @@ export default class InfoScene extends Phaser.Scene {
     this.portId = data.portId;
     this.spawn = data.spawn;
     this.tab = 'quest';
+    this.codexCategory = '';
     this.codexId = undefined;
+    this.codexPage = 0;
+    this.codexDetailPage = 0;
     this.dyn = [];
   }
 
@@ -272,35 +279,105 @@ export default class InfoScene extends Phaser.Scene {
 
   private drawCodex(): void {
     this.addTitle('圖鑑');
-    const codex = codexEntriesForState(this.state);
-    if (codex.length === 0) {
-      this.addWrapped(300, 130, '目前還沒有解鎖圖鑑。推進主線後會解鎖事件、人物、地點與貿易品卡。', 840, 17);
+    if (!this.codexCategory) this.codexCategory = firstUnlockedCodexCategory(this.state);
+    const category = CODEX_CATEGORIES.find((cat) => cat.id === this.codexCategory) ?? CODEX_CATEGORIES[0];
+    if (!category) {
+      this.addWrapped(300, 130, '目前沒有圖鑑資料。', 840, 17);
       return;
     }
-    if (!this.codexId || !codex.some((entry) => entry.id === this.codexId)) this.codexId = codex[0].id;
-    codex.forEach((entry, i) => {
-      const col = i < 9 ? 0 : 1;
-      const row = i % 9;
-      const btn = makeButton(this, 392 + col * 232, 130 + row * 42, 208, 34, `【${entry.type}】${entry.title}`, () => {
+
+    CODEX_CATEGORIES.forEach((cat, i) => {
+      const unlockedCount = codexEntriesForCategory(this.state, cat.id).filter((entry) => entry.unlocked).length;
+      const total = codexEntriesForCategory(this.state, cat.id).length;
+      const btn = makeButton(this, 385 + (i % 3) * 170, 120 + Math.floor(i / 3) * 38, 158, 32, `${cat.label} ${unlockedCount}/${total}`, () => {
+        this.codexCategory = cat.id;
+        this.codexId = undefined;
+        this.codexPage = 0;
+        this.codexDetailPage = 0;
+        this.render();
+      }, 11);
+      if (cat.id === this.codexCategory) btn.setAlpha(0.72);
+      this.dyn.push(btn);
+    });
+
+    this.addWrapped(300, 238, category.desc, 520, 14, '#6b5530');
+    const entries = codexEntriesForCategory(this.state, category.id);
+    if (entries.length === 0) {
+      this.addWrapped(300, 286, '這個分類目前沒有資料。', 520, 15);
+      return;
+    }
+
+    const pageSize = 8;
+    const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
+    this.codexPage = Math.min(this.codexPage, pageCount - 1);
+    const visible = entries.slice(this.codexPage * pageSize, this.codexPage * pageSize + pageSize);
+    if (!this.codexId || !entries.some((entry) => entry.id === this.codexId)) {
+      this.codexId = visible.find((entry) => entry.unlocked)?.id ?? visible[0].id;
+      this.codexDetailPage = 0;
+    }
+    visible.forEach((entry, i) => {
+      const label = entry.unlocked ? entry.title : '???';
+      const btn = makeButton(this, 475, 286 + i * 38, 350, 32, label, () => {
         this.codexId = entry.id;
+        this.codexDetailPage = 0;
         this.render();
       }, 12);
       if (entry.id === this.codexId) btn.setAlpha(0.7);
+      if (!entry.unlocked) btn.setAlpha(entry.id === this.codexId ? 0.7 : 0.55);
       this.dyn.push(btn);
     });
-    const selected = codex.find((entry) => entry.id === this.codexId) ?? codex[0];
-    this.dyn.push(this.add.rectangle(960, 370, 390, 476, COLORS.parchment, 0.55));
-    const detail = this.add.text(
-      780,
-      142,
-      `【${selected.type}】${selected.title}\n\n${this.wrapCodexBody(selected.body)}`,
-      { ...textStyle(16), wordWrap: { width: 350, useAdvancedWrap: true }, lineSpacing: 7 }
-    );
-    while (detail.height > 432 && Number.parseInt(String(detail.style.fontSize), 10) > 13) {
-      const next = Number.parseInt(String(detail.style.fontSize), 10) - 1;
-      detail.setFontSize(next);
+
+    if (pageCount > 1) {
+      this.dyn.push(makeButton(this, 385, 602, 110, 32, '上一頁', () => { this.codexPage = Math.max(0, this.codexPage - 1); this.codexId = undefined; this.render(); }, 12));
+      this.dyn.push(this.add.text(475, 602, `${this.codexPage + 1}/${pageCount}`, textStyle(13)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 565, 602, 110, 32, '下一頁', () => { this.codexPage = Math.min(pageCount - 1, this.codexPage + 1); this.codexId = undefined; this.render(); }, 12));
     }
+
+    const selected = entries.find((entry) => entry.id === this.codexId) ?? entries[0];
+    this.drawCodexDetail(selected);
+  }
+
+  private drawCodexDetail(selected: CodexListEntry): void {
+    this.dyn.push(this.add.rectangle(960, 372, 430, 492, COLORS.parchment, 0.55));
+    const title = selected.unlocked ? `【${selected.type}】${selected.title}` : `【${selected.type}】???`;
+    const body = selected.unlocked
+      ? [
+          selected.short ? `摘要：${selected.short}` : '',
+          selected.body,
+          selected.whyImportant ? `為什麼重要：${selected.whyImportant}` : '',
+          selected.kidNote ? `閱讀提示：${selected.kidNote}` : '',
+        ].filter(Boolean).join('\n\n')
+      : `尚未發現這筆圖鑑。\n\n提示：${selected.unlockHint ?? '繼續推進主線、探索地圖或結識夥伴，就有機會解鎖。'}`;
+    const pages = this.splitCodexPages(body, selected.unlocked ? 230 : 180);
+    this.codexDetailPage = Math.min(this.codexDetailPage, pages.length - 1);
+    const detail = this.add.text(
+      765,
+      142,
+      `${title}\n\n${this.wrapCodexBody(pages[this.codexDetailPage] ?? '')}`,
+      { ...textStyle(15), wordWrap: { width: 390, useAdvancedWrap: true }, lineSpacing: 7 }
+    );
     this.dyn.push(detail);
+    if (pages.length > 1) {
+      this.dyn.push(makeButton(this, 880, 622, 100, 32, '上段', () => { this.codexDetailPage = Math.max(0, this.codexDetailPage - 1); this.render(); }, 12));
+      this.dyn.push(this.add.text(960, 622, `${this.codexDetailPage + 1}/${pages.length}`, textStyle(13)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 1040, 622, 100, 32, '下段', () => { this.codexDetailPage = Math.min(pages.length - 1, this.codexDetailPage + 1); this.render(); }, 12));
+    }
+  }
+
+  private splitCodexPages(text: string, maxChars: number): string[] {
+    const paragraphs = text.split('\n\n');
+    const pages: string[] = [];
+    let current = '';
+    for (const paragraph of paragraphs) {
+      if ((current + '\n\n' + paragraph).trim().length > maxChars && current) {
+        pages.push(current.trim());
+        current = paragraph;
+      } else {
+        current = [current, paragraph].filter(Boolean).join('\n\n');
+      }
+    }
+    if (current.trim()) pages.push(current.trim());
+    return pages.length ? pages : [''];
   }
 
   private wrapCodexBody(text: string): string {

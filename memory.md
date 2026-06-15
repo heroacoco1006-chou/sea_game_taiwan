@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-15] 圖鑑主資料檔與分類 UI
+
+- 背景：老闆希望圖鑑不要把所有類型混在一起，未解鎖項目以 `???` 保留收集感，並擴寫說明讓小朋友能理解歷史、人文與自然背景。
+- 記憶（已實作）：
+  - 新增 `src/data/codex.json` 作為圖鑑主資料檔，整合主線、探索與夥伴圖鑑；目前 120 筆，每筆含 `category`、`short`、`body`、`whyImportant`、`kidNote`、`unlockHint`。
+  - 圖鑑分類為：歷史事件、人物、地點與建築、勢力與制度、貿易品與產業、船隻與航海、自然地理、生物、寶物與裝備。
+  - `CODEX_ENTRIES` 現在以 `codex.json` 為準；主線 Markdown、探索與夥伴仍只負責解鎖 id。後續要改圖鑑文字、分類或閱讀提示，優先改 `src/data/codex.json`。
+  - 圖鑑 UI 改為分類瀏覽，未解鎖項目顯示 `???` 與解鎖提示；已解鎖項目顯示摘要、完整說明、重要性與閱讀提示，長文用分段頁呈現。
+  - `tools/generate-codex-data.mjs` 可從現有資料重建 codex 主檔；如果已人工精修 `codex.json`，重跑前要小心不要覆蓋精修內容。
+- 影響：小航或 Codex 後續新增主線、探索、夥伴任務時，需同步在 `codex.json` 補對應 id；不要再把長篇圖鑑文字分散寫在 Markdown、discoveries 或 mates 裡。
+
 ## [2026-06-15] M4 25 位夥伴基礎招募與人物圖鑑
 
 - 背景：依 GitHub commit 與 `log.md` 確認小航已完成三線各 10 章主線播放器後，M4 剩餘主項轉向 25 位夥伴 NPC。
@@ -19,9 +30,9 @@
 
 - 背景：把三線各 10 章 Markdown 劇本接進遊戲；老闆選「三條線一次全接完」。
 - 記憶（已實作，後續開發須沿用）：
-  - **劇本是對白與圖鑑的唯一來源**：`src/data/story/*.md`（lin/peter/chiyo 各 10 章）。要改對白或圖鑑內文就改 MD，不要寫死在程式或 story.json。解析器在 `src/story/parseStory.ts`（用 Vite `?raw` 載入）。
+  - **劇本是對白與圖鑑解鎖 id 的來源**：`src/data/story/*.md`（lin/peter/chiyo 各 10 章）。要改對白就改 MD；圖鑑完整內文已改由 `src/data/codex.json` 維護。解析器在 `src/story/parseStory.ts`（用 Vite `?raw` 載入）。
   - **MD 標記規格**（新增章節務必沿用，否則解析不到）：`## 第N章　標題（年份）`、`〔旁白〕`、`〔心聲〕`、`〔角色名〕（動作）「對白」`、`▸目標：`、`### 場景名`、`✦ 圖鑑【標題】：內文`、`→ 下一章`。
-  - **圖鑑（CODEX）改為劇本驅動**：`CODEX_ENTRIES = ALL_STORY_CODEX(解析自 MD ✦) + DISCOVERIES`；圖鑑 id 由解析器自動生成 `codex_{hero}_{章}_{序}`，章節完成時由 `completeStoryChapter` 用 `chapterCodexIds()` 解鎖。不要再回去用 story.json 的 codex 陣列。
+  - **圖鑑（CODEX）解鎖仍由劇本驅動**：圖鑑 id 由解析器自動生成 `codex_{hero}_{章}_{序}`，章節完成時由 `completeStoryChapter` 用 `chapterCodexIds()` 解鎖；完整資料由 `src/data/codex.json` 提供。不要再回去用 story.json 的 codex 陣列。
   - **story.json 只剩進度骨架**：每章 = id/heroId/chapter/title/year/targetPortId/npc/objective/requirements?/rewardGold。已移除 prompt/completion/codexIds 與 codex 陣列；`StoryChapter` 型別同步精簡。年份(year)用來在完成時推進遊戲日期。
   - **播放流程**：官府／商館 `FacilityScene` →「推進主線（看劇情）」→ `storyAdvanceCheck`（檢查目標港＋貨物，不變動狀態）→ 啟動 `StoryScene`（場景 key `Story`）播完整對話 → 播完才 `completeStoryChapter` 結算獎勵／圖鑑／年份。新增劇情入口請重用 StoryScene，傳 `{heroId,chapter,ret:{portId,type,door}}`。
   - **中文換行**：Phaser 文字框顯示中文長句要加 `wordWrap:{ useAdvancedWrap:true }`，否則無空白不會斷行（StoryScene、InfoScene 圖鑑都已用）。
