@@ -355,13 +355,13 @@ export default class InfoScene extends Phaser.Scene {
           selected.kidNote ? `閱讀提示：${selected.kidNote}` : '',
         ].filter(Boolean).join('\n\n')
       : `尚未發現這筆圖鑑。\n\n提示：${selected.unlockHint ?? '繼續推進主線、探索地圖或結識夥伴，就有機會解鎖。'}`;
-    const pages = this.splitCodexPages(body, selected.unlocked ? 260 : 180);
+    const pages = this.splitCodexPages(body, selected.unlocked ? 15 : 8);
     this.codexDetailPage = Math.min(this.codexDetailPage, pages.length - 1);
     const detail = this.add.text(
       320,
       145,
-      `${title}\n\n${this.wrapCodexBody(pages[this.codexDetailPage] ?? '')}`,
-      { ...textStyle(16), wordWrap: { width: 820, useAdvancedWrap: true }, lineSpacing: 8 }
+      `${title}\n\n${pages[this.codexDetailPage] ?? ''}`,
+      { ...textStyle(16), wordWrap: { width: 430, useAdvancedWrap: true }, lineSpacing: 8 }
     );
     this.dyn.push(detail);
     this.dyn.push(makeButton(this, 1065, 135, 120, 34, '返回圖鑑', () => {
@@ -376,19 +376,19 @@ export default class InfoScene extends Phaser.Scene {
     }
   }
 
-  private splitCodexPages(text: string, maxChars: number): string[] {
-    const paragraphs = text.split('\n\n');
+  private splitCodexPages(text: string, maxLines: number): string[] {
+    const lines = this.wrapCodexBody(text).split('\n');
     const pages: string[] = [];
-    let current = '';
-    for (const paragraph of paragraphs) {
-      if ((current + '\n\n' + paragraph).trim().length > maxChars && current) {
-        pages.push(current.trim());
-        current = paragraph;
+    let current: string[] = [];
+    for (const line of lines) {
+      if (current.length >= maxLines && current.some((part) => part.trim())) {
+        pages.push(current.join('\n').trim());
+        current = line.trim() ? [line] : [];
       } else {
-        current = [current, paragraph].filter(Boolean).join('\n\n');
+        current.push(line);
       }
     }
-    if (current.trim()) pages.push(current.trim());
+    if (current.some((line) => line.trim())) pages.push(current.join('\n').trim());
     return pages.length ? pages : [''];
   }
 
