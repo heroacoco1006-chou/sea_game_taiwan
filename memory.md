@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-17] 圖鑑資料流：codex.json 為產生檔
+
+- 背景：校對 120 筆圖鑑時釐清資料流，避免改錯地方被覆蓋。
+- 記憶（重要技術約定）：
+  - `src/data/codex.json`（遊戲讀取）與 `src/data/codex_圖鑑資料庫.md`（人工校對版）都是由 `tools/generate-codex-data.mjs` **產生**的，不要直接手改——會在下次重跑時被覆蓋。
+  - 圖鑑內文的真正來源：主線圖鑑＝三條主線 MD 的 `✦圖鑑【標題】：內文`；探索（物種／風景／地理／文化／寶物）＝`discoveries.json`；夥伴人物＝`mates.json` 的 `codexBody`；另有產生器內 `expandedBodies` 對 14 個重要主題提供擴充版本（會覆蓋同名 MD 內文）。
+  - `short`／`whyImportant`／`kidNote`／`category` 由產生器依分類自動產生（firstSentence／defaultWhy／defaultKidNote／categoryFor 啟發式），目前不支援逐條覆寫。
+  - 校訂流程：改對應來源檔 → 跑 `node tools/generate-codex-data.mjs` → `git diff` 確認只動到預期條目 → build。物種等項目改 title／body 可，但**不要改 id**（探索點 `exploration_points.json` 以 id 引用）。
+  - 注意：夥伴名與 expandedBodies 鍵同名時（鄭芝龍、顏思齊），夥伴卡內文會被 expandedBodies 覆蓋；同名主題在主線與夥伴會各有一張圖鑑。屬已知設計細節。
+
 ## [2026-06-16] 客座夥伴自動離隊機制
 
 - 背景：建構書 §5-7 規定主線要角採「客座夥伴」——限定章節同行、劇情節點自動離隊、不影響史實結局。
