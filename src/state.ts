@@ -167,6 +167,11 @@ export interface MateQuestStage {
   desc: string;
   requirement?: MateRequirement;
 }
+/** 客座夥伴設定：主線推進到 leaveAfterChapter 之後會自動離隊（限定章節同行，不影響史實結局）。 */
+export interface MateGuest {
+  leaveAfterChapter: number;
+  leaveText: string;
+}
 export interface MateDef {
   id: string;
   name: string;
@@ -181,6 +186,7 @@ export interface MateDef {
   requirement?: MateRequirement;
   questStages?: MateQuestStage[];
   codexBody: string;
+  guest?: MateGuest;
 }
 
 export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
@@ -1231,6 +1237,22 @@ export function storyChapterTeaser(heroId: string, chapter: number): string {
   return intro?.text ?? '';
 }
 
+/** 處理客座夥伴離隊：主線章節超過其同行窗口時自動離隊（不影響史實結局），回傳告別訊息。 */
+export function processGuestDepartures(state: GameState): string[] {
+  const messages: string[] = [];
+  const remaining: typeof state.mates = [];
+  for (const m of state.mates) {
+    const def = mateDefById(m.id);
+    if (def?.guest && state.story.chapter > def.guest.leaveAfterChapter) {
+      messages.push(`${def.name}${def.guest.leaveText}`);
+    } else {
+      remaining.push(m);
+    }
+  }
+  state.mates = remaining;
+  return messages;
+}
+
 /** 不改動狀態的前置檢查：目前主線章節能否在這個港口推進。 */
 export function storyAdvanceCheck(state: GameState, port: Port): { ok: boolean; message: string } {
   const chapter = currentStoryChapter(state);
@@ -1269,6 +1291,9 @@ export function completeStoryChapter(
   if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
   state.story.chapter += 1;
 
+  // 客座夥伴於劇情節點自動離隊
+  const departures = processGuestDepartures(state);
+
   const next = currentStoryChapter(state);
   const nextPort = storyTargetPort(next);
   const lines = [
@@ -1277,6 +1302,7 @@ export function completeStoryChapter(
     chapter.requirements?.cargo?.some((req) => req.consume) ? `${storyRequirementText(chapter)}已完成。` : '',
     chapter.rewardGold > 0 ? `獲得 ${chapter.rewardGold} 兩。` : '',
     unlocked.length > 0 ? `解鎖圖鑑：${unlocked.join('、')}` : '',
+    ...departures.map((d) => `\n${d}`),
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];
   return { ok: true, title: `完成：${chapter.title}`, message: lines.filter(Boolean).join('\n') };

@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-16] 客座夥伴自動離隊機制
+
+- 背景：建構書 §5-7 規定主線要角採「客座夥伴」——限定章節同行、劇情節點自動離隊、不影響史實結局。
+- 記憶（已實作，後續沿用）：
+  - **資料驅動**：`MateDef.guest = { leaveAfterChapter, leaveText }`（mates.json）。主線章節 > leaveAfterChapter 時該夥伴自動離隊。要新增客座夥伴就在 mates.json 加 guest 欄位，不寫死在程式。
+  - **觸發點**：唯一推進主線章節的地方是 `completeStoryChapter`，離隊檢查 `processGuestDepartures(state)` 就掛在它推進章節後；告別文字併入章節完成彈窗（StoryScene 會顯示）。
+  - **目前設定**：顏思齊 leaveAfterChapter 3（林線，依史實 1625 病逝，第 4 章「顏思齊之後」前離隊）；鄭芝龍 leaveAfterChapter 8（千代線客座）。鄭成功依建構書同行到終章，不設 guest。
+  - 客座夥伴的招募窗口用 `requirement.maxChapter`（只能在窗口內招募）；離隊用 `guest.leaveAfterChapter`（入隊後超過窗口才踢出）。兩者搭配。
+- 影響：鄭芝龍第 8 章離隊點為建構書未明定的採用值，老闆若要調整改 mates.json 即可。其他主角線要角若日後開放客座，同樣用 guest 欄位設定離隊點。
+
 ## [2026-06-16] 高星夥伴招募劇情架構
 
 - 背景：把 ★4～5 夥伴的專屬任務接成 StoryScene 多段劇情演出。
