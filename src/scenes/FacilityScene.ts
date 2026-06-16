@@ -199,9 +199,10 @@ export default class FacilityScene extends Phaser.Scene {
         }
         // 播放完整對話，播完由 StoryScene 結算獎勵與圖鑑
         this.scene.start('Story', {
+          mode: 'story',
           heroId: s.story.heroId,
           chapter: chapter.chapter,
-          ret: { portId: this.port.id, type: this.type, door: this.door },
+          ret: { scene: 'Facility', portId: this.port.id, type: this.type, door: this.door },
         });
       });
       return;

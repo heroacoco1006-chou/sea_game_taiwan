@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, MATE_DEFS, ROLES, mateDefById, roleName, saveGame,
-  mateRequirementStatus, mateQuestStageStatuses, unlockCodex, mateCodexId,
+  mateRequirementStatus, mateQuestStageStatuses, recruitMate, getMateScript,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -135,13 +135,23 @@ export default class MatesScene extends Phaser.Scene {
       toast(this, '資金不足，付不出謝禮！');
       return;
     }
-    s.gold -= def.fee;
-    s.mates.push({ id, role: def.roles[0] });
-    this.assignRole(id, def.roles[0]); // 預設指派並處理互斥
-    const unlocked = unlockCodex(s, [mateCodexId(id)]);
+    // 高星夥伴有專屬招募劇情 → 先播劇情，播完由 StoryScene 完成入隊
+    if (getMateScript(id)) {
+      saveGame(s);
+      this.scene.start('Story', {
+        mode: 'mate',
+        mateId: id,
+        ret: { scene: 'Mates', portId: this.port.id, door: this.door },
+      });
+      return;
+    }
+    // 一般夥伴：直接入隊
+    const result = recruitMate(s, id);
     saveGame(s);
     this.rebuild();
-    toast(this, `${def.name} 加入了船隊，擔任${roleName(def.roles[0])}${unlocked.length ? '，人物圖鑑已解鎖' : ''}！`);
+    if (result.ok) {
+      toast(this, `${def.name} 加入了船隊，擔任${roleName(result.roleKey)}${result.unlocked.length ? '，人物圖鑑已解鎖' : ''}！`);
+    }
   }
 
   private showRequirement(id: string): void {

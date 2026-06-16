@@ -9,7 +9,7 @@ import explorationData from './data/exploration_points.json';
 import discoveriesData from './data/discoveries.json';
 import codexData from './data/codex.json';
 import { chapterCodexIds, getChapterScript } from './story/parseStory';
-export { getChapterScript } from './story/parseStory';
+export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
 export interface Good {
@@ -706,6 +706,26 @@ export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boo
   }
   if (!req && stageStatuses.length === 0) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
   return { ok: lines.length === 0, lines: lines.length ? lines : ['條件已達成。'] };
+}
+
+/** 招募夥伴（共用入隊邏輯）：扣謝禮、入隊、指派預設職位（同職位互斥）、解鎖人物圖鑑。
+ *  呼叫前請先用 mateRequirementStatus 確認條件、確認資金足夠。 */
+export function recruitMate(
+  state: GameState,
+  mateId: string
+): { ok: boolean; unlocked: string[]; roleKey: string | null } {
+  const def = mateDefById(mateId);
+  if (!def) return { ok: false, unlocked: [], roleKey: null };
+  if (state.mates.some((m) => m.id === mateId)) return { ok: false, unlocked: [], roleKey: null };
+  if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null };
+  state.gold -= def.fee;
+  const roleKey = def.roles[0] ?? null;
+  if (roleKey) {
+    for (const m of state.mates) if (m.role === roleKey) m.role = null; // 同職位互斥
+  }
+  state.mates.push({ id: mateId, role: roleKey });
+  const unlocked = unlockCodex(state, [mateCodexId(mateId)]);
+  return { ok: true, unlocked, roleKey };
 }
 
 /** 是否有夥伴擔任某職位 */

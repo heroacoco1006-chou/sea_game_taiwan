@@ -1,26 +1,33 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, saveGame, heroDefById, completeStoryChapter, getChapterScript,
+  getMateScript, mateDefById, recruitMate, roleName,
 } from '../state';
-import type { ParsedChapter, StoryLine } from '../state';
+import type { StoryLine } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
+type StoryMode = 'story' | 'mate';
 interface ReturnTo {
+  scene: 'Facility' | 'Mates';
   portId: string;
-  type: string;
+  type?: string;
   door: { x: number; y: number };
 }
 
 /**
- * 主線劇情播放器（仿大航海2 對話框）：
- * 一句一句播放旁白／心聲／角色對白，點畫面或按 Enter 前進；
- * 遇到圖鑑解鎖會跳出說明卡；播完才結算獎勵、圖鑑與年份推進。
+ * 劇情播放器（仿大航海2 對話框）：
+ * 一句一句播放旁白／心聲／角色對白，點畫面或按 Enter 前進；遇到圖鑑解鎖會跳出說明卡。
+ * - story 模式：播主線章節，播完結算獎勵、圖鑑與年份推進。
+ * - mate 模式：播高星夥伴招募劇情，播完讓夥伴入隊並解鎖人物圖鑑。
  */
 export default class StoryScene extends Phaser.Scene {
+  private mode: StoryMode = 'story';
   private heroId = 'lin';
   private chapterNo = 1;
+  private mateId = '';
   private ret!: ReturnTo;
-  private script?: ParsedChapter;
+  private lines: StoryLine[] = [];
+  private headerText = '';
   private index = 0;
   private heroName = '';
   private dyn: Phaser.GameObjects.GameObject[] = [];
@@ -35,14 +42,31 @@ export default class StoryScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { heroId: string; chapter: number; ret: ReturnTo }): void {
-    this.heroId = data.heroId;
-    this.chapterNo = data.chapter;
+  init(data: { mode?: StoryMode; heroId?: string; chapter?: number; mateId?: string; ret: ReturnTo }): void {
+    this.mode = data.mode ?? 'story';
+    this.heroId = data.heroId ?? this.state.story.heroId;
     this.ret = data.ret;
-    this.script = getChapterScript(data.heroId, data.chapter);
     this.index = 0;
     this.dyn = [];
     this.finished = false;
+
+    if (this.mode === 'mate') {
+      this.mateId = data.mateId ?? '';
+      const def = mateDefById(this.mateId);
+      this.lines = [...(getMateScript(this.mateId) ?? [])];
+      // 劇情結尾自動補一張人物圖鑑卡（史實說明）
+      if (def) {
+        this.lines.push({ kind: 'codex', text: def.codexBody, codexTitle: def.name });
+        this.headerText = `${def.name}・${def.questTitle}`;
+      }
+    } else {
+      this.chapterNo = data.chapter ?? this.state.story.chapter;
+      const script = getChapterScript(this.heroId, this.chapterNo);
+      this.lines = script ? script.lines : [];
+      this.headerText = script
+        ? `${heroDefById(this.heroId).name}・第 ${this.chapterNo} 章　${script.title}（${script.year}）`
+        : `${heroDefById(this.heroId).name}・第 ${this.chapterNo} 章`;
+    }
   }
 
   create(): void {
@@ -54,13 +78,10 @@ export default class StoryScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep);
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.35);
 
-    // 上方章節標題列
-    const title = this.script
-      ? `${this.heroName}・第 ${this.chapterNo} 章　${this.script.title}（${this.script.year}）`
-      : `${this.heroName}・第 ${this.chapterNo} 章`;
-    this.add.text(40, 30, title, textStyle(20, '#f2e3bd')).setOrigin(0, 0.5);
+    // 上方標題列
+    this.add.text(40, 30, this.headerText, textStyle(20, '#f2e3bd')).setOrigin(0, 0.5);
 
-    // 跳過本章（也方便重玩時快轉）
+    // 跳過（也方便重玩時快轉）
     makeButton(this, W - 90, 30, 130, 40, '跳過 ▶▶', () => this.finish(), 14).setDepth(50);
 
     // 下方對話框面板
@@ -80,7 +101,7 @@ export default class StoryScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ENTER', () => this.advance());
     this.input.keyboard?.on('keydown-SPACE', () => this.advance());
 
-    if (!this.script || this.script.lines.length === 0) {
+    if (this.lines.length === 0) {
       this.finish();
       return;
     }
@@ -90,7 +111,7 @@ export default class StoryScene extends Phaser.Scene {
   private advance(): void {
     if (this.finished) return;
     this.index += 1;
-    if (!this.script || this.index >= this.script.lines.length) {
+    if (this.index >= this.lines.length) {
       this.finish();
       return;
     }
@@ -100,13 +121,13 @@ export default class StoryScene extends Phaser.Scene {
   private renderBeat(): void {
     for (const obj of this.dyn) obj.destroy();
     this.dyn = [];
-    if (!this.script) return;
-    const line = this.script.lines[this.index];
+    const line = this.lines[this.index];
+    if (!line) return;
     const W = this.scale.width;
 
     // 進度（第幾句）
     this.dyn.push(
-      this.add.text(80, 660, `${this.index + 1} / ${this.script.lines.length}`, textStyle(14, '#8a7448'))
+      this.add.text(80, 660, `${this.index + 1} / ${this.lines.length}`, textStyle(14, '#8a7448'))
     );
 
     switch (line.kind) {
@@ -224,12 +245,37 @@ export default class StoryScene extends Phaser.Scene {
     this.finished = true;
     this.hint?.setVisible(false);
 
+    if (this.mode === 'mate') {
+      this.finishMate();
+      return;
+    }
+
     const port = PORTS.find((p) => p.id === this.ret.portId) as Port;
     const result = completeStoryChapter(this.state, port);
     saveGame(this.state);
-
     showModal(this, result.title, result.message, [
-      { label: '回到港口', onPick: () => this.scene.start('Facility', { portId: this.ret.portId, type: this.ret.type, door: this.ret.door }) },
+      { label: '回到港口', onPick: () => this.backToReturn() },
     ]);
+  }
+
+  private finishMate(): void {
+    const def = mateDefById(this.mateId);
+    const result = recruitMate(this.state, this.mateId);
+    saveGame(this.state);
+    const name = def?.name ?? '夥伴';
+    const message = result.ok
+      ? `${name} 加入了船隊，擔任${roleName(result.roleKey)}！${result.unlocked.length ? `\n\n解鎖人物圖鑑：${result.unlocked.join('、')}` : ''}`
+      : `${name} 這次沒能加入（資金不足或已在船隊）。`;
+    showModal(this, def?.questTitle ?? '結識夥伴', message, [
+      { label: '回到酒館', onPick: () => this.backToReturn() },
+    ]);
+  }
+
+  private backToReturn(): void {
+    if (this.ret.scene === 'Mates') {
+      this.scene.start('Mates', { portId: this.ret.portId, door: this.ret.door });
+    } else {
+      this.scene.start('Facility', { portId: this.ret.portId, type: this.ret.type, door: this.ret.door });
+    }
   }
 }
