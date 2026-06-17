@@ -7,6 +7,25 @@
 
 ---
 
+## [2026-06-17] 提問 | 操作者：小航 | 討論：以 GitHub Pages 網站發行（免安裝）
+
+- 背景：老闆詢問除了 Electron 安裝檔，能否透過 GitHub 提供網站讓小朋友直接在瀏覽器遊玩。要求只討論、不動檔案（log 除外）。
+- 查核（唯讀）：本專案為純前端（Phaser + Vite，無後端，存檔走 localStorage）；`vite.config.ts` 已設 `base: './'`，同一包 build 可同時供網站與 Electron；尚無 `.github/workflows`；gh CLI 未安裝，無法查倉庫可見性。
+- 結論：完全可行且更適合目標族群。GitHub Pages 免費靜態託管，點網址即玩，免安裝、免 Windows 防毒警告、跨裝置（含 Chromebook/平板）、推版即更新。安裝檔可作為「無網路教室」備用，兩者共用同一 build。
+- 注意事項：(1) 免費 Pages 需倉庫 public（待老闆確認目前可見性）；(2) 存檔綁瀏覽器，日後可加匯出/匯入；(3) 首次載入需連網，日後可做 PWA 離線；(4) 專案頁網址為 `https://heroacoco1006-chou.github.io/sea_game_taiwan/`。
+- 待老闆決定：① 倉庫公開或私有？② 是否把「網站版上線（GitHub Actions 自動建置部署 + 開啟 Pages）」排入 M5/M6。需老闆本人在 GitHub 網頁操作的部分（設公開、開 Pages）由小航列步驟、不代為操作。
+- 本次未改動程式或設定檔，僅記錄討論結論。
+
+## [2026-06-17] 開發 | 操作者：小航 | 圖鑑收集率與全收集稱號＋網站發行流程入 status
+
+- 背景：老闆指示 ① 倉庫開發階段維持 private、M5/M6 再公開；② 把 GitHub Pages 網站上線流程寫入 status 備用；③ 完成 M4 圖鑑收集率與全收集獎勵稱號。
+- 完成事項：
+  - status.md 新增「🌐 網站版上線流程（GitHub Pages）」段落：含前置（倉庫改 public、Pages 設 GitHub Actions）、可代做的 vite base 與 `.github/workflows/deploy.yml` 範本、網址與上線後可選優化（存檔匯出入、PWA、自訂網域）。
+  - `state.ts` 新增 `codexCollection()`（已解鎖/總數/百分比）與 `codexTitle()`（依收集率 6 級稱號，全收集＝福爾摩沙活字典）。
+  - `InfoScene`：圖鑑頁標題列與人物資訊頁顯示「收集 X/120（％）＋稱號」；稱號即時推導、不改存檔。
+- 驗證：`tsc`、`npm run build`（38 模組）通過；瀏覽器實測 0/5/12/30/60/90/120 門檻稱號正確、兩頁顯示正常（截圖確認）。
+- 待追蹤：三線完整通關驗收；任務平衡；M5/M6 依 status 流程讓網站版上線。
+
 ## [2026-06-17] 整理歸納 | 操作者：小航 | 120 筆圖鑑逐條校對
 
 - 背景：M4 收尾，老闆指示逐條校對 120 筆圖鑑（尤其重要人物、主線事件、自然物種）。

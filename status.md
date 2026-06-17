@@ -35,6 +35,58 @@ status: draft
 
 ---
 
+## 🌐 網站版上線流程（GitHub Pages，待 M5/M6 執行）
+
+> 老闆決定：開發階段倉庫維持 **private**；到 M5/M6 改 **public** 後再依本流程上線，讓小朋友開網址即玩、免安裝。
+> 本遊戲為純前端（Phaser + Vite，無後端，存檔走 localStorage），可直接靜態託管。安裝檔與網站共用同一份 build。
+> 討論結論見 `log.md`（2026-06-17）。
+
+**前置（老闆在 GitHub 網頁操作，小航不代為操作帳號/設定）**
+1. 把倉庫 `sea_game_taiwan` 改為 **Public**（Settings → General → Danger Zone → Change visibility）。免費 GitHub Pages 需公開倉庫。
+2. Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
+
+**小航可代做的程式部分**
+3. 確認 `vite.config.ts` 的 `base`：專案頁網址含子路徑，建議部署時用 `base: '/sea_game_taiwan/'`（或維持 `'./'`，若資源 404 再改絕對子路徑）。可用環境變數區分本機開發與 Pages 部署。
+4. 新增 `.github/workflows/deploy.yml`（一推 main 就自動 build＋部署）：
+
+   ```yaml
+   name: Deploy to GitHub Pages
+   on:
+     push:
+       branches: [main]
+   permissions:
+     contents: read
+     pages: write
+     id-token: write
+   jobs:
+     build:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-node@v4
+           with: { node-version: 20 }
+         - run: npm ci
+         - run: npm run build
+         - uses: actions/upload-pages-artifact@v3
+           with: { path: dist }
+     deploy:
+       needs: build
+       runs-on: ubuntu-latest
+       environment: { name: github-pages, url: "${{ steps.deployment.outputs.page_url }}" }
+       steps:
+         - id: deployment
+           uses: actions/deploy-pages@v4
+   ```
+
+5. 推上去後，網址為 `https://heroacoco1006-chou.github.io/sea_game_taiwan/`。
+
+**上線後可選優化（非必要）**
+- 存檔匯出／匯入（解決「換電腦存檔不跟著走」）。
+- PWA 離線（載過一次即可離線玩，適合教室無網路）。
+- 自訂網域（想要更好記的網址時）。
+
+---
+
 ## 待辦（當前）
 
 | 項目 | 說明 | 狀態 |
@@ -92,7 +144,7 @@ status: draft
 - [x] 圖鑑分類、未解鎖 `???`、獨立說明頁、長文行數分頁已接入。
 - [x] 說明頁右半邊已預留 M5 插圖區。
 - [x] 120 筆圖鑑逐條人工校對（2026-06-17）：全數複查史實與用字；修正物種錯誤「斯文豪氏樹蛙→斯文豪氏赤蛙」（赤蛙非樹蛙）；其餘內容正確、用字適合國小。架空登場人物（鄭和、三浦按針、謝名親方）已確認皆註明真實年代。
-- [ ] 圖鑑收集率與全收集獎勵稱號。
+- [x] 圖鑑收集率與全收集獎勵稱號（2026-06-17）：圖鑑頁與人物資訊頁顯示「收集 X/120（％）＋稱號」；稱號依收集率分 6 級，全收集（120/120）獲最高稱號「福爾摩沙活字典」。
 - [ ] 次要：鄭芝龍／鄭成功／顏思齊在主線與夥伴兩處各有一張同名圖鑑（解鎖來源不同）；鄭芝龍／顏思齊夥伴卡內文因標題與 expandedBodies 同名而沿用主線擴充版（內容正確，僅少了「可任職位」尾句）。屬產生器設計細節，非史實錯誤，後續可再優化。
 
 ### F. M4 驗收
@@ -101,6 +153,14 @@ status: draft
 - [ ] 每條主線至少跑到第 4 章，確認貨物門檻與圖鑑解鎖。
 - [ ] 測一輪商館三分流：採購、海戰、探險。
 - [ ] 測高星夥伴任務鏈顯示與至少一名高星夥伴招募流程。
+
+## M4 圖鑑收集率與全收集稱號（2026-06-17）
+
+- **收集率顯示**：`state.ts` 新增 `codexCollection()`（已解鎖/總筆數/百分比）與 `codexTitle()`（依收集率分級稱號）。
+- **顯示位置**：選單→圖鑑頁標題列顯示「收集 X/120（％）＋稱號」；人物資訊頁也加一行同樣資訊，讓稱號像個人成就。
+- **稱號分級**：初出海的見習生（<10%）→見習航海者（10%）→識途的領航員（25%）→博學的船長（50%）→通曉四海的智者（75%）→福爾摩沙活字典（100% 全收集）。
+- **無需改存檔**：稱號由收集數即時推導，不新增存檔欄位。
+- **驗證**：`tsc`、`npm run build`（38 模組）通過；瀏覽器實測 0/5/12/30/60/90/120 各門檻稱號正確、圖鑑頁與人物頁標題正常顯示（截圖確認）。
 
 ## M4 圖鑑逐條校對（2026-06-17）
 

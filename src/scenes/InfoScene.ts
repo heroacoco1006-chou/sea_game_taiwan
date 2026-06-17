@@ -7,6 +7,7 @@ import {
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
   CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
+  codexCollection, codexTitle,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -231,6 +232,7 @@ export default class InfoScene extends Phaser.Scene {
       `水手：${s.crew}/${crewMax(s)}　疲勞：${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
       `主線方向：${hero.routeFocus}`,
       `已招募夥伴：${s.mates.length} 位`,
+      `圖鑑收集：${codexCollection(s).unlocked}/${codexCollection(s).total}（${codexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
     ];
     this.addWrapped(300, 130, lines.join('\n'), 820, 17);
   }
@@ -280,7 +282,12 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   private drawCodex(): void {
-    this.addTitle('圖鑑');
+    const col = codexCollection(this.state);
+    this.dyn.push(
+      this.add
+        .text(730, 88, `圖鑑　收集 ${col.unlocked}/${col.total}（${col.rate}%）　稱號：${codexTitle(this.state)}`, textStyle(19))
+        .setOrigin(0.5)
+    );
     if (!this.codexCategory) this.codexCategory = firstUnlockedCodexCategory(this.state);
     const category = CODEX_CATEGORIES.find((cat) => cat.id === this.codexCategory) ?? CODEX_CATEGORIES[0];
     if (!category) {

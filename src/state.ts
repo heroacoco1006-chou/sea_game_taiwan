@@ -1208,6 +1208,26 @@ export function codexEntriesForCategory(state: GameState, categoryId: string): C
     .map((entry) => ({ ...entry, unlocked: unlocked.has(entry.id) }));
 }
 
+/** 圖鑑收集率：已解鎖筆數／總筆數與百分比。 */
+export function codexCollection(state: GameState): { unlocked: number; total: number; rate: number } {
+  const total = CODEX_ENTRIES.length;
+  const unlockedSet = new Set(state.story.codex);
+  const unlocked = CODEX_ENTRIES.filter((e) => unlockedSet.has(e.id)).length;
+  const rate = total > 0 ? Math.round((unlocked / total) * 100) : 0;
+  return { unlocked, total, rate };
+}
+
+/** 依圖鑑收集率給予稱號；全收集為最高榮譽稱號。 */
+export function codexTitle(state: GameState): string {
+  const { unlocked, total, rate } = codexCollection(state);
+  if (total > 0 && unlocked >= total) return '福爾摩沙活字典';
+  if (rate >= 75) return '通曉四海的智者';
+  if (rate >= 50) return '博學的船長';
+  if (rate >= 25) return '識途的領航員';
+  if (rate >= 10) return '見習航海者';
+  return '初出海的見習生';
+}
+
 export function firstUnlockedCodexCategory(state: GameState): string {
   const unlocked = new Set(state.story.codex);
   return (
