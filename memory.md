@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-17] 三分流委託平衡公式
+
+- 背景：M4 任務平衡定案。
+- 記憶（設計定案，後續調整以此為基準）：
+  - 風險階梯：**採購 < 探索 < 海戰**（獎勵與風險同序）。
+  - 獎勵公式集中在 `state.ts` 的 `deliveryReward／combatReward／explorationReward`：採購 `qty×基準價×1.1 + 航距天數×60`（採購需玩家自備貨物，故須覆蓋貨值；勿再用 <1 係數否則送貨倒虧）；海戰 `800 + tier×350 + 航距×60`（tier 由遊戲日 <120/<300 分 1/2/3）；探索 `550 + 難度×280 + 航距×45`（難度 1–3，外加圖鑑＋寶物加值）。
+  - 實際使用路徑只有 `questOffersForPort` → `deliveryQuestOfferAt／combatQuestOfferAt／explorationQuestOfferAt`（同日同港三件候選固定）。舊的單一 `questOffer` 與非 `At` 版已移除，勿再加回。
+  - 要調平衡就改三個 reward 函式，不要散落在各 OfferAt 內。
+
 ## [2026-06-17] 圖鑑資料流：codex.json 為產生檔
 
 - 背景：校對 120 筆圖鑑時釐清資料流，避免改錯地方被覆蓋。

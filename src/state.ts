@@ -1453,15 +1453,19 @@ function pirateAreaForPort(port: Port): { name: string; x: number; y: number } {
   return { name: '近海航路', x: port.x, y: port.y + 120 };
 }
 
-function deliveryQuestOffer(state: GameState, port: Port): DeliveryQuest {
-  const candidates = PORTS.filter((p) => p.id !== port.id);
-  const target = candidates[Math.floor(hashNoise(state.day, 'qp' + port.id) * candidates.length)];
-  const good = GOODS[Math.floor(hashNoise(state.day, 'qg' + port.id) * GOODS.length)];
-  const qty = 5 + Math.floor(hashNoise(state.day, 'qq' + port.id) * 8); // 5~12
-  const distDays = Math.ceil(Math.hypot(target.x - port.x, target.y - port.y) / PX_PER_DAY_EST);
-  const deadlineDay = state.day + distDays * 2 + 8;
-  const reward = Math.round(qty * good.basePrice * 0.7 + distDays * 40);
-  return { type: 'delivery', goodId: good.id, qty, portId: target.id, deadlineDay, reward, originPortId: port.id };
+// ---- 委託獎勵平衡 ----
+// 風險階梯：採購 < 探索 < 海戰。
+// 採購：需自備資金、最安全，獎勵覆蓋貨值並保證小利（買得便宜利潤更高）。
+// 探索：消耗糧水與天數，另解鎖圖鑑與可能寶物，獎勵中等。
+// 海戰：高風險（可能傷船減員），獎勵最高，另有戰鬥戰利品。
+function deliveryReward(qty: number, basePrice: number, distDays: number): number {
+  return Math.round(qty * basePrice * 1.1 + distDays * 60);
+}
+function combatReward(tier: number, distDays: number): number {
+  return 800 + tier * 350 + distDays * 60;
+}
+function explorationReward(difficulty: number, distDays: number): number {
+  return 550 + difficulty * 280 + distDays * 45;
 }
 
 function deliveryQuestOfferAt(state: GameState, port: Port, slot: number): DeliveryQuest {
@@ -1471,26 +1475,8 @@ function deliveryQuestOfferAt(state: GameState, port: Port, slot: number): Deliv
   const qty = 5 + Math.floor(hashNoise(state.day + slot * 17, 'qq' + port.id + slot) * 8);
   const distDays = Math.ceil(Math.hypot(target.x - port.x, target.y - port.y) / PX_PER_DAY_EST);
   const deadlineDay = state.day + distDays * 2 + 8;
-  const reward = Math.round(qty * good.basePrice * 0.7 + distDays * 40);
+  const reward = deliveryReward(qty, good.basePrice, distDays);
   return { type: 'delivery', goodId: good.id, qty, portId: target.id, deadlineDay, reward, originPortId: port.id };
-}
-
-function combatQuestOffer(state: GameState, port: Port): CombatQuest {
-  const area = pirateAreaForPort(port);
-  const distDays = Math.max(1, Math.ceil(Math.hypot(area.x - port.x, area.y - port.y) / PX_PER_DAY_EST));
-  const tier = state.day < 120 ? 1 : state.day < 300 ? 2 : 3;
-  return {
-    type: 'combat',
-    title: `討伐${area.name}海盜`,
-    originPortId: port.id,
-    targetX: area.x,
-    targetY: area.y,
-    deadlineDay: state.day + distDays * 2 + 10,
-    reward: 700 + tier * 300 + distDays * 60,
-    enemyTier: tier,
-    completed: false,
-    codexIds: [],
-  };
 }
 
 function combatQuestOfferAt(state: GameState, port: Port, slot: number): CombatQuest {
@@ -1508,26 +1494,8 @@ function combatQuestOfferAt(state: GameState, port: Port, slot: number): CombatQ
     targetX,
     targetY,
     deadlineDay: state.day + distDays * 2 + 10,
-    reward: 700 + tier * 300 + distDays * 60,
+    reward: combatReward(tier, distDays),
     enemyTier: tier,
-    completed: false,
-    codexIds: [],
-  };
-}
-
-function explorationQuestOffer(state: GameState, port: Port): ExplorationQuest {
-  const nearby = EXPLORATION_POINTS.filter((point) => Math.hypot(point.x - port.x, point.y - port.y) <= 1900);
-  const pool = nearby.length > 0 ? nearby : EXPLORATION_POINTS;
-  const point = pool[Math.floor(hashNoise(state.day, 'qx' + port.id) * pool.length)];
-  const distDays = Math.max(1, Math.ceil(Math.hypot(point.x - port.x, point.y - port.y) / PX_PER_DAY_EST));
-  const reward = 450 + point.difficulty * 260 + distDays * 35;
-  return {
-    type: 'exploration',
-    title: `調查${point.name}`,
-    originPortId: port.id,
-    pointId: point.id,
-    deadlineDay: state.day + distDays * 2 + 14,
-    reward,
     completed: false,
     codexIds: [],
   };
@@ -1538,7 +1506,7 @@ function explorationQuestOfferAt(state: GameState, port: Port, slot: number): Ex
   const pool = nearby.length > 0 ? nearby : EXPLORATION_POINTS;
   const point = pool[Math.floor(hashNoise(state.day + slot * 19, 'qx' + port.id + slot) * pool.length)];
   const distDays = Math.max(1, Math.ceil(Math.hypot(point.x - port.x, point.y - port.y) / PX_PER_DAY_EST));
-  const reward = 450 + point.difficulty * 260 + distDays * 35;
+  const reward = explorationReward(point.difficulty, distDays);
   return {
     type: 'exploration',
     title: `調查${point.name}`,
@@ -1549,14 +1517,6 @@ function explorationQuestOfferAt(state: GameState, port: Port, slot: number): Ex
     completed: false,
     codexIds: [],
   };
-}
-
-/** 產生本日此港的委託內容（同日同港固定），採購／海戰／探索三分流 */
-export function questOffer(state: GameState, port: Port): Quest {
-  const roll = hashNoise(state.day, 'qt' + port.id);
-  if (roll < 0.45) return deliveryQuestOffer(state, port);
-  if (roll < 0.7) return combatQuestOffer(state, port);
-  return explorationQuestOffer(state, port);
 }
 
 export function questOffersForPort(state: GameState, port: Port): Quest[] {
