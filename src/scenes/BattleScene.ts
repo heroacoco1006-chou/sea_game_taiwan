@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
-  cannonMod, weaponBoard, boardBonus, reduceCrewLoss,
+  cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
@@ -186,8 +186,9 @@ export default class BattleScene extends Phaser.Scene {
     if (this.questCombat && s.quest?.type === 'combat') {
       s.quest.completed = true;
     }
+    const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
     this.refreshPanels();
-    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}`);
+    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}${lv ? `\n${lv}` : ''}`);
   }
 
   private defeat(): void {

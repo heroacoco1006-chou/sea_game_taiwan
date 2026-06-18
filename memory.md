@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-17] 等級與能力值系統 v1 已實作
+
+- 接續下方「設計定案」：v1 已實作完成。實作技術要點：
+  - 船長能力為**等級的純函式**：`statsAtLevel(heroId, level)` = `baseStats` ＋ `allocatePoints((level−1)×5, aptitude)`（最大餘數法）；不要改成逐級就地累加（會讓四捨五入失效或弱項卡死）。`addXp` 升級後重算 `cap.stats = statsAtLevel(...)`。
+  - `fleetStat(state,key)` = 船長能力 ＋ 擔任對應職位的在隊夥伴能力（`ROLE_STAT` 對照）。所有加成函式（cannonMod 等）吃 `fleetStat`。
+  - 夥伴能力 `mateStats(def)` 由星級＋職位規則產生，`mates.json` 的 `stats` 可逐項覆蓋。
+  - 存檔 **v14**：新增 `captain{level,xp,stats}`；舊檔依主角補 Lv1 預設。
+  - 三主角 `baseStats/aptitude` 在 `story.json`。
+  - 平衡係數（cannonMod /300、tradeBonus /800 等）為初版，待試玩調整。
+
 ## [2026-06-17] 等級與能力值系統設計定案（待實作）
 
 - 背景：老闆要新增等級機制，前提是先有能力值；架構檔 `2026-06-17_等級與能力值架構.md`。

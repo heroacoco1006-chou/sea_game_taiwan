@@ -151,6 +151,7 @@ export default class MatesScene extends Phaser.Scene {
     this.rebuild();
     if (result.ok) {
       toast(this, `${def.name} 加入了船隊，擔任${roleName(result.roleKey)}${result.unlocked.length ? '，人物圖鑑已解鎖' : ''}！`);
+      if (result.levelMsg) toast(this, result.levelMsg, 640, 130);
     }
   }
 

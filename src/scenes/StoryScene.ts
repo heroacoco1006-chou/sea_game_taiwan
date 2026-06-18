@@ -264,7 +264,7 @@ export default class StoryScene extends Phaser.Scene {
     saveGame(this.state);
     const name = def?.name ?? '夥伴';
     const message = result.ok
-      ? `${name} 加入了船隊，擔任${roleName(result.roleKey)}！${result.unlocked.length ? `\n\n解鎖人物圖鑑：${result.unlocked.join('、')}` : ''}`
+      ? `${name} 加入了船隊，擔任${roleName(result.roleKey)}！${result.unlocked.length ? `\n\n解鎖人物圖鑑：${result.unlocked.join('、')}` : ''}${result.levelMsg ? `\n\n${result.levelMsg}` : ''}`
       : `${name} 這次沒能加入（資金不足或已在船隊）。`;
     showModal(this, def?.questTitle ?? '結識夥伴', message, [
       { label: '回到酒館', onPick: () => this.backToReturn() },

@@ -8,6 +8,7 @@ import {
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
   CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
   codexCollection, codexTitle,
+  STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
@@ -225,16 +226,22 @@ export default class InfoScene extends Phaser.Scene {
     this.addTitle('人物資訊');
     const s = this.state;
     const hero = heroDefById(s.story.heroId);
+    const statLine = STAT_KEYS.map((k) => {
+      const base = s.captain.stats[k];
+      const eff = fleetStat(s, k);
+      return `${STAT_NAMES[k]} ${base}${eff > base ? `(隊${eff})` : ''}`;
+    }).join('　');
     const lines = [
-      `${hero.name}（${hero.role}）`,
+      `${hero.name}（${hero.role}）　${xpProgressText(s)}`,
       hero.intro,
       `目前日期：${dateText(s.day)}　資金：${s.gold} 兩`,
       `水手：${s.crew}/${crewMax(s)}　疲勞：${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
+      `能力（括號為含在隊夥伴加成）：\n${statLine}`,
       `主線方向：${hero.routeFocus}`,
       `已招募夥伴：${s.mates.length} 位`,
       `圖鑑收集：${codexCollection(s).unlocked}/${codexCollection(s).total}（${codexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
     ];
-    this.addWrapped(300, 130, lines.join('\n'), 820, 17);
+    this.addWrapped(300, 124, lines.join('\n'), 840, 17);
   }
 
   private drawFleet(): void {
@@ -270,7 +277,9 @@ export default class InfoScene extends Phaser.Scene {
       const def = mateDefById(mate.id);
       if (!def) return;
       const y = 424 + i * 48;
-      this.addWrapped(300, y, `${def.name}：${roleName(mate.role)}`, 230, 14);
+      const st = mateStats(def);
+      const statStr = STAT_KEYS.map((k) => `${STAT_NAMES[k]}${st[k]}`).join(' ');
+      this.addWrapped(300, y, `${def.name}：${roleName(mate.role)}\n${statStr}`, 240, 12);
       def.roles.forEach((roleKey, j) => {
         const role = ROLES.find((r) => r.key === roleKey);
         const btn = makeButton(this, 580 + j * 105, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);

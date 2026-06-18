@@ -4,6 +4,7 @@ import {
   hullMax, supplyMax, crewMax, questOffersForPort, sailableDays,
   currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
+  addXp, levelUpMessage,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -242,9 +243,11 @@ export default class FacilityScene extends Phaser.Scene {
           }
           s.gold += q.reward;
           s.quest = null;
+          const lv = levelUpMessage(addXp(s, 60));
           saveGame(s);
           this.refreshInfo();
           toast(this, `委託完成！獲得 ${q.reward} 兩`);
+          if (lv) toast(this, lv, 640, 130);
           this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
         });
         return;
@@ -261,9 +264,11 @@ export default class FacilityScene extends Phaser.Scene {
         s.gold += q.reward;
         const unlocked = unlockCodex(s, q.codexIds);
         s.quest = null;
+        const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
         saveGame(s);
         this.refreshInfo();
         toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}`);
+        if (lv) toast(this, lv, 640, 130);
         this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
       });
       return;

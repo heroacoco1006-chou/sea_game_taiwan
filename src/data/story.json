@@ -10,7 +10,9 @@
       "startGold": 1000,
       "startCrew": 16,
       "intro": "福建泉州出身的年輕海商，家道因海禁與風暴受挫，正準備從月港重新出海。",
-      "routeFocus": "海商、海禁、鄭氏集團"
+      "routeFocus": "海商、海禁、鄭氏集團",
+      "baseStats": { "lead": 18, "gun": 12, "val": 15, "nav": 20, "kno": 14, "neg": 22 },
+      "aptitude": { "lead": 18, "gun": 12, "val": 13, "nav": 20, "kno": 15, "neg": 22 }
     },
     {
       "id": "peter",
@@ -22,7 +24,9 @@
       "startGold": 800,
       "startCrew": 18,
       "intro": "阿姆斯特丹來的 VOC 見習商務員，被派往東方尋找能打開中國貿易的新據點。",
-      "routeFocus": "VOC、轉口貿易、荷蘭治台"
+      "routeFocus": "VOC、轉口貿易、荷蘭治台",
+      "baseStats": { "lead": 20, "gun": 16, "val": 10, "nav": 18, "kno": 24, "neg": 24 },
+      "aptitude": { "lead": 18, "gun": 12, "val": 10, "nav": 16, "kno": 22, "neg": 22 }
     },
     {
       "id": "chiyo",
@@ -34,7 +38,9 @@
       "startGold": 1200,
       "startCrew": 18,
       "intro": "平戶商人之女，接手父親留下的朱印船，想重新跑通台灣航線。",
-      "routeFocus": "朱印船、日荷衝突、琉球中介"
+      "routeFocus": "朱印船、日荷衝突、琉球中介",
+      "baseStats": { "lead": 16, "gun": 12, "val": 12, "nav": 22, "kno": 20, "neg": 22 },
+      "aptitude": { "lead": 16, "gun": 12, "val": 12, "nav": 22, "kno": 18, "neg": 20 }
     }
   ],
   "chapters": [

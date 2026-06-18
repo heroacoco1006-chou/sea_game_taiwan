@@ -16,6 +16,19 @@
 - 待老闆決定：① 倉庫公開或私有？② 是否把「網站版上線（GitHub Actions 自動建置部署 + 開啟 Pages）」排入 M5/M6。需老闆本人在 GitHub 網頁操作的部分（設公開、開 Pages）由小航列步驟、不代為操作。
 - 本次未改動程式或設定檔，僅記錄討論結論。
 
+## [2026-06-17] 開發 | 操作者：小航 | 等級與能力值系統 v1 實作
+
+- 背景：老闆確認設計後指示開始實作等級系統（六圍／夥伴固定／自動加點／1–99／經驗曲線維持）。
+- 完成事項：
+  - 型別與資料：`StatKey/Stats/CaptainState`、`GameState.captain`、`HeroDef.baseStats/aptitude`（story.json 三主角）、`MateDef.stats`；存檔升 v14＋舊檔 migration。
+  - 能力與升級：`mateStats`（星級＋職位規則）、`fleetStat`、`xpForNextLevel`、`statsAtLevel`（最大餘數法累積成長）、`addXp`/`levelUpMessage`/`xpProgressText`；newGame 帶 captain。
+  - 經驗來源：completeStoryChapter +400、recruitMate +40、FacilityScene 委託（採購60／海戰100／探索80）、BattleScene 勝利 +40~80，皆提示升級。
+  - 能力接入加成：cannonMod／gearSpeedMod／stormDamageMod／fatigueMod／boardBonus／reduceCrewLoss／tradeBonus／explorationFindChance 吃 fleetStat。
+  - 顯示：InfoScene 人物資訊頁等級＋經驗＋六圍（含夥伴加成 (隊X)）、船隊頁夥伴六圍。
+  - 修正：原每級加點四捨五入會讓六圍各 +1（傾向無效），改為最大餘數法累積成長；再修「弱項卡死」問題，改 statsAtLevel 純函式，弱項也按比例緩慢成長。
+- 驗證：`tsc`、`npm run build`（38 模組）通過；瀏覽器實測起始能力、升級成長（Lv50 專長~70-78、弱項仍成長）、夥伴加總（沈有容砲術 86 → cannonMod 1.04→1.59）、v13→v14 遷移、人物頁顯示皆正常。
+- 待追蹤：係數平衡微調（待試玩）；把等級系統補進《遊戲建構書》（待老闆確認措辭）。
+
 ## [2026-06-17] 整理歸納 | 操作者：小航 | M4 收尾驗收，里程碑標記完成
 
 - 背景：老闆確認等級系統設計後指示「先把 M4 收尾」。

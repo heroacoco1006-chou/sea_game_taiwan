@@ -187,6 +187,7 @@ export interface MateDef {
   questStages?: MateQuestStage[];
   codexBody: string;
   guest?: MateGuest;
+  stats?: Partial<Stats>; // 可選手動微調，覆蓋規則產生的能力值
 }
 
 export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
@@ -204,6 +205,21 @@ export interface SeaStatus {
   days: number;
 }
 
+// ---------- 能力值與等級 ----------
+export type StatKey = 'lead' | 'gun' | 'val' | 'nav' | 'kno' | 'neg';
+export type Stats = Record<StatKey, number>;
+export const STAT_KEYS: StatKey[] = ['lead', 'gun', 'val', 'nav', 'kno', 'neg'];
+export const STAT_NAMES: Record<StatKey, string> = {
+  lead: '統率', gun: '砲術', val: '武勇', nav: '航海', kno: '知識', neg: '交涉',
+};
+export const LEVEL_CAP = 50;
+
+export interface CaptainState {
+  level: number;
+  xp: number;
+  stats: Stats;
+}
+
 export interface HeroDef {
   id: HeroId;
   name: string;
@@ -215,6 +231,8 @@ export interface HeroDef {
   startCrew: number;
   intro: string;
   routeFocus: string;
+  baseStats?: Stats; // Lv1 起始六圍
+  aptitude?: Stats; // 成長傾向權重
 }
 
 export interface StoryChapter {
@@ -329,6 +347,8 @@ export interface GameState {
   exploration: ExplorationState;
   /** 造船廠建造中的船 */
   shipOrders: ShipOrder[];
+  /** 船長等級、經驗與六圍能力值 */
+  captain: CaptainState;
 }
 
 export interface ExplorationState {
@@ -490,7 +510,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 13,
+    version: 14,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -523,6 +543,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
       questOffers: [],
     },
     shipOrders: [],
+    captain: { level: 1, xp: 0, stats: heroBaseStats(hero.id) },
   };
 }
 
@@ -591,6 +612,7 @@ export function gearSpeedMod(state: GameState): number {
   if (accessoryEffect(state) === 'speed') b += 0.05;
   if (figureheadEffect(state) === 'speed') b += 0.1;
   if (hasRole(state, 'navigator')) b += 0.08;
+  b += fleetStat(state, 'nav') / 600; // 航海能力加成
   return b;
 }
 
@@ -598,6 +620,7 @@ export function gearSpeedMod(state: GameState): number {
 export function stormDamageMod(state: GameState): number {
   let m = figureheadEffect(state) === 'storm' ? 0.5 : 1;
   if (hasRole(state, 'navigator')) m *= 0.8;
+  m *= 1 - Math.min(0.4, fleetStat(state, 'nav') / 400); // 航海越高，暴風損害越低
   return m;
 }
 
@@ -612,6 +635,7 @@ export function fatigueMod(state: GameState): number {
   if (accessoryEffect(state) === 'morale') m -= 0.2;
   if (figureheadEffect(state) === 'morale') m -= 0.2;
   if (hasRole(state, 'boatswain')) m -= 0.2;
+  m -= Math.min(0.3, fleetStat(state, 'lead') / 500); // 統率越高，疲勞累積越慢
   return Math.max(0.4, m);
 }
 
@@ -627,6 +651,7 @@ export function statusSpeedMod(state: GameState): number {
 export function cannonMod(state: GameState): number {
   let m = figureheadEffect(state) === 'cannon' ? 1.25 : 1;
   if (hasRole(state, 'gunner')) m *= 1.2;
+  m *= 1 + fleetStat(state, 'gun') / 300; // 砲術能力加成
   return m;
 }
 
@@ -634,6 +659,7 @@ export function cannonMod(state: GameState): number {
 export function tradeBonus(state: GameState): number {
   let d = accessoryEffect(state) === 'trade' ? 0.05 : 0;
   if (hasRole(state, 'purser')) d += 0.05;
+  d += Math.min(0.1, fleetStat(state, 'neg') / 800); // 交涉能力加成
   return d;
 }
 
@@ -645,6 +671,118 @@ export function mateDefById(id: string): MateDef | undefined {
 
 export function mateCodexId(id: string): string {
   return `mate_${id}`;
+}
+
+// ---------- 能力值與等級系統 ----------
+
+const ROLE_STAT: Record<string, StatKey> = {
+  vice: 'lead', boatswain: 'lead', gunner: 'gun', navigator: 'nav',
+  purser: 'neg', interpreter: 'neg', strategist: 'kno', surgeon: 'kno', guide: 'kno', scholar: 'kno',
+};
+const STAR_SPEC: Record<number, number> = { 1: 34, 2: 46, 3: 58, 4: 72, 5: 86 };
+const STAR_FLOOR: Record<number, number> = { 1: 18, 2: 22, 3: 26, 4: 32, 5: 40 };
+const DEFAULT_STATS: Stats = { lead: 16, gun: 14, val: 14, nav: 18, kno: 16, neg: 18 };
+
+/** 夥伴六圍：依星級＋職位規則產生；mates.json 的 `stats` 可逐項覆蓋微調。 */
+export function mateStats(def: MateDef): Stats {
+  const floor = STAR_FLOOR[def.star] ?? 24;
+  const spec = STAR_SPEC[def.star] ?? 50;
+  const s: Stats = { lead: floor, gun: floor, val: floor, nav: floor, kno: floor, neg: floor };
+  if (def.roles.includes('gunner') || def.roles.includes('vice')) s.val = floor + 12;
+  const primary = ROLE_STAT[def.roles[0]];
+  if (primary) s[primary] = spec;
+  if (def.roles[1]) {
+    const sec = ROLE_STAT[def.roles[1]];
+    if (sec) s[sec] = Math.max(s[sec], spec - 8);
+  }
+  for (const k of STAT_KEYS) s[k] = Math.min(99, s[k]);
+  if (def.stats) for (const k of STAT_KEYS) if (typeof def.stats[k] === 'number') s[k] = def.stats[k]!;
+  return s;
+}
+
+export function heroBaseStats(heroId: string): Stats {
+  return { ...DEFAULT_STATS, ...(heroDefById(heroId).baseStats ?? {}) };
+}
+function heroAptitude(heroId: string): Stats {
+  return { ...DEFAULT_STATS, ...(heroDefById(heroId).aptitude ?? {}) };
+}
+
+/** 艦隊在某能力維度的總能力＝船長能力＋擔任對應職位的在隊夥伴能力。 */
+export function fleetStat(state: GameState, key: StatKey): number {
+  let v = state.captain?.stats?.[key] ?? 0;
+  for (const m of state.mates) {
+    if (m.role && ROLE_STAT[m.role] === key) {
+      const def = mateDefById(m.id);
+      if (def) v += mateStats(def)[key];
+    }
+  }
+  return v;
+}
+
+export function xpForNextLevel(level: number): number {
+  return 100 + (level - 1) * 60;
+}
+
+const LEVEL_POINTS = 5; // 每級成長點數
+/** 最大餘數法：把 budget 點依成長傾向分配到各能力（高傾向拿較多，弱項仍按比例成長）。 */
+function allocatePoints(budget: number, aptitude: Stats): Record<StatKey, number> {
+  const totalW = STAT_KEYS.reduce((a, k) => a + (aptitude[k] || 0), 0) || 1;
+  const res: Record<StatKey, number> = { lead: 0, gun: 0, val: 0, nav: 0, kno: 0, neg: 0 };
+  const frac: Array<{ k: StatKey; f: number }> = [];
+  let used = 0;
+  for (const k of STAT_KEYS) {
+    const v = (budget * (aptitude[k] || 0)) / totalW;
+    const fl = Math.floor(v);
+    res[k] = fl; used += fl; frac.push({ k, f: v - fl });
+  }
+  frac.sort((a, b) => b.f - a.f);
+  for (let j = 0; j < budget - used && j < frac.length; j++) res[frac[j].k] += 1;
+  return res;
+}
+
+/** 某主角在某等級的六圍＝起始值＋累積成長（等級的純函式，弱項也會緩慢成長）。 */
+export function statsAtLevel(heroId: string, level: number): Stats {
+  const base = heroBaseStats(heroId);
+  const alloc = allocatePoints(Math.max(0, level - 1) * LEVEL_POINTS, heroAptitude(heroId));
+  const stats = {} as Stats;
+  for (const k of STAT_KEYS) stats[k] = Math.min(99, base[k] + alloc[k]);
+  return stats;
+}
+
+export interface XpResult { gained: number; levelsGained: number; newLevel: number; statGains: Partial<Stats>; }
+
+/** 給船長加經驗，處理升級與自動加點；回傳升級資訊供 UI 提示。 */
+export function addXp(state: GameState, amount: number): XpResult {
+  const cap = state.captain;
+  const res: XpResult = { gained: amount, levelsGained: 0, newLevel: cap.level, statGains: {} };
+  if (amount <= 0 || cap.level >= LEVEL_CAP) return res;
+  cap.xp += amount;
+  const before = { ...cap.stats };
+  while (cap.level < LEVEL_CAP && cap.xp >= xpForNextLevel(cap.level)) {
+    cap.xp -= xpForNextLevel(cap.level);
+    cap.level += 1;
+    res.levelsGained += 1;
+  }
+  if (cap.level >= LEVEL_CAP) cap.xp = 0;
+  if (res.levelsGained > 0) {
+    cap.stats = statsAtLevel(state.story.heroId, cap.level);
+    for (const k of STAT_KEYS) { const d = cap.stats[k] - before[k]; if (d > 0) res.statGains[k] = d; }
+  }
+  res.newLevel = cap.level;
+  return res;
+}
+
+export function xpProgressText(state: GameState): string {
+  const c = state.captain;
+  if (c.level >= LEVEL_CAP) return `Lv${LEVEL_CAP}（已滿級）`;
+  return `Lv${c.level}　經驗 ${c.xp}/${xpForNextLevel(c.level)}`;
+}
+
+/** 升級提示文字（無升級回空字串）。 */
+export function levelUpMessage(r: XpResult): string {
+  if (r.levelsGained <= 0) return '';
+  const parts = STAT_KEYS.filter((k) => r.statGains[k]).map((k) => `${STAT_NAMES[k]}+${r.statGains[k]}`);
+  return `⭐ 升級！等級提升到 Lv${r.newLevel}${parts.length ? `（${parts.join('、')}）` : ''}`;
 }
 
 export function roleName(key: string | null): string {
@@ -719,11 +857,11 @@ export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boo
 export function recruitMate(
   state: GameState,
   mateId: string
-): { ok: boolean; unlocked: string[]; roleKey: string | null } {
+): { ok: boolean; unlocked: string[]; roleKey: string | null; levelMsg: string } {
   const def = mateDefById(mateId);
-  if (!def) return { ok: false, unlocked: [], roleKey: null };
-  if (state.mates.some((m) => m.id === mateId)) return { ok: false, unlocked: [], roleKey: null };
-  if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null };
+  if (!def) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
+  if (state.mates.some((m) => m.id === mateId)) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
+  if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
   state.gold -= def.fee;
   const roleKey = def.roles[0] ?? null;
   if (roleKey) {
@@ -731,7 +869,8 @@ export function recruitMate(
   }
   state.mates.push({ id: mateId, role: roleKey });
   const unlocked = unlockCodex(state, [mateCodexId(mateId)]);
-  return { ok: true, unlocked, roleKey };
+  const levelMsg = levelUpMessage(addXp(state, 40));
+  return { ok: true, unlocked, roleKey, levelMsg };
 }
 
 /** 是否有夥伴擔任某職位 */
@@ -739,14 +878,16 @@ export function hasRole(state: GameState, roleKey: string): boolean {
   return state.mates.some((m) => m.role === roleKey);
 }
 
-/** 接舷額外戰力（副隊長） */
+/** 接舷額外戰力（副隊長＋統率／武勇能力） */
 export function boardBonus(state: GameState): number {
-  return hasRole(state, 'vice') ? 8 : 0;
+  let b = hasRole(state, 'vice') ? 8 : 0;
+  b += Math.round(fleetStat(state, 'lead') / 15 + fleetStat(state, 'val') / 12);
+  return b;
 }
 
-/** 接舷減員是否獲得緩衝（醫師夥伴或重甲） */
+/** 接舷減員是否獲得緩衝（醫師夥伴、重甲或高統率） */
 export function reduceCrewLoss(state: GameState): boolean {
-  return hasRole(state, 'surgeon') || armorDefense(state) >= 8;
+  return hasRole(state, 'surgeon') || armorDefense(state) >= 8 || fleetStat(state, 'lead') >= 80;
 }
 
 // ---------- 背包／道具 ----------
@@ -1091,6 +1232,15 @@ function migrateSave(raw: string): GameState | null {
       full.exploration.questOfferPortId = full.exploration.questOfferPortId ?? null;
       full.version = 13;
     }
+    // v13 → v14：新增船長等級與六圍能力值；舊檔依主角給 Lv1 預設能力。
+    if (s.version < 14) {
+      const full = s as GameState;
+      if (!full.captain) {
+        full.captain = { level: 1, xp: 0, stats: heroBaseStats(full.story?.heroId ?? 'lin') };
+      }
+      full.captain.stats = { ...heroBaseStats(full.story?.heroId ?? 'lin'), ...(full.captain.stats ?? {}) };
+      full.version = 14;
+    }
     return s as GameState;
   } catch {
     return null;
@@ -1309,6 +1459,7 @@ export function completeStoryChapter(
   state.story.completed.push(chapter.id);
   const unlocked = unlockCodex(state, chapterCodexIds(chapter.heroId, chapter.chapter));
   if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
+  const xp = addXp(state, 400);
   state.story.chapter += 1;
 
   // 客座夥伴於劇情節點自動離隊
@@ -1316,12 +1467,14 @@ export function completeStoryChapter(
 
   const next = currentStoryChapter(state);
   const nextPort = storyTargetPort(next);
+  const levelMsg = levelUpMessage(xp);
   const lines = [
     `第 ${chapter.chapter} 章「${chapter.title}」完成。`,
     state.day > beforeDay ? `劇情時間推進到 ${dateText(state.day)}。` : '',
     chapter.requirements?.cargo?.some((req) => req.consume) ? `${storyRequirementText(chapter)}已完成。` : '',
     chapter.rewardGold > 0 ? `獲得 ${chapter.rewardGold} 兩。` : '',
     unlocked.length > 0 ? `解鎖圖鑑：${unlocked.join('、')}` : '',
+    levelMsg ? `\n${levelMsg}` : '',
     ...departures.map((d) => `\n${d}`),
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];
@@ -1557,7 +1710,8 @@ export function explorationFindChance(state: GameState, point: ExplorationPoint)
   const scholar = hasRole(state, 'scholar') ? 0.08 : 0;
   const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
   const retry = Math.min(0.2, explorationAttemptCount(state, point.id) * 0.05);
-  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry));
+  const know = Math.min(0.15, fleetStat(state, 'kno') / 600); // 知識能力加成
+  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry + know));
 }
 
 export function explorationCostForState(state: GameState, point: ExplorationPoint): { food: number; water: number; days: number } {
