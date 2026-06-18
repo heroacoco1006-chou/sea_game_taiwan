@@ -1,0 +1,230 @@
+{
+  "version": "m5-3-v1",
+  "license": "original_generated_for_project",
+  "style": "original 2D pixel-art maritime RPG, inspired by 17th-century East Asian and Southeast Asian seafaring culture",
+  "characters": [
+    {
+      "id": "lin",
+      "name": "林海生",
+      "portrait": "assets/m5/characters/portraits/lin.png",
+      "walk": "assets/m5/characters/walk/lin.png"
+    },
+    {
+      "id": "peter",
+      "name": "彼得・范德堡",
+      "portrait": "assets/m5/characters/portraits/peter.png",
+      "walk": "assets/m5/characters/walk/peter.png"
+    },
+    {
+      "id": "chiyo",
+      "name": "田中千代",
+      "portrait": "assets/m5/characters/portraits/chiyo.png",
+      "walk": "assets/m5/characters/walk/chiyo.png"
+    },
+    {
+      "id": "zheng_he",
+      "name": "鄭和",
+      "portrait": "assets/m5/characters/portraits/zheng_he.png",
+      "walk": null
+    },
+    {
+      "id": "shen_yourong",
+      "name": "沈有容",
+      "portrait": "assets/m5/characters/portraits/shen_yourong.png",
+      "walk": null
+    },
+    {
+      "id": "yamada",
+      "name": "山田長政",
+      "portrait": "assets/m5/characters/portraits/yamada.png",
+      "walk": null
+    },
+    {
+      "id": "li_dan",
+      "name": "李旦",
+      "portrait": "assets/m5/characters/portraits/li_dan.png",
+      "walk": null
+    },
+    {
+      "id": "hamada",
+      "name": "濱田彌兵衛",
+      "portrait": "assets/m5/characters/portraits/hamada.png",
+      "walk": null
+    },
+    {
+      "id": "anjin",
+      "name": "三浦按針",
+      "portrait": "assets/m5/characters/portraits/anjin.png",
+      "walk": null
+    },
+    {
+      "id": "liu_xiang",
+      "name": "劉香",
+      "portrait": "assets/m5/characters/portraits/liu_xiang.png",
+      "walk": null
+    },
+    {
+      "id": "jana",
+      "name": "謝名親方",
+      "portrait": "assets/m5/characters/portraits/jana.png",
+      "walk": null
+    },
+    {
+      "id": "yan_siqi",
+      "name": "顏思齊",
+      "portrait": "assets/m5/characters/portraits/yan_siqi.png",
+      "walk": null
+    },
+    {
+      "id": "zheng_zhilong",
+      "name": "鄭芝龍",
+      "portrait": "assets/m5/characters/portraits/zheng_zhilong.png",
+      "walk": null
+    },
+    {
+      "id": "zheng_chenggong",
+      "name": "鄭成功",
+      "portrait": "assets/m5/characters/portraits/zheng_chenggong.png",
+      "walk": null
+    },
+    {
+      "id": "shi_lang",
+      "name": "施琅",
+      "portrait": "assets/m5/characters/portraits/shi_lang.png",
+      "walk": null
+    },
+    {
+      "id": "linschoten",
+      "name": "林斯豪頓",
+      "portrait": "assets/m5/characters/portraits/linschoten.png",
+      "walk": null
+    },
+    {
+      "id": "su_minggang",
+      "name": "蘇鳴崗",
+      "portrait": "assets/m5/characters/portraits/su_minggang.png",
+      "walk": null
+    },
+    {
+      "id": "chen_di",
+      "name": "陳第",
+      "portrait": "assets/m5/characters/portraits/chen_di.png",
+      "walk": null
+    },
+    {
+      "id": "he_bin",
+      "name": "何斌",
+      "portrait": "assets/m5/characters/portraits/he_bin.png",
+      "walk": null
+    },
+    {
+      "id": "guo_huaiyi",
+      "name": "郭懷一",
+      "portrait": "assets/m5/characters/portraits/guo_huaiyi.png",
+      "walk": null
+    },
+    {
+      "id": "lika",
+      "name": "理加",
+      "portrait": "assets/m5/characters/portraits/lika.png",
+      "walk": null
+    },
+    {
+      "id": "candidius",
+      "name": "干治士",
+      "portrait": "assets/m5/characters/portraits/candidius.png",
+      "walk": null
+    },
+    {
+      "id": "esquivel",
+      "name": "艾斯基維",
+      "portrait": "assets/m5/characters/portraits/esquivel.png",
+      "walk": null
+    },
+    {
+      "id": "pinto",
+      "name": "平托",
+      "portrait": "assets/m5/characters/portraits/pinto.png",
+      "walk": null
+    },
+    {
+      "id": "adika",
+      "name": "阿迪卡",
+      "portrait": "assets/m5/characters/portraits/adika.png",
+      "walk": null
+    },
+    {
+      "id": "salima",
+      "name": "莎麗瑪",
+      "portrait": "assets/m5/characters/portraits/salima.png",
+      "walk": null
+    },
+    {
+      "id": "yusuf",
+      "name": "尤蘇夫",
+      "portrait": "assets/m5/characters/portraits/yusuf.png",
+      "walk": null
+    },
+    {
+      "id": "zheng_jing",
+      "name": "鄭經",
+      "portrait": "assets/m5/characters/portraits/zheng_jing.png",
+      "walk": null
+    }
+  ],
+  "ships": [
+    {
+      "id": "junk_small",
+      "name": "小戎克船",
+      "world": "assets/m5/ships/world/junk_small.png",
+      "battle": "assets/m5/ships/battle/junk_small.png"
+    },
+    {
+      "id": "junk_large",
+      "name": "大戎克船",
+      "world": "assets/m5/ships/world/junk_large.png",
+      "battle": "assets/m5/ships/battle/junk_large.png"
+    },
+    {
+      "id": "fuchuan",
+      "name": "福船",
+      "world": "assets/m5/ships/world/fuchuan.png",
+      "battle": "assets/m5/ships/battle/fuchuan.png"
+    },
+    {
+      "id": "shuinsen",
+      "name": "朱印船",
+      "world": "assets/m5/ships/world/shuinsen.png",
+      "battle": "assets/m5/ships/battle/shuinsen.png"
+    },
+    {
+      "id": "caravel",
+      "name": "卡拉維爾帆船",
+      "world": "assets/m5/ships/world/caravel.png",
+      "battle": "assets/m5/ships/battle/caravel.png"
+    },
+    {
+      "id": "fluyt",
+      "name": "笛型船",
+      "world": "assets/m5/ships/world/fluyt.png",
+      "battle": "assets/m5/ships/battle/fluyt.png"
+    },
+    {
+      "id": "carrack",
+      "name": "克拉克帆船",
+      "world": "assets/m5/ships/world/carrack.png",
+      "battle": "assets/m5/ships/battle/carrack.png"
+    },
+    {
+      "id": "galleon",
+      "name": "蓋倫帆船",
+      "world": "assets/m5/ships/world/galleon.png",
+      "battle": "assets/m5/ships/battle/galleon.png"
+    }
+  ],
+  "notes": [
+    "Reference images in art/ were used only for broad period mood and layout discussion; no source pixels were copied.",
+    "Portraits are 256x256 PNG. Walking sprites are 96x48 PNG, three 32x48 frames.",
+    "World ship sprites are 64x48 PNG. Battle ship sprites are 256x144 PNG."
+  ]
+}

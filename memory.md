@@ -5,6 +5,19 @@
 
 ---
 
+## [2026-06-18] M5-3 角色與船隻素材包 v1
+
+- 背景：老闆要求依目前遊戲架構，先針對 M5-3「角色與船隻」建立美術圖檔；可參考大航海時代 2/4 的年代感，但必須帶有中國、台灣、日本與其他人種元素，且不可直接使用商業遊戲素材。
+- 記憶（已建立）：
+  - 正式素材放在 `assets/m5/`，索引檔為 `assets/m5/m5-3-assets.json`；總覽圖為 `assets/m5/m5-3-contact-sheet.png`。
+  - 角色頭像：`assets/m5/characters/portraits/`，三主角＋25 位夥伴共 28 張，256×256 PNG。
+  - 主角港町行走圖：`assets/m5/characters/walk/`，林海生／彼得／千代共 3 張，96×48 PNG，每張三格 32×48。
+  - 船隻世界圖：`assets/m5/ships/world/`，8 船型共 8 張，64×48 PNG。
+  - 船隻海戰圖：`assets/m5/ships/battle/`，8 船型共 8 張，256×144 PNG。
+  - 生成腳本為 `tools/generate-m5-3-art.py`，使用 Python/Pillow 原創程式繪製；若要微調色盤、服裝或船型外觀，先改此腳本再重跑，避免手改 PNG 後被覆蓋。
+  - `art/` 內圖片只作氛圍參考，不可裁切、描圖、改作或直接納入遊戲；正式素材授權紀錄在 `assets/CREDITS.md`。
+- 影響：下一步 M5-3 應接 BootScene／StoryScene／WorldMapScene／BattleScene，讓頭像與船型 sprite 實際顯示；船首像、裝甲、船帆、大砲種類的外觀差異仍待補。
+
 ## [2026-06-17] 船隻裝備：裝甲／船帆／大砲種類（M5-0）
 
 - 背景：建構書 §5-8 設計的船隻裝備原只實作船首像；M5-0 補完其餘三類。

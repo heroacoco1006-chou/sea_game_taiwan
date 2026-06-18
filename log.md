@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-06-18] 開發 | 操作者：Codex | M5-3 角色與船隻第一批像素素材
+
+- 背景：老闆要求依目前遊戲架構檔，先針對 M5-3「角色與船隻」建立相關美術圖檔；風格可參考大航海時代 2/4 的年代感，但需帶有中國、台灣、日本與其他人種元素，且不可直接使用商業遊戲素材。
+- 完成事項：
+  - 新增 `tools/generate-m5-3-art.py`，用 Python/Pillow 原創程式繪製 M5-3 像素素材，方便後續重跑與微調。
+  - 新增 `assets/m5/characters/portraits/`：三主角＋25 位夥伴頭像，共 28 張 256×256 PNG。
+  - 新增 `assets/m5/characters/walk/`：林海生、彼得、田中千代港町行走圖，共 3 張 96×48 PNG。
+  - 新增 `assets/m5/ships/world/` 與 `assets/m5/ships/battle/`：8 船型世界地圖 sprite 與海戰 sprite，各 8 張。
+  - 新增 `assets/m5/m5-3-assets.json` 素材 manifest 與 `assets/m5/m5-3-contact-sheet.png` 總覽圖。
+  - 新增 `assets/CREDITS.md`，註記本批素材為 Codex 原創程式生成；`art/` 內參考圖只作氛圍借鏡，不裁切、不描圖、不納入正式素材。
+  - 更新 `status.md` 的 M5-3 細項進度，並在 `memory.md` 記錄素材路徑、尺寸、生成腳本與版權界線。
+- 驗證：共產生 47 張 PNG；頭像 28 張皆為 256×256 RGBA，行走圖 3 張皆為 96×48 RGBA，船隻世界圖 8 張皆為 64×48 RGBA，海戰圖 8 張皆為 256×144 RGBA；總覽圖已檢查無空白或明顯錯位；`npm run build` 通過。
+
 ## [2026-06-17] 提問 | 操作者：小航 | 討論：以 GitHub Pages 網站發行（免安裝）
 
 - 背景：老闆詢問除了 Electron 安裝檔，能否透過 GitHub 提供網站讓小朋友直接在瀏覽器遊玩。要求只討論、不動檔案（log 除外）。
