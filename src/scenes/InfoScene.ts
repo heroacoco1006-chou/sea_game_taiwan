@@ -213,8 +213,10 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   private backpackEntries(): Array<{ id: string; qty: number }> {
-    const equipped = [this.state.equip.weapon, this.state.equip.armor, this.state.equip.accessory, this.state.ship.figurehead]
-      .filter(Boolean) as string[];
+    const equipped = [
+      this.state.equip.weapon, this.state.equip.armor, this.state.equip.accessory,
+      this.state.ship.figurehead, this.state.ship.armor, this.state.ship.sail, this.state.ship.cannonType,
+    ].filter(Boolean) as string[];
     const used = new Map<string, number>();
     equipped.forEach((id) => used.set(id, (used.get(id) ?? 0) + 1));
     return Object.entries(this.state.inventory)

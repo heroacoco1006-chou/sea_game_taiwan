@@ -126,6 +126,12 @@ export interface PlayerShip {
   supplySpace: number;
   /** 船首像 id（提升能力），無則 null */
   figurehead: string | null;
+  /** 裝甲 id（船體耐久↑、抗暴風），無則 null */
+  armor: string | null;
+  /** 船帆 id（航速↑、抗暴風），無則 null */
+  sail: string | null;
+  /** 大砲種類 id（海戰火力倍率），無則 null */
+  cannonType: string | null;
 }
 
 /** 造船廠建造中的船 */
@@ -195,6 +201,10 @@ export interface ArmorItem { id: string; name: string; price: number; defense: n
 export interface AccessoryItem { id: string; name: string; price: number; effect: string; desc: string; }
 export interface FigureheadItem { id: string; name: string; price: number; effect: string; desc: string; }
 export interface ConsumableItem { id: string; name: string; price: number; effect: string; desc: string; }
+// 船隻裝備（旗艦）：裝甲、船帆、大砲種類
+export interface HullPlatingItem { id: string; name: string; price: number; hullBonus: number; stormReduce: number; desc: string; }
+export interface SailItem { id: string; name: string; price: number; speedBonus: number; stormReduce: number; desc: string; }
+export interface CannonTypeItem { id: string; name: string; price: number; power: number; board: number; desc: string; }
 
 export type ShopCat = 'weapon' | 'armor' | 'accessory' | 'consumable';
 export type SeaStatusId = 'storm' | 'rats' | 'scurvy' | 'mutiny' | 'homesick';
@@ -372,6 +382,9 @@ export const WEAPONS: WeaponItem[] = equipData.weapons;
 export const ARMORS: ArmorItem[] = equipData.armors;
 export const ACCESSORIES: AccessoryItem[] = equipData.accessories;
 export const FIGUREHEADS: FigureheadItem[] = equipData.figureheads;
+export const HULL_PLATINGS: HullPlatingItem[] = equipData.hullPlatings;
+export const SAILS: SailItem[] = equipData.sails;
+export const CANNON_TYPES: CannonTypeItem[] = equipData.cannonTypes;
 export const CONSUMABLES: ConsumableItem[] = equipData.consumables;
 export const ROLES: RoleDef[] = matesData.roles;
 export const MATE_DEFS: MateDef[] = matesData.mates as MateDef[];
@@ -424,6 +437,9 @@ export function newPlayerShip(typeId: string, pos: { x: number; y: number }): Pl
     cargoSpace: type.space - supply,
     supplySpace: supply,
     figurehead: null,
+    armor: null,
+    sail: null,
+    cannonType: null,
   };
 }
 
@@ -462,7 +478,7 @@ export function supplyMax(state: GameState): number {
 
 /** 旗艦船體上限（旅館保養、旗艦修理用） */
 export function hullMax(state: GameState): number {
-  return shipTypeOf(state).hullMax;
+  return shipTypeOf(state).hullMax + (shipArmor(state)?.hullBonus ?? 0);
 }
 
 /** 水手上限＝全艦隊各船型 maxCrew 加總 */
@@ -485,9 +501,9 @@ export function fleetHull(state: GameState): number {
   return fleetShips(state).reduce((sum, sh) => sum + sh.hull, 0);
 }
 
-/** 全艦隊船體上限總和 */
+/** 全艦隊船體上限總和（旗艦含裝甲加成） */
 export function fleetHullMax(state: GameState): number {
-  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).hullMax, 0);
+  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).hullMax, 0) + (shipArmor(state)?.hullBonus ?? 0);
 }
 
 /** 對全艦隊造成傷害（按各船血量比例分攤，每船至少留 1） */
@@ -510,7 +526,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 14,
+    version: 15,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -600,6 +616,17 @@ function accessoryEffect(state: GameState): string | null {
   return a ? a.effect : null;
 }
 
+/** 旗艦船隻裝備（裝甲／船帆／大砲種類），無則 null */
+export function shipArmor(state: GameState): HullPlatingItem | null {
+  return HULL_PLATINGS.find((x) => x.id === state.ship.armor) ?? null;
+}
+export function shipSail(state: GameState): SailItem | null {
+  return SAILS.find((x) => x.id === state.ship.sail) ?? null;
+}
+export function shipCannonType(state: GameState): CannonTypeItem | null {
+  return CANNON_TYPES.find((x) => x.id === state.ship.cannonType) ?? null;
+}
+
 /** 旗艦船首像效果 */
 export function figureheadEffect(state: GameState): string | null {
   const f = FIGUREHEADS.find((x) => x.id === state.ship.figurehead);
@@ -613,6 +640,7 @@ export function gearSpeedMod(state: GameState): number {
   if (figureheadEffect(state) === 'speed') b += 0.1;
   if (hasRole(state, 'navigator')) b += 0.08;
   b += fleetStat(state, 'nav') / 600; // 航海能力加成
+  b += shipSail(state)?.speedBonus ?? 0; // 船帆加成
   return b;
 }
 
@@ -621,6 +649,7 @@ export function stormDamageMod(state: GameState): number {
   let m = figureheadEffect(state) === 'storm' ? 0.5 : 1;
   if (hasRole(state, 'navigator')) m *= 0.8;
   m *= 1 - Math.min(0.4, fleetStat(state, 'nav') / 400); // 航海越高，暴風損害越低
+  m *= 1 - Math.min(0.4, (shipArmor(state)?.stormReduce ?? 0) + (shipSail(state)?.stormReduce ?? 0)); // 裝甲＋船帆抗暴風
   return m;
 }
 
@@ -652,6 +681,7 @@ export function cannonMod(state: GameState): number {
   let m = figureheadEffect(state) === 'cannon' ? 1.25 : 1;
   if (hasRole(state, 'gunner')) m *= 1.2;
   m *= 1 + fleetStat(state, 'gun') / 300; // 砲術能力加成
+  m *= shipCannonType(state)?.power ?? 1; // 大砲種類倍率
   return m;
 }
 
@@ -882,6 +912,7 @@ export function hasRole(state: GameState, roleKey: string): boolean {
 export function boardBonus(state: GameState): number {
   let b = hasRole(state, 'vice') ? 8 : 0;
   b += Math.round(fleetStat(state, 'lead') / 15 + fleetStat(state, 'val') / 12);
+  b += shipCannonType(state)?.board ?? 0; // 散彈砲接舷壓制
   return b;
 }
 
@@ -898,6 +929,9 @@ export function itemNameById(id: string): string {
     ARMORS.find((x) => x.id === id)?.name ??
     ACCESSORIES.find((x) => x.id === id)?.name ??
     FIGUREHEADS.find((x) => x.id === id)?.name ??
+    HULL_PLATINGS.find((x) => x.id === id)?.name ??
+    SAILS.find((x) => x.id === id)?.name ??
+    CANNON_TYPES.find((x) => x.id === id)?.name ??
     CONSUMABLES.find((x) => x.id === id)?.name ??
     DISCOVERIES.find((x) => x.id === id || x.rewardItemId === id)?.title ??
     id
@@ -910,6 +944,9 @@ export function itemDescById(id: string): string {
     ARMORS.find((x) => x.id === id)?.desc ??
     ACCESSORIES.find((x) => x.id === id)?.desc ??
     FIGUREHEADS.find((x) => x.id === id)?.desc ??
+    HULL_PLATINGS.find((x) => x.id === id)?.desc ??
+    SAILS.find((x) => x.id === id)?.desc ??
+    CANNON_TYPES.find((x) => x.id === id)?.desc ??
     CONSUMABLES.find((x) => x.id === id)?.desc ??
     DISCOVERIES.find((x) => x.id === id || x.rewardItemId === id)?.body ??
     ''
@@ -1240,6 +1277,19 @@ function migrateSave(raw: string): GameState | null {
       }
       full.captain.stats = { ...heroBaseStats(full.story?.heroId ?? 'lin'), ...(full.captain.stats ?? {}) };
       full.version = 14;
+    }
+    // v14 → v15：新增船隻裝備（裝甲／船帆／大砲種類），舊船補 null。
+    if (s.version < 15) {
+      const full = s as GameState;
+      const fixShip = (sh: PlayerShip | undefined) => {
+        if (!sh) return;
+        sh.armor = sh.armor ?? null;
+        sh.sail = sh.sail ?? null;
+        sh.cannonType = sh.cannonType ?? null;
+      };
+      fixShip(full.ship);
+      (full.escorts ?? []).forEach(fixShip);
+      full.version = 15;
     }
     return s as GameState;
   } catch {

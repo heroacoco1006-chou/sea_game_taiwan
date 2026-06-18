@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-17] 船隻裝備：裝甲／船帆／大砲種類（M5-0）
+
+- 背景：建構書 §5-8 設計的船隻裝備原只實作船首像；M5-0 補完其餘三類。
+- 記憶（已實作）：
+  - 旗艦四種船隻裝備：船首像 figurehead、裝甲 armor、船帆 sail、大砲種類 cannonType，皆為 `PlayerShip` 上的 id 欄位（僅旗艦生效；effect 函式都讀 `state.ship`）。
+  - 資料在 `equipment.json` 的 `hullPlatings／sails／cannonTypes`；常數 `HULL_PLATINGS／SAILS／CANNON_TYPES`；accessors `shipArmor／shipSail／shipCannonType`。
+  - 接入：裝甲→`hullMax`/`fleetHullMax`＋`stormDamageMod`；船帆→`gearSpeedMod`＋`stormDamageMod`；大砲種類→`cannonMod`（power）＋`boardBonus`（散彈 board）。要加新船隻裝備就走這套。
+  - 購買/換裝沿用船首像機制：buy 進 inventory、免費換回；造船廠「船艦改造」`showShipEquipMenu/installShipEquip`。
+  - 存檔 **v15**：PlayerShip 新增三欄，舊船補 null。
+  - 外觀圖留 M5-3；數值為初版待試玩平衡。
+
 ## [2026-06-17] 等級與能力值系統 v1 已實作
 
 - 接續下方「設計定案」：v1 已實作完成。實作技術要點：

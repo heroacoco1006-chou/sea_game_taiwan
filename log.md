@@ -16,6 +16,17 @@
 - 待老闆決定：① 倉庫公開或私有？② 是否把「網站版上線（GitHub Actions 自動建置部署 + 開啟 Pages）」排入 M5/M6。需老闆本人在 GitHub 網頁操作的部分（設公開、開 Pages）由小航列步驟、不代為操作。
 - 本次未改動程式或設定檔，僅記錄討論結論。
 
+## [2026-06-17] 開發 | 操作者：小航 | M5-0 船隻裝備（裝甲／船帆／大砲種類）
+
+- 背景：老闆選擇船隻裝備先做（M5-0 前置）。建構書 §5-8 已設計、原只實作船首像。
+- 完成事項：
+  - `equipment.json` 新增 hullPlatings／sails／cannonTypes 各 3 件；`state.ts` 加型別、exports、`PlayerShip` armor/sail/cannonType、accessors（shipArmor/shipSail/shipCannonType）。
+  - 接入加成：裝甲→hullMax/fleetHullMax＋抗暴風；船帆→gearSpeedMod＋抗暴風；大砲種類→cannonMod＋散彈接舷 boardBonus；itemNameById/Desc 補新陣列；InfoScene 背包排除已裝。
+  - `ShipyardScene`「船艦改造」開放三類選單（共用 showShipEquipMenu／installShipEquip，沿用船首像購買/背包/免費換回機制），改造面板顯示四欄位。
+  - 存檔升 v15，舊船補 armor/sail/cannonType=null。
+- 驗證：`tsc`、`npm run build`（38 模組）通過；瀏覽器實測頂級裝備 hullMax 100→200、航速+0.2、暴風 0.95→0.71、砲擊 1.04→1.35、散彈接舷+5；v14→v15 遷移正常；造船廠四欄位顯示正確。
+- 備註：船隻裝備外觀（圖）併入 M5-3；數值平衡待試玩微調。
+
 ## [2026-06-17] 文件 | 操作者：小航 | 補建構書等級系統＋M5 架構規劃
 
 - 背景：老闆指示 ① 把等級系統補進建構書；② 討論船隻裝備（裝甲/船帆/大砲）建構時機；③ 開始 M5、先規劃架構。

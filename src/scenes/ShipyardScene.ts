@@ -4,6 +4,7 @@ import {
   cargoCount, cargoMax, supplyMax, fleetShips, fleetMinCrew, crewMax, FLEET_MAX,
   saveGame, CANNON_PRICE, availableShipsAtPort, FIGUREHEADS, addInventory, hasInventory,
   dateText, newPlayerShip, shipBuildDays,
+  HULL_PLATINGS, SAILS, CANNON_TYPES, shipArmor, shipSail, shipCannonType,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
@@ -120,7 +121,7 @@ export default class ShipyardScene extends Phaser.Scene {
     );
     const fig = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
     this.figureheadText?.setText(
-      `目前船首像：${fig ? fig.name : '（無）'}\n船首像、裝甲、船帆與砲種集中改造。`
+      `船首像：${fig?.name ?? '（無）'}　裝甲：${shipArmor(s)?.name ?? '（無）'}\n船帆：${shipSail(s)?.name ?? '（無）'}　砲種：${shipCannonType(s)?.name ?? '（無）'}`
     );
     const localOrders = s.shipOrders.filter((o) => o.portId === this.port.id);
     const ready = localOrders.filter((o) => o.readyDay <= s.day).length;
@@ -266,13 +267,57 @@ export default class ShipyardScene extends Phaser.Scene {
   }
 
   private showRefitMenu(): void {
-    showModal(this, '船艦改造', '選擇要改造的船艦裝備類型。', [
+    showModal(this, '船艦改造', '選擇要改造的旗艦裝備類型。', [
       { label: '船首像', onPick: () => this.showFigureheadMenu() },
-      { label: '裝甲（後續開放）', onPick: () => toast(this, '裝甲改造會在後續版本加入。') },
-      { label: '船帆（後續開放）', onPick: () => toast(this, '船帆改造會在後續版本加入。') },
-      { label: '大砲種類（後續開放）', onPick: () => toast(this, '大砲種類改造會在後續版本加入。') },
+      { label: '裝甲（船體耐久↑・抗暴風）', onPick: () => this.showShipEquipMenu('armor') },
+      { label: '船帆（航速↑・抗暴風）', onPick: () => this.showShipEquipMenu('sail') },
+      { label: '大砲種類（海戰火力）', onPick: () => this.showShipEquipMenu('cannonType') },
       { label: '取消', onPick: () => {} },
     ]);
+  }
+
+  /** 裝甲／船帆／大砲種類共用的改裝選單 */
+  private showShipEquipMenu(slot: 'armor' | 'sail' | 'cannonType'): void {
+    const cfg = {
+      armor: { title: '裝甲改裝', list: HULL_PLATINGS, cur: this.state.ship.armor },
+      sail: { title: '船帆改裝', list: SAILS, cur: this.state.ship.sail },
+      cannonType: { title: '大砲種類改裝', list: CANNON_TYPES, cur: this.state.ship.cannonType },
+    }[slot];
+    showModal(
+      this,
+      cfg.title,
+      '船隻裝備在造船廠購買與改裝；買過的會留在背包，可免費換回。',
+      [
+        ...cfg.list.map((item) => ({
+          label: `${cfg.cur === item.id ? '✓' : ''}${item.name}　${hasInventory(this.state, item.id) ? '已持有' : `${item.price} 兩`}`,
+          onPick: () => this.installShipEquip(slot, item.id),
+        })),
+        { label: '取消', onPick: () => {} },
+      ]
+    );
+  }
+
+  private installShipEquip(slot: 'armor' | 'sail' | 'cannonType', id: string): void {
+    const s = this.state;
+    const item = [...HULL_PLATINGS, ...SAILS, ...CANNON_TYPES].find((x) => x.id === id);
+    if (!item) return;
+    if (s.ship[slot] === id) {
+      toast(this, `【${item.name}】已經裝在旗艦上。`);
+      return;
+    }
+    if (!hasInventory(s, id)) {
+      if (s.gold < item.price) {
+        toast(this, `購買【${item.name}】需要 ${item.price} 兩，資金不足！`);
+        return;
+      }
+      s.gold -= item.price;
+      addInventory(s, id);
+    }
+    s.ship[slot] = id;
+    // 裝甲提升船體上限時，順帶把當前船體補到不超過新上限即可（不免費全修）
+    saveGame(s);
+    this.refreshFleet();
+    toast(this, `旗艦改裝【${item.name}】完成！`);
   }
 
   private showFigureheadMenu(): void {
