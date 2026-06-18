@@ -1,0 +1,181 @@
+{
+  "version": "m5-3-v2",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen built-in tool plus local Pillow slicing",
+  "source": {
+    "characters": "assets/m5/v2/source/m5-3-characters-v2-source.png",
+    "ships": "assets/m5/v2/source/m5-3-ships-v2-source.png",
+    "characterCorrections": "assets/m5/v2/source/m5-3-character-corrections-v2-source.png"
+  },
+  "style": "refined 2D painterly maritime RPG illustration with pixel-art discipline, 17th-century Taiwan/East Asia/Southeast Asia context",
+  "characters": [
+    {
+      "id": "adika",
+      "portrait": "assets/m5/v2/characters/portraits/adika.png"
+    },
+    {
+      "id": "anjin",
+      "portrait": "assets/m5/v2/characters/portraits/anjin.png"
+    },
+    {
+      "id": "candidius",
+      "portrait": "assets/m5/v2/characters/portraits/candidius.png"
+    },
+    {
+      "id": "chen_di",
+      "portrait": "assets/m5/v2/characters/portraits/chen_di.png"
+    },
+    {
+      "id": "chiyo",
+      "portrait": "assets/m5/v2/characters/portraits/chiyo.png"
+    },
+    {
+      "id": "esquivel",
+      "portrait": "assets/m5/v2/characters/portraits/esquivel.png"
+    },
+    {
+      "id": "guo_huaiyi",
+      "portrait": "assets/m5/v2/characters/portraits/guo_huaiyi.png"
+    },
+    {
+      "id": "hamada",
+      "portrait": "assets/m5/v2/characters/portraits/hamada.png"
+    },
+    {
+      "id": "he_bin",
+      "portrait": "assets/m5/v2/characters/portraits/he_bin.png"
+    },
+    {
+      "id": "jana",
+      "portrait": "assets/m5/v2/characters/portraits/jana.png"
+    },
+    {
+      "id": "li_dan",
+      "portrait": "assets/m5/v2/characters/portraits/li_dan.png"
+    },
+    {
+      "id": "lika",
+      "portrait": "assets/m5/v2/characters/portraits/lika.png"
+    },
+    {
+      "id": "lin",
+      "portrait": "assets/m5/v2/characters/portraits/lin.png"
+    },
+    {
+      "id": "linschoten",
+      "portrait": "assets/m5/v2/characters/portraits/linschoten.png"
+    },
+    {
+      "id": "liu_xiang",
+      "portrait": "assets/m5/v2/characters/portraits/liu_xiang.png"
+    },
+    {
+      "id": "peter",
+      "portrait": "assets/m5/v2/characters/portraits/peter.png"
+    },
+    {
+      "id": "pinto",
+      "portrait": "assets/m5/v2/characters/portraits/pinto.png"
+    },
+    {
+      "id": "salima",
+      "portrait": "assets/m5/v2/characters/portraits/salima.png"
+    },
+    {
+      "id": "shen_yourong",
+      "portrait": "assets/m5/v2/characters/portraits/shen_yourong.png"
+    },
+    {
+      "id": "shi_lang",
+      "portrait": "assets/m5/v2/characters/portraits/shi_lang.png"
+    },
+    {
+      "id": "su_minggang",
+      "portrait": "assets/m5/v2/characters/portraits/su_minggang.png"
+    },
+    {
+      "id": "yamada",
+      "portrait": "assets/m5/v2/characters/portraits/yamada.png"
+    },
+    {
+      "id": "yan_siqi",
+      "portrait": "assets/m5/v2/characters/portraits/yan_siqi.png"
+    },
+    {
+      "id": "yusuf",
+      "portrait": "assets/m5/v2/characters/portraits/yusuf.png"
+    },
+    {
+      "id": "zheng_chenggong",
+      "portrait": "assets/m5/v2/characters/portraits/zheng_chenggong.png"
+    },
+    {
+      "id": "zheng_he",
+      "portrait": "assets/m5/v2/characters/portraits/zheng_he.png"
+    },
+    {
+      "id": "zheng_jing",
+      "portrait": "assets/m5/v2/characters/portraits/zheng_jing.png"
+    },
+    {
+      "id": "zheng_zhilong",
+      "portrait": "assets/m5/v2/characters/portraits/zheng_zhilong.png"
+    }
+  ],
+  "ships": [
+    {
+      "id": "junk_small",
+      "card": "assets/m5/v2/ships/cards/junk_small.png",
+      "battle": "assets/m5/v2/ships/battle/junk_small.png",
+      "world": "assets/m5/v2/ships/world/junk_small.png"
+    },
+    {
+      "id": "junk_large",
+      "card": "assets/m5/v2/ships/cards/junk_large.png",
+      "battle": "assets/m5/v2/ships/battle/junk_large.png",
+      "world": "assets/m5/v2/ships/world/junk_large.png"
+    },
+    {
+      "id": "fuchuan",
+      "card": "assets/m5/v2/ships/cards/fuchuan.png",
+      "battle": "assets/m5/v2/ships/battle/fuchuan.png",
+      "world": "assets/m5/v2/ships/world/fuchuan.png"
+    },
+    {
+      "id": "shuinsen",
+      "card": "assets/m5/v2/ships/cards/shuinsen.png",
+      "battle": "assets/m5/v2/ships/battle/shuinsen.png",
+      "world": "assets/m5/v2/ships/world/shuinsen.png"
+    },
+    {
+      "id": "caravel",
+      "card": "assets/m5/v2/ships/cards/caravel.png",
+      "battle": "assets/m5/v2/ships/battle/caravel.png",
+      "world": "assets/m5/v2/ships/world/caravel.png"
+    },
+    {
+      "id": "fluyt",
+      "card": "assets/m5/v2/ships/cards/fluyt.png",
+      "battle": "assets/m5/v2/ships/battle/fluyt.png",
+      "world": "assets/m5/v2/ships/world/fluyt.png"
+    },
+    {
+      "id": "carrack",
+      "card": "assets/m5/v2/ships/cards/carrack.png",
+      "battle": "assets/m5/v2/ships/battle/carrack.png",
+      "world": "assets/m5/v2/ships/world/carrack.png"
+    },
+    {
+      "id": "galleon",
+      "card": "assets/m5/v2/ships/cards/galleon.png",
+      "battle": "assets/m5/v2/ships/battle/galleon.png",
+      "world": "assets/m5/v2/ships/world/galleon.png"
+    }
+  ],
+  "notes": [
+    "V2 preserves the generated source sheets under assets/m5/v2/source.",
+    "Portraits are sliced from a 7x4 source sheet and exported as 256x256 PNG.",
+    "Ship cards preserve the full generated tiles; battle/world files are contained previews for later scene integration.",
+    "No KOEI or other commercial game pixels were copied, cropped, traced, or adapted."
+  ]
+}
