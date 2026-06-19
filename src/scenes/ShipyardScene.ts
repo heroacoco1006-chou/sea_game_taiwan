@@ -6,6 +6,7 @@ import {
   dateText, newPlayerShip, shipBuildDays,
   HULL_PLATINGS, SAILS, CANNON_TYPES, shipArmor, shipSail, shipCannonType,
 } from '../state';
+import { shipCardKey, shipEquipmentKey } from '../art';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 
 const REPAIR_PRICE = 2;
@@ -25,7 +26,9 @@ export default class ShipyardScene extends Phaser.Scene {
   private highlight!: Phaser.GameObjects.Rectangle;
   private figureheadText!: Phaser.GameObjects.Text;
   private ordersText!: Phaser.GameObjects.Text;
+  private shipCardImage!: Phaser.GameObjects.Image;
   private escortObjs: Phaser.GameObjects.GameObject[] = [];
+  private equipmentPreviewObjs: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('Shipyard');
@@ -96,6 +99,8 @@ export default class ShipyardScene extends Phaser.Scene {
       this.add.text(950, 140, '這座港口沒有可建造的船型。', textStyle(16, '#6b5530')).setOrigin(0.5);
     }
     this.buyDetail = this.add.text(680, 396, '（點選上方船隻查看詳情）', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 }, lineSpacing: 5 });
+    this.buyDetail.setWordWrapWidth(365, true);
+    this.shipCardImage = this.add.image(1155, 405, 'ship').setVisible(false);
     makeButton(this, 820, 520, 260, 50, '建造新旗艦（折抵舊旗艦）', () => this.orderShip(false), 15);
     makeButton(this, 1100, 520, 220, 50, '建造僚艦', () => this.orderShip(true), 16);
 
@@ -103,8 +108,8 @@ export default class ShipyardScene extends Phaser.Scene {
     this.add.text(950, 586, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
     this.ordersText = this.add.text(690, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
     this.figureheadText = this.add.text(980, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
-    makeButton(this, 820, 682, 220, 38, '建造進度／取船', () => this.showOrderMenu(), 15);
-    makeButton(this, 1100, 682, 220, 38, '船艦改造', () => this.showRefitMenu(), 16);
+    makeButton(this, 820, 696, 220, 38, '建造進度／取船', () => this.showOrderMenu(), 15);
+    makeButton(this, 1100, 696, 220, 38, '船艦改造', () => this.showRefitMenu(), 16);
 
     this.refreshFleet();
   }
@@ -130,6 +135,7 @@ export default class ShipyardScene extends Phaser.Scene {
         ? `本港建造中：${localOrders.length} 艘\n可取船：${ready} 艘`
         : '本港目前沒有建造訂單。'
     );
+    this.drawEquipmentPreview();
 
     // 重建僚艦列
     for (const o of this.escortObjs) o.destroy();
@@ -232,6 +238,12 @@ export default class ShipyardScene extends Phaser.Scene {
       `建造新旗艦：先付 ${swapCost} 兩（原價 ${t.price} − 目前旗艦折抵 ${tradeIn}）。\n` +
       `建造僚艦：先付全額 ${t.price} 兩；完工取船後才加入艦隊。`
     );
+    const cardKey = this.m5Texture(shipCardKey(t.id), '');
+    if (cardKey) {
+      this.shipCardImage.setTexture(cardKey).setDisplaySize(108, 144).setVisible(true);
+    } else {
+      this.shipCardImage.setVisible(false);
+    }
   }
 
   private shipyardNote(): string {
@@ -506,5 +518,36 @@ export default class ShipyardScene extends Phaser.Scene {
     saveGame(s);
     this.refreshFleet();
     toast(this, `賣掉【${et.name}】，得 ${gain} 兩`);
+  }
+
+  private drawEquipmentPreview(): void {
+    for (const obj of this.equipmentPreviewObjs) obj.destroy();
+    this.equipmentPreviewObjs = [];
+    const entries = [
+      { label: '船首像', id: this.state.ship.figurehead },
+      { label: '裝甲', id: this.state.ship.armor },
+      { label: '船帆', id: this.state.ship.sail },
+      { label: '砲種', id: this.state.ship.cannonType },
+    ];
+    entries.forEach((entry, i) => {
+      const x = 978 + i * 68;
+      const y = 636;
+      const frame = this.add.rectangle(x, y, 48, 48, COLORS.parchment, 0.88).setStrokeStyle(2, COLORS.wood);
+      const key = entry.id ? this.m5Texture(shipEquipmentKey(entry.id), '') : '';
+      this.equipmentPreviewObjs.push(frame);
+      if (key) {
+        const img = this.add.image(x, y, key).setDisplaySize(42, 42);
+        this.equipmentPreviewObjs.push(img);
+      } else {
+        const none = this.add.text(x, y, '無', textStyle(13, '#8a7650')).setOrigin(0.5);
+        this.equipmentPreviewObjs.push(none);
+      }
+      const label = this.add.text(x, y + 30, entry.label, textStyle(10, '#5a4a30')).setOrigin(0.5);
+      this.equipmentPreviewObjs.push(label);
+    });
+  }
+
+  private m5Texture(preferred: string, fallback: string): string {
+    return preferred && this.textures.exists(preferred) ? preferred : fallback;
   }
 }

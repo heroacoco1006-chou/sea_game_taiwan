@@ -3,6 +3,8 @@
 // 在 build 與 dev 都產生正確的 URL；檔名（去副檔名）即為對照 key。
 // - 角色頭像：key = 主角／夥伴 id（lin、chiyo、zheng_zhilong…）
 // - 船隻 sprite：key = 船型 id（junk_small、galleon…）
+// - 船卡／船隻裝備：key = 船型 id／裝備 id
+// - 主角行走圖：key = 主角 id（lin、peter、chiyo），7 格 spritesheet
 // - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
 
 type UrlMap = Record<string, string>;
@@ -26,6 +28,18 @@ export const SHIP_WORLD_URLS = byBaseName(
 
 export const SHIP_BATTLE_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/ships/battle/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const SHIP_CARD_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/ships/cards/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const CHARACTER_WALK_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/characters/walk/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const SHIP_EQUIPMENT_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/ships/equipment/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
 export const WORLD_ART_URLS = byBaseName(
@@ -52,6 +66,9 @@ export const FACILITY_ICON_URLS = byBaseName(
 export const portraitKey = (id: string): string => `portrait_${id}`;
 export const shipWorldKey = (typeId: string): string => `shipw_${typeId}`;
 export const shipBattleKey = (typeId: string): string => `shipb_${typeId}`;
+export const shipCardKey = (typeId: string): string => `shipc_${typeId}`;
+export const characterWalkKey = (heroId: string): string => `walk_${heroId}`;
+export const shipEquipmentKey = (id: string): string => `shipeq_${id}`;
 export const worldArtKey = (id: string): string => `m5w_${id}`;
 export const portBuildingKey = (id: string): string => `m5b_${id}`;
 export const harborSceneKey = (id: string): string => `m5h_${id}`;

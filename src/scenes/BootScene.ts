@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import {
   PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_BATTLE_URLS,
+  SHIP_CARD_URLS, CHARACTER_WALK_URLS, SHIP_EQUIPMENT_URLS,
   WORLD_ART_URLS, PORT_BUILDING_URLS, HARBOR_SCENE_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS,
-  portraitKey, shipWorldKey, shipBattleKey,
+  portraitKey, shipWorldKey, shipBattleKey, shipCardKey, characterWalkKey, shipEquipmentKey,
   worldArtKey, portBuildingKey, harborSceneKey, explorationIconKey, facilityIconKey,
 } from '../art';
 
@@ -17,6 +18,9 @@ export default class BootScene extends Phaser.Scene {
     for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
     for (const [id, url] of Object.entries(SHIP_WORLD_URLS)) this.load.image(shipWorldKey(id), url);
     for (const [id, url] of Object.entries(SHIP_BATTLE_URLS)) this.load.image(shipBattleKey(id), url);
+    for (const [id, url] of Object.entries(SHIP_CARD_URLS)) this.load.image(shipCardKey(id), url);
+    for (const [id, url] of Object.entries(CHARACTER_WALK_URLS)) this.load.spritesheet(characterWalkKey(id), url, { frameWidth: 96, frameHeight: 128 });
+    for (const [id, url] of Object.entries(SHIP_EQUIPMENT_URLS)) this.load.image(shipEquipmentKey(id), url);
     for (const [id, url] of Object.entries(WORLD_ART_URLS)) this.load.image(worldArtKey(id), url);
     for (const [id, url] of Object.entries(PORT_BUILDING_URLS)) this.load.image(portBuildingKey(id), url);
     for (const [id, url] of Object.entries(HARBOR_SCENE_URLS)) this.load.image(harborSceneKey(id), url);

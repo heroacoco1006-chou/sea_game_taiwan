@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
-import { harborSceneKey, portBuildingKey, shipWorldKey } from '../art';
+import { characterWalkKey, harborSceneKey, portBuildingKey, shipWorldKey } from '../art';
 import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
 /**
@@ -70,7 +70,8 @@ const BUILDING_SIZE: Record<FacilityKey, { w: number; h: number }> = {
 
 export default class PortScene extends Phaser.Scene {
   private port!: Port;
-  private player!: Phaser.GameObjects.Image;
+  private player!: Phaser.GameObjects.Sprite;
+  private playerWalkKey: string | null = null;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key; ENTER: Phaser.Input.Keyboard.Key };
   private hint!: Phaser.GameObjects.Text;
@@ -143,7 +144,13 @@ export default class PortScene extends Phaser.Scene {
 
     // 主角與鏡頭
     const start = this.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
-    this.player = this.add.image(start.x, start.y, 'player').setDepth(10);
+    this.playerWalkKey = this.textures.exists(characterWalkKey(this.state.story.heroId)) ? characterWalkKey(this.state.story.heroId) : null;
+    this.player = this.add.sprite(start.x, start.y, this.playerWalkKey ?? 'player').setDepth(10);
+    if (this.playerWalkKey) {
+      this.player.setFrame(0).setDisplaySize(42, 56);
+    } else {
+      this.player.setDisplaySize(32, 48);
+    }
     this.cameras.main.setBounds(0, 0, TOWN_W, TOWN_H);
     this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
 
@@ -442,7 +449,23 @@ export default class PortScene extends Phaser.Scene {
     const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, TOWN_H - 60);
     if (this.hitsBuilding(px, py)) return false;
     this.player.setPosition(px, py);
+    this.updatePlayerWalkFrame(nx, ny);
     return true;
+  }
+
+  private updatePlayerWalkFrame(nx: number, ny: number): void {
+    if (!this.playerWalkKey) return;
+    const step = Math.floor(this.time.now / 160) % 3;
+    if (Math.abs(nx) > Math.abs(ny)) {
+      this.player.setFlipX(nx < 0);
+      this.player.setFrame(3 + step);
+    } else if (ny < 0) {
+      this.player.setFlipX(false);
+      this.player.setFrame(6);
+    } else {
+      this.player.setFlipX(false);
+      this.player.setFrame(step === 0 ? 0 : step);
+    }
   }
 
   private enterBuilding(b: Building): void {

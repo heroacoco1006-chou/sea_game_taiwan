@@ -5,6 +5,18 @@
 
 ---
 
+## [2026-06-19] M5-3 角色與船隻第一輪接入完成
+
+- 背景：老闆要求完成 M5-3；此前頭像、船隻 world/battle sprite 已接入，但主角行走圖、船卡與船隻裝備外觀仍未進遊戲 UI。
+- 記憶（載入管線）：
+  - `src/art.ts` 新增 `SHIP_CARD_URLS`、`CHARACTER_WALK_URLS`、`SHIP_EQUIPMENT_URLS`，helper 為 `shipCardKey(typeId)`、`characterWalkKey(heroId)`、`shipEquipmentKey(itemId)`。
+  - `BootScene.preload()` 以 `load.spritesheet(characterWalkKey, { frameWidth: 96, frameHeight: 128 })` 載入三主角行走圖；船卡與船隻裝備用 `load.image`。
+- 記憶（場景接入）：
+  - `PortScene` 會依 `state.story.heroId` 顯示 `lin／peter／chiyo` 的 V2 行走 spritesheet，移動時切換方向幀；素材不存在時退回舊 `player` 生成貼圖。
+  - `ShipyardScene` 在選取可建造船型時顯示 V2 船卡；右下船艦改造區顯示旗艦目前船首像、裝甲、船帆、砲種的小圖示。
+  - `InfoScene` 的「船隊資訊」顯示旗艦船卡與四類船隻裝備圖示，讓玩家不進造船廠也能查看目前外觀配置。
+- 注意：M5-3 行走圖第一版仍有少量綠幕邊緣雜訊，目前以 42×56 顯示降低突兀感；若 M5-6 UI/視覺細修時仍明顯，再優先做去背精修或重切，而不是改 gameplay。
+
 ## [2026-06-19] M5-1／M5-2 第一輪場景接入
 
 - 背景：老闆要求嘗試把 M5-1 與 M5-2 收尾；既有素材包已建立但尚未接入世界地圖與港町。

@@ -10,6 +10,7 @@ import {
   codexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
 } from '../state';
+import { shipCardKey, shipEquipmentKey } from '../art';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
@@ -251,11 +252,18 @@ export default class InfoScene extends Phaser.Scene {
     const s = this.state;
     const flag = shipTypeOf(s);
     const figurehead = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
+    const cardKey = this.m5Texture(shipCardKey(flag.id), '');
+    if (cardKey) {
+      const card = this.add.image(1015, 215, cardKey).setDisplaySize(150, 200);
+      this.dyn.push(card);
+      this.dyn.push(this.add.text(1015, 328, flag.name, textStyle(13, '#5a4a30')).setOrigin(0.5));
+    }
+    this.drawShipEquipmentIcons(870, 360);
     this.addWrapped(
       290,
       112,
       `艦隊 ${fleetShips(s).length}/5 艘　貨艙 ${cargoCount(s)}/${cargoMax(s)}　糧水艙 ${supplyMax(s)}　水手 ${s.crew}/${crewMax(s)}（最低 ${fleetMinCrew(s)}）\n旗艦：${flag.name}　船體 ${s.ship.hull}/${flag.hullMax}　大砲 ${s.ship.cannons}/${flag.cannonSlots}　船首像：${figurehead?.name ?? '（無）'}`,
-      840,
+      cardKey ? 560 : 840,
       15
     );
 
@@ -289,6 +297,30 @@ export default class InfoScene extends Phaser.Scene {
       });
       const off = makeButton(this, 580 + def.roles.length * 105, y + 10, 82, 32, '不指派', () => this.assignRole(mate.id, null), 12);
       this.dyn.push(off);
+    });
+  }
+
+  private drawShipEquipmentIcons(x: number, y: number): void {
+    const entries = [
+      { label: '船首像', id: this.state.ship.figurehead },
+      { label: '裝甲', id: this.state.ship.armor },
+      { label: '船帆', id: this.state.ship.sail },
+      { label: '砲種', id: this.state.ship.cannonType },
+    ];
+    entries.forEach((entry, i) => {
+      const cx = x + i * 82;
+      const frame = this.add.rectangle(cx, y, 54, 54, COLORS.parchment, 0.9).setStrokeStyle(2, COLORS.wood);
+      this.dyn.push(frame);
+      const key = entry.id ? this.m5Texture(shipEquipmentKey(entry.id), '') : '';
+      if (key) {
+        this.dyn.push(this.add.image(cx, y, key).setDisplaySize(48, 48));
+      } else {
+        this.dyn.push(this.add.text(cx, y, '未裝', textStyle(11, '#8a7650')).setOrigin(0.5));
+      }
+      this.dyn.push(this.add.text(cx, y + 36, entry.label, textStyle(11, '#5a4a30')).setOrigin(0.5));
+      if (entry.id) {
+        this.dyn.push(this.add.text(cx, y + 51, itemNameById(entry.id), textStyle(10, '#6b5530')).setOrigin(0.5));
+      }
     });
   }
 
@@ -479,5 +511,9 @@ export default class InfoScene extends Phaser.Scene {
     saveGame(s);
     this.render();
     toast(this, roleKey ? `已指派為${roleName(roleKey)}。` : '已取消職位。');
+  }
+
+  private m5Texture(preferred: string, fallback: string): string {
+    return preferred && this.textures.exists(preferred) ? preferred : fallback;
   }
 }
