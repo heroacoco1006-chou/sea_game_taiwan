@@ -1,0 +1,344 @@
+{
+  "version": "m5-2-v2",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen built-in tool plus local Pillow slicing",
+  "artDirection": "V2 official style: refined 2D painterly maritime RPG illustration, pixel-art discipline, warm parchment, dark walnut outlines, deep ocean blue, aged gold, cinnabar and jade accents",
+  "sources": {
+    "world": "assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png",
+    "buildings": "assets/m5/v2/m5-2/source/m5-2-port-buildings-source.png",
+    "harbors": "assets/m5/v2/m5-2/source/m5-2-harbor-scenes-source.png",
+    "explorationIcons": "assets/m5/v2/m5-2/source/m5-2-exploration-icons-source.png",
+    "facilityIcons": "assets/m5/v2/m5-2/source/m5-2-map-facility-icons-source.png"
+  },
+  "world": {
+    "id": "sea_chart",
+    "source": "assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png",
+    "path": "assets/m5/v2/m5-2/world/sea_chart.png",
+    "preview": "assets/m5/v2/m5-2/world/sea_chart_preview.png"
+  },
+  "portBuildings": [
+    {
+      "id": "han_guild_hall",
+      "path": "assets/m5/v2/m5-2/ports/buildings/han_guild_hall.png"
+    },
+    {
+      "id": "han_mazu_temple",
+      "path": "assets/m5/v2/m5-2/ports/buildings/han_mazu_temple.png"
+    },
+    {
+      "id": "han_item_shop",
+      "path": "assets/m5/v2/m5-2/ports/buildings/han_item_shop.png"
+    },
+    {
+      "id": "han_shipyard_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/buildings/han_shipyard_warehouse.png"
+    },
+    {
+      "id": "japanese_machiya",
+      "path": "assets/m5/v2/m5-2/ports/buildings/japanese_machiya.png"
+    },
+    {
+      "id": "japanese_tavern",
+      "path": "assets/m5/v2/m5-2/ports/buildings/japanese_tavern.png"
+    },
+    {
+      "id": "japanese_inn",
+      "path": "assets/m5/v2/m5-2/ports/buildings/japanese_inn.png"
+    },
+    {
+      "id": "japanese_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/buildings/japanese_trade_office.png"
+    },
+    {
+      "id": "southeast_spice_market",
+      "path": "assets/m5/v2/m5-2/ports/buildings/southeast_spice_market.png"
+    },
+    {
+      "id": "southeast_stilt_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/buildings/southeast_stilt_warehouse.png"
+    },
+    {
+      "id": "southeast_tropical_inn",
+      "path": "assets/m5/v2/m5-2/ports/buildings/southeast_tropical_inn.png"
+    },
+    {
+      "id": "southeast_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/buildings/southeast_trade_office.png"
+    },
+    {
+      "id": "european_fort_gate",
+      "path": "assets/m5/v2/m5-2/ports/buildings/european_fort_gate.png"
+    },
+    {
+      "id": "spanish_church_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/buildings/spanish_church_warehouse.png"
+    },
+    {
+      "id": "voc_trading_post",
+      "path": "assets/m5/v2/m5-2/ports/buildings/voc_trading_post.png"
+    },
+    {
+      "id": "siraya_meeting_house",
+      "path": "assets/m5/v2/m5-2/ports/buildings/siraya_meeting_house.png"
+    }
+  ],
+  "harborScenes": [
+    {
+      "id": "tayouan_lagoon_fort",
+      "path": "assets/m5/v2/m5-2/ports/harbors/tayouan_lagoon_fort.png"
+    },
+    {
+      "id": "fujian_han_port",
+      "path": "assets/m5/v2/m5-2/ports/harbors/fujian_han_port.png"
+    },
+    {
+      "id": "japanese_hirado_nagasaki_harbor",
+      "path": "assets/m5/v2/m5-2/ports/harbors/japanese_hirado_nagasaki_harbor.png"
+    },
+    {
+      "id": "ryukyu_naha_shuri_harbor",
+      "path": "assets/m5/v2/m5-2/ports/harbors/ryukyu_naha_shuri_harbor.png"
+    },
+    {
+      "id": "southeast_spice_port",
+      "path": "assets/m5/v2/m5-2/ports/harbors/southeast_spice_port.png"
+    },
+    {
+      "id": "european_colonial_harbor",
+      "path": "assets/m5/v2/m5-2/ports/harbors/european_colonial_harbor.png"
+    }
+  ],
+  "explorationIcons": [
+    {
+      "id": "unknown_exploration",
+      "path": "assets/m5/v2/m5-2/exploration/icons/unknown_exploration.png"
+    },
+    {
+      "id": "scenery_magnifier",
+      "path": "assets/m5/v2/m5-2/exploration/icons/scenery_magnifier.png"
+    },
+    {
+      "id": "harbor_marker",
+      "path": "assets/m5/v2/m5-2/exploration/icons/harbor_marker.png"
+    },
+    {
+      "id": "compass_marker",
+      "path": "assets/m5/v2/m5-2/exploration/icons/compass_marker.png"
+    },
+    {
+      "id": "telescope_marker",
+      "path": "assets/m5/v2/m5-2/exploration/icons/telescope_marker.png"
+    },
+    {
+      "id": "mountain_trail_marker",
+      "path": "assets/m5/v2/m5-2/exploration/icons/mountain_trail_marker.png"
+    },
+    {
+      "id": "taroko_gorge",
+      "path": "assets/m5/v2/m5-2/exploration/icons/taroko_gorge.png"
+    },
+    {
+      "id": "jade_mountain",
+      "path": "assets/m5/v2/m5-2/exploration/icons/jade_mountain.png"
+    },
+    {
+      "id": "alishan_forest",
+      "path": "assets/m5/v2/m5-2/exploration/icons/alishan_forest.png"
+    },
+    {
+      "id": "siraya_plain_village",
+      "path": "assets/m5/v2/m5-2/exploration/icons/siraya_plain_village.png"
+    },
+    {
+      "id": "quanzhou_mazu_temple",
+      "path": "assets/m5/v2/m5-2/exploration/icons/quanzhou_mazu_temple.png"
+    },
+    {
+      "id": "forbidden_city_gate",
+      "path": "assets/m5/v2/m5-2/exploration/icons/forbidden_city_gate.png"
+    },
+    {
+      "id": "hanyang_city_gate",
+      "path": "assets/m5/v2/m5-2/exploration/icons/hanyang_city_gate.png"
+    },
+    {
+      "id": "shuri_castle_hill",
+      "path": "assets/m5/v2/m5-2/exploration/icons/shuri_castle_hill.png"
+    },
+    {
+      "id": "unzen_volcano",
+      "path": "assets/m5/v2/m5-2/exploration/icons/unzen_volcano.png"
+    },
+    {
+      "id": "sakai_workshop_street",
+      "path": "assets/m5/v2/m5-2/exploration/icons/sakai_workshop_street.png"
+    },
+    {
+      "id": "java_volcano",
+      "path": "assets/m5/v2/m5-2/exploration/icons/java_volcano.png"
+    },
+    {
+      "id": "moluccas_spice_forest",
+      "path": "assets/m5/v2/m5-2/exploration/icons/moluccas_spice_forest.png"
+    },
+    {
+      "id": "qingshui_cliff",
+      "path": "assets/m5/v2/m5-2/exploration/icons/qingshui_cliff.png"
+    },
+    {
+      "id": "penghu_basalt",
+      "path": "assets/m5/v2/m5-2/exploration/icons/penghu_basalt.png"
+    },
+    {
+      "id": "yuegang_river",
+      "path": "assets/m5/v2/m5-2/exploration/icons/yuegang_river.png"
+    },
+    {
+      "id": "macau_church",
+      "path": "assets/m5/v2/m5-2/exploration/icons/macau_church.png"
+    },
+    {
+      "id": "nagasaki_dejima",
+      "path": "assets/m5/v2/m5-2/exploration/icons/nagasaki_dejima.png"
+    },
+    {
+      "id": "hirado_trading_post",
+      "path": "assets/m5/v2/m5-2/exploration/icons/hirado_trading_post.png"
+    },
+    {
+      "id": "manila_city_wall",
+      "path": "assets/m5/v2/m5-2/exploration/icons/manila_city_wall.png"
+    },
+    {
+      "id": "hoi_an_japanese_bridge",
+      "path": "assets/m5/v2/m5-2/exploration/icons/hoi_an_japanese_bridge.png"
+    },
+    {
+      "id": "malacca_strait",
+      "path": "assets/m5/v2/m5-2/exploration/icons/malacca_strait.png"
+    },
+    {
+      "id": "batavia_canal",
+      "path": "assets/m5/v2/m5-2/exploration/icons/batavia_canal.png"
+    },
+    {
+      "id": "banten_pepper_market",
+      "path": "assets/m5/v2/m5-2/exploration/icons/banten_pepper_market.png"
+    },
+    {
+      "id": "banda_islands",
+      "path": "assets/m5/v2/m5-2/exploration/icons/banda_islands.png"
+    }
+  ],
+  "facilityIcons": [
+    {
+      "id": "port_marker_roof",
+      "path": "assets/m5/v2/m5-2/ui/icons/port_marker_roof.png"
+    },
+    {
+      "id": "port_marker_anchor",
+      "path": "assets/m5/v2/m5-2/ui/icons/port_marker_anchor.png"
+    },
+    {
+      "id": "unknown_question",
+      "path": "assets/m5/v2/m5-2/ui/icons/unknown_question.png"
+    },
+    {
+      "id": "scenery_magnifier",
+      "path": "assets/m5/v2/m5-2/ui/icons/scenery_magnifier.png"
+    },
+    {
+      "id": "quest_scroll",
+      "path": "assets/m5/v2/m5-2/ui/icons/quest_scroll.png"
+    },
+    {
+      "id": "pirate_target",
+      "path": "assets/m5/v2/m5-2/ui/icons/pirate_target.png"
+    },
+    {
+      "id": "trading_post",
+      "path": "assets/m5/v2/m5-2/ui/icons/trading_post.png"
+    },
+    {
+      "id": "shipyard",
+      "path": "assets/m5/v2/m5-2/ui/icons/shipyard.png"
+    },
+    {
+      "id": "tavern",
+      "path": "assets/m5/v2/m5-2/ui/icons/tavern.png"
+    },
+    {
+      "id": "inn",
+      "path": "assets/m5/v2/m5-2/ui/icons/inn.png"
+    },
+    {
+      "id": "government_office",
+      "path": "assets/m5/v2/m5-2/ui/icons/government_office.png"
+    },
+    {
+      "id": "item_shop",
+      "path": "assets/m5/v2/m5-2/ui/icons/item_shop.png"
+    },
+    {
+      "id": "supply_food",
+      "path": "assets/m5/v2/m5-2/ui/icons/supply_food.png"
+    },
+    {
+      "id": "water_barrel",
+      "path": "assets/m5/v2/m5-2/ui/icons/water_barrel.png"
+    },
+    {
+      "id": "cargo_crate",
+      "path": "assets/m5/v2/m5-2/ui/icons/cargo_crate.png"
+    },
+    {
+      "id": "coins",
+      "path": "assets/m5/v2/m5-2/ui/icons/coins.png"
+    },
+    {
+      "id": "compass",
+      "path": "assets/m5/v2/m5-2/ui/icons/compass.png"
+    },
+    {
+      "id": "wind_swirl",
+      "path": "assets/m5/v2/m5-2/ui/icons/wind_swirl.png"
+    },
+    {
+      "id": "storm_cloud",
+      "path": "assets/m5/v2/m5-2/ui/icons/storm_cloud.png"
+    },
+    {
+      "id": "rat_status",
+      "path": "assets/m5/v2/m5-2/ui/icons/rat_status.png"
+    },
+    {
+      "id": "scurvy_lime",
+      "path": "assets/m5/v2/m5-2/ui/icons/scurvy_lime.png"
+    },
+    {
+      "id": "ship_cat",
+      "path": "assets/m5/v2/m5-2/ui/icons/ship_cat.png"
+    },
+    {
+      "id": "prayer_potion",
+      "path": "assets/m5/v2/m5-2/ui/icons/prayer_potion.png"
+    },
+    {
+      "id": "repair_hammer",
+      "path": "assets/m5/v2/m5-2/ui/icons/repair_hammer.png"
+    }
+  ],
+  "contactSheets": {
+    "overview": "assets/m5/v2/m5-2/m5-2-v2-contact-sheet.png",
+    "buildings": "assets/m5/v2/m5-2/m5-2-v2-buildings-contact-sheet.png",
+    "harbors": "assets/m5/v2/m5-2/m5-2-v2-harbors-contact-sheet.png",
+    "exploration": "assets/m5/v2/m5-2/m5-2-v2-exploration-contact-sheet.png",
+    "facility": "assets/m5/v2/m5-2/m5-2-v2-facility-contact-sheet.png"
+  },
+  "notes": [
+    "M5-2 v2 establishes the V2 visual style for world map, ports, exploration markers, and facility icons.",
+    "Building source generated as a 4x4 sheet, so this first pack contains 16 refined buildings rather than the originally requested 20.",
+    "World map is a visual art source; gameplay coordinates and collision still come from src/data/map.json and existing scene code.",
+    "No KOEI or other commercial game pixels were copied, cropped, traced, or adapted."
+  ]
+}
