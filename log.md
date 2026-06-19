@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-19] 修正 | 操作者：Codex | 修正主角行走圖左右與上方向對齊
+
+- 背景：老闆回報港町主角向下正常，但左、右、上方向圖案沒有對齊，需要測試修正。
+- 原因：M5-3 v2 行走圖從 imagegen source 切格時，左右幀帶入相鄰格殘影；背面幀在原始格內偏位，導致向上顯示偏移。
+- 完成事項：
+  - `tools/slice-m5-3-v2-supplement-art.py` 新增 alpha component 清理、透明 bbox 裁切、水平置中與腳底固定高度輸出。
+  - 重切三主角 7 格行走 spritesheet 與逐格 PNG，更新 walk contact sheet。
+  - `PortScene` 改用 `setPlayerWalkFrame()` 統一切換 frame、flipX、origin，避免不同方向切換時殘留錯誤錨點。
+- 驗證：重切後三主角 7 格 bbox 中心皆落在 x 約 47～47.5（96px frame）；左右單格殘影消失；`npm run build` 通過（sandbox 內 esbuild EPERM，改用非 sandbox 重跑通過）；Browser 載入月港測試 console 無錯誤。
+- 備註：背面幀因原始 imagegen source 本身較窄，已置中避免偏移；若後續要更完整背面姿勢，建議在 M5 視覺細修時以 image2.0 補繪完整背面行走格。
+
 ## [2026-06-19] 開發 | 操作者：Codex | 完成 M5-3 角色與船隻素材接入
 
 - 背景：老闆要求把 M5-3 完成；此前 v2 素材已生成，頭像與船隻 world/battle sprite 已接入，但港町主角行走圖、船卡與船隻裝備外觀尚未進遊戲 UI。

@@ -39,6 +39,7 @@ const TOWN_W = 2000;
 const TOWN_H = 1100;
 const MINI_W = 180;
 const MINI_H = 100;
+const WALK_BACK_ORIGIN_X = 0.5;
 
 const FACILITY_SLOTS: LayoutSlot[] = [
   { x: 320, y: 285 },
@@ -147,7 +148,8 @@ export default class PortScene extends Phaser.Scene {
     this.playerWalkKey = this.textures.exists(characterWalkKey(this.state.story.heroId)) ? characterWalkKey(this.state.story.heroId) : null;
     this.player = this.add.sprite(start.x, start.y, this.playerWalkKey ?? 'player').setDepth(10);
     if (this.playerWalkKey) {
-      this.player.setFrame(0).setDisplaySize(42, 56);
+      this.setPlayerWalkFrame(0);
+      this.player.setDisplaySize(42, 56);
     } else {
       this.player.setDisplaySize(32, 48);
     }
@@ -457,15 +459,19 @@ export default class PortScene extends Phaser.Scene {
     if (!this.playerWalkKey) return;
     const step = Math.floor(this.time.now / 160) % 3;
     if (Math.abs(nx) > Math.abs(ny)) {
-      this.player.setFlipX(nx < 0);
-      this.player.setFrame(3 + step);
+      this.setPlayerWalkFrame(3 + step, nx < 0);
     } else if (ny < 0) {
-      this.player.setFlipX(false);
-      this.player.setFrame(6);
+      this.setPlayerWalkFrame(6);
     } else {
-      this.player.setFlipX(false);
-      this.player.setFrame(step === 0 ? 0 : step);
+      this.setPlayerWalkFrame(step === 0 ? 0 : step);
     }
+  }
+
+  private setPlayerWalkFrame(frame: number, flipX = false): void {
+    const originX = frame === 6 ? WALK_BACK_ORIGIN_X : 0.5;
+    this.player.setFlipX(flipX);
+    this.player.setOrigin(originX, 0.5);
+    this.player.setFrame(frame);
   }
 
   private enterBuilding(b: Building): void {

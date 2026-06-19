@@ -81,6 +81,71 @@ def remove_green_key(img: Image.Image) -> Image.Image:
     return src
 
 
+def alpha_bbox(img: Image.Image, threshold: int = 20) -> tuple[int, int, int, int] | None:
+    alpha = img.getchannel("A")
+    mask = alpha.point(lambda a: 255 if a > threshold else 0)
+    return mask.getbbox()
+
+
+def keep_main_alpha_components(img: Image.Image, threshold: int = 20) -> Image.Image:
+    src = img.convert("RGBA")
+    pixels = src.load()
+    visited: set[tuple[int, int]] = set()
+    components: list[tuple[int, list[tuple[int, int]]]] = []
+
+    for sy in range(src.height):
+        for sx in range(src.width):
+            if (sx, sy) in visited or pixels[sx, sy][3] <= threshold:
+                continue
+            stack = [(sx, sy)]
+            visited.add((sx, sy))
+            points: list[tuple[int, int]] = []
+            while stack:
+                x, y = stack.pop()
+                points.append((x, y))
+                for nx in (x - 1, x, x + 1):
+                    for ny in (y - 1, y, y + 1):
+                        if nx < 0 or nx >= src.width or ny < 0 or ny >= src.height or (nx, ny) in visited:
+                            continue
+                        if pixels[nx, ny][3] <= threshold:
+                            continue
+                        visited.add((nx, ny))
+                        stack.append((nx, ny))
+            components.append((len(points), points))
+
+    if not components:
+        return src
+
+    max_area = max(area for area, _ in components)
+    keep: set[tuple[int, int]] = set()
+    for area, points in components:
+        # Keep the body and meaningful attached details, drop thin leftovers from neighboring frames.
+        if area >= max_area * 0.03:
+            keep.update(points)
+
+    out = src.copy()
+    out_pixels = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            if out_pixels[x, y][3] > threshold and (x, y) not in keep:
+                out_pixels[x, y] = (*out_pixels[x, y][:3], 0)
+    return out
+
+
+def normalize_walk_sprite(img: Image.Image, size: tuple[int, int]) -> Image.Image:
+    cleaned = keep_main_alpha_components(img)
+    bbox = alpha_bbox(cleaned)
+    if not bbox:
+        return Image.new("RGBA", size, (0, 0, 0, 0))
+    cropped = cleaned.crop(bbox)
+    cropped.thumbnail((size[0] - 12, size[1] - 14), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    x = (size[0] - cropped.width) // 2
+    y = size[1] - 14 - cropped.height
+    canvas.alpha_composite(cropped, (x, y))
+    return canvas
+
+
 def contain_rgba(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     work = img.copy()
@@ -132,7 +197,7 @@ def slice_walk() -> list[dict[str, object]]:
         frames: list[dict[str, str]] = []
         for col, frame_name in enumerate(WALK_FRAMES):
             tile = crop_grid(source, len(WALK_FRAMES), len(HERO_ROWS), row * len(WALK_FRAMES) + col)
-            sprite = contain_rgba(remove_green_key(tile), frame_size)
+            sprite = normalize_walk_sprite(remove_green_key(tile), frame_size)
             frame_dir = OUT / "characters" / "walk" / "frames" / hero_id
             frame_dir.mkdir(parents=True, exist_ok=True)
             frame_path = frame_dir / f"{frame_name}.png"

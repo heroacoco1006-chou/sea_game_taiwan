@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-19] M5-3 主角行走圖切片對齊規則
+
+- 背景：港町主角向下行走正常，但左、右、上方向出現對齊問題；根因不是 Phaser 顯示尺寸，而是行走圖 source 切格後帶入相鄰格殘影與背面幀偏位。
+- 記憶（切片管線）：
+  - `tools/slice-m5-3-v2-supplement-art.py` 的 walk 輸出不能只對原始 grid tile 做 `contain_rgba`；imagegen source 可能會有相鄰格殘影、透明 bbox 偏位與角色不在格中央的問題。
+  - 現在流程為 `remove_green_key` → `keep_main_alpha_components` → alpha bbox crop → thumbnail 到 84×114 以內 → frame x 軸置中、腳底固定在 y=114。
+  - 重跑腳本會覆蓋 `assets/m5/v2/characters/walk/{lin,peter,chiyo}.png`、`frames/` 逐格圖與 `m5-3-v2-walk-contact-sheet.png`；後續若補繪 source，仍應沿用這套正規化流程。
+- 注意：目前背面幀因原始 imagegen source 畫面較窄，只能置中避免偏移；若視覺仍不足，應重繪完整 back frame，而不是用 scene origin 硬調。
+
 ## [2026-06-19] M5-3 角色與船隻第一輪接入完成
 
 - 背景：老闆要求完成 M5-3；此前頭像、船隻 world/battle sprite 已接入，但主角行走圖、船卡與船隻裝備外觀仍未進遊戲 UI。
