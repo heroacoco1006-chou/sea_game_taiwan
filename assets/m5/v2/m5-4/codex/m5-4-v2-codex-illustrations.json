@@ -1,0 +1,993 @@
+{
+  "version": "m5-4-v2",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen built-in tool plus local Pillow slicing and reuse manifest builder",
+  "sources": {
+    "historyTrade": "assets/m5/v2/m5-4/codex/source/m5-4-codex-history-trade-v2-source.png",
+    "species": "assets/m5/v2/m5-4/codex/source/m5-4-codex-species-v2-source.png"
+  },
+  "illustrationSize": [
+    384,
+    384
+  ],
+  "counts": {
+    "generated_history_trade": 37,
+    "reuse_m5_2": 25,
+    "reuse_portrait": 28,
+    "generated_species": 30
+  },
+  "total": 120,
+  "entries": [
+    {
+      "id": "codex_lin_1_0",
+      "title": "明末海禁",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_1_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_1_0.png"
+    },
+    {
+      "id": "codex_lin_2_0",
+      "title": "笨港",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_2_0.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/ports/harbors/fujian_han_port.png"
+    },
+    {
+      "id": "codex_lin_2_1",
+      "title": "顏思齊",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_2_1.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/yan_siqi.png"
+    },
+    {
+      "id": "codex_lin_3_0",
+      "title": "鄭芝龍",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_3_0.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_zhilong.png"
+    },
+    {
+      "id": "codex_lin_3_1",
+      "title": "生絲",
+      "category": "trade",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_3_1.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_3_1.png"
+    },
+    {
+      "id": "codex_lin_4_0",
+      "title": "鄭芝龍崛起",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_4_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_4_0.png"
+    },
+    {
+      "id": "codex_lin_5_0",
+      "title": "鄭芝龍受撫",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_5_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_5_0.png"
+    },
+    {
+      "id": "codex_lin_6_0",
+      "title": "料羅灣海戰",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_6_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_6_0.png"
+    },
+    {
+      "id": "codex_lin_7_0",
+      "title": "鄭氏的海上霸權",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_7_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_7_0.png"
+    },
+    {
+      "id": "codex_lin_8_0",
+      "title": "明清易代與鄭芝龍降清",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_8_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_8_0.png"
+    },
+    {
+      "id": "codex_lin_9_0",
+      "title": "鄭成功（國姓爺）",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_9_0.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_chenggong.png"
+    },
+    {
+      "id": "codex_lin_10_0",
+      "title": "鄭成功攻台與熱蘭遮城之戰",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_lin_10_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_lin_10_0.png"
+    },
+    {
+      "id": "codex_peter_1_0",
+      "title": "荷蘭東印度公司（VOC）",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_1_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_1_0.png"
+    },
+    {
+      "id": "codex_peter_2_0",
+      "title": "1622 年澎湖事件",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_2_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_2_0.png"
+    },
+    {
+      "id": "codex_peter_3_0",
+      "title": "熱蘭遮城",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_3_0.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/ports/harbors/tayouan_lagoon_fort.png"
+    },
+    {
+      "id": "codex_peter_4_0",
+      "title": "鹿皮與蔗糖",
+      "category": "trade",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_4_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_4_0.png"
+    },
+    {
+      "id": "codex_peter_5_0",
+      "title": "濱田彌兵衛事件",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_5_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_5_0.png"
+    },
+    {
+      "id": "codex_peter_6_0",
+      "title": "荷蘭驅逐西班牙",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_6_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_6_0.png"
+    },
+    {
+      "id": "codex_peter_7_0",
+      "title": "荷蘭治台制度",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_7_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_7_0.png"
+    },
+    {
+      "id": "codex_peter_8_0",
+      "title": "郭懷一事件",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_8_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_8_0.png"
+    },
+    {
+      "id": "codex_peter_9_0",
+      "title": "鄭成功的威脅",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_9_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_9_0.png"
+    },
+    {
+      "id": "codex_peter_10_0",
+      "title": "熱蘭遮城之戰（荷蘭視角）",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_peter_10_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_peter_10_0.png"
+    },
+    {
+      "id": "codex_chiyo_1_0",
+      "title": "朱印船貿易",
+      "category": "ship",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_1_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_1_0.png"
+    },
+    {
+      "id": "codex_chiyo_2_0",
+      "title": "濱田彌兵衛事件",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_2_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_2_0.png"
+    },
+    {
+      "id": "codex_chiyo_3_0",
+      "title": "白銀與生絲",
+      "category": "trade",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_3_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_3_0.png"
+    },
+    {
+      "id": "codex_chiyo_4_0",
+      "title": "那霸與琉球的中介角色",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_4_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_4_0.png"
+    },
+    {
+      "id": "codex_chiyo_5_0",
+      "title": "夾縫中的朱印船商人",
+      "category": "ship",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_5_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_5_0.png"
+    },
+    {
+      "id": "codex_chiyo_6_0",
+      "title": "鎖國令",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_6_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_6_0.png"
+    },
+    {
+      "id": "codex_chiyo_7_0",
+      "title": "出島",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_7_0.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/nagasaki_dejima.png"
+    },
+    {
+      "id": "codex_chiyo_8_0",
+      "title": "東亞貿易網與人的相遇",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_8_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_8_0.png"
+    },
+    {
+      "id": "codex_chiyo_9_0",
+      "title": "鄭成功的威脅（東亞各方的關注）",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_9_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_9_0.png"
+    },
+    {
+      "id": "codex_chiyo_10_0",
+      "title": "熱蘭遮城之戰（民間商人視角）",
+      "category": "event",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/codex_chiyo_10_0.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/codex_chiyo_10_0.png"
+    },
+    {
+      "id": "view_qingshui_cliff",
+      "title": "清水斷崖",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_qingshui_cliff.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/qingshui_cliff.png"
+    },
+    {
+      "id": "view_taiwan_west_lagoons",
+      "title": "台灣西南潟湖",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_taiwan_west_lagoons.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/ports/harbors/tayouan_lagoon_fort.png"
+    },
+    {
+      "id": "view_penghu_basalt",
+      "title": "澎湖玄武岩",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_penghu_basalt.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/penghu_basalt.png"
+    },
+    {
+      "id": "view_quanzhou_mazu",
+      "title": "泉州媽祖廟",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_quanzhou_mazu.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/quanzhou_mazu_temple.png"
+    },
+    {
+      "id": "view_yuegang_river",
+      "title": "月港河道",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_yuegang_river.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/yuegang_river.png"
+    },
+    {
+      "id": "view_macau_church",
+      "title": "澳門大三巴",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_macau_church.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/macau_church.png"
+    },
+    {
+      "id": "view_nagasaki_dejima",
+      "title": "長崎出島",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_nagasaki_dejima.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/nagasaki_dejima.png"
+    },
+    {
+      "id": "view_hirado_trading_post",
+      "title": "平戶商館",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_hirado_trading_post.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/hirado_trading_post.png"
+    },
+    {
+      "id": "view_shuri_castle",
+      "title": "首里城",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_shuri_castle.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/shuri_castle_hill.png"
+    },
+    {
+      "id": "view_manila_walls",
+      "title": "馬尼拉城牆",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_manila_walls.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/manila_city_wall.png"
+    },
+    {
+      "id": "view_hoian_bridge",
+      "title": "會安日本橋",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_hoian_bridge.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/hoi_an_japanese_bridge.png"
+    },
+    {
+      "id": "view_malacca_strait",
+      "title": "麻六甲海峽",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_malacca_strait.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/malacca_strait.png"
+    },
+    {
+      "id": "view_batavia_canal",
+      "title": "巴達維亞運河",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_batavia_canal.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/batavia_canal.png"
+    },
+    {
+      "id": "view_banten_pepper",
+      "title": "萬丹胡椒市集",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_banten_pepper.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/banten_pepper_market.png"
+    },
+    {
+      "id": "view_banda_islands",
+      "title": "班達群島",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_banda_islands.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/banda_islands.png"
+    },
+    {
+      "id": "geo_yushan",
+      "title": "玉山",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/geo_yushan.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/jade_mountain.png"
+    },
+    {
+      "id": "geo_alishan",
+      "title": "阿里山森林",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/geo_alishan.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/alishan_forest.png"
+    },
+    {
+      "id": "geo_unzen",
+      "title": "雲仙火山",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/geo_unzen.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/unzen_volcano.png"
+    },
+    {
+      "id": "geo_java_volcano",
+      "title": "爪哇火山",
+      "category": "nature",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/geo_java_volcano.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/java_volcano.png"
+    },
+    {
+      "id": "culture_siraya",
+      "title": "西拉雅平原社",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/culture_siraya.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/culture_siraya.png"
+    },
+    {
+      "id": "culture_mazu",
+      "title": "媽祖信仰",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/culture_mazu.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/culture_mazu.png"
+    },
+    {
+      "id": "culture_ming_court",
+      "title": "明末朝貢秩序",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/culture_ming_court.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/culture_ming_court.png"
+    },
+    {
+      "id": "culture_korean_seowon",
+      "title": "朝鮮書院文化",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/culture_korean_seowon.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/culture_korean_seowon.png"
+    },
+    {
+      "id": "culture_sakai_merchants",
+      "title": "堺商人",
+      "category": "system",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/culture_sakai_merchants.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/culture_sakai_merchants.png"
+    },
+    {
+      "id": "view_sakai_workshops",
+      "title": "堺工坊街",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/view_sakai_workshops.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/sakai_workshop_street.png"
+    },
+    {
+      "id": "place_forbidden_city",
+      "title": "紫禁城",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/place_forbidden_city.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/forbidden_city_gate.png"
+    },
+    {
+      "id": "place_hanyang",
+      "title": "漢陽城",
+      "category": "place",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/place_hanyang.png",
+      "sourceType": "reuse_m5_2",
+      "sourceAsset": "assets/m5/v2/m5-2/exploration/icons/hanyang_city_gate.png"
+    },
+    {
+      "id": "sp_swinhoe_frog",
+      "title": "斯文豪氏赤蛙",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_swinhoe_frog.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_swinhoe_frog.png"
+    },
+    {
+      "id": "sp_taiwan_blue_magpie",
+      "title": "台灣藍鵲",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_taiwan_blue_magpie.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_taiwan_blue_magpie.png"
+    },
+    {
+      "id": "sp_mikado_pheasant",
+      "title": "帝雉",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_mikado_pheasant.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_mikado_pheasant.png"
+    },
+    {
+      "id": "sp_taiwan_macaque",
+      "title": "台灣獼猴",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_taiwan_macaque.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_taiwan_macaque.png"
+    },
+    {
+      "id": "sp_sika_deer",
+      "title": "梅花鹿",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_sika_deer.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_sika_deer.png"
+    },
+    {
+      "id": "sp_taiwan_black_bear",
+      "title": "台灣黑熊",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_taiwan_black_bear.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_taiwan_black_bear.png"
+    },
+    {
+      "id": "sp_formosan_salmon",
+      "title": "櫻花鉤吻鮭",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_formosan_salmon.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_formosan_salmon.png"
+    },
+    {
+      "id": "sp_taiwan_salamander",
+      "title": "台灣山椒魚",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_taiwan_salamander.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_taiwan_salamander.png"
+    },
+    {
+      "id": "sp_lanyu_scops_owl",
+      "title": "蘭嶼角鴞",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_lanyu_scops_owl.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_lanyu_scops_owl.png"
+    },
+    {
+      "id": "sp_green_turtle",
+      "title": "綠蠵龜",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_green_turtle.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_green_turtle.png"
+    },
+    {
+      "id": "sp_red_crowned_crane",
+      "title": "丹頂鶴",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_red_crowned_crane.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_red_crowned_crane.png"
+    },
+    {
+      "id": "sp_japanese_macaque",
+      "title": "日本獼猴",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_japanese_macaque.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_japanese_macaque.png"
+    },
+    {
+      "id": "sp_ryukyu_flying_fox",
+      "title": "琉球狐蝠",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_ryukyu_flying_fox.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_ryukyu_flying_fox.png"
+    },
+    {
+      "id": "sp_ryukyu_kingfisher",
+      "title": "琉球翠鳥",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_ryukyu_kingfisher.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_ryukyu_kingfisher.png"
+    },
+    {
+      "id": "sp_korean_tiger",
+      "title": "朝鮮虎",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_korean_tiger.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_korean_tiger.png"
+    },
+    {
+      "id": "sp_koi",
+      "title": "錦鯉",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_koi.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_koi.png"
+    },
+    {
+      "id": "sp_giant_salamander",
+      "title": "大鯢",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_giant_salamander.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_giant_salamander.png"
+    },
+    {
+      "id": "sp_orangutan",
+      "title": "紅毛猩猩",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_orangutan.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_orangutan.png"
+    },
+    {
+      "id": "sp_hornbill",
+      "title": "犀鳥",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_hornbill.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_hornbill.png"
+    },
+    {
+      "id": "sp_bird_of_paradise",
+      "title": "天堂鳥",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_bird_of_paradise.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_bird_of_paradise.png"
+    },
+    {
+      "id": "sp_javan_rhino",
+      "title": "爪哇犀牛",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_javan_rhino.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_javan_rhino.png"
+    },
+    {
+      "id": "sp_komodo_dragon",
+      "title": "科摩多巨蜥",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_komodo_dragon.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_komodo_dragon.png"
+    },
+    {
+      "id": "sp_sumatran_tiger",
+      "title": "蘇門答臘虎",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_sumatran_tiger.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_sumatran_tiger.png"
+    },
+    {
+      "id": "sp_tarsier",
+      "title": "眼鏡猴",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_tarsier.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_tarsier.png"
+    },
+    {
+      "id": "sp_coconut_crab",
+      "title": "椰子蟹",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_coconut_crab.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_coconut_crab.png"
+    },
+    {
+      "id": "sp_sea_turtle",
+      "title": "海龜",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_sea_turtle.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_sea_turtle.png"
+    },
+    {
+      "id": "sp_coral_reef_fish",
+      "title": "珊瑚礁魚群",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_coral_reef_fish.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_coral_reef_fish.png"
+    },
+    {
+      "id": "sp_clove_tree",
+      "title": "丁香樹",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_clove_tree.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_clove_tree.png"
+    },
+    {
+      "id": "sp_nutmeg_tree",
+      "title": "肉豆蔻樹",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_nutmeg_tree.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_nutmeg_tree.png"
+    },
+    {
+      "id": "sp_banteng_pepper",
+      "title": "胡椒藤",
+      "category": "species",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/sp_banteng_pepper.png",
+      "sourceType": "generated_species",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/species/sp_banteng_pepper.png"
+    },
+    {
+      "id": "tr_mazu_amulet",
+      "title": "海商護符",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_mazu_amulet.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_mazu_amulet.png"
+    },
+    {
+      "id": "tr_merchant_abacus",
+      "title": "堺商人的小算盤",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_merchant_abacus.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_merchant_abacus.png"
+    },
+    {
+      "id": "tr_old_compass",
+      "title": "古航海羅盤",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_old_compass.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_old_compass.png"
+    },
+    {
+      "id": "tr_seafarer_telescope",
+      "title": "異國望遠鏡",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_seafarer_telescope.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_seafarer_telescope.png"
+    },
+    {
+      "id": "tr_spice_specimen",
+      "title": "香料標本盒",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_spice_specimen.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_spice_specimen.png"
+    },
+    {
+      "id": "tr_coral_specimen",
+      "title": "珊瑚標本",
+      "category": "treasure",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/tr_coral_specimen.png",
+      "sourceType": "generated_history_trade",
+      "sourceAsset": "assets/m5/v2/m5-4/codex/generated/history_trade/tr_coral_specimen.png"
+    },
+    {
+      "id": "mate_zheng_he",
+      "title": "鄭和",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_zheng_he.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_he.png"
+    },
+    {
+      "id": "mate_shen_yourong",
+      "title": "沈有容",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_shen_yourong.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/shen_yourong.png"
+    },
+    {
+      "id": "mate_yamada",
+      "title": "山田長政",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_yamada.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/yamada.png"
+    },
+    {
+      "id": "mate_li_dan",
+      "title": "李旦",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_li_dan.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/li_dan.png"
+    },
+    {
+      "id": "mate_hamada",
+      "title": "濱田彌兵衛",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_hamada.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/hamada.png"
+    },
+    {
+      "id": "mate_anjin",
+      "title": "三浦按針",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_anjin.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/anjin.png"
+    },
+    {
+      "id": "mate_liu_xiang",
+      "title": "劉香",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_liu_xiang.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/liu_xiang.png"
+    },
+    {
+      "id": "mate_jana",
+      "title": "謝名親方",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_jana.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/jana.png"
+    },
+    {
+      "id": "mate_linschoten",
+      "title": "林斯豪頓",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_linschoten.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/linschoten.png"
+    },
+    {
+      "id": "mate_su_minggang",
+      "title": "蘇鳴崗",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_su_minggang.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/su_minggang.png"
+    },
+    {
+      "id": "mate_chen_di",
+      "title": "陳第",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_chen_di.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/chen_di.png"
+    },
+    {
+      "id": "mate_he_bin",
+      "title": "何斌",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_he_bin.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/he_bin.png"
+    },
+    {
+      "id": "mate_guo_huaiyi",
+      "title": "郭懷一",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_guo_huaiyi.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/guo_huaiyi.png"
+    },
+    {
+      "id": "mate_lika",
+      "title": "理加",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_lika.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/lika.png"
+    },
+    {
+      "id": "mate_candidius",
+      "title": "干治士",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_candidius.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/candidius.png"
+    },
+    {
+      "id": "mate_esquivel",
+      "title": "艾斯基維",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_esquivel.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/esquivel.png"
+    },
+    {
+      "id": "mate_pinto",
+      "title": "平托",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_pinto.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/pinto.png"
+    },
+    {
+      "id": "mate_adika",
+      "title": "阿迪卡",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_adika.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/adika.png"
+    },
+    {
+      "id": "mate_salima",
+      "title": "莎麗瑪",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_salima.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/salima.png"
+    },
+    {
+      "id": "mate_yusuf",
+      "title": "尤蘇夫",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_yusuf.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/yusuf.png"
+    },
+    {
+      "id": "mate_yan_siqi",
+      "title": "顏思齊",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_yan_siqi.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/yan_siqi.png"
+    },
+    {
+      "id": "mate_zheng_zhilong",
+      "title": "鄭芝龍",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_zheng_zhilong.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_zhilong.png"
+    },
+    {
+      "id": "mate_zheng_chenggong",
+      "title": "鄭成功",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_zheng_chenggong.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_chenggong.png"
+    },
+    {
+      "id": "mate_zheng_jing",
+      "title": "鄭經",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_zheng_jing.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/zheng_jing.png"
+    },
+    {
+      "id": "mate_shi_lang",
+      "title": "施琅",
+      "category": "people",
+      "path": "assets/m5/v2/m5-4/codex/illustrations/mate_shi_lang.png",
+      "sourceType": "reuse_portrait",
+      "sourceAsset": "assets/m5/v2/characters/portraits/shi_lang.png"
+    }
+  ],
+  "contactSheets": {
+    "all": "assets/m5/v2/m5-4/codex/m5-4-v2-codex-contact-sheet.png",
+    "historyTrade": "assets/m5/v2/m5-4/codex/m5-4-v2-history-trade-contact-sheet.png",
+    "species": "assets/m5/v2/m5-4/codex/m5-4-v2-species-contact-sheet.png"
+  },
+  "notes": [
+    "People codex entries reuse M5-3 v2 portraits.",
+    "Place and nature codex entries reuse M5-2 v2 harbor and exploration art when possible.",
+    "Event, system, trade, ship, treasure, and species entries use new M5-4 generated sheets.",
+    "All final codex illustrations are exported as 384x384 PNGs for the right-side codex panel."
+  ]
+}

@@ -4,6 +4,35 @@
 
 ---
 
+## M5-4 圖鑑插圖精緻素材 v2（2026-06-19）
+
+- **素材位置**：`assets/m5/v2/m5-4/codex/`
+- **內容**：
+  - `assets/m5/v2/m5-4/codex/source/`：imagegen 產出的歷史／制度／貿易／船舶／寶物圖板與生物圖板 source 原圖。
+  - `assets/m5/v2/m5-4/codex/generated/`：由 source 圖板切出的事件、制度、貿易、船舶、寶物與生物中繼圖。
+  - `assets/m5/v2/m5-4/codex/illustrations/`：對應 `src/data/codex.json` 120 筆圖鑑的 384×384 PNG 插圖。
+  - `assets/m5/v2/m5-4/codex/m5-4-v2-codex-illustrations.json`：120 筆圖鑑插圖 manifest；`m5-4-v2-codex-prompts.md`：prompt 紀錄。
+  - `assets/m5/v2/m5-4/codex/m5-4-v2-codex-contact-sheet.png`、`m5-4-v2-history-trade-contact-sheet.png`、`m5-4-v2-species-contact-sheet.png`：總覽圖。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖板，並以專案內 Pillow 腳本 `tools/build-m5-4-v2-codex-art.py` 切片、縮圖、沿用既有 M5-2／M5-3 素材並產生 manifest。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：人物圖鑑優先沿用 M5-3 v2 頭像；地點與自然地理優先沿用 M5-2 v2 探索／港口圖；事件、制度、貿易、船舶、寶物與生物用新圖板補足。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
+## M5-3 主角行走圖與船艦裝備外觀精緻素材 v2（2026-06-19）
+
+- **素材位置**：`assets/m5/v2/`
+- **內容**：
+  - `assets/m5/v2/source/m5-3-hero-walk-v2-source.png`：三主角多格行走圖 source。
+  - `assets/m5/v2/characters/walk/`：林海生、彼得・范德堡、田中千代 v2 行走圖 sheet，各 7 格；`characters/walk/frames/` 另存逐格 PNG。
+  - `assets/m5/v2/source/m5-3-ship-equipment-v2-source.png`：船隻裝備外觀 source。
+  - `assets/m5/v2/ships/equipment/`：船首像 4 張、裝甲 3 張、船帆 3 張、大砲種類 3 張與 3 張船體／索具／砲艙預覽圖，共 16 張。
+  - `assets/m5/v2/m5-3-v2-supplement-assets.json`：素材 manifest；`m5-3-v2-supplement-prompts.md`：prompt 紀錄。
+  - `assets/m5/v2/m5-3-v2-walk-contact-sheet.png`、`assets/m5/v2/m5-3-v2-equipment-contact-sheet.png`：總覽圖。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-3-v2-supplement-art.py` 切片、縮圖、綠幕去背與產生 manifest。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：主角行走圖第一版仍有少量綠幕邊緣雜訊，足供接入測試；若未來 UI 或港町顯示尺寸放大，應再做精修去背。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
 ## M5-2 世界與港口精緻素材 v2（2026-06-19）
 
 - **素材位置**：`assets/m5/v2/m5-2/`

@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-06-19] 開發 | 操作者：Codex | 補齊 M5-3 行走／裝備與 M5-4 圖鑑插圖素材包
+
+- 背景：老闆要求用 image2.0 補齊缺的 V2 素材包，包含三主角行走圖、船隻裝備外觀，以及 120 筆圖鑑插圖；已建過的素材可沿用。
+- 完成事項：
+  - 使用 OpenAI imagegen／image2.0 產生主角行走圖 source 與船隻裝備 source，新增 `tools/slice-m5-3-v2-supplement-art.py` 切片、綠幕去背、縮圖與 manifest。
+  - 輸出三主角 v2 行走 sheet（各 7 格）與 21 張逐格 PNG 到 `assets/m5/v2/characters/walk/`。
+  - 輸出船首像 4、裝甲 3、船帆 3、大砲種類 3 與 3 張船艦預覽圖到 `assets/m5/v2/ships/equipment/`。
+  - 使用 OpenAI imagegen／image2.0 產生 M5-4 歷史／制度／貿易／船舶／寶物圖板與生物圖板，新增 `tools/build-m5-4-v2-codex-art.py`，依 `src/data/codex.json` 建立全 120 筆 384×384 圖鑑插圖。
+  - 圖鑑插圖採沿用策略：人物沿用 M5-3 v2 頭像，地點／自然沿用 M5-2 v2 素材，事件／制度／貿易／船舶／寶物與生物用新圖板補齊。
+  - 新增 prompt 紀錄、manifest、contact sheet；更新 `assets/CREDITS.md`、`status.md`、`memory.md`。
+- 驗證：素材計數通過（三主角 sheet 3、逐格 21、船艦裝備 16、圖鑑插圖 120）；圖鑑 manifest total=120，來源分布為 generated_history_trade 37、reuse_m5_2 25、reuse_portrait 28、generated_species 30；已人工檢查行走圖、裝備圖、歷史圖板、生物圖板與 120 圖鑑總覽圖。
+- 待續：將行走圖接入港町角色顯示；將船艦裝備圖接入造船廠／船隊資訊；將 120 張圖鑑插圖接入圖鑑說明頁右側插圖區。
+
 ## [2026-06-19] 開發 | 操作者：小航 | M5-3 第一輪素材接入（頭像＋船隻 sprite）
 
 - 背景：老闆選 B——先用已建好的 V2 素材做第一輪 BootScene 接入（缺的裝備外觀、圖鑑插圖之後補）。

@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-06-19] M5-3 補件與 M5-4 圖鑑插圖素材包
+
+- 背景：老闆要求用 image2.0 補齊缺的 M5 素材包：三主角 v2 行走圖、船隻裝備外觀，以及 120 筆圖鑑插圖；已有素材可沿用，不必重建。
+- 記憶（M5-3 補件）：
+  - 主角行走圖 source：`assets/m5/v2/source/m5-3-hero-walk-v2-source.png`；輸出 `assets/m5/v2/characters/walk/{lin,peter,chiyo}.png`，每位主角 7 格，逐格圖在 `assets/m5/v2/characters/walk/frames/`。
+  - 船隻裝備 source：`assets/m5/v2/source/m5-3-ship-equipment-v2-source.png`；輸出 `assets/m5/v2/ships/equipment/`，含船首像 4、裝甲 3、船帆 3、大砲種類 3、預覽圖 3。
+  - manifest：`assets/m5/v2/m5-3-v2-supplement-assets.json`；prompt 紀錄：`assets/m5/v2/m5-3-v2-supplement-prompts.md`；切圖腳本：`tools/slice-m5-3-v2-supplement-art.py`。
+  - 注意：行走圖第一版有少量綠幕邊緣雜訊；若接入後放大顯示，再優先做去背精修，而不是重繪整批。
+- 記憶（M5-4 圖鑑插圖）：
+  - 圖鑑插圖 final 輸出：`assets/m5/v2/m5-4/codex/illustrations/`，全 120 筆皆為 384×384 PNG，id 對應 `src/data/codex.json`。
+  - manifest：`assets/m5/v2/m5-4/codex/m5-4-v2-codex-illustrations.json`；prompt 紀錄：`assets/m5/v2/m5-4/codex/m5-4-v2-codex-prompts.md`；建置腳本：`tools/build-m5-4-v2-codex-art.py`。
+  - 沿用策略：人物圖鑑沿用 M5-3 v2 portraits（28 筆），地點／自然沿用 M5-2 v2 港口與探索素材（25 筆），事件／制度／貿易／船舶／寶物用新歷史圖板（37 筆），生物用新物種圖板（30 筆）。
+  - 後續接入：依現有 `src/art.ts` 模式增加 glob，BootScene 載入後在圖鑑說明頁右側顯示；未解鎖項目仍只顯示 `???`，避免破壞收集感。
+
 ## [2026-06-19] 美術素材載入方式：src/art.ts ＋ import.meta.glob
 
 - 背景：V2 素材放在專案根目錄 `assets/m5/v2/`（非 public/），需讓 Phaser 執行時讀到。

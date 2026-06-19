@@ -1,0 +1,246 @@
+{
+  "version": "m5-3-v2-supplement",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen built-in tool plus local Pillow slicing and chroma-key cleanup",
+  "sources": {
+    "heroWalk": "assets/m5/v2/source/m5-3-hero-walk-v2-source.png",
+    "shipEquipment": "assets/m5/v2/source/m5-3-ship-equipment-v2-source.png"
+  },
+  "heroWalk": [
+    {
+      "id": "lin",
+      "name": "林海生",
+      "sheet": "assets/m5/v2/characters/walk/lin.png",
+      "frameSize": [
+        96,
+        128
+      ],
+      "frameOrder": [
+        "front_idle",
+        "front_step_left",
+        "front_step_right",
+        "side_walk_1",
+        "side_walk_2",
+        "side_walk_3",
+        "back_idle"
+      ],
+      "frames": [
+        {
+          "frame": "front_idle",
+          "path": "assets/m5/v2/characters/walk/frames/lin/front_idle.png"
+        },
+        {
+          "frame": "front_step_left",
+          "path": "assets/m5/v2/characters/walk/frames/lin/front_step_left.png"
+        },
+        {
+          "frame": "front_step_right",
+          "path": "assets/m5/v2/characters/walk/frames/lin/front_step_right.png"
+        },
+        {
+          "frame": "side_walk_1",
+          "path": "assets/m5/v2/characters/walk/frames/lin/side_walk_1.png"
+        },
+        {
+          "frame": "side_walk_2",
+          "path": "assets/m5/v2/characters/walk/frames/lin/side_walk_2.png"
+        },
+        {
+          "frame": "side_walk_3",
+          "path": "assets/m5/v2/characters/walk/frames/lin/side_walk_3.png"
+        },
+        {
+          "frame": "back_idle",
+          "path": "assets/m5/v2/characters/walk/frames/lin/back_idle.png"
+        }
+      ]
+    },
+    {
+      "id": "peter",
+      "name": "彼得・范德堡",
+      "sheet": "assets/m5/v2/characters/walk/peter.png",
+      "frameSize": [
+        96,
+        128
+      ],
+      "frameOrder": [
+        "front_idle",
+        "front_step_left",
+        "front_step_right",
+        "side_walk_1",
+        "side_walk_2",
+        "side_walk_3",
+        "back_idle"
+      ],
+      "frames": [
+        {
+          "frame": "front_idle",
+          "path": "assets/m5/v2/characters/walk/frames/peter/front_idle.png"
+        },
+        {
+          "frame": "front_step_left",
+          "path": "assets/m5/v2/characters/walk/frames/peter/front_step_left.png"
+        },
+        {
+          "frame": "front_step_right",
+          "path": "assets/m5/v2/characters/walk/frames/peter/front_step_right.png"
+        },
+        {
+          "frame": "side_walk_1",
+          "path": "assets/m5/v2/characters/walk/frames/peter/side_walk_1.png"
+        },
+        {
+          "frame": "side_walk_2",
+          "path": "assets/m5/v2/characters/walk/frames/peter/side_walk_2.png"
+        },
+        {
+          "frame": "side_walk_3",
+          "path": "assets/m5/v2/characters/walk/frames/peter/side_walk_3.png"
+        },
+        {
+          "frame": "back_idle",
+          "path": "assets/m5/v2/characters/walk/frames/peter/back_idle.png"
+        }
+      ]
+    },
+    {
+      "id": "chiyo",
+      "name": "田中千代",
+      "sheet": "assets/m5/v2/characters/walk/chiyo.png",
+      "frameSize": [
+        96,
+        128
+      ],
+      "frameOrder": [
+        "front_idle",
+        "front_step_left",
+        "front_step_right",
+        "side_walk_1",
+        "side_walk_2",
+        "side_walk_3",
+        "back_idle"
+      ],
+      "frames": [
+        {
+          "frame": "front_idle",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/front_idle.png"
+        },
+        {
+          "frame": "front_step_left",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/front_step_left.png"
+        },
+        {
+          "frame": "front_step_right",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/front_step_right.png"
+        },
+        {
+          "frame": "side_walk_1",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/side_walk_1.png"
+        },
+        {
+          "frame": "side_walk_2",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/side_walk_2.png"
+        },
+        {
+          "frame": "side_walk_3",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/side_walk_3.png"
+        },
+        {
+          "frame": "back_idle",
+          "path": "assets/m5/v2/characters/walk/frames/chiyo/back_idle.png"
+        }
+      ]
+    }
+  ],
+  "shipEquipment": [
+    {
+      "id": "fh_mazu",
+      "name": "媽祖像",
+      "path": "assets/m5/v2/ships/equipment/fh_mazu.png"
+    },
+    {
+      "id": "fh_dragon",
+      "name": "海龍像",
+      "path": "assets/m5/v2/ships/equipment/fh_dragon.png"
+    },
+    {
+      "id": "fh_lion",
+      "name": "獅子像",
+      "path": "assets/m5/v2/ships/equipment/fh_lion.png"
+    },
+    {
+      "id": "fh_phoenix",
+      "name": "鳳凰像",
+      "path": "assets/m5/v2/ships/equipment/fh_phoenix.png"
+    },
+    {
+      "id": "hp_wood",
+      "name": "木製補強",
+      "path": "assets/m5/v2/ships/equipment/hp_wood.png"
+    },
+    {
+      "id": "hp_iron",
+      "name": "鐵製包板",
+      "path": "assets/m5/v2/ships/equipment/hp_iron.png"
+    },
+    {
+      "id": "hp_copper",
+      "name": "銅皮船底",
+      "path": "assets/m5/v2/ships/equipment/hp_copper.png"
+    },
+    {
+      "id": "hull_reinforced_preview",
+      "name": "補強船身預覽",
+      "path": "assets/m5/v2/ships/equipment/hull_reinforced_preview.png"
+    },
+    {
+      "id": "sl_cotton",
+      "name": "棉布帆",
+      "path": "assets/m5/v2/ships/equipment/sl_cotton.png"
+    },
+    {
+      "id": "sl_canvas",
+      "name": "帆布硬帆",
+      "path": "assets/m5/v2/ships/equipment/sl_canvas.png"
+    },
+    {
+      "id": "sl_multi",
+      "name": "多桅軟帆",
+      "path": "assets/m5/v2/ships/equipment/sl_multi.png"
+    },
+    {
+      "id": "rigging_preview",
+      "name": "索具預覽",
+      "path": "assets/m5/v2/ships/equipment/rigging_preview.png"
+    },
+    {
+      "id": "ct_folang",
+      "name": "輕型佛朗機砲",
+      "path": "assets/m5/v2/ships/equipment/ct_folang.png"
+    },
+    {
+      "id": "ct_scatter",
+      "name": "散彈砲",
+      "path": "assets/m5/v2/ships/equipment/ct_scatter.png"
+    },
+    {
+      "id": "ct_hongyi",
+      "name": "重型紅夷砲",
+      "path": "assets/m5/v2/ships/equipment/ct_hongyi.png"
+    },
+    {
+      "id": "cannon_deck_preview",
+      "name": "砲艙預覽",
+      "path": "assets/m5/v2/ships/equipment/cannon_deck_preview.png"
+    }
+  ],
+  "contactSheets": {
+    "walk": "assets/m5/v2/m5-3-v2-walk-contact-sheet.png",
+    "equipment": "assets/m5/v2/m5-3-v2-equipment-contact-sheet.png"
+  },
+  "notes": [
+    "Hero walk v2 source generated as a 3x7 sheet; output sheets use 7 frames per protagonist.",
+    "Walk frames are transparent PNGs produced by removing the flat green chroma-key background.",
+    "Ship equipment covers 4 figureheads, 3 hull platings, 3 sail sets, 3 cannon types, and 3 preview tiles."
+  ]
+}
