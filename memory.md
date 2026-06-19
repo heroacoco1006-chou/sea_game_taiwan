@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-19] M5-1／M5-2 第一輪場景接入
+
+- 背景：老闆要求嘗試把 M5-1 與 M5-2 收尾；既有素材包已建立但尚未接入世界地圖與港町。
+- 記憶（載入管線）：
+  - `src/art.ts` 已擴充 M5-2 glob：`WORLD_ART_URLS`、`PORT_BUILDING_URLS`、`HARBOR_SCENE_URLS`、`EXPLORATION_ICON_URLS`、`FACILITY_ICON_URLS`，對應 key helper 為 `worldArtKey／portBuildingKey／harborSceneKey／explorationIconKey／facilityIconKey`。
+  - `BootScene.preload()` 會載入 M5-2 world／building／harbor／exploration／facility icons；場景使用 `this.textures.exists()` fallback 到原程式貼圖。
+- 記憶（場景接入）：
+  - `WorldMapScene`：加入 `sea_chart` 低透明底圖與 V2 港口、問號、探索點、放大鏡、海盜標記；陸地多邊形、港口座標、探索半徑、碰撞仍用 `map.json` 與既有邏輯，不讓視覺圖影響可達性。
+  - `PortScene`：依港口文化圈映射建築圖（han／wa／ryu／sea／euro），並加入對應 harbor scene 作背景；設施門口、碰撞、隨機配置與港口固定在碼頭下方的規則保留。
+  - 注意：目前 M5-2 素材使用 eager glob，build 會把 world／building／harbor／exploration／facility 圖打包進 dist，Vite 會出現 chunk size warning；這是體積提醒非錯誤。M5-8 前如需低階機優化，可改 lazy load 或壓縮 source。
+
 ## [2026-06-19] M5-3 補件與 M5-4 圖鑑插圖素材包
 
 - 背景：老闆要求用 image2.0 補齊缺的 M5 素材包：三主角 v2 行走圖、船隻裝備外觀，以及 120 筆圖鑑插圖；已有素材可沿用，不必重建。

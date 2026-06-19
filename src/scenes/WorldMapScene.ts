@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
-import { shipWorldKey } from '../art';
+import { explorationIconKey, facilityIconKey, shipWorldKey, worldArtKey } from '../art';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
@@ -63,7 +63,16 @@ export default class WorldMapScene extends Phaser.Scene {
 
     // ----- 世界 -----
     this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, COLORS.sea);
+    const chartKey = worldArtKey('sea_chart');
+    if (this.textures.exists(chartKey)) {
+      this.add
+        .image(WORLD_W / 2, WORLD_H / 2, chartKey)
+        .setDisplaySize(WORLD_W, WORLD_H)
+        .setAlpha(0.22)
+        .setDepth(0);
+    }
     const waves = this.add.graphics();
+    waves.setDepth(1);
     waves.lineStyle(1, 0x2a6a8e, 0.55);
     for (let y = 40; y < WORLD_H; y += 56) {
       for (let x = 20; x < WORLD_W; x += 84) {
@@ -74,6 +83,7 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     const landG = this.add.graphics();
+    landG.setDepth(2);
     for (const land of LANDS) {
       const pts = land.points;
       this.landPolys.push(new Phaser.Geom.Polygon(pts.flat()));
@@ -88,12 +98,14 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     for (const lb of LABELS) {
-      this.add.text(lb.x, lb.y, lb.text, textStyle(lb.size, '#6b5530')).setOrigin(0.5);
+      this.add.text(lb.x, lb.y, lb.text, textStyle(lb.size, '#6b5530')).setOrigin(0.5).setDepth(3);
     }
 
     for (const p of PORTS) {
-      this.add.image(p.x, p.y, 'port');
-      this.add.text(p.x, p.y + 20, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setShadow(1, 1, '#000', 2);
+      const portKey = this.m5Texture(facilityIconKey('port_marker_roof'), 'port');
+      const portIcon = this.add.image(p.x, p.y, portKey).setDepth(4);
+      if (portKey !== 'port') portIcon.setDisplaySize(34, 34);
+      this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(4).setShadow(1, 1, '#000', 2);
     }
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
@@ -136,7 +148,10 @@ export default class WorldMapScene extends Phaser.Scene {
     this.pirateMarker = null;
 
     for (const entry of DISCOVERIES.filter((d) => d.kind === 'scenery' && typeof d.x === 'number' && typeof d.y === 'number')) {
-      const icon = this.add.image(entry.x!, entry.y!, 'marker_telescope').setDepth(9).setScale(0.85).setAlpha(0.92);
+      const key = this.m5Texture(explorationIconKey('scenery_magnifier'), 'marker_telescope');
+      const icon = this.add.image(entry.x!, entry.y!, key).setDepth(9).setAlpha(0.92);
+      if (key !== 'marker_telescope') icon.setDisplaySize(42, 42);
+      else icon.setScale(0.85);
       icon.setInteractive({ useHandCursor: true });
       icon.setVisible(false);
       icon.on('pointerdown', () => this.tryDiscoverScenery(entry));
@@ -144,7 +159,9 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     for (const point of EXPLORATION_POINTS) {
-      const icon = this.add.image(point.x, point.y, 'marker_question').setDepth(8).setAlpha(0.82);
+      const key = this.m5Texture(explorationIconKey('unknown_exploration'), 'marker_question');
+      const icon = this.add.image(point.x, point.y, key).setDepth(8).setAlpha(0.82);
+      if (key !== 'marker_question') icon.setDisplaySize(44, 44);
       const label = this.add
         .text(point.x, point.y + 24, '？', textStyle(16, '#fff4d6'))
         .setOrigin(0.5)
@@ -157,7 +174,10 @@ export default class WorldMapScene extends Phaser.Scene {
 
     const q = this.state.quest;
     if (q?.type === 'combat' && !q.completed) {
-      this.pirateMarker = this.add.image(q.targetX, q.targetY, 'marker_pirate').setDepth(9).setScale(1.1);
+      const key = this.m5Texture(facilityIconKey('pirate_target'), 'marker_pirate');
+      this.pirateMarker = this.add.image(q.targetX, q.targetY, key).setDepth(9);
+      if (key !== 'marker_pirate') this.pirateMarker.setDisplaySize(42, 42);
+      else this.pirateMarker.setScale(1.1);
       this.add.text(q.targetX, q.targetY + 28, '海盜', textStyle(14, '#fff4d6')).setOrigin(0.5).setDepth(9).setShadow(1, 1, '#000', 2);
       this.pirateMarker.setInteractive({ useHandCursor: true });
       this.pirateMarker.on('pointerdown', () => this.tryStartQuestBattle());
@@ -305,7 +325,12 @@ export default class WorldMapScene extends Phaser.Scene {
       const known = activeQuest || this.isExplorationPointKnown(marker.point);
       marker.icon.setVisible(visible);
       marker.label.setVisible(visible);
-      marker.icon.setTexture(known ? 'marker_explore' : 'marker_question');
+      marker.icon.setTexture(
+        known
+          ? this.m5Texture(explorationIconKey(this.explorationIconIdForPoint(marker.point.id)), 'marker_explore')
+          : this.m5Texture(explorationIconKey('unknown_exploration'), 'marker_question')
+      );
+      marker.icon.setDisplaySize(44, 44);
       marker.icon.setAlpha(activeQuest ? 1 : known ? 0.88 : 0.68);
       marker.label.setText(known ? marker.point.name : '？');
       marker.label.setFontSize(known ? 13 : 16);
@@ -711,6 +736,28 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private isLand(x: number, y: number): boolean {
     return this.landPolys.some((poly) => Phaser.Geom.Polygon.Contains(poly, x, y));
+  }
+
+  private explorationIconIdForPoint(pointId: string): string {
+    const map: Record<string, string> = {
+      exp_taroko: 'taroko_gorge',
+      exp_yushan: 'jade_mountain',
+      exp_alishan: 'alishan_forest',
+      exp_siraya: 'siraya_plain_village',
+      exp_quanzhou_temple: 'quanzhou_mazu_temple',
+      exp_forbidden_city: 'forbidden_city_gate',
+      exp_seoul: 'hanyang_city_gate',
+      exp_ryukyu_shuri: 'shuri_castle_hill',
+      exp_unzen: 'unzen_volcano',
+      exp_sakai_route: 'sakai_workshop_street',
+      exp_java_volcano: 'java_volcano',
+      exp_moluccas_forest: 'moluccas_spice_forest',
+    };
+    return map[pointId] ?? 'mountain_trail_marker';
+  }
+
+  private m5Texture(preferred: string, fallback: string): string {
+    return this.textures.exists(preferred) ? preferred : fallback;
   }
 
   private updateWindHud(): void {

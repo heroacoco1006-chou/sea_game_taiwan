@@ -3,6 +3,7 @@
 // 在 build 與 dev 都產生正確的 URL；檔名（去副檔名）即為對照 key。
 // - 角色頭像：key = 主角／夥伴 id（lin、chiyo、zheng_zhilong…）
 // - 船隻 sprite：key = 船型 id（junk_small、galleon…）
+// - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
 
 type UrlMap = Record<string, string>;
 
@@ -27,7 +28,32 @@ export const SHIP_BATTLE_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/ships/battle/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
+export const WORLD_ART_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-2/world/sea_chart.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const PORT_BUILDING_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-2/ports/buildings/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const HARBOR_SCENE_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-2/ports/harbors/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const EXPLORATION_ICON_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-2/exploration/icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const FACILITY_ICON_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-2/ui/icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
 /** Phaser 材質 key 命名（避免和程式生成的材質撞名） */
 export const portraitKey = (id: string): string => `portrait_${id}`;
 export const shipWorldKey = (typeId: string): string => `shipw_${typeId}`;
 export const shipBattleKey = (typeId: string): string => `shipb_${typeId}`;
+export const worldArtKey = (id: string): string => `m5w_${id}`;
+export const portBuildingKey = (id: string): string => `m5b_${id}`;
+export const harborSceneKey = (id: string): string => `m5h_${id}`;
+export const explorationIconKey = (id: string): string => `m5x_${id}`;
+export const facilityIconKey = (id: string): string => `m5u_${id}`;

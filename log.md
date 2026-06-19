@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-19] 開發 | 操作者：Codex | M5-1 與 M5-2 第一輪接入收尾
+
+- 背景：老闆要求嘗試把 M5-1 視覺基礎與 M5-2 世界／港口素材接入收尾。
+- 完成事項：
+  - `src/art.ts` 擴充 M5-2 素材載入：world、port buildings、harbor scenes、exploration icons、facility icons；`BootScene` preload 統一載入，並保留程式生成 fallback。
+  - `WorldMapScene` 接入 V2 海圖底圖、港口 icon、海盜標記、探索問號、探索點圖示與風景放大鏡；保留原本 `map.json` 陸地多邊形、港口座標、碰撞與互動半徑。
+  - `PortScene` 接入文化圈建築與港口背景：漢式／日本／琉球／南洋／歐式港町會使用不同建築圖；碼頭船隻改優先用 V2 世界船圖。
+  - 更新 `status.md`、`memory.md`，把 M5-1 與 M5-2 標為第一輪完成，並留下 bundle 體積後續優化提醒。
+- 驗證：`npm run build` 通過（Vite 因大量美術資源提示 chunk size warning，非錯誤）；本機 `http://127.0.0.1:5173/` 載入正常，瀏覽器 console 無錯誤。Browser 截圖 API 本輪逾時，已改用載入狀態與 console 檢查；後續如需視覺截圖，可用 Chrome 或遊戲內截圖方式補驗。
+- 待續：M5-4 圖鑑插圖接入圖鑑 UI、M5-3 行走圖接入港町主角、船艦裝備圖接入造船廠／船隊資訊，以及 M5-5 音樂音效。
+
 ## [2026-06-19] 開發 | 操作者：Codex | 補齊 M5-3 行走／裝備與 M5-4 圖鑑插圖素材包
 
 - 背景：老闆要求用 image2.0 補齊缺的 V2 素材包，包含三主角行走圖、船隻裝備外觀，以及 120 筆圖鑑插圖；已建過的素材可沿用。

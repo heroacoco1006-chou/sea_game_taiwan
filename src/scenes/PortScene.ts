@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
+import { harborSceneKey, portBuildingKey, shipWorldKey } from '../art';
 import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
 /**
@@ -11,6 +12,7 @@ import { COLORS, textStyle, makeButton, showModal } from '../ui';
 interface Building {
   key: string; // trade/tavern/inn/harbor/shipyard/office/item
   label: string;
+  artId: string;
   x: number;
   y: number;
   w: number;
@@ -99,6 +101,7 @@ export default class PortScene extends Phaser.Scene {
 
     // 地面
     this.add.rectangle(TOWN_W / 2, TOWN_H / 2, TOWN_W, TOWN_H, style.ground);
+    this.addHarborBackdrop();
     const paths = this.add.graphics();
     paths.fillStyle(0x000000, 0.1);
     paths.fillRect(0, 430, TOWN_W, 80); // 大街（橫）
@@ -107,21 +110,32 @@ export default class PortScene extends Phaser.Scene {
     // 港邊海面與棧橋
     this.add.rectangle(TOWN_W / 2, TOWN_H - 35, TOWN_W, 70, COLORS.sea);
     this.add.rectangle(this.dock.x, TOWN_H - 75, 340, 18, 0x6b4a2a);
-    this.add.image(this.dock.x + 230, TOWN_H - 38, 'ship').setScale(1.5);
+    const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
+    const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
+    if (shipKey === 'ship') dockShip.setScale(1.5);
+    else dockShip.setDisplaySize(82, 62);
 
     this.buildings = this.createTownBuildings();
 
     const g = this.add.graphics();
     for (const b of this.buildings) {
-      g.fillStyle(style.wall, 1);
-      g.fillRect(b.x - b.w / 2, b.y - b.h / 2 + 18, b.w, b.h - 18);
-      g.fillStyle(style.roof, 1);
-      g.fillTriangle(b.x - b.w / 2 - 14, b.y - b.h / 2 + 22, b.x + b.w / 2 + 14, b.y - b.h / 2 + 22, b.x, b.y - b.h / 2 - 26);
-      g.fillStyle(0x4a2f15, 1);
-      g.fillRect(b.x - 16, b.y + b.h / 2 - 36, 32, 36);
+      const artKey = this.m5Texture(portBuildingKey(b.artId), '');
+      if (artKey) {
+        this.add.image(b.x, b.y, artKey).setDisplaySize(b.w, b.h + 28).setDepth(2);
+        g.fillStyle(0x3a2a14, 0.18);
+        g.fillEllipse(b.x, b.y + b.h / 2 + 8, b.w * 0.72, 20);
+      } else {
+        g.fillStyle(style.wall, 1);
+        g.fillRect(b.x - b.w / 2, b.y - b.h / 2 + 18, b.w, b.h - 18);
+        g.fillStyle(style.roof, 1);
+        g.fillTriangle(b.x - b.w / 2 - 14, b.y - b.h / 2 + 22, b.x + b.w / 2 + 14, b.y - b.h / 2 + 22, b.x, b.y - b.h / 2 - 26);
+        g.fillStyle(0x4a2f15, 1);
+        g.fillRect(b.x - 16, b.y + b.h / 2 - 36, 32, 36);
+      }
       this.add
         .text(b.x, b.y - 4, b.label, { ...textStyle(20, '#fff8e8'), backgroundColor: '#3a2a14cc', padding: { x: 8, y: 3 } })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(3);
     }
 
     // 裝飾：民宅、樹、水井、貨箱（豐富城景）
@@ -234,14 +248,14 @@ export default class PortScene extends Phaser.Scene {
   private createTownBuildings(): Building[] {
     const buildings: Building[] = [
       // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
-      { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 120 },
+      { key: 'harbor', label: '港口（補給・出航）', artId: this.buildingArtFor('harbor'), x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 150 },
     ];
     const seed = this.hashPortId(this.port.id);
     const itemSlot = ITEM_SLOTS[seed % ITEM_SLOTS.length];
     const usedSlots = new Set<string>([this.slotKey(itemSlot)]);
     const addFacility = (key: FacilityKey, label: string, slot: LayoutSlot) => {
       const size = BUILDING_SIZE[key];
-      buildings.push({ key, label, x: slot.x, y: slot.y, w: size.w, h: size.h });
+      buildings.push({ key, label, artId: this.buildingArtFor(key), x: slot.x, y: slot.y, w: size.w, h: size.h });
       usedSlots.add(this.slotKey(slot));
     };
 
@@ -262,6 +276,54 @@ export default class PortScene extends Phaser.Scene {
       if (slot) addFacility(facility.key, facility.label, slot);
     }
     return buildings;
+  }
+
+  private addHarborBackdrop(): void {
+    const key = this.m5Texture(harborSceneKey(this.harborSceneId()), '');
+    if (!key) return;
+    this.add
+      .image(TOWN_W / 2, 230, key)
+      .setDisplaySize(640, 360)
+      .setAlpha(0.38)
+      .setDepth(0);
+  }
+
+  private harborSceneId(): string {
+    if (this.port.id === 'tayouan' || this.port.id === 'penghu') return 'tayouan_lagoon_fort';
+    if (this.port.culture === 'han') return 'fujian_han_port';
+    if (this.port.culture === 'wa') return 'japanese_hirado_nagasaki_harbor';
+    if (this.port.culture === 'ryu') return 'ryukyu_naha_shuri_harbor';
+    if (this.port.culture === 'euro') return 'european_colonial_harbor';
+    return 'southeast_spice_port';
+  }
+
+  private buildingArtFor(key: FacilityKey | 'harbor'): string {
+    if (this.port.culture === 'wa') {
+      if (key === 'tavern') return 'japanese_tavern';
+      if (key === 'inn') return 'japanese_inn';
+      if (key === 'office' || key === 'trade') return 'japanese_trade_office';
+      return 'japanese_machiya';
+    }
+    if (this.port.culture === 'euro') {
+      if (key === 'office' || key === 'trade') return 'voc_trading_post';
+      if (key === 'inn' || key === 'tavern') return 'spanish_church_warehouse';
+      return 'european_fort_gate';
+    }
+    if (this.port.culture === 'sea') {
+      if (key === 'trade' || key === 'item') return 'southeast_spice_market';
+      if (key === 'office' || key === 'shipyard') return 'southeast_trade_office';
+      if (key === 'inn' || key === 'tavern') return 'southeast_tropical_inn';
+      return 'southeast_stilt_warehouse';
+    }
+    if (this.port.culture === 'ryu') {
+      if (key === 'office' || key === 'trade') return 'han_guild_hall';
+      if (key === 'inn' || key === 'tavern') return 'han_mazu_temple';
+      return 'siraya_meeting_house';
+    }
+    if (key === 'item') return 'han_item_shop';
+    if (key === 'shipyard' || key === 'harbor') return 'han_shipyard_warehouse';
+    if (key === 'office' || key === 'trade') return 'han_guild_hall';
+    return 'han_mazu_temple';
   }
 
   private shuffledSlots(seed: number): LayoutSlot[] {
@@ -412,5 +474,9 @@ export default class PortScene extends Phaser.Scene {
       }
     }
     return null;
+  }
+
+  private m5Texture(preferred: string, fallback: string): string {
+    return preferred && this.textures.exists(preferred) ? preferred : fallback;
   }
 }
