@@ -11,6 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
+import { shipWorldKey } from '../art';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
@@ -96,7 +97,11 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
-    this.ship = this.add.image(this.state.ship.x, this.state.ship.y, 'ship').setDepth(10);
+    const swKey = shipWorldKey(shipTypeOf(this.state).id);
+    this.ship = this.add
+      .image(this.state.ship.x, this.state.ship.y, this.textures.exists(swKey) ? swKey : 'ship')
+      .setDepth(10);
+    if (this.textures.exists(swKey)) this.ship.setDisplaySize(64, 48); // V2 船隻 sprite 縮放到合適大小
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.ship, true, 0.12, 0.12);
     this.createExplorationMarkers();

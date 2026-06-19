@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-19] 美術素材載入方式：src/art.ts ＋ import.meta.glob
+
+- 背景：V2 素材放在專案根目錄 `assets/m5/v2/`（非 public/），需讓 Phaser 執行時讀到。
+- 記憶（技術約定）：
+  - 統一在 `src/art.ts` 用 `import.meta.glob('/assets/m5/v2/.../*.png', { eager:true, query:'?url', import:'default' })` 收集 URL（dev＋build 皆可，Vite 會把圖打包進 dist/assets）。key＝檔名去副檔名（角色頭像＝主角／夥伴 id；船隻＝船型 id）。helper：`portraitKey/shipWorldKey/shipBattleKey`。
+  - `BootScene.preload()` 把這些 URL 用 `this.load.image(key,url)` 載入；場景用 `this.textures.exists(key)` 判斷，缺素材時退回程式生成貼圖（'ship' 等），確保不會壞。
+  - 已接入：StoryScene 說話者頭像（name→id 對照由 HEROES＋MATE_DEFS 建）、WorldMap 旗艦 sprite、Battle 雙方 sprite。
+  - 後續接新素材（港口建築、探索圖示、圖鑑插圖）就在 art.ts 加 glob、BootScene 載入、場景用 key 取用；不要把 assets 搬進 public 或手寫絕對路徑。
+
 ## [2026-06-19] M5 正式美術風格定調與 M5-2 素材包
 
 - 背景：老闆明確表示喜歡 M5-3 v2 的風格，要求定調為整個遊戲風格，並且後續都採用 imagegen／image2.0 進行繪製；同時要求依此風格製作 M5-2 素材包。

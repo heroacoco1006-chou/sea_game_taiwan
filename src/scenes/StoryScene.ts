@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, saveGame, heroDefById, completeStoryChapter, getChapterScript,
-  getMateScript, mateDefById, recruitMate, roleName,
+  getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
 } from '../state';
 import type { StoryLine } from '../state';
+import { portraitKey } from '../art';
 import { COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
 type StoryMode = 'story' | 'mate';
@@ -33,6 +34,8 @@ export default class StoryScene extends Phaser.Scene {
   private dyn: Phaser.GameObjects.GameObject[] = [];
   private hint!: Phaser.GameObjects.Text;
   private finished = false;
+  private portrait!: Phaser.GameObjects.Image;
+  private nameToId: Record<string, string> = {}; // 說話者名 → 頭像 id
 
   constructor() {
     super('Story');
@@ -78,6 +81,14 @@ export default class StoryScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep);
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.35);
 
+    // 說話者名 → 頭像 id（三主角＋25 夥伴）
+    this.nameToId = {};
+    for (const h of HEROES) this.nameToId[h.name] = h.id;
+    for (const m of MATE_DEFS) this.nameToId[m.name] = m.id;
+
+    // 對話框上方的說話者頭像（V2 美術；無對應頭像時隱藏）
+    this.portrait = this.add.image(W / 2, 300, portraitKey(this.heroId)).setVisible(false).setDepth(5);
+
     // 上方標題列
     this.add.text(40, 30, this.headerText, textStyle(20, '#f2e3bd')).setOrigin(0, 0.5);
 
@@ -118,12 +129,28 @@ export default class StoryScene extends Phaser.Scene {
     this.renderBeat();
   }
 
+  /** 依當前句子顯示說話者頭像（對白＝說話者、心聲＝主角、其餘隱藏） */
+  private updatePortrait(line: StoryLine): void {
+    let id: string | undefined;
+    if (line.kind === 'speech' && line.speaker) id = this.nameToId[line.speaker];
+    else if (line.kind === 'inner') id = this.heroId;
+    if (id && this.textures.exists(portraitKey(id))) {
+      this.portrait.setTexture(portraitKey(id));
+      this.portrait.setDisplaySize(300, 300);
+      this.portrait.setAlpha(line.kind === 'inner' ? 0.85 : 1);
+      this.portrait.setVisible(true);
+    } else {
+      this.portrait.setVisible(false);
+    }
+  }
+
   private renderBeat(): void {
     for (const obj of this.dyn) obj.destroy();
     this.dyn = [];
     const line = this.lines[this.index];
     if (!line) return;
     const W = this.scale.width;
+    this.updatePortrait(line);
 
     // 進度（第幾句）
     this.dyn.push(

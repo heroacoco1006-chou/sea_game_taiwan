@@ -4,6 +4,7 @@ import {
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
 } from '../state';
+import { shipBattleKey } from '../art';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
 interface Enemy {
@@ -13,6 +14,7 @@ interface Enemy {
   cannons: number;
   crew: number;
   loot: number;
+  shipType: string;
 }
 
 /**
@@ -43,11 +45,11 @@ export default class BattleScene extends Phaser.Scene {
     // 敵人規模隨遊戲天數成長
     const tier = s.quest?.type === 'combat' ? s.quest.enemyTier : s.day < 60 ? 1 : s.day < 180 ? 2 : 3;
     if (tier <= 1) {
-      this.enemy = { name: '海盜小船', hull: 60, hullMax: 60, cannons: 2, crew: 10, loot: 120 + Math.floor(Math.random() * 120) };
+      this.enemy = { name: '海盜小船', hull: 60, hullMax: 60, cannons: 2, crew: 10, loot: 120 + Math.floor(Math.random() * 120), shipType: 'junk_small' };
     } else if (tier <= 2) {
-      this.enemy = { name: '海盜戎克船', hull: 110, hullMax: 110, cannons: 4, crew: 20, loot: 250 + Math.floor(Math.random() * 250) };
+      this.enemy = { name: '海盜戎克船', hull: 110, hullMax: 110, cannons: 4, crew: 20, loot: 250 + Math.floor(Math.random() * 250), shipType: 'junk_large' };
     } else {
-      this.enemy = { name: '海盜頭目的快船', hull: 160, hullMax: 160, cannons: 6, crew: 32, loot: 500 + Math.floor(Math.random() * 400) };
+      this.enemy = { name: '海盜頭目的快船', hull: 160, hullMax: 160, cannons: 6, crew: 32, loot: 500 + Math.floor(Math.random() * 400), shipType: 'fuchuan' };
     }
     this.logLines = [];
     this.busy = false;
@@ -72,12 +74,12 @@ export default class BattleScene extends Phaser.Scene {
 
     // 我方／敵方面板
     drawPanel(this, 70, 90, 480, 150);
-    this.add.image(140, 150, 'ship').setScale(2.2);
-    this.myText = this.add.text(220, 108, '', { ...textStyle(18), lineSpacing: 6 });
+    this.addShip(150, 165, shipTypeOf(this.state).id, false);
+    this.myText = this.add.text(250, 104, '', { ...textStyle(17), lineSpacing: 5 });
 
     drawPanel(this, W - 550, 90, 480, 150);
-    const foeShip = this.add.image(W - 480, 150, 'ship').setScale(2.2).setFlipX(true).setTint(0x884444);
-    this.foeText = this.add.text(W - 410, 108, '', { ...textStyle(18), lineSpacing: 6 });
+    this.addShip(W - 470, 165, this.enemy.shipType, true, 0x884444);
+    this.foeText = this.add.text(W - 400, 104, '', { ...textStyle(17), lineSpacing: 5 });
 
     // 戰報
     drawPanel(this, 200, 290, 880, 210);
@@ -92,6 +94,16 @@ export default class BattleScene extends Phaser.Scene {
 
     this.pushLog(`敵船【${this.enemy.name}】逼近！大砲 ${this.enemy.cannons} 門、船員約 ${this.enemy.crew} 人。`);
     this.refreshPanels();
+  }
+
+  /** 海戰面板的船隻圖：有 V2 海戰 sprite 就用，否則退回程式生成的 'ship' */
+  private addShip(x: number, y: number, typeId: string, flip: boolean, tint?: number): void {
+    const key = shipBattleKey(typeId);
+    const useV2 = this.textures.exists(key);
+    const img = this.add.image(x, y, useV2 ? key : 'ship');
+    if (useV2) img.setDisplaySize(140, 79); else img.setScale(2.2);
+    img.setFlipX(flip);
+    if (tint !== undefined) img.setTint(tint);
   }
 
   private refreshPanels(): void {

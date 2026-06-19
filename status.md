@@ -138,8 +138,8 @@ status: draft
   - [x] v1 原創像素占位素材檔建立：28 張角色頭像、3 張主角行走圖、8 種船型世界地圖 sprite、8 種船型海戰 sprite、manifest 與總覽圖。
   - [x] v2 精緻素材包建立：imagegen 產出 28 張 256×256 角色頭像、8 張 384×512 船隻精緻船卡、8 張 256×144 戰鬥預覽、8 張 96×72 世界地圖預覽、source 原圖、manifest 與角色／船隻總覽圖，路徑 `assets/m5/v2/`。
   - [x] `assets/CREDITS.md` 建立並登錄本批素材來源；確認 `art/` 參考圖只作氛圍參考，不納入正式素材。
-  - [ ] 接入 BootScene／StoryScene：載入角色頭像並在對話框上方預留區顯示。
-  - [ ] 接入 WorldMapScene／BattleScene：依船型顯示對應航行與海戰船隻 sprite。
+  - [x] 接入 BootScene／StoryScene（2026-06-19）：`src/art.ts` 用 import.meta.glob 收 V2 素材 URL；BootScene preload 載入頭像/船隻；StoryScene 對話框上方顯示說話者頭像（對白＝說話者、心聲＝主角、旁白隱藏）。
+  - [x] 接入 WorldMapScene／BattleScene（2026-06-19）：世界地圖旗艦依船型顯示 V2 world sprite；海戰雙方依船型顯示 V2 battle sprite（敵船依 tier 對應船型＋紅色 tint）。
   - [ ] 補船隻裝備外觀差異：船首像、裝甲、船帆、大砲種類的可視化。
 - [ ] **M5-4 圖鑑插圖**：120 筆圖鑑的人物／地點／物種／事件插圖（說明頁右側已預留位置）。
 - [ ] **M5-5 音樂音效**：分區 BGM（大海／東亞港／日本港／南洋港／歐洲港／台灣／海戰／酒館）＋音效（海浪／砲擊／金錢／選單／升級），含音量控制與靜音。

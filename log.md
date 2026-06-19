@@ -7,6 +7,18 @@
 
 ---
 
+## [2026-06-19] 開發 | 操作者：小航 | M5-3 第一輪素材接入（頭像＋船隻 sprite）
+
+- 背景：老闆選 B——先用已建好的 V2 素材做第一輪 BootScene 接入（缺的裝備外觀、圖鑑插圖之後補）。
+- 完成事項：
+  - 新增 `src/art.ts`：用 `import.meta.glob('/assets/m5/v2/...png', {eager,query:'?url'})` 收集 V2 素材執行時 URL（dev/build 皆可），key＝檔名（角色 id／船型 id）；提供 portraitKey/shipWorldKey/shipBattleKey。
+  - `BootScene` 新增 `preload()` 載入 28 頭像＋8 world＋8 battle sprite；create 仍保留程式生成基礎貼圖。
+  - `StoryScene`：對話框上方顯示說話者頭像（建 name→id 對照含三主角＋25 夥伴）；對白＝說話者頭像、心聲＝主角、旁白/場景/圖鑑＝隱藏；無對應頭像則隱藏。
+  - `WorldMapScene`：旗艦改用 `shipw_<船型>`（setDisplaySize 64×48），保留左右翻面；無素材退回 'ship'。
+  - `BattleScene`：我方／敵方改用 `shipb_<船型>`（addShip helper，140×79），敵船依 tier 對應船型（junk_small/junk_large/fuchuan）＋紅色 tint；Enemy 介面加 shipType。
+- 驗證：`tsc`、`npm run build`（V2 png 已打包進 dist/assets）通過；瀏覽器實測材質載入、StoryScene 頭像（林海生心聲、鄭芝龍對白、旁白隱藏）、世界地圖船 sprite、海戰雙方 sprite 皆正常（截圖確認）。
+- 待續：船隻裝備外觀差異、M5-2 世界/港口素材接入場景、M5-4 圖鑑插圖、M5-5 音樂音效。
+
 ## [2026-06-19] 開發 | 操作者：Codex | V2 美術定調與 M5-2 世界港口素材包
 
 - 背景：老闆確認喜歡 M5-3 v2 的精緻風格，要求定調為整個遊戲美術方向，並以 imagegen／image2.0 製作 M5-2 世界與港口素材包。

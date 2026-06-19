@@ -1,9 +1,20 @@
 import Phaser from 'phaser';
+import {
+  PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_BATTLE_URLS,
+  portraitKey, shipWorldKey, shipBattleKey,
+} from '../art';
 
-/** 程式產生所有貼圖（正式美術於 M5 替換） */
+/** 程式產生基礎貼圖；M5 起載入 V2 美術素材（角色頭像、船隻 sprite） */
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
+  }
+
+  preload(): void {
+    // 載入 V2 美術素材（preload 完成後才會進 create）
+    for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
+    for (const [id, url] of Object.entries(SHIP_WORLD_URLS)) this.load.image(shipWorldKey(id), url);
+    for (const [id, url] of Object.entries(SHIP_BATTLE_URLS)) this.load.image(shipBattleKey(id), url);
   }
 
   create(): void {
