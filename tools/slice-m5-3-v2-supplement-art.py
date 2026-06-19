@@ -132,6 +132,76 @@ def keep_main_alpha_components(img: Image.Image, threshold: int = 20) -> Image.I
     return out
 
 
+def alpha_component_bboxes(img: Image.Image, threshold: int = 20, min_area: int = 1000) -> list[tuple[int, int, int, int]]:
+    src = img.convert("RGBA")
+    pixels = src.load()
+    visited: set[tuple[int, int]] = set()
+    bboxes: list[tuple[int, int, int, int]] = []
+
+    for sy in range(src.height):
+        for sx in range(src.width):
+            if (sx, sy) in visited or pixels[sx, sy][3] <= threshold:
+                continue
+            stack = [(sx, sy)]
+            visited.add((sx, sy))
+            area = 0
+            min_x = max_x = sx
+            min_y = max_y = sy
+            while stack:
+                x, y = stack.pop()
+                area += 1
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+                min_y = min(min_y, y)
+                max_y = max(max_y, y)
+                for nx in (x - 1, x, x + 1):
+                    for ny in (y - 1, y, y + 1):
+                        if nx < 0 or nx >= src.width or ny < 0 or ny >= src.height or (nx, ny) in visited:
+                            continue
+                        if pixels[nx, ny][3] <= threshold:
+                            continue
+                        visited.add((nx, ny))
+                        stack.append((nx, ny))
+            if area >= min_area:
+                bboxes.append((min_x, min_y, max_x + 1, max_y + 1))
+
+    return bboxes
+
+
+def expand_bbox(bbox: tuple[int, int, int, int], padding: int, size: tuple[int, int]) -> tuple[int, int, int, int]:
+    left, top, right, bottom = bbox
+    width, height = size
+    return (
+        max(0, left - padding),
+        max(0, top - padding),
+        min(width, right + padding),
+        min(height, bottom + padding),
+    )
+
+
+def extract_walk_tiles(source: Image.Image) -> list[list[Image.Image]]:
+    keyed = remove_green_key(source)
+    bboxes = alpha_component_bboxes(keyed)
+    expected = len(HERO_ROWS) * len(WALK_FRAMES)
+    if len(bboxes) != expected:
+        raise RuntimeError(f"Expected {expected} walk sprites in {WALK_SOURCE}, found {len(bboxes)}")
+
+    by_y = sorted(bboxes, key=lambda b: (b[1] + b[3]) / 2)
+    rows: list[list[tuple[int, int, int, int]]] = []
+    for row_index in range(len(HERO_ROWS)):
+        start = row_index * len(WALK_FRAMES)
+        row = by_y[start : start + len(WALK_FRAMES)]
+        rows.append(sorted(row, key=lambda b: (b[0] + b[2]) / 2))
+
+    tiles: list[list[Image.Image]] = []
+    for row in rows:
+        tile_row: list[Image.Image] = []
+        for bbox in row:
+            tile_row.append(keyed.crop(expand_bbox(bbox, 10, keyed.size)))
+        tiles.append(tile_row)
+    return tiles
+
+
 def normalize_walk_sprite(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     cleaned = keep_main_alpha_components(img)
     bbox = alpha_bbox(cleaned)
@@ -188,6 +258,7 @@ def make_contact_sheet(thumbs: list[tuple[str, Image.Image]], cols: int, thumb_s
 
 def slice_walk() -> list[dict[str, object]]:
     source = Image.open(WALK_SOURCE).convert("RGB")
+    tiles = extract_walk_tiles(source)
     frame_size = (96, 128)
     entries: list[dict[str, object]] = []
     contact: list[tuple[str, Image.Image]] = []
@@ -196,8 +267,8 @@ def slice_walk() -> list[dict[str, object]]:
         sheet = Image.new("RGBA", (frame_size[0] * len(WALK_FRAMES), frame_size[1]), (0, 0, 0, 0))
         frames: list[dict[str, str]] = []
         for col, frame_name in enumerate(WALK_FRAMES):
-            tile = crop_grid(source, len(WALK_FRAMES), len(HERO_ROWS), row * len(WALK_FRAMES) + col)
-            sprite = normalize_walk_sprite(remove_green_key(tile), frame_size)
+            tile = tiles[row][col]
+            sprite = normalize_walk_sprite(tile, frame_size)
             frame_dir = OUT / "characters" / "walk" / "frames" / hero_id
             frame_dir.mkdir(parents=True, exist_ok=True)
             frame_path = frame_dir / f"{frame_name}.png"
@@ -254,7 +325,8 @@ def write_manifest(walk: list[dict[str, object]], equipment: list[dict[str, str]
             "equipment": "assets/m5/v2/m5-3-v2-equipment-contact-sheet.png",
         },
         "notes": [
-            "Hero walk v2 source generated as a 3x7 sheet; output sheets use 7 frames per protagonist.",
+            "Hero walk v2 source is visually arranged as 3x7, but not evenly spaced; walk slicing detects character alpha components instead of fixed grid cells.",
+            "The walk source must resolve to exactly 21 character components before output sheets are written.",
             "Walk frames are transparent PNGs produced by removing the flat green chroma-key background.",
             "Ship equipment covers 4 figureheads, 3 hull platings, 3 sail sets, 3 cannon types, and 3 preview tiles.",
         ],

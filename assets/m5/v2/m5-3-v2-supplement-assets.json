@@ -239,7 +239,8 @@
     "equipment": "assets/m5/v2/m5-3-v2-equipment-contact-sheet.png"
   },
   "notes": [
-    "Hero walk v2 source generated as a 3x7 sheet; output sheets use 7 frames per protagonist.",
+    "Hero walk v2 source is visually arranged as 3x7, but not evenly spaced; walk slicing detects character alpha components instead of fixed grid cells.",
+    "The walk source must resolve to exactly 21 character components before output sheets are written.",
     "Walk frames are transparent PNGs produced by removing the flat green chroma-key background.",
     "Ship equipment covers 4 figureheads, 3 hull platings, 3 sail sets, 3 cannon types, and 3 preview tiles."
   ]

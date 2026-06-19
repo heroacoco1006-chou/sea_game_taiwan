@@ -3,14 +3,14 @@ title: sea_game 專案作戰盤
 type: status
 tags: [sea_game, 作戰盤, 里程碑]
 created: 2026-06-12
-updated: 2026-06-19
+updated: 2026-06-20
 author: Codex
 status: draft
 ---
 
 # 《大航海福爾摩沙》專案作戰盤
 
-> 最後更新：2026-06-19 | 作者：Codex
+> 最後更新：2026-06-20 | 作者：Codex
 > 設計依據：`2026-06-12_大航海福爾摩沙_遊戲建構書.md`
 
 ---
@@ -144,6 +144,7 @@ status: draft
   - [x] v2 主角行走圖補件（2026-06-19）：三主角各 7 格行走 sheet 與逐格 PNG，路徑 `assets/m5/v2/characters/walk/`；第一版仍有少量綠幕邊緣雜訊，已以較小顯示尺寸接入，後續可視畫面再精修。
   - [x] 船隻裝備外觀素材包（2026-06-19）：船首像 4、裝甲 3、船帆 3、大砲種類 3，另含 3 張預覽圖，路徑 `assets/m5/v2/ships/equipment/`。
   - [x] 接入 PortScene（2026-06-19）：港町主角依 `state.story.heroId` 載入 `lin／peter／chiyo` 的 96×128 spritesheet，移動時依方向切換行走幀；缺素材時退回舊程式小人。
+  - [x] 行走圖二次修正（2026-06-20）：`m5-3-hero-walk-v2-source.png` 改用人物輪廓偵測切片，不再用平均 7 欄硬切；修正上、左、右方向與背面幀被切到隔壁人物的問題。
   - [x] 接入 ShipyardScene／InfoScene（2026-06-19）：造船廠可選船型顯示 V2 精緻船卡，旗艦目前船首像／裝甲／船帆／砲種以圖示顯示；資訊選單「船隊資訊」同步顯示船卡與船隻裝備外觀。
 - [ ] **M5-4 圖鑑插圖**：120 筆圖鑑的人物／地點／物種／事件插圖（說明頁右側已預留位置）。
   - [x] v2 插圖素材包建立（2026-06-19）：對應 `src/data/codex.json` 全 120 筆輸出 384×384 PNG，人物沿用 M5-3 頭像、地點／自然沿用 M5-2 素材，事件／制度／貿易／船舶／寶物／生物用新 imagegen 圖板補齊；路徑 `assets/m5/v2/m5-4/codex/illustrations/`。

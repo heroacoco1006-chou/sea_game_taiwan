@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-20] 修正 | 操作者：Codex | 以輪廓偵測重切主角行走圖 source
+
+- 背景：老闆檢查 `m5-3-v2-walk-contact-sheet` 後指出上、右、左方向仍有問題，判斷原檔分割時就出錯。
+- 原因：`m5-3-hero-walk-v2-source.png` 的 21 個人物在視覺上是 3×7 排列，但不是精準等寬欄位；舊腳本用平均 7 欄硬切，導致側面與背面幀切到隔壁人物。
+- 完成事項：
+  - `tools/slice-m5-3-v2-supplement-art.py` 新增 alpha component bbox 偵測，先抓出 source 內 21 個人物輪廓，再依列與 x 座標排序成三主角七幀。
+  - 重新輸出 `assets/m5/v2/characters/walk/{lin,peter,chiyo}.png`、逐格 PNG 與 `m5-3-v2-walk-contact-sheet.png`。
+  - `status.md`、`memory.md` 補記此切片規則，避免後續重跑腳本又回到等寬切格。
+- 驗證：人工檢查 contact sheet，三主角側面與背面幀已不再出現隔壁人物殘影；source 輪廓偵測數量為 21，符合三主角 × 七幀。
+
 ## [2026-06-19] 修正 | 操作者：Codex | 修正主角行走圖左右與上方向對齊
 
 - 背景：老闆回報港町主角向下正常，但左、右、上方向圖案沒有對齊，需要測試修正。

@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-20] M5-3 行走圖 source 必須用人物輪廓切片
+
+- 背景：`m5-3-hero-walk-v2-source.png` 雖然視覺上是 3×7 行走圖，但欄距不是精準等分；用 `crop_grid(source, 7, 3, index)` 會切到隔壁人物，特別是 side/back frame。
+- 記憶（正式規則）：
+  - `tools/slice-m5-3-v2-supplement-art.py` 的 `slice_walk()` 必須走 `extract_walk_tiles()`：先 `remove_green_key()`，再用 alpha component bbox 找出 21 個人物，依 y 分三列、依 x 排七幀。
+  - source 正常時應偵測到 21 個人物；若不是 21，腳本要直接丟錯，不要回退到等寬切格，否則會把錯誤素材悄悄輸出進遊戲。
+  - 後續若用 imagegen/image2.0 補繪新的行走圖 source，也沿用輪廓偵測切片；只有在 source 明確加上固定格線且經驗證時，才可另寫專用切格器。
+- 影響：`m5-3-v2-walk-contact-sheet.png` 是第一個人工驗收點；確認側面與背面沒有隔壁人物殘影後，才接著看遊戲內方向切換。
+
 ## [2026-06-19] M5-3 主角行走圖切片對齊規則
 
 - 背景：港町主角向下行走正常，但左、右、上方向出現對齊問題；根因不是 Phaser 顯示尺寸，而是行走圖 source 切格後帶入相鄰格殘影與背面幀偏位。
