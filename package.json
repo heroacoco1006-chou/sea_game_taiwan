@@ -5,7 +5,7 @@
   "description": "大航海福爾摩沙 — 台灣大航海時代歷史教育遊戲",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },

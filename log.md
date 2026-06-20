@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-20] 修正 | 操作者：Codex | 清理重複 dev server 並固定 5173
+
+- 背景：老闆回報測試存檔不見，並發現多個 port 都能進入遊戲畫面。
+- 原因：本機殘留多個 Vite dev server，`5173、5174、5175、5176、5177、5179` 都曾在 listen；不同 port 是不同瀏覽器 origin，各自有 localStorage，因此會出現「同一遊戲在不同 port 看不到原存檔」的現象。
+- 完成事項：
+  - 關閉重複的 sea_game Vite dev server，只重新啟動 `127.0.0.1:5173`。
+  - `package.json` 的 `dev` script 改為 `vite --host 127.0.0.1 --port 5173 --strictPort`，避免 5173 被佔用時自動跳到 5174。
+- 驗證：`netstat` 確認只剩 `127.0.0.1:5173` 在 LISTENING；行走圖修正 commit 未改動 `state.ts`、`SaveSlotScene.ts` 或 localStorage key。
+- 備註：昨天 Codex 做行走圖 Browser 測試時曾使用測試存檔第 10 格；若老闆原存檔剛好在同一瀏覽器同一 port 的第 10 格，可能被測試覆蓋。後續測試不得覆蓋未確認的既有格，應先詢問或使用專用測試 origin。
+
 ## [2026-06-20] 修正 | 操作者：Codex | 以輪廓偵測重切主角行走圖 source
 
 - 背景：老闆檢查 `m5-3-v2-walk-contact-sheet` 後指出上、右、左方向仍有問題，判斷原檔分割時就出錯。
