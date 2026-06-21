@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-21] 開發 | 操作者：小航 | M5-5c 程式合成 BGM 與場景對應
+
+- 背景：老闆指示 BGM 也用簡單風格的程式合成（不下載音檔），但要能辨識不同場景。
+- 完成事項：
+  - `src/audio.ts` 新增程序化 BGM 引擎：lookahead 排程器（setInterval 25ms）把循環樂句排到 AudioContext 時間軸；`playBgm(key)`（同曲不重起、ctx 未解鎖時等待）、`stopBgm`、`refreshBgmGain`（隨音量/靜音調整）；BGM 走獨立 `bgmGain` 節點。
+  - 7 首 BGM 各用不同音階＋速度＋波形以利辨識：sailing/battle/adventure/town_china/town_taiwan/town_japan(平調子)/town_seasia；`townBgmForRegion(region)` 對應城町。
+  - 場景接入：Title／WorldMap=sailing、Battle=battle、Story=adventure、Port 及設施（Facility/Trade/Shipyard/ItemShop/Mates）=town(region)、Info 依來源；SaveSlot/GameOver 經 WorldMap.create 繼承 sailing。
+- 驗證：`tsc`、`npm run build` 通過；dist preview 實測 7 首播放/切換不丟錯、各場景 bgmKey 正確（月港=china、平戶=japan、巴達維亞=seasia、大員=taiwan、海戰=battle、劇情=adventure）。聽感（音量/旋律）待老闆於 5173 親耳確認。
+- 待續：M5-5e 音量設定 UI（併 M5-6）、依老闆聽感微調 BGM 配方。
+- 協作：本批只動 M5-5 音效相關（audio.ts 與各場景 create 的 playBgm 一行＋import），未碰 Codex 美術接入邏輯。
+
 ## [2026-06-21] 修正 | 操作者：Codex | 修正人物頭像與圖鑑插圖切片
 
 - 背景：老闆指出圖鑑與人物頭像仍有切割問題，要求先把素材修好，再推進程式接入。

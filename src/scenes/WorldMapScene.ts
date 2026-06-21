@@ -12,6 +12,7 @@ import {
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey } from '../art';
+import { audio } from '../audio';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
@@ -69,6 +70,7 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   create(): void {
+    audio.playBgm('sailing');
     this.paused = false;
     this.distAcc = 0;
     this.landPolys = [];

@@ -11,6 +11,8 @@ import {
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
 } from '../state';
 import { shipCardKey, shipEquipmentKey } from '../art';
+import { audio, townBgmForRegion } from '../audio';
+import { PORTS } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
@@ -60,6 +62,8 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   create(): void {
+    const bgmPort = this.from === 'Port' && this.portId ? PORTS.find((p) => p.id === this.portId) : undefined;
+    audio.playBgm(bgmPort ? townBgmForRegion(bgmPort.region) : 'sailing');
     const W = this.scale.width;
     const H = this.scale.height;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);

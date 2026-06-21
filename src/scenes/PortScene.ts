@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
 import { characterWalkKey, harborSceneKey, portBuildingKey, shipWorldKey } from '../art';
+import { audio, townBgmForRegion } from '../audio';
 import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
 /**
@@ -140,6 +141,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   create(): void {
+    audio.playBgm(townBgmForRegion(this.port.region));
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
     this.createTownBase(style);

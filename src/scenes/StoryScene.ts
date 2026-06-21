@@ -76,6 +76,7 @@ export default class StoryScene extends Phaser.Scene {
   create(): void {
     const W = this.scale.width;
     const H = this.scale.height;
+    audio.playBgm('adventure');
     this.heroName = heroDefById(this.heroId).name;
 
     // 背景：海色＋暗角，營造劇情氛圍

@@ -59,6 +59,7 @@ export default class BattleScene extends Phaser.Scene {
   create(): void {
     const W = this.scale.width;
     const H = this.scale.height;
+    audio.playBgm('battle');
     this.add.rectangle(W / 2, H / 2, W, H, 0x16384e);
     // 海面波紋
     const g = this.add.graphics();

@@ -7,7 +7,7 @@ import {
   addXp, levelUpMessage,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
-import { audio } from '../audio';
+import { audio, townBgmForRegion } from '../audio';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
 
@@ -41,6 +41,7 @@ export default class FacilityScene extends Phaser.Scene {
   create(): void {
     const W = this.scale.width;
     const H = this.scale.height;
+    audio.playBgm(townBgmForRegion(this.port.region));
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
 
     const titles: Record<FacilityType, string> = {

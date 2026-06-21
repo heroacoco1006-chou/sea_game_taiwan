@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-21] M5-5c BGM 程式合成（不用音檔）
+
+- 背景：老闆決定 BGM 也用簡單程式合成，不下載 CC-BY 音檔（M5-5d 取消／延後）。
+- 記憶（已實作）：
+  - `src/audio.ts` 內建程序化 BGM 引擎：`BGM` 物件存 7 首樂句配方（tempo/root/scale/wave/melody/bass），用 lookahead 排程器循環播放；BGM 走獨立 `bgmGain` 節點（受 master×bgm×非靜音控制）。
+  - 7 首用「不同音階＋速度＋波形」辨識：sailing(majPenta慢triangle)、battle(minor快sawtooth)、adventure(minor神祕sine)、town_china/taiwan(majPenta)、town_japan(hira平調子)、town_seasia(majPenta快square)。
+  - `townBgmForRegion(region)`：台灣/澎湖→taiwan、中國→china、日本/琉球→japan、其餘→seasia。
+  - 場景在 create 呼叫 `audio.playBgm(...)`：Title/WorldMap=sailing、Battle=battle、Story=adventure、Port 與所有港內設施(Facility/Trade/Shipyard/ItemShop/Mates)=town(region)、Info 依來源；playBgm 同曲不重起，所以場景間切換不會卡頓。
+  - 要調整旋律/音量就改 `BGM` 配方或各 SFX 配方；不需動場景。
+  - 驗證限制：headless 只驗不丟錯與 bgmKey 正確；聽感需老闆於 5173 親耳確認。
+
 ## [2026-06-21] M5-3/M5-4 頭像與圖鑑插圖需先清格邊再輸出
 
 - 背景：人物頭像與圖鑑插圖 source sheet 不是可直接等分後放進遊戲的最終圖；直接 resize 會保留格線、淡色邊框或鄰格殘影。

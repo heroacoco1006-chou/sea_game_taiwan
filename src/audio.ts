@@ -74,10 +74,72 @@ const SFX: Record<SfxName, SfxSpec> = {
   ] },
 };
 
+// ---- 背景音樂（程式合成，簡單但各場景可辨識）----
+export type BgmKey =
+  | 'sailing' | 'battle' | 'adventure'
+  | 'town_china' | 'town_taiwan' | 'town_japan' | 'town_seasia';
+
+const SCALES = {
+  majPenta: [0, 2, 4, 7, 9], // 大調五聲（中國／台灣／南洋）
+  minor: [0, 2, 3, 5, 7, 8, 10], // 小調（海戰／冒險）
+  hira: [0, 2, 3, 7, 8], // 日本平調子風
+};
+
+interface BgmSpec {
+  tempo: number; // BPM（一拍＝一步）
+  root: number; // 主音頻率
+  scale: number[];
+  wave: OscillatorType;
+  bassWave: OscillatorType;
+  melody: number[]; // 每步旋律音級（-99＝休止）
+  bass: number[]; // 每步低音音級（-99＝休止；實際低八度）
+}
+
+// 用不同音階＋速度＋波形讓七種場景一聽就能分辨
+const BGM: Record<BgmKey, BgmSpec> = {
+  sailing: { tempo: 70, root: 261.63, scale: SCALES.majPenta, wave: 'triangle', bassWave: 'sine',
+    melody: [0, 2, 4, 2, 7, 4, 2, 0], bass: [0, -99, -99, -99, 2, -99, -99, -99] },
+  battle: { tempo: 140, root: 196.0, scale: SCALES.minor, wave: 'sawtooth', bassWave: 'sawtooth',
+    melody: [0, 3, 0, 4, 3, 1, 4, 3], bass: [0, 0, 0, 0, 4, 4, 2, 2] },
+  adventure: { tempo: 86, root: 261.63, scale: SCALES.minor, wave: 'sine', bassWave: 'triangle',
+    melody: [0, -99, 3, -99, 5, -99, 4, 3], bass: [0, -99, -99, -99, 5, -99, -99, -99] },
+  town_china: { tempo: 100, root: 293.66, scale: SCALES.majPenta, wave: 'square', bassWave: 'triangle',
+    melody: [0, 2, 4, 5, 4, 2, 1, 0], bass: [0, -99, 4, -99, 2, -99, 4, -99] },
+  town_taiwan: { tempo: 82, root: 196.0, scale: SCALES.majPenta, wave: 'triangle', bassWave: 'sine',
+    melody: [4, 2, 0, 2, 4, 5, 4, 2], bass: [0, -99, -99, -99, 4, -99, -99, -99] },
+  town_japan: { tempo: 74, root: 329.63, scale: SCALES.hira, wave: 'triangle', bassWave: 'sine',
+    melody: [0, 2, 3, -99, 4, 3, 2, -99], bass: [0, -99, -99, -99, 2, -99, -99, -99] },
+  town_seasia: { tempo: 112, root: 349.23, scale: SCALES.majPenta, wave: 'square', bassWave: 'triangle',
+    melody: [0, 4, 2, 7, 5, 4, 2, 0], bass: [0, -99, -99, 2, -99, 4, -99, -99] },
+};
+
+/** 港口 region → 城町 BGM。 */
+export function townBgmForRegion(region: string): BgmKey {
+  if (region.includes('台灣') || region.includes('澎湖')) return 'town_taiwan';
+  if (region.includes('中國')) return 'town_china';
+  if (region.includes('日本') || region.includes('琉球')) return 'town_japan';
+  return 'town_seasia';
+}
+
+/** 音級轉頻率（音級可超出音階長度＝跨八度；負值＝低八度） */
+function degToFreq(root: number, scale: number[], deg: number): number {
+  const n = scale.length;
+  const oct = Math.floor(deg / n);
+  const semis = scale[((deg % n) + n) % n] + 12 * oct;
+  return root * Math.pow(2, semis / 12);
+}
+
 class AudioManager {
   private ctx: AudioContext | null = null;
   private settings: AudioSettings;
   private noiseBuffer: AudioBuffer | null = null;
+  // 背景音樂排程
+  private bgmGain: GainNode | null = null;
+  private bgmKey: BgmKey | null = null;
+  private bgmSpec: BgmSpec | null = null;
+  private bgmTimer: number | null = null;
+  private bgmStep = 0;
+  private nextNoteTime = 0;
 
   constructor() {
     this.settings = this.load();
@@ -114,13 +176,23 @@ class AudioManager {
   setVolume(track: 'master' | 'bgm' | 'sfx', value: number): void {
     this.settings[track] = Math.max(0, Math.min(100, Math.round(value)));
     this.save();
+    this.refreshBgmGain();
   }
-  toggleMute(): boolean { this.settings.muted = !this.settings.muted; this.save(); return this.settings.muted; }
-  setMuted(m: boolean): void { this.settings.muted = m; this.save(); }
+  toggleMute(): boolean { this.settings.muted = !this.settings.muted; this.save(); this.refreshBgmGain(); return this.settings.muted; }
+  setMuted(m: boolean): void { this.settings.muted = m; this.save(); this.refreshBgmGain(); }
 
   private sfxLevel(): number {
     if (this.settings.muted) return 0;
     return (this.settings.master / 100) * (this.settings.sfx / 100);
+  }
+  private bgmLevel(): number {
+    if (this.settings.muted) return 0;
+    return (this.settings.master / 100) * (this.settings.bgm / 100);
+  }
+  private refreshBgmGain(): void {
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setTargetAtTime(this.bgmLevel(), this.ctx.currentTime, 0.05);
+    }
   }
 
   private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
@@ -174,9 +246,69 @@ class AudioManager {
     }
   }
 
-  // ---- 背景音樂（介面預留，M5-5c 實作載入與切換）----
-  playBgm(_key: string): void { /* TODO M5-5c */ }
-  stopBgm(): void { /* TODO M5-5c */ }
+  // ---- 背景音樂（程式合成的循環樂句，依場景切換）----
+  playBgm(key: BgmKey): void {
+    if (this.bgmKey === key && this.bgmTimer !== null) return; // 同曲播放中，不重起
+    const spec = BGM[key];
+    if (!spec) { this.stopBgm(); return; }
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    if (!this.bgmGain) {
+      this.bgmGain = ctx.createGain();
+      this.bgmGain.gain.value = this.bgmLevel();
+      this.bgmGain.connect(ctx.destination);
+    } else {
+      this.refreshBgmGain();
+    }
+    this.bgmKey = key;
+    this.bgmSpec = spec;
+    this.bgmStep = 0;
+    this.nextNoteTime = ctx.currentTime;
+    if (this.bgmTimer === null) {
+      this.bgmTimer = window.setInterval(() => this.scheduleBgm(), 25);
+    }
+  }
+
+  stopBgm(): void {
+    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    this.bgmKey = null;
+    this.bgmSpec = null;
+    if (this.bgmGain && this.ctx) this.bgmGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
+  }
+
+  /** 排程器：用 lookahead 把循環樂句的音符排到 AudioContext 時間軸上。 */
+  private scheduleBgm(): void {
+    const ctx = this.ctx;
+    const spec = this.bgmSpec;
+    if (!ctx || !spec || !this.bgmGain) return;
+    if (ctx.state !== 'running') { this.nextNoteTime = ctx.currentTime + 0.1; return; } // 等待解鎖
+    const beat = 60 / spec.tempo;
+    while (this.nextNoteTime < ctx.currentTime + 0.12) {
+      const step = this.bgmStep % spec.melody.length;
+      const t = this.nextNoteTime;
+      const mDeg = spec.melody[step];
+      if (mDeg !== -99) this.bgmTone(degToFreq(spec.root, spec.scale, mDeg), t, beat * 0.5, spec.wave, 0.12);
+      const bDeg = spec.bass[step];
+      if (bDeg !== -99) this.bgmTone(degToFreq(spec.root, spec.scale, bDeg) / 2, t, beat * 0.9, spec.bassWave, 0.16);
+      this.bgmStep = (this.bgmStep + 1) % spec.melody.length;
+      this.nextNoteTime += beat;
+    }
+  }
+
+  private bgmTone(freq: number, t: number, dur: number, wave: OscillatorType, vol: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.bgmGain) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(this.bgmGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
 }
 
 export const audio = new AudioManager();

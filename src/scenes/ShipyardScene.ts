@@ -8,6 +8,7 @@ import {
 } from '../state';
 import { shipCardKey, shipEquipmentKey } from '../art';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { audio, townBgmForRegion } from '../audio';
 
 const REPAIR_PRICE = 2;
 const REFIT_FEE = 10;
@@ -54,6 +55,7 @@ export default class ShipyardScene extends Phaser.Scene {
   }
 
   create(): void {
+    audio.playBgm(townBgmForRegion(this.port.region));
     const W = this.scale.width;
     const H = this.scale.height;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);

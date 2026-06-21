@@ -225,12 +225,10 @@ status: draft
 ### 實作分項清單（逐項完成）
 - [x] **M5-5a 音訊系統**（2026-06-21）：`src/audio.ts` 單例——Web Audio 合成 `playSfx`、三軌音量（master/bgm/sfx）＋靜音、存 `localStorage('seagame_audio')`、首次互動解鎖 AudioContext（main.ts 監聽 pointerdown/keydown/touchstart）；`playBgm/stopBgm` 介面預留待 M5-5c。實測：game 正常 boot、12 種 SFX 不丟錯、設定持久化。
 - [x] **M5-5b 音效合成**（2026-06-21）：11 種 SFX 配方（click/coin/cannon/board/victory/defeat/levelup/unlock/port/page/confirm/cancel）；接入 makeButton 全域點擊、TradeScene 買賣（coin）、BattleScene 砲擊/接舷/勝/敗＋升級、FacilityScene 領賞 coin＋解鎖 unlock＋升級、StoryScene 圖鑑卡 unlock。
-- [ ] **M5-5c BGM 載入＋場景對應**：`art.ts` 加 `BGM_URLS`、BootScene 預載；WorldMap／Battle／Port（region）／探索 接 `playBgm`。
-- [ ] **M5-5d BGM 音源挑選與下載**（CC-BY，需老闆授權）＋ `CREDITS.md` 標註：航海／海戰／城町×4／冒險 共 7 首。
+- [x] **M5-5c BGM（程式合成）＋場景對應**（2026-06-21）：老闆指示 BGM 也用簡單程式合成（不下載音檔）。`audio.ts` 加程序化 BGM 引擎（lookahead 排程循環樂句），7 首各用不同音階／速度／波形：sailing（大調五聲・慢・triangle）、battle（小調・快・sawtooth）、adventure（小調・神祕・sine）、town_china／taiwan（五聲）、town_japan（平調子）、town_seasia（五聲・快・square）。場景接入：Title／WorldMap=sailing、Battle=battle、Story=adventure、Port 及設施（Facility/Trade/Shipyard/ItemShop/Mates）依 `townBgmForRegion(port.region)`、Info 依來源。實測：各場景 bgmKey 正確（月港=china、平戶=japan、巴達維亞=seasia、大員=taiwan）、7 首切換不丟錯。
+- [x] **M5-5d BGM 音源**：改為程式合成（上方 M5-5c），不需下載 CC-BY 音檔；日後若要更精緻可再評估改用 CC-BY 音檔（需授權下載）。
 - [ ] **M5-5e 設定 UI**：音量滑桿×3＋靜音鈕（與 M5-6 一起美化）。
-- [ ] **M5-5f 實測與平衡**：各場景切換正確、音量適中、低階機／行動裝置可播、無自動播放錯誤。
-
-> 建議起手：先做 **M5-5a＋M5-5b**（音訊系統＋程式合成音效，零外部檔、可立即聽到回饋），再做 **M5-5c**（先用占位或一首先接通管線），最後 **M5-5d** 逐首挑 CC-BY 背景音樂下載接入。
+- [ ] **M5-5f 聽感平衡**：headless 已驗不丟錯與切換正確；**音量／旋律好不好聽需老闆親耳於 5173 確認**後再微調配方。
 
 ---
 

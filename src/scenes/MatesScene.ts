@@ -4,6 +4,7 @@ import {
   mateRequirementStatus, mateQuestStageStatuses, recruitMate, getMateScript,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { audio, townBgmForRegion } from '../audio';
 
 /**
  * 夥伴：招募本港的夥伴、指派幹部職位（同職位互斥）。
@@ -35,6 +36,7 @@ export default class MatesScene extends Phaser.Scene {
   }
 
   create(): void {
+    audio.playBgm(townBgmForRegion(this.port.region));
     const W = this.scale.width;
     const H = this.scale.height;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);

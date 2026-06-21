@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { hasAnySave, HEROES } from '../state';
 import type { HeroId } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
+import { audio } from '../audio';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() {
@@ -10,6 +11,7 @@ export default class TitleScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    audio.playBgm('sailing');
 
     // 海色背景＋裝飾波紋
     this.add.rectangle(width / 2, height / 2, width, height, COLORS.seaDeep);
