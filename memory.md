@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-21] M5-2 exploration source 不可平均等分切片
+
+- 背景：M5-2 exploration source 雖然看起來是 6×5 圖板，但 imagegen 輸出的卡片沒有平均分布在整張 1536×1024 畫布上；用 `img.width / 6` 直接等分會切掉最後一欄或把鄰格殘影帶進來。
+- 決策／實作：
+  - `tools/slice-m5-2-v2-art.py` 的 exploration 路徑必須先跑 `detect_component_grid()`，偵測實際 30 張卡片元件後再排序對應 `EXPLORATION_IDS`。
+  - 輸出探索圖示時用 `render_exploration_icon()` 轉成透明底圓形探索標記，避免世界地圖上出現方形卡片底、黑框或鄰格殘影。
+  - 後續若重繪 M5-2 exploration source，先看 `m5-2-v2-exploration-contact-sheet.png`，並用 alpha bbox 檢查每張圖不可貼齊畫布四邊。
+
 ## [2026-06-21] M5-5c BGM 程式合成（不用音檔）
 
 - 背景：老闆決定 BGM 也用簡單程式合成，不下載 CC-BY 音檔（M5-5d 取消／延後）。
