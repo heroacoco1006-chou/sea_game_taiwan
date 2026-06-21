@@ -31,6 +31,10 @@ const COAST_LIGHT = 0xf2e3bd;
 const COAST_SHALLOW = 0x7aa7a8;
 const SHIP_WORLD_DISPLAY_W = 54;
 const SHIP_WORLD_DISPLAY_H = 40;
+const SCENERY_ICON_SIZE = 32;
+const EXPLORE_ICON_UNKNOWN_SIZE = 32;
+const EXPLORE_ICON_KNOWN_SIZE = 36;
+const EXPLORE_LABEL_OFFSET = 30;
 
 export default class WorldMapScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Sprite;
@@ -269,8 +273,8 @@ export default class WorldMapScene extends Phaser.Scene {
     for (const entry of DISCOVERIES.filter((d) => d.kind === 'scenery' && typeof d.x === 'number' && typeof d.y === 'number')) {
       const key = this.m5Texture(explorationIconKey('scenery_magnifier'), 'marker_telescope');
       const icon = this.add.image(entry.x!, entry.y!, key).setDepth(9).setAlpha(0.92);
-      if (key !== 'marker_telescope') icon.setDisplaySize(42, 42);
-      else icon.setScale(0.85);
+      if (key !== 'marker_telescope') icon.setDisplaySize(SCENERY_ICON_SIZE, SCENERY_ICON_SIZE);
+      else icon.setScale(0.72);
       icon.setInteractive({ useHandCursor: true });
       icon.setVisible(false);
       icon.on('pointerdown', () => this.tryDiscoverScenery(entry));
@@ -279,12 +283,14 @@ export default class WorldMapScene extends Phaser.Scene {
 
     for (const point of EXPLORATION_POINTS) {
       const key = this.m5Texture(explorationIconKey('unknown_exploration'), 'marker_question');
-      const icon = this.add.image(point.x, point.y, key).setDepth(8).setAlpha(0.82);
-      if (key !== 'marker_question') icon.setDisplaySize(44, 44);
+      const icon = this.add.image(point.x, point.y, key).setDepth(8).setAlpha(0.78);
+      if (key !== 'marker_question') icon.setDisplaySize(EXPLORE_ICON_UNKNOWN_SIZE, EXPLORE_ICON_UNKNOWN_SIZE);
       const label = this.add
-        .text(point.x, point.y + 24, '？', textStyle(16, '#fff4d6'))
+        .text(point.x, point.y + EXPLORE_LABEL_OFFSET, '？', textStyle(15, '#fff4d6'))
         .setOrigin(0.5)
-        .setDepth(8)
+        .setDepth(9)
+        .setPadding(4, 1, 4, 1)
+        .setBackgroundColor('rgba(58, 42, 20, 0.58)')
         .setShadow(1, 1, '#000', 2);
       icon.setInteractive({ useHandCursor: true });
       icon.on('pointerdown', () => this.tryExplorePoint(point));
@@ -460,10 +466,12 @@ export default class WorldMapScene extends Phaser.Scene {
           ? this.m5Texture(explorationIconKey(this.explorationIconIdForPoint(marker.point.id)), 'marker_explore')
           : this.m5Texture(explorationIconKey('unknown_exploration'), 'marker_question')
       );
-      marker.icon.setDisplaySize(44, 44);
+      const iconSize = known ? EXPLORE_ICON_KNOWN_SIZE : EXPLORE_ICON_UNKNOWN_SIZE;
+      marker.icon.setDisplaySize(iconSize, iconSize);
       marker.icon.setAlpha(activeQuest ? 1 : known ? 0.88 : 0.68);
+      marker.label.setPosition(marker.point.x, marker.point.y + EXPLORE_LABEL_OFFSET);
       marker.label.setText(known ? marker.point.name : '？');
-      marker.label.setFontSize(known ? 13 : 16);
+      marker.label.setFontSize(known ? 12 : 15);
     }
     if (this.pirateMarker) {
       const q = this.state.quest;
@@ -911,3 +919,4 @@ export default class WorldMapScene extends Phaser.Scene {
     this.updateWindHud();
   }
 }
+
