@@ -1,0 +1,101 @@
+{
+  "source": "assets/m5/v2/source/m5-3-ship-directional-v2-source.png",
+  "frameWidth": 96,
+  "frameHeight": 72,
+  "directions": [
+    "down",
+    "up",
+    "right",
+    "left"
+  ],
+  "ships": [
+    {
+      "id": "junk_small",
+      "name": "小型中國帆船",
+      "sheet": "assets/m5/v2/ships/world_directional/junk_small.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/junk_small_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/junk_small_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/junk_small_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/junk_small_left.png"
+      }
+    },
+    {
+      "id": "junk_large",
+      "name": "大型中國帆船",
+      "sheet": "assets/m5/v2/ships/world_directional/junk_large.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/junk_large_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/junk_large_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/junk_large_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/junk_large_left.png"
+      }
+    },
+    {
+      "id": "fuchuan",
+      "name": "福船",
+      "sheet": "assets/m5/v2/ships/world_directional/fuchuan.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/fuchuan_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/fuchuan_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/fuchuan_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/fuchuan_left.png"
+      }
+    },
+    {
+      "id": "shuinsen",
+      "name": "朱印船",
+      "sheet": "assets/m5/v2/ships/world_directional/shuinsen.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/shuinsen_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/shuinsen_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/shuinsen_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/shuinsen_left.png"
+      }
+    },
+    {
+      "id": "caravel",
+      "name": "卡拉維爾帆船",
+      "sheet": "assets/m5/v2/ships/world_directional/caravel.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/caravel_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/caravel_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/caravel_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/caravel_left.png"
+      }
+    },
+    {
+      "id": "carrack",
+      "name": "卡拉克帆船",
+      "sheet": "assets/m5/v2/ships/world_directional/carrack.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/carrack_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/carrack_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/carrack_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/carrack_left.png"
+      }
+    },
+    {
+      "id": "fluyt",
+      "name": "荷蘭笛型船",
+      "sheet": "assets/m5/v2/ships/world_directional/fluyt.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/fluyt_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/fluyt_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/fluyt_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/fluyt_left.png"
+      }
+    },
+    {
+      "id": "galleon",
+      "name": "蓋倫帆船",
+      "sheet": "assets/m5/v2/ships/world_directional/galleon.png",
+      "frames": {
+        "down": "assets/m5/v2/ships/world_directional/frames/galleon_down.png",
+        "up": "assets/m5/v2/ships/world_directional/frames/galleon_up.png",
+        "right": "assets/m5/v2/ships/world_directional/frames/galleon_right.png",
+        "left": "assets/m5/v2/ships/world_directional/frames/galleon_left.png"
+      }
+    }
+  ]
+}

@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-21] M5-3 船隻方向幀素材包
+
+- 背景：老闆指出世界地圖船隻用方形船卡缺乏真實感，靠港時也可能蓋住港口；要求先用 imagegen／image2.0 產生船隻上下左右方向幀。
+- 決策／實作：
+  - 新增 `assets/m5/v2/source/m5-3-ship-directional-v2-source.png` 作為 8 船型 × 4 方向的 source 圖板。
+  - `tools/slice-m5-3-ship-directional-art.py` 會把 source 等分切成 8 張 4 格 spritesheet，輸出到 `assets/m5/v2/ships/world_directional/`；方向順序固定為 `down, up, right, left`，單格 96×72。
+  - 後續接入 `WorldMapScene` 時，應改用方向 frame 切換，並降低船隻顯示尺寸與碰撞視覺範圍，避免靠港時遮住港口圖示。
+
 ## [2026-06-21] M5-2.6 Phase B 世界地圖陸地邊界質感已導入
 
 - 背景：老闆截圖指出世界地圖台灣／澎湖一帶仍有明顯方塊陸地與生硬邊界，要求更新世界地圖邊界狀況、提升質感。

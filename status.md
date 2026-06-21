@@ -154,6 +154,7 @@ status: draft
   - [x] 接入 WorldMapScene／BattleScene（2026-06-19）：世界地圖旗艦依船型顯示 V2 world sprite；海戰雙方依船型顯示 V2 battle sprite（敵船依 tier 對應船型＋紅色 tint）。
   - [x] v2 主角行走圖補件（2026-06-19）：三主角各 7 格行走 sheet 與逐格 PNG，路徑 `assets/m5/v2/characters/walk/`；第一版仍有少量綠幕邊緣雜訊，已以較小顯示尺寸接入，後續可視畫面再精修。
   - [x] 船隻裝備外觀素材包（2026-06-19）：船首像 4、裝甲 3、船帆 3、大砲種類 3，另含 3 張預覽圖，路徑 `assets/m5/v2/ships/equipment/`。
+  - [x] 船隻方向幀素材包（2026-06-21）：以 imagegen／image2.0 產出 8 船型 × 4 方向 source，切成 `assets/m5/v2/ships/world_directional/` spritesheet 與 32 張逐格 PNG；待下一步接入 `WorldMapScene` 取代方形船卡。
   - [x] 接入 PortScene（2026-06-19）：港町主角依 `state.story.heroId` 載入 `lin／peter／chiyo` 的 96×128 spritesheet，移動時依方向切換行走幀；缺素材時退回舊程式小人。
   - [x] 行走圖二次修正（2026-06-20）：`m5-3-hero-walk-v2-source.png` 改用人物輪廓偵測切片，不再用平均 7 欄硬切；修正上、左、右方向與背面幀被切到隔壁人物的問題。
   - [x] 接入 ShipyardScene／InfoScene（2026-06-19）：造船廠可選船型顯示 V2 精緻船卡，旗艦目前船首像／裝甲／船帆／砲種以圖示顯示；資訊選單「船隊資訊」同步顯示船卡與船隻裝備外觀。

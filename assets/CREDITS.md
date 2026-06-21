@@ -4,6 +4,19 @@
 
 ---
 
+## M5-3 船隻方向幀精緻素材 v2（2026-06-21）
+
+- **素材位置**：`assets/m5/v2/ships/world_directional/`
+- **內容**：
+  - `assets/m5/v2/source/m5-3-ship-directional-v2-source.png`：imagegen／image2.0 產出的 8 船型 × 4 方向 source 圖板。
+  - `assets/m5/v2/ships/world_directional/`：8 種船型方向 spritesheet，各 4 格，方向順序為 `down, up, right, left`。
+  - `assets/m5/v2/ships/world_directional/frames/`：32 張逐格方向 PNG。
+  - `assets/m5/v2/m5-3-v2-ship-directional-assets.json`：素材 manifest；`assets/m5/v2/m5-3-v2-ship-directional-prompts.md`：prompt 與後處理紀錄。
+  - `assets/m5/v2/m5-3-v2-ship-directional-contact-sheet.png`：總覽圖。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-3-ship-directional-art.py` 綠幕去背、切片、縮放、置中與產生 manifest。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：此批素材用於取代世界地圖船隻方形船卡，後續接入時可依船隻航行方向切換 frame。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 ## M5-4 圖鑑插圖精緻素材 v2（2026-06-19）
 
 - **素材位置**：`assets/m5/v2/m5-4/codex/`

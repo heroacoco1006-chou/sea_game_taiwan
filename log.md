@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-06-21] 素材 | 操作者：Codex | 建立船隻方向幀素材包
+
+- 背景：老闆截圖指出世界地圖船隻仍像方形船卡，缺乏真實感且靠港時會蓋到港口；建議仿照港町主角行走圖，先建立船隻上下左右方向幀。
+- 完成事項：
+  - 使用 OpenAI imagegen／image2.0 產出 `assets/m5/v2/source/m5-3-ship-directional-v2-source.png`，內容為 8 船型 × 4 方向 source 圖板。
+  - 新增 `tools/slice-m5-3-ship-directional-art.py`，將 source 綠幕去背、切片、縮放、置中，輸出 8 張 4 格 spritesheet 與 32 張逐格 PNG。
+  - 新增 `assets/m5/v2/m5-3-v2-ship-directional-assets.json`、`m5-3-v2-ship-directional-prompts.md` 與 contact sheet，方便後續接入 `WorldMapScene`。
+  - 更新 `assets/CREDITS.md`、`status.md` 與 `memory.md`。
+- 驗證：切片腳本執行成功；輸出 8 張 spritesheet、32 張逐格方向 PNG 與 manifest。
 ## [2026-06-21] 修正 | 操作者：Codex | 改善世界地圖陸地邊界質感
 
 - 背景：老闆截圖指出世界地圖台灣、澎湖與海岸邊界仍像方塊圖，和復古海面與 M5 V2 素材質感不一致。
