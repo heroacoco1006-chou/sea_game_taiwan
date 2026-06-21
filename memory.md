@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-21] M5-5 音樂音效架構（待實作）
+
+- 背景：老闆指派小航做 M5-5；音效程式合成、BGM 用 CC-BY。架構與分項已寫進 status「🎵 M5-5 音樂音效」。
+- 記憶（設計定案，實作以此為準）：
+  - **音效＝Web Audio 程式合成**（零檔案零版權）；**BGM＝CC-BY／CC0 音檔**，放 `assets/m5/audio/bgm/`，CC-BY 須在 `assets/CREDITS.md` 標註，下載需老闆授權。
+  - 統一在 `src/audio.ts`（單例）：`playBgm/stopBgm`（淡入淡出、loop、同曲不重播）、`playSfx`、三軌音量 master/bgm/sfx＋靜音、存 `localStorage('seagame_audio')`、首次互動後解鎖 AudioContext。
+  - BGM 載入沿用 art.ts 的 import.meta.glob（新增 `BGM_URLS`），BootScene `load.audio` 預載；缺檔安靜略過。
+  - 7 首 BGM：sailing／battle／town_china／town_taiwan／town_japan／town_seasia／adventure。城町依 `port.region` 對應（台灣＋澎湖→台灣；中國福建＋廣東→中國；日本九州＋近畿＋琉球→日本；其餘→東南亞）。
+  - 分項 M5-5a 音訊系統 → b 合成音效 → c BGM 載入＋場景對應 → d 挑 CC-BY 下載 → e 設定 UI（併 M5-6）→ f 實測。建議先做 a＋b。
+
 ## [2026-06-21] M5-3 世界地圖船隻方向幀已接入
 
 - 背景：船隻方向幀素材包完成後，老闆要求把船隻接入遊戲中，取代世界地圖方形船卡。
