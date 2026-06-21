@@ -26,12 +26,49 @@ interface LayoutSlot {
   y: number;
 }
 
-const CULTURE_STYLE: Record<string, { roof: number; wall: number; ground: number }> = {
-  han: { roof: 0x8a3024, wall: 0xd8c8a8, ground: 0xb8a070 },
-  wa: { roof: 0x4a4a52, wall: 0xe8e0d0, ground: 0xc0b090 },
-  euro: { roof: 0xa85a28, wall: 0xd8b89a, ground: 0xb09878 },
-  ryu: { roof: 0xb84a30, wall: 0xe8d8b8, ground: 0xc0a878 },
-  sea: { roof: 0x7a6a3a, wall: 0xc8a878, ground: 0xa89868 },
+interface TownStyle {
+  roof: number;
+  wall: number;
+  ground: number;
+  ground2: number;
+  road: number;
+  roadEdge: number;
+  plaza: number;
+  shadow: number;
+  water: number;
+  dock: number;
+  label: number;
+  labelText: string;
+  propGreen: number;
+  propTrunk: number;
+}
+
+const CULTURE_STYLE: Record<string, TownStyle> = {
+  han: {
+    roof: 0x8a3024, wall: 0xd8c8a8, ground: 0xb99f71, ground2: 0xc9b485, road: 0x9a8a66, roadEdge: 0x6f5934,
+    plaza: 0xd0bf91, shadow: 0x3a2a14, water: 0x285f73, dock: 0x6b4a2a, label: 0x4b3118, labelText: '#fff4d6',
+    propGreen: 0x4a7a3a, propTrunk: 0x5a4530,
+  },
+  wa: {
+    roof: 0x4a4a52, wall: 0xe8e0d0, ground: 0xc2b18d, ground2: 0xd2c5a6, road: 0x8f8168, roadEdge: 0x5a4a36,
+    plaza: 0xd8cfb4, shadow: 0x2f2a21, water: 0x24586f, dock: 0x5b4630, label: 0x332c23, labelText: '#fff8e8',
+    propGreen: 0x3f6a48, propTrunk: 0x4d3a2a,
+  },
+  euro: {
+    roof: 0xa85a28, wall: 0xd8b89a, ground: 0xb49a76, ground2: 0xcdb68d, road: 0x7f725d, roadEdge: 0x584631,
+    plaza: 0xd6c39e, shadow: 0x322417, water: 0x265b76, dock: 0x614228, label: 0x4a321f, labelText: '#fff2dc',
+    propGreen: 0x4d7041, propTrunk: 0x57412e,
+  },
+  ryu: {
+    roof: 0xb84a30, wall: 0xe8d8b8, ground: 0xc2aa7c, ground2: 0xd4bf8e, road: 0x99886c, roadEdge: 0x675132,
+    plaza: 0xdcc999, shadow: 0x392616, water: 0x25637a, dock: 0x68452a, label: 0x553019, labelText: '#fff4d6',
+    propGreen: 0x477b43, propTrunk: 0x5a4028,
+  },
+  sea: {
+    roof: 0x7a6a3a, wall: 0xc8a878, ground: 0xa99667, ground2: 0xc0ae79, road: 0x846b47, roadEdge: 0x564027,
+    plaza: 0xcdb77d, shadow: 0x332416, water: 0x1f6478, dock: 0x644225, label: 0x4f351d, labelText: '#fff3d0',
+    propGreen: 0x3f7a45, propTrunk: 0x5a3b24,
+  },
 };
 
 const PLAYER_SPEED = 230;
@@ -101,17 +138,10 @@ export default class PortScene extends Phaser.Scene {
   create(): void {
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
-    // 地面
-    this.add.rectangle(TOWN_W / 2, TOWN_H / 2, TOWN_W, TOWN_H, style.ground);
-    this.addHarborBackdrop();
-    const paths = this.add.graphics();
-    paths.fillStyle(0x000000, 0.1);
-    paths.fillRect(0, 430, TOWN_W, 80); // 大街（橫）
-    paths.fillRect(TOWN_W / 2 - 40, 100, 80, TOWN_H - 200); // 大街（縱）
-
-    // 港邊海面與棧橋
-    this.add.rectangle(TOWN_W / 2, TOWN_H - 35, TOWN_W, 70, COLORS.sea);
-    this.add.rectangle(this.dock.x, TOWN_H - 75, 340, 18, 0x6b4a2a);
+    this.createTownBase(style);
+    this.addHarborBackdrop(style);
+    this.createRoads(style);
+    this.createDock(style);
     const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
     const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
     if (shipKey === 'ship') dockShip.setScale(1.5);
@@ -119,26 +149,7 @@ export default class PortScene extends Phaser.Scene {
 
     this.buildings = this.createTownBuildings();
 
-    const g = this.add.graphics();
-    for (const b of this.buildings) {
-      const artKey = this.m5Texture(portBuildingKey(b.artId), '');
-      if (artKey) {
-        this.add.image(b.x, b.y, artKey).setDisplaySize(b.w, b.h + 28).setDepth(2);
-        g.fillStyle(0x3a2a14, 0.18);
-        g.fillEllipse(b.x, b.y + b.h / 2 + 8, b.w * 0.72, 20);
-      } else {
-        g.fillStyle(style.wall, 1);
-        g.fillRect(b.x - b.w / 2, b.y - b.h / 2 + 18, b.w, b.h - 18);
-        g.fillStyle(style.roof, 1);
-        g.fillTriangle(b.x - b.w / 2 - 14, b.y - b.h / 2 + 22, b.x + b.w / 2 + 14, b.y - b.h / 2 + 22, b.x, b.y - b.h / 2 - 26);
-        g.fillStyle(0x4a2f15, 1);
-        g.fillRect(b.x - 16, b.y + b.h / 2 - 36, 32, 36);
-      }
-      this.add
-        .text(b.x, b.y - 4, b.label, { ...textStyle(20, '#fff8e8'), backgroundColor: '#3a2a14cc', padding: { x: 8, y: 3 } })
-        .setOrigin(0.5)
-        .setDepth(3);
-    }
+    this.createBuildings(style);
 
     // 裝飾：民宅、樹、水井、貨箱（豐富城景）
     this.addDecorations(style);
@@ -222,35 +233,180 @@ export default class PortScene extends Phaser.Scene {
     ]);
   }
 
-  private addDecorations(style: { roof: number; wall: number }): void {
-    const g = this.add.graphics();
+  private createTownBase(style: TownStyle): void {
+    const g = this.add.graphics().setDepth(0);
+    g.fillStyle(style.ground, 1);
+    g.fillRect(0, 0, TOWN_W, TOWN_H);
+    g.fillStyle(style.ground2, 0.22);
+    g.fillRect(0, 0, TOWN_W, 390);
+    g.fillStyle(style.shadow, 0.08);
+    g.fillRect(0, TOWN_H - 150, TOWN_W, 80);
+
+    const seed = this.hashPortId(this.port.id);
+    for (let i = 0; i < 240; i += 1) {
+      const x = this.seededRange(seed, i, 0, TOWN_W);
+      const y = this.seededRange(seed, i + 971, 70, TOWN_H - 80);
+      const w = this.seededRange(seed, i + 251, 10, 46);
+      const h = this.seededRange(seed, i + 593, 4, 18);
+      const color = i % 3 === 0 ? style.ground2 : style.plaza;
+      g.fillStyle(color, i % 4 === 0 ? 0.1 : 0.06);
+      g.fillEllipse(x, y, w, h);
+    }
+
+    for (let i = 0; i < 90; i += 1) {
+      const x = this.seededRange(seed, i + 331, 0, TOWN_W);
+      const y = this.seededRange(seed, i + 733, 120, TOWN_H - 120);
+      g.lineStyle(1, style.shadow, 0.08);
+      g.lineBetween(x, y, x + this.seededRange(seed, i + 17, 12, 42), y + this.seededRange(seed, i + 41, -3, 3));
+    }
+  }
+
+  private addHarborBackdrop(style: TownStyle): void {
+    const key = this.m5Texture(harborSceneKey(this.harborSceneId()), '');
+    if (!key) return;
+    const frame = this.add.graphics().setDepth(0);
+    frame.fillStyle(style.shadow, 0.16);
+    frame.fillRoundedRect(TOWN_W / 2 - 560, 38, 1120, 360, 10);
+    const harbor = this.add
+      .image(TOWN_W / 2, 218, key)
+      .setDisplaySize(1120, 430)
+      .setAlpha(0.5)
+      .setDepth(0);
+    harbor.setTint(0xf2ddb0);
+    const wash = this.add.graphics().setDepth(0);
+    wash.fillStyle(style.ground, 0.28);
+    wash.fillRoundedRect(TOWN_W / 2 - 560, 38, 1120, 360, 10);
+    wash.lineStyle(3, style.roadEdge, 0.45);
+    wash.strokeRoundedRect(TOWN_W / 2 - 560, 38, 1120, 360, 10);
+  }
+
+  private createRoads(style: TownStyle): void {
+    const g = this.add.graphics().setDepth(1);
+    g.fillStyle(style.roadEdge, 0.55);
+    g.fillRoundedRect(-35, 398, TOWN_W + 70, 126, 30);
+    g.fillRoundedRect(TOWN_W / 2 - 68, 92, 136, TOWN_H - 190, 36);
+    g.fillStyle(style.road, 0.94);
+    g.fillRoundedRect(-30, 408, TOWN_W + 60, 102, 24);
+    g.fillRoundedRect(TOWN_W / 2 - 52, 106, 104, TOWN_H - 214, 28);
+    g.fillStyle(style.plaza, 0.82);
+    g.fillEllipse(TOWN_W / 2, 455, 260, 128);
+
+    const seed = this.hashPortId(`${this.port.id}-roads`);
+    for (let i = 0; i < 120; i += 1) {
+      const horizontal = i % 2 === 0;
+      const x = horizontal ? this.seededRange(seed, i, 0, TOWN_W) : this.seededRange(seed, i, TOWN_W / 2 - 45, TOWN_W / 2 + 45);
+      const y = horizontal ? this.seededRange(seed, i + 97, 420, 492) : this.seededRange(seed, i + 197, 130, TOWN_H - 140);
+      g.lineStyle(1, style.shadow, 0.12);
+      g.lineBetween(x, y, x + this.seededRange(seed, i + 17, 18, 58), y + this.seededRange(seed, i + 29, -2, 2));
+    }
+    g.lineStyle(2, style.roadEdge, 0.35);
+    g.strokeRoundedRect(-30, 408, TOWN_W + 60, 102, 24);
+    g.strokeRoundedRect(TOWN_W / 2 - 52, 106, 104, TOWN_H - 214, 28);
+  }
+
+  private createDock(style: TownStyle): void {
+    const g = this.add.graphics().setDepth(2);
+    g.fillStyle(style.water, 1);
+    g.fillRect(0, TOWN_H - 88, TOWN_W, 88);
+    g.fillStyle(style.roadEdge, 0.42);
+    g.fillRect(0, TOWN_H - 94, TOWN_W, 12);
+    g.lineStyle(2, 0xf0dfb0, 0.2);
+    for (let x = 20; x < TOWN_W; x += 96) {
+      g.beginPath();
+      g.arc(x, TOWN_H - 42, 18, 0.15, Math.PI - 0.15);
+      g.strokePath();
+    }
+
+    g.fillStyle(style.dock, 1);
+    g.fillRoundedRect(this.dock.x - 190, TOWN_H - 86, 380, 28, 5);
+    g.fillStyle(0x4a2f18, 0.65);
+    for (let x = this.dock.x - 170; x <= this.dock.x + 170; x += 34) {
+      g.fillRect(x, TOWN_H - 86, 4, 28);
+    }
+    g.lineStyle(2, 0x2b1b0d, 0.55);
+    g.strokeRoundedRect(this.dock.x - 190, TOWN_H - 86, 380, 28, 5);
+  }
+
+  private createBuildings(style: TownStyle): void {
+    const shadow = this.add.graphics().setDepth(4);
+    const fallback = this.add.graphics().setDepth(5);
+    for (const b of this.buildings) {
+      shadow.fillStyle(style.shadow, 0.2);
+      shadow.fillEllipse(b.x, b.y + b.h / 2 + 9, b.w * 0.78, 26);
+      shadow.fillStyle(style.plaza, 0.44);
+      shadow.fillRoundedRect(b.x - b.w / 2 + 18, b.y + b.h / 2 - 18, b.w - 36, 28, 7);
+
+      const artKey = this.m5Texture(portBuildingKey(b.artId), '');
+      if (artKey) {
+        this.add.image(b.x, b.y, artKey).setDisplaySize(b.w, b.h).setDepth(5);
+      } else {
+        fallback.fillStyle(style.wall, 1);
+        fallback.fillRoundedRect(b.x - b.w / 2, b.y - b.h / 2 + 18, b.w, b.h - 18, 4);
+        fallback.fillStyle(style.roof, 1);
+        fallback.fillTriangle(b.x - b.w / 2 - 14, b.y - b.h / 2 + 22, b.x + b.w / 2 + 14, b.y - b.h / 2 + 22, b.x, b.y - b.h / 2 - 26);
+        fallback.fillStyle(0x4a2f15, 1);
+        fallback.fillRect(b.x - 16, b.y + b.h / 2 - 36, 32, 36);
+      }
+
+      this.add
+        .text(b.x, b.y + b.h / 2 - 22, b.label, {
+          ...textStyle(b.key === 'harbor' ? 17 : 16, style.labelText),
+          backgroundColor: `#${style.label.toString(16).padStart(6, '0')}dd`,
+          padding: { x: 8, y: 3 },
+        })
+        .setOrigin(0.5)
+        .setDepth(7);
+    }
+  }
+
+  private addDecorations(style: TownStyle): void {
+    const g = this.add.graphics().setDepth(3);
     // 民宅（不可進入的小屋）
     const houses = [
       [180, 520], [700, 180], [1250, 200], [1850, 480], [200, 900], [750, 950], [1300, 940], [1850, 900],
     ];
     for (const [hx, hy] of houses) {
-      g.fillStyle(style.wall, 0.85);
-      g.fillRect(hx - 45, hy - 25, 90, 55);
-      g.fillStyle(style.roof, 0.85);
+      g.fillStyle(style.shadow, 0.16);
+      g.fillEllipse(hx, hy + 34, 100, 20);
+      g.fillStyle(style.wall, 0.88);
+      g.fillRoundedRect(hx - 45, hy - 25, 90, 55, 3);
+      g.fillStyle(style.roof, 0.92);
       g.fillTriangle(hx - 55, hy - 22, hx + 55, hy - 22, hx, hy - 58);
+      g.lineStyle(2, style.shadow, 0.25);
+      g.strokeRoundedRect(hx - 45, hy - 25, 90, 55, 3);
     }
     // 樹
     const trees = [[120, 240], [620, 560], [1180, 540], [1750, 200], [1950, 620], [80, 760], [880, 480], [1420, 480]];
     for (const [tx, ty] of trees) {
-      g.fillStyle(0x5a4530, 1);
-      g.fillRect(tx - 4, ty, 8, 18);
-      g.fillStyle(0x4a7a3a, 1);
-      g.fillCircle(tx, ty - 12, 22);
+      g.fillStyle(style.shadow, 0.15);
+      g.fillEllipse(tx, ty + 20, 42, 14);
+      g.fillStyle(style.propTrunk, 1);
+      g.fillRoundedRect(tx - 5, ty - 2, 10, 24, 3);
+      g.fillStyle(style.propGreen, 1);
+      g.fillCircle(tx - 9, ty - 18, 16);
+      g.fillCircle(tx + 9, ty - 19, 17);
+      g.fillCircle(tx, ty - 30, 18);
+      g.fillStyle(0xffffff, 0.08);
+      g.fillCircle(tx - 7, ty - 34, 8);
     }
     // 水井（城中心）
-    g.fillStyle(0x7a7a7a, 1);
+    g.fillStyle(style.shadow, 0.14);
+    g.fillEllipse(TOWN_W / 2, 487, 52, 18);
+    g.fillStyle(0x8f8a78, 1);
     g.fillCircle(TOWN_W / 2, 470, 18);
-    g.fillStyle(0x3a5a7a, 1);
+    g.fillStyle(0x315a72, 1);
     g.fillCircle(TOWN_W / 2, 470, 11);
+    g.lineStyle(2, style.shadow, 0.3);
+    g.strokeCircle(TOWN_W / 2, 470, 18);
     // 碼頭貨箱
-    g.fillStyle(0x8a6a40, 1);
     for (const [cx, cy] of [[820, 990], [860, 975], [1160, 985]]) {
-      g.fillRect(cx, cy, 30, 26);
+      g.fillStyle(style.shadow, 0.14);
+      g.fillEllipse(cx + 16, cy + 28, 34, 9);
+      g.fillStyle(0x8a6a40, 1);
+      g.fillRoundedRect(cx, cy, 30, 26, 3);
+      g.lineStyle(1, 0x4a2f18, 0.55);
+      g.strokeRoundedRect(cx, cy, 30, 26, 3);
+      g.lineBetween(cx + 15, cy, cx + 15, cy + 26);
     }
   }
 
@@ -287,15 +443,6 @@ export default class PortScene extends Phaser.Scene {
     return buildings;
   }
 
-  private addHarborBackdrop(): void {
-    const key = this.m5Texture(harborSceneKey(this.harborSceneId()), '');
-    if (!key) return;
-    this.add
-      .image(TOWN_W / 2, 230, key)
-      .setDisplaySize(640, 360)
-      .setAlpha(0.38)
-      .setDepth(0);
-  }
 
   private harborSceneId(): string {
     if (this.port.id === 'tayouan' || this.port.id === 'penghu') return 'tayouan_lagoon_fort';
@@ -362,6 +509,12 @@ export default class PortScene extends Phaser.Scene {
       hash = (hash * 31 + portId.charCodeAt(i)) >>> 0;
     }
     return hash;
+  }
+
+  private seededRange(seed: number, index: number, min: number, max: number): number {
+    const value = Math.sin(seed * 12.9898 + index * 78.233) * 43758.5453;
+    const t = value - Math.floor(value);
+    return min + t * (max - min);
   }
 
   private createMinimap(): void {

@@ -5,6 +5,22 @@
 
 ---
 
+## [2026-06-21] M5-2.6 世界地圖整體化先以 map.json 為互動權威
+
+- 背景：老闆指出大地圖海面已改成復古風，但陸地仍是方塊圖，視覺斷裂明顯；檢查 `WorldMapScene` 後確認 V2 `sea_chart` 只是低透明底圖，陸地仍由 `map.json` 多邊形單色繪製在上層。
+- 決策：新增 **M5-2.6 世界地圖整體化**，文件為 `2026-06-21_世界地圖整體美術一致化架構.md`。
+- 原則：短期以 `map.json` 作為港口、探索點、碰撞與小地圖的互動權威，只改視覺分層與陸地材質；中長期若做精緻 full map，必須用 `map.json` land-mask 約束 imagegen/image2.0，不能拿不對齊的美術圖硬改港口座標。
+- 後續順序：Phase B 先不改座標，改善陸地多層材質、海岸線、淺灘與島嶼浪線；Phase C 再建立 full map source；Phase D 才逐區校正可達性。
+
+## [2026-06-21] M5-2.5 Phase B 已導入 PortScene
+
+- 背景：港町整體化架構已建立後，老闆確認是否已導入程式；檢查發現 `PortScene` 仍停在原型期單色地面、半透明道路與幾何 props。
+- 決策／實作：
+  - `PortScene` 第一輪導入 M5-2.5 Phase B，新增 `TownStyle` 與 `createTownBase()`、`addHarborBackdrop()`、`createRoads()`、`createDock()`、`createBuildings()` 分層。
+  - 地面用 deterministic texture noise 做舊紙／石板感；道路改為有邊緣、廣場與磨損線條；港景圖放大融入上半部；碼頭加入岸線、浪線、木棧橋；民宅、樹、水井、貨箱改成帶陰影和描邊的手繪占位 props。
+  - 目前仍沿用 M5-2 帶框 building card，僅縮小顯示、加地面陰影並把設施名稱改成建築下緣牌匾；正式透明背景 cutout 建築仍屬 Phase C。
+- 驗證：`npm run build` 通過；Vite 仍有既有美術素材 chunk size warning，非本次錯誤。
+
 ## [2026-06-20] M5-2.5 港町整體化不是一般 UI 美化
 
 - 背景：設施已套用 V2 精緻圖片後，`PortScene` 仍使用原型期單色地面、半透明道路、幾何樹/井/貨箱與帶框建築卡片，導致美術語言斷裂。
