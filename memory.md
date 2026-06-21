@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-21] M5-3 世界地圖船隻方向幀已接入
+
+- 背景：船隻方向幀素材包完成後，老闆要求把船隻接入遊戲中，取代世界地圖方形船卡。
+- 決策／實作：
+  - `src/art.ts` 新增 `SHIP_WORLD_DIRECTIONAL_URLS` 與 `shipWorldDirectionalKey(typeId)`，key 格式為 `shipwd_<shipTypeId>`。
+  - `BootScene` 以 `frameWidth: 96, frameHeight: 72` 載入 `assets/m5/v2/ships/world_directional/*.png` spritesheet。
+  - `WorldMapScene` 優先使用方向幀；方向順序為 `down=0, up=1, right=2, left=3`。若方向幀缺圖，退回舊 `shipw_` 單張圖，再退回程式船圖。
+  - 世界地圖船隻顯示尺寸調為 54×40，深度降到港口標記下方；港口圖示與文字提高到 depth 11，避免靠港時被船蓋住。
+
 ## [2026-06-21] M5-3 船隻方向幀素材包
 
 - 背景：老闆指出世界地圖船隻用方形船卡缺乏真實感，靠港時也可能蓋住港口；要求先用 imagegen／image2.0 產生船隻上下左右方向幀。

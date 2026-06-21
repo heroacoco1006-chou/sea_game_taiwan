@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
-import { explorationIconKey, facilityIconKey, shipWorldKey, worldArtKey } from '../art';
+import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
@@ -29,9 +29,12 @@ const LAND_LIGHT = 0xe5d29a;
 const LAND_DARK = 0x8a7448;
 const COAST_LIGHT = 0xf2e3bd;
 const COAST_SHALLOW = 0x7aa7a8;
+const SHIP_WORLD_DISPLAY_W = 54;
+const SHIP_WORLD_DISPLAY_H = 40;
 
 export default class WorldMapScene extends Phaser.Scene {
-  private ship!: Phaser.GameObjects.Image;
+  private ship!: Phaser.GameObjects.Sprite;
+  private shipHasDirectionalFrames = false;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key; ENTER: Phaser.Input.Keyboard.Key };
   private hud!: Phaser.GameObjects.Text;
@@ -76,17 +79,13 @@ export default class WorldMapScene extends Phaser.Scene {
 
     for (const p of PORTS) {
       const portKey = this.m5Texture(facilityIconKey('port_marker_roof'), 'port');
-      const portIcon = this.add.image(p.x, p.y, portKey).setDepth(7);
+      const portIcon = this.add.image(p.x, p.y, portKey).setDepth(11);
       if (portKey !== 'port') portIcon.setDisplaySize(34, 34);
-      this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(7).setShadow(1, 1, '#000', 2);
+      this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(11).setShadow(1, 1, '#000', 2);
     }
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
-    const swKey = shipWorldKey(shipTypeOf(this.state).id);
-    this.ship = this.add
-      .image(this.state.ship.x, this.state.ship.y, this.textures.exists(swKey) ? swKey : 'ship')
-      .setDepth(10);
-    if (this.textures.exists(swKey)) this.ship.setDisplaySize(64, 48); // V2 船隻 sprite 縮放到合適大小
+    this.createPlayerShip();
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.ship, true, 0.12, 0.12);
     this.createExplorationMarkers();
@@ -113,6 +112,27 @@ export default class WorldMapScene extends Phaser.Scene {
     this.wind = windOf(this.state.day);
     refreshMarketEvents(this.state);
     this.updateHud();
+  }
+
+  private createPlayerShip(): void {
+    const typeId = shipTypeOf(this.state).id;
+    const directionalKey = shipWorldDirectionalKey(typeId);
+    const worldKey = shipWorldKey(typeId);
+    const textureKey = this.textures.exists(directionalKey)
+      ? directionalKey
+      : this.textures.exists(worldKey)
+        ? worldKey
+        : 'ship';
+
+    this.shipHasDirectionalFrames = this.textures.exists(directionalKey);
+    this.ship = this.add.sprite(this.state.ship.x, this.state.ship.y, textureKey).setDepth(8).setOrigin(0.5, 0.58);
+    if (this.shipHasDirectionalFrames) {
+      this.ship.setFrame(0).setDisplaySize(SHIP_WORLD_DISPLAY_W, SHIP_WORLD_DISPLAY_H);
+    } else if (this.textures.exists(worldKey)) {
+      this.ship.setDisplaySize(SHIP_WORLD_DISPLAY_W, SHIP_WORLD_DISPLAY_H);
+    } else {
+      this.ship.setScale(1.15);
+    }
   }
 
   private createSeaBase(): void {
@@ -362,8 +382,8 @@ export default class WorldMapScene extends Phaser.Scene {
       const ny = Phaser.Math.Clamp(this.ship.y + (dy / len) * speed * dt, 10, WORLD_H - 10);
       if (!this.isLand(nx, ny)) {
         const moved = Math.hypot(nx - this.ship.x, ny - this.ship.y);
+        this.setShipDirectionFrame(dx, dy);
         this.ship.setPosition(nx, ny);
-        this.ship.setFlipX(dx < 0);
         this.state.ship.x = nx;
         this.state.ship.y = ny;
         this.distAcc += moved;
@@ -413,6 +433,17 @@ export default class WorldMapScene extends Phaser.Scene {
       else if (this.nearExplorePoint) this.tryExplorePoint(this.nearExplorePoint);
     }
 
+  }
+
+  private setShipDirectionFrame(dx: number, dy: number): void {
+    if (!this.shipHasDirectionalFrames) {
+      this.ship.setFlipX(dx < 0);
+      return;
+    }
+    const frame = Math.abs(dx) > Math.abs(dy)
+      ? dx >= 0 ? 2 : 3
+      : dy >= 0 ? 0 : 1;
+    this.ship.setFrame(frame).setFlipX(false);
   }
 
   private refreshExplorationMarkers(): void {

@@ -2,7 +2,7 @@
 // 素材檔放在專案根目錄 `assets/m5/v2/`（非 public/），用 Vite 的 import.meta.glob
 // 在 build 與 dev 都產生正確的 URL；檔名（去副檔名）即為對照 key。
 // - 角色頭像：key = 主角／夥伴 id（lin、chiyo、zheng_zhilong…）
-// - 船隻 sprite：key = 船型 id（junk_small、galleon…）
+// - 船隻 sprite：key = 船型 id（junk_small、galleon…）；世界地圖方向幀另用 shipwd_
 // - 船卡／船隻裝備：key = 船型 id／裝備 id
 // - 主角行走圖：key = 主角 id（lin、peter、chiyo），7 格 spritesheet
 // - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
@@ -24,6 +24,10 @@ export const PORTRAIT_URLS = byBaseName(
 
 export const SHIP_WORLD_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/ships/world/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
+export const SHIP_WORLD_DIRECTIONAL_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/ships/world_directional/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
 export const SHIP_BATTLE_URLS = byBaseName(
@@ -65,6 +69,7 @@ export const FACILITY_ICON_URLS = byBaseName(
 /** Phaser 材質 key 命名（避免和程式生成的材質撞名） */
 export const portraitKey = (id: string): string => `portrait_${id}`;
 export const shipWorldKey = (typeId: string): string => `shipw_${typeId}`;
+export const shipWorldDirectionalKey = (typeId: string): string => `shipwd_${typeId}`;
 export const shipBattleKey = (typeId: string): string => `shipb_${typeId}`;
 export const shipCardKey = (typeId: string): string => `shipc_${typeId}`;
 export const characterWalkKey = (heroId: string): string => `walk_${heroId}`;

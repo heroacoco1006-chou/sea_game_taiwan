@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import {
-  PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_BATTLE_URLS,
+  PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_WORLD_DIRECTIONAL_URLS, SHIP_BATTLE_URLS,
   SHIP_CARD_URLS, CHARACTER_WALK_URLS, SHIP_EQUIPMENT_URLS,
   WORLD_ART_URLS, PORT_BUILDING_URLS, HARBOR_SCENE_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS,
-  portraitKey, shipWorldKey, shipBattleKey, shipCardKey, characterWalkKey, shipEquipmentKey,
+  portraitKey, shipWorldKey, shipWorldDirectionalKey, shipBattleKey, shipCardKey, characterWalkKey, shipEquipmentKey,
   worldArtKey, portBuildingKey, harborSceneKey, explorationIconKey, facilityIconKey,
 } from '../art';
 
@@ -17,6 +17,7 @@ export default class BootScene extends Phaser.Scene {
     // 載入 V2 美術素材（preload 完成後才會進 create）
     for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
     for (const [id, url] of Object.entries(SHIP_WORLD_URLS)) this.load.image(shipWorldKey(id), url);
+    for (const [id, url] of Object.entries(SHIP_WORLD_DIRECTIONAL_URLS)) this.load.spritesheet(shipWorldDirectionalKey(id), url, { frameWidth: 96, frameHeight: 72 });
     for (const [id, url] of Object.entries(SHIP_BATTLE_URLS)) this.load.image(shipBattleKey(id), url);
     for (const [id, url] of Object.entries(SHIP_CARD_URLS)) this.load.image(shipCardKey(id), url);
     for (const [id, url] of Object.entries(CHARACTER_WALK_URLS)) this.load.spritesheet(characterWalkKey(id), url, { frameWidth: 96, frameHeight: 128 });
