@@ -38,6 +38,6 @@ Constraints: no text, no watermark, no UI frame, no square card border, no ocean
 ## 後處理規則
 
 - Source 以 8 列 × 4 欄等分切片。
-- 每格先移除 imagegen 綠幕背景，再依透明 bbox 裁切、縮放、置中到 96×72 frame。
-- 每種船型輸出 4 格橫向 spritesheet，方向順序固定為 `down, up, right, left`。
-- 後續接入 `WorldMapScene` 時，船隻顯示尺寸應小於目前方形船卡，並用方向 frame 取代 `flipX`。
+- 每格先移除 imagegen 綠幕背景，並以 connected-component 清理遠離主船體的小殘影。
+- 每種船型四方向共用同一個縮放比例，再置中到 96×72 frame，避免上下左右各自放大造成尺寸跳動。`directions` 順序固定為 `down, up, right, left`。
+- `WorldMapScene` 接入後，船隻顯示尺寸小於原方形船卡，方向 frame 取代 `flipX`；若素材需再調整，重跑 `tools/slice-m5-3-ship-directional-art.py`。

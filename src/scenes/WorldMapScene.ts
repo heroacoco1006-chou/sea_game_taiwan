@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
-import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
+import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey } from '../art';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
@@ -137,14 +137,8 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private createSeaBase(): void {
     this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, COLORS.seaDeep).setDepth(0);
-    const chartKey = worldArtKey('sea_chart');
-    if (this.textures.exists(chartKey)) {
-      this.add
-        .image(WORLD_W / 2, WORLD_H / 2, chartKey)
-        .setDisplaySize(WORLD_W, WORLD_H)
-        .setAlpha(0.34)
-        .setDepth(0);
-    }
+    // The old V2 sea_chart contains decorative land shapes that do not match map.json.
+    // Keep the sea procedural until Phase C produces a map.json-aligned full map.
 
     const sea = this.add.graphics().setDepth(1);
     sea.fillStyle(COLORS.sea, 0.28);
