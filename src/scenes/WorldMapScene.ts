@@ -24,6 +24,11 @@ const EXPLORE_REVEAL_RADIUS = 180;
 const PIRATE_RADIUS = 64;
 const MINIMAP_W = 220;
 const MINIMAP_H = 165;
+const LAND_BASE = 0xd0b879;
+const LAND_LIGHT = 0xe5d29a;
+const LAND_DARK = 0x8a7448;
+const COAST_LIGHT = 0xf2e3bd;
+const COAST_SHALLOW = 0x7aa7a8;
 
 export default class WorldMapScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
@@ -62,50 +67,18 @@ export default class WorldMapScene extends Phaser.Scene {
     this.landPolys = [];
 
     // ----- 世界 -----
-    this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, COLORS.sea);
-    const chartKey = worldArtKey('sea_chart');
-    if (this.textures.exists(chartKey)) {
-      this.add
-        .image(WORLD_W / 2, WORLD_H / 2, chartKey)
-        .setDisplaySize(WORLD_W, WORLD_H)
-        .setAlpha(0.22)
-        .setDepth(0);
-    }
-    const waves = this.add.graphics();
-    waves.setDepth(1);
-    waves.lineStyle(1, 0x2a6a8e, 0.55);
-    for (let y = 40; y < WORLD_H; y += 56) {
-      for (let x = 20; x < WORLD_W; x += 84) {
-        waves.beginPath();
-        waves.arc(x + ((y / 56) % 2) * 42, y, 10, Math.PI * 0.15, Math.PI * 0.85);
-        waves.strokePath();
-      }
-    }
-
-    const landG = this.add.graphics();
-    landG.setDepth(2);
-    for (const land of LANDS) {
-      const pts = land.points;
-      this.landPolys.push(new Phaser.Geom.Polygon(pts.flat()));
-      landG.fillStyle(COLORS.land, 1);
-      landG.lineStyle(3, COLORS.landEdge, 1);
-      landG.beginPath();
-      landG.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i < pts.length; i++) landG.lineTo(pts[i][0], pts[i][1]);
-      landG.closePath();
-      landG.fillPath();
-      landG.strokePath();
-    }
+    this.createSeaBase();
+    this.createLandVisuals();
 
     for (const lb of LABELS) {
-      this.add.text(lb.x, lb.y, lb.text, textStyle(lb.size, '#6b5530')).setOrigin(0.5).setDepth(3);
+      this.add.text(lb.x, lb.y, lb.text, textStyle(lb.size, '#6b5530')).setOrigin(0.5).setDepth(6).setShadow(1, 1, '#f2e3bd', 1);
     }
 
     for (const p of PORTS) {
       const portKey = this.m5Texture(facilityIconKey('port_marker_roof'), 'port');
-      const portIcon = this.add.image(p.x, p.y, portKey).setDepth(4);
+      const portIcon = this.add.image(p.x, p.y, portKey).setDepth(7);
       if (portKey !== 'port') portIcon.setDisplaySize(34, 34);
-      this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(4).setShadow(1, 1, '#000', 2);
+      this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(7).setShadow(1, 1, '#000', 2);
     }
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
@@ -140,6 +113,138 @@ export default class WorldMapScene extends Phaser.Scene {
     this.wind = windOf(this.state.day);
     refreshMarketEvents(this.state);
     this.updateHud();
+  }
+
+  private createSeaBase(): void {
+    this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, COLORS.seaDeep).setDepth(0);
+    const chartKey = worldArtKey('sea_chart');
+    if (this.textures.exists(chartKey)) {
+      this.add
+        .image(WORLD_W / 2, WORLD_H / 2, chartKey)
+        .setDisplaySize(WORLD_W, WORLD_H)
+        .setAlpha(0.34)
+        .setDepth(0);
+    }
+
+    const sea = this.add.graphics().setDepth(1);
+    sea.fillStyle(COLORS.sea, 0.28);
+    sea.fillRect(0, 0, WORLD_W, WORLD_H);
+    sea.lineStyle(1, 0x9cc8d0, 0.16);
+    for (let y = 40; y < WORLD_H; y += 56) {
+      for (let x = 20; x < WORLD_W; x += 84) {
+        sea.beginPath();
+        sea.arc(x + ((y / 56) % 2) * 42, y, 10, Math.PI * 0.15, Math.PI * 0.85);
+        sea.strokePath();
+      }
+    }
+    sea.lineStyle(2, 0xffffff, 0.05);
+    for (let i = 0; i < 90; i += 1) {
+      const x = this.seededRange(7109, i, 0, WORLD_W);
+      const y = this.seededRange(7109, i + 411, 0, WORLD_H);
+      sea.lineBetween(x, y, x + this.seededRange(7109, i + 31, 80, 260), y + this.seededRange(7109, i + 61, -18, 18));
+    }
+  }
+
+  private createLandVisuals(): void {
+    const shallow = this.add.graphics().setDepth(2);
+    const landG = this.add.graphics().setDepth(3);
+    const texture = this.add.graphics().setDepth(4);
+    const coast = this.add.graphics().setDepth(5);
+
+    for (const land of LANDS) {
+      const pts = land.points;
+      const poly = new Phaser.Geom.Polygon(pts.flat());
+      this.landPolys.push(poly);
+
+      this.strokePolygon(shallow, pts, 34, COAST_SHALLOW, 0.22);
+      this.strokePolygon(shallow, pts, 20, COAST_LIGHT, 0.18);
+      this.drawPolygon(landG, pts, LAND_BASE, 1);
+      this.strokePolygon(landG, pts, 6, LAND_DARK, 0.72);
+      this.strokePolygon(coast, pts, 3, 0x5f4a2e, 0.72);
+      this.drawCoastRipples(coast, pts, this.hashText(land.name));
+      this.drawLandTexture(texture, poly, pts, this.hashText(land.name));
+    }
+  }
+
+  private drawPolygon(g: Phaser.GameObjects.Graphics, pts: number[][], color: number, alpha: number): void {
+    g.fillStyle(color, alpha);
+    g.beginPath();
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i += 1) g.lineTo(pts[i][0], pts[i][1]);
+    g.closePath();
+    g.fillPath();
+  }
+
+  private strokePolygon(g: Phaser.GameObjects.Graphics, pts: number[][], width: number, color: number, alpha: number): void {
+    g.lineStyle(width, color, alpha);
+    g.beginPath();
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i += 1) g.lineTo(pts[i][0], pts[i][1]);
+    g.closePath();
+    g.strokePath();
+  }
+
+  private drawCoastRipples(g: Phaser.GameObjects.Graphics, pts: number[][], seed: number): void {
+    for (let i = 0; i < pts.length; i += 1) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const len = Math.hypot(dx, dy);
+      const count = Math.max(1, Math.floor(len / 90));
+      const nx = len === 0 ? 0 : -dy / len;
+      const ny = len === 0 ? 0 : dx / len;
+      for (let j = 0; j < count; j += 1) {
+        const t = (j + 0.45) / count;
+        const x = a[0] + dx * t + nx * this.seededRange(seed, i * 37 + j, -12, 12);
+        const y = a[1] + dy * t + ny * this.seededRange(seed, i * 53 + j, -12, 12);
+        g.lineStyle(2, COAST_LIGHT, 0.22);
+        g.beginPath();
+        g.arc(x + nx * 13, y + ny * 13, this.seededRange(seed, i * 71 + j, 10, 24), Math.PI * 0.12, Math.PI * 0.88);
+        g.strokePath();
+      }
+    }
+  }
+
+  private drawLandTexture(g: Phaser.GameObjects.Graphics, poly: Phaser.Geom.Polygon, pts: number[][], seed: number): void {
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const areaHint = Math.max(1, (maxX - minX) * (maxY - minY));
+    const flecks = Math.min(180, Math.max(16, Math.floor(areaHint / 48000)));
+    for (let i = 0; i < flecks; i += 1) {
+      const x = this.seededRange(seed, i, minX, maxX);
+      const y = this.seededRange(seed, i + 991, minY, maxY);
+      if (!Phaser.Geom.Polygon.Contains(poly, x, y)) continue;
+      const color = i % 4 === 0 ? LAND_LIGHT : LAND_DARK;
+      g.fillStyle(color, i % 4 === 0 ? 0.16 : 0.08);
+      g.fillEllipse(x, y, this.seededRange(seed, i + 47, 26, 92), this.seededRange(seed, i + 73, 10, 34));
+    }
+
+    const reliefs = Math.min(70, Math.max(4, Math.floor(areaHint / 105000)));
+    for (let i = 0; i < reliefs; i += 1) {
+      const x = this.seededRange(seed, i + 211, minX, maxX);
+      const y = this.seededRange(seed, i + 433, minY, maxY);
+      if (!Phaser.Geom.Polygon.Contains(poly, x, y)) continue;
+      g.lineStyle(2, LAND_DARK, 0.16);
+      g.lineBetween(x - 18, y + 10, x, y - 10);
+      g.lineBetween(x, y - 10, x + 20, y + 10);
+    }
+  }
+
+  private seededRange(seed: number, index: number, min: number, max: number): number {
+    const value = Math.sin(seed * 12.9898 + index * 78.233) * 43758.5453;
+    const t = value - Math.floor(value);
+    return min + t * (max - min);
+  }
+
+  private hashText(text: string): number {
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    return hash || 1;
   }
 
   private createExplorationMarkers(): void {
@@ -219,7 +324,7 @@ export default class WorldMapScene extends Phaser.Scene {
     g.fillRoundedRect(mx - 5, my - 5, MINIMAP_W + 10, MINIMAP_H + 10, 6);
     g.fillStyle(COLORS.seaDeep, 1);
     g.fillRect(mx, my, MINIMAP_W, MINIMAP_H);
-    g.fillStyle(COLORS.land, 1);
+    g.fillStyle(LAND_BASE, 1);
     for (const land of LANDS) {
       const pts = land.points;
       g.beginPath();
