@@ -7,6 +7,27 @@
 
 ---
 
+## [2026-06-21] 開發 | 操作者：小航 | M5-5a/b 音訊系統與合成音效
+
+- 背景：老闆指派小航做 M5-5；先做 a＋b（音訊系統＋程式合成音效，零外部檔）。
+- 完成事項：
+  - 新增 `src/audio.ts` 單例：Web Audio 合成 `playSfx`（11 種配方）、三軌音量 master/bgm/sfx＋靜音、存 `localStorage('seagame_audio')`、`unlock()` 解鎖 AudioContext；`playBgm/stopBgm` 介面預留 M5-5c。
+  - `main.ts` 首次互動（pointerdown/keydown/touchstart）解鎖音訊，掛 `window.__audio`。
+  - 接入：`ui.ts` makeButton 全域點擊 click、TradeScene 買賣 coin、BattleScene 砲擊/接舷/勝/敗＋升級、FacilityScene 領賞 coin＋解鎖 unlock＋升級、StoryScene 圖鑑卡 unlock。
+  - `vite.config` 加 `preview.port`（讓出 PORT）＋ launch.json 加 `sea-game-preview`，方便用內建預覽工具驗 build 版（dev 5173 strictPort 被佔時）。
+- 驗證：`tsc`、`npm run build` 通過；以 dist preview 實測 game 正常 boot（14 場景）、12 種 SFX 不丟錯、音量/靜音設定持久化到 localStorage。聽感請老闆於 5173 親耳確認。
+- 待續：M5-5c BGM 載入＋場景對應、M5-5d 挑 CC-BY 背景音樂（下載需授權）、M5-5e 設定 UI、M5-5f 平衡。
+- 協作：本批只動 M5-5 音效相關檔（audio.ts/main.ts/ui.ts/Trade/Battle/Facility/Story、vite.config、launch.json），未碰 Codex 的美術接入檔。
+
+## [2026-06-21] 修正 | 操作者：Codex | 重切船隻方向幀並停用未對齊海圖底板
+
+- 背景：老闆回報船隻上下左右方向大小不一致，向上幀右側有船帆殘影；另指出 V2 世界地圖底板本身含台灣等地形，出現在目前海面上不合理。老闆也提醒小航正在做 M5-5 音效模組，需避免衝突。
+- 完成事項：
+  - `tools/slice-m5-3-ship-directional-art.py` 改為 connected-component 清理殘影，並讓同船型四方向共用同一縮放比例。
+  - 重新輸出 `assets/m5/v2/ships/world_directional/`、32 張逐格 frames、contact sheet 與 manifest，修正方向幀大小跳動與殘影問題。
+  - `WorldMapScene` 停用未對齊的 `sea_chart` 全圖底板，暫以程式海面、波紋與航線淡線呈現，避免底板地形浮在海上；精緻底圖留待 Phase C 以 `map.json` mask 對齊重做。
+  - 更新 `status.md`、`memory.md`、世界地圖架構文件與船隻方向幀 prompt 紀錄。
+- 驗證：`npm run build` 通過；目前工作區另有小航 M5-5 音效檔案未提交變更，Codex 未納入本次 stage。
 ## [2026-06-21] 整理歸納 | 操作者：小航 | M5-5 音樂音效製作架構與分項
 
 - 背景：老闆指示小航負責 M5-5——音效用程式簡單合成（Web Audio）、背景音樂找 CC-BY 音源；BGM 分航海／海戰／城町（中國/台灣/日本/東南亞）／冒險。先寫架構與分項併入 status，之後逐項完成。

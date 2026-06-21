@@ -15,6 +15,7 @@ import SaveSlotScene from './scenes/SaveSlotScene';
 import StoryScene from './scenes/StoryScene';
 import * as state from './state';
 import * as story from './story/parseStory';
+import { audio } from './audio';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -29,7 +30,13 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene, StoryScene],
 });
 
+// 首次使用者互動時解鎖音訊（瀏覽器自動播放限制）
+for (const ev of ['pointerdown', 'keydown', 'touchstart']) {
+  window.addEventListener(ev, () => audio.unlock(), { passive: true });
+}
+
 // 偵錯掛鉤（供自動化測試）
 (window as unknown as Record<string, unknown>).__game = game;
 (window as unknown as Record<string, unknown>).__state = state;
 (window as unknown as Record<string, unknown>).__story = story;
+(window as unknown as Record<string, unknown>).__audio = audio;

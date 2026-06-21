@@ -5,6 +5,7 @@ import {
 } from '../state';
 import type { StoryLine } from '../state';
 import { portraitKey } from '../art';
+import { audio } from '../audio';
 import { COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
 type StoryMode = 'story' | 'mate';
@@ -151,6 +152,7 @@ export default class StoryScene extends Phaser.Scene {
     if (!line) return;
     const W = this.scale.width;
     this.updatePortrait(line);
+    if (line.kind === 'codex') audio.playSfx('unlock');
 
     // 進度（第幾句）
     this.dyn.push(

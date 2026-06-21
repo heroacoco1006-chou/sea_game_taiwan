@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { audio } from './audio';
 
 /** 仿大航海2 的羊皮紙＋木框配色 */
 export const COLORS = {
@@ -70,7 +71,7 @@ export function makeButton(
   c.setInteractive({ useHandCursor: true });
   c.on('pointerover', () => draw(true));
   c.on('pointerout', () => draw(false));
-  c.on('pointerdown', () => onClick());
+  c.on('pointerdown', () => { audio.playSfx('click'); onClick(); });
   return c;
 }
 

@@ -137,7 +137,7 @@ status: draft
   - [ ] 後續細修：美術素材大量 eager 載入後 bundle 變大；M5-8 前可再改成分場景 lazy load 或壓縮圖檔。
 - [ ] **M5-2.6 世界地圖整體化**：把大地圖從「復古海面＋方塊陸地」改為同一套 V2 舊海圖語言，並保留港口／探索點可達性。
   - [x] 架構文件建立（2026-06-21）：新增 `2026-06-21_世界地圖整體美術一致化架構.md`，定義世界地圖分層、互動資料優先原則、快速止血、精緻 full map source、資料校正與驗收地點。
-  - [x] Phase B 快速視覺止血（2026-06-21）：不改 `map.json` 座標，`WorldMapScene` 已加入海面疊層、陸地多層材質、海岸描邊、淺灘光暈、岸邊浪線與小地圖陸地描邊。
+  - [x] Phase B 快速視覺止血（2026-06-21）：不改 `map.json` 座標，`WorldMapScene` 已加入海面疊層、陸地多層材質、海岸描邊、淺灘光暈、岸邊浪線與小地圖陸地描邊；2026-06-21 二次修正停用未對齊的 `sea_chart` 全圖底板，避免底板內建台灣／島嶼圖形浮在海上。
   - [ ] Phase C 精緻大地圖 source：以 `map.json` land-mask 約束 imagegen/image2.0，避免圖像與碰撞資料漂移。
   - [ ] Phase D 座標／可達性驗收：逐區檢查台灣、福建、琉球、日本、朝鮮、東南亞港口與探索點。
 - [ ] **M5-2.5 港町場景整體化**：把走動式港町從原型期色塊場景升級為完整 V2 港町場景，避免精緻設施卡片浮在簡單地圖上。
@@ -154,7 +154,7 @@ status: draft
   - [x] 接入 WorldMapScene／BattleScene（2026-06-19）：世界地圖旗艦依船型顯示 V2 world sprite；海戰雙方依船型顯示 V2 battle sprite（敵船依 tier 對應船型＋紅色 tint）。
   - [x] v2 主角行走圖補件（2026-06-19）：三主角各 7 格行走 sheet 與逐格 PNG，路徑 `assets/m5/v2/characters/walk/`；第一版仍有少量綠幕邊緣雜訊，已以較小顯示尺寸接入，後續可視畫面再精修。
   - [x] 船隻裝備外觀素材包（2026-06-19）：船首像 4、裝甲 3、船帆 3、大砲種類 3，另含 3 張預覽圖，路徑 `assets/m5/v2/ships/equipment/`。
-  - [x] 船隻方向幀素材包與接入（2026-06-21）：以 imagegen／image2.0 產出 8 船型 × 4 方向 source，切成 `assets/m5/v2/ships/world_directional/` spritesheet 與 32 張逐格 PNG；`WorldMapScene` 已改用方向 frame，船隻尺寸縮小且港口標記深度高於船隻，減少靠港遮擋。
+  - [x] 船隻方向幀素材包與接入（2026-06-21）：以 imagegen／image2.0 產出 8 船型 × 4 方向 source，切成 `assets/m5/v2/ships/world_directional/` spritesheet 與 32 張逐格 PNG；`WorldMapScene` 已改用方向 frame，船隻尺寸縮小且港口標記深度高於船隻；2026-06-21 二次修正同船型四方向共用縮放比例並清除殘影。
   - [x] 接入 PortScene（2026-06-19）：港町主角依 `state.story.heroId` 載入 `lin／peter／chiyo` 的 96×128 spritesheet，移動時依方向切換行走幀；缺素材時退回舊程式小人。
   - [x] 行走圖二次修正（2026-06-20）：`m5-3-hero-walk-v2-source.png` 改用人物輪廓偵測切片，不再用平均 7 欄硬切；修正上、左、右方向與背面幀被切到隔壁人物的問題。
   - [x] 接入 ShipyardScene／InfoScene（2026-06-19）：造船廠可選船型顯示 V2 精緻船卡，旗艦目前船首像／裝甲／船帆／砲種以圖示顯示；資訊選單「船隊資訊」同步顯示船卡與船隻裝備外觀。
@@ -223,8 +223,8 @@ status: draft
 - 音效不需下載（程式合成）。
 
 ### 實作分項清單（逐項完成）
-- [ ] **M5-5a 音訊系統**：`src/audio.ts`（BGM 切換＋淡入淡出、SFX 合成、三軌音量、靜音、localStorage、AudioContext 解鎖）。
-- [ ] **M5-5b 音效合成**：實作 C 表 11 種 SFX，接到各場景按鈕與事件（買賣／砲擊／升級／解鎖／進出港…）。
+- [x] **M5-5a 音訊系統**（2026-06-21）：`src/audio.ts` 單例——Web Audio 合成 `playSfx`、三軌音量（master/bgm/sfx）＋靜音、存 `localStorage('seagame_audio')`、首次互動解鎖 AudioContext（main.ts 監聽 pointerdown/keydown/touchstart）；`playBgm/stopBgm` 介面預留待 M5-5c。實測：game 正常 boot、12 種 SFX 不丟錯、設定持久化。
+- [x] **M5-5b 音效合成**（2026-06-21）：11 種 SFX 配方（click/coin/cannon/board/victory/defeat/levelup/unlock/port/page/confirm/cancel）；接入 makeButton 全域點擊、TradeScene 買賣（coin）、BattleScene 砲擊/接舷/勝/敗＋升級、FacilityScene 領賞 coin＋解鎖 unlock＋升級、StoryScene 圖鑑卡 unlock。
 - [ ] **M5-5c BGM 載入＋場景對應**：`art.ts` 加 `BGM_URLS`、BootScene 預載；WorldMap／Battle／Port（region）／探索 接 `playBgm`。
 - [ ] **M5-5d BGM 音源挑選與下載**（CC-BY，需老闆授權）＋ `CREDITS.md` 標註：航海／海戰／城町×4／冒險 共 7 首。
 - [ ] **M5-5e 設定 UI**：音量滑桿×3＋靜音鈕（與 M5-6 一起美化）。

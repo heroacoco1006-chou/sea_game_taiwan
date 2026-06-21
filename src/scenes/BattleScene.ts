@@ -5,6 +5,7 @@ import {
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
 } from '../state';
 import { shipBattleKey } from '../art';
+import { audio } from '../audio';
 import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
 interface Enemy {
@@ -137,10 +138,12 @@ export default class BattleScene extends Phaser.Scene {
     const s = this.state;
 
     if (action === 'cannon') {
+      audio.playSfx('cannon');
       const dmg = Math.round((fleetCannons(s) * 7 + s.crew / 4) * cannonMod(s) * (0.8 + Math.random() * 0.4));
       this.enemy.hull -= dmg;
       this.pushLog(`我方齊射！轟出 ${dmg} 點損傷！`);
     } else if (action === 'board') {
+      audio.playSfx('board');
       const myPower = (s.crew + weaponBoard(s) * 1.5 + boardBonus(s)) * (0.8 + Math.random() * 0.4);
       const foePower = this.enemy.crew * (0.8 + Math.random() * 0.4);
       if (myPower > foePower) {
@@ -198,12 +201,15 @@ export default class BattleScene extends Phaser.Scene {
     if (this.questCombat && s.quest?.type === 'combat') {
       s.quest.completed = true;
     }
+    audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
+    if (lv) audio.playSfx('levelup');
     this.refreshPanels();
     this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}${lv ? `\n${lv}` : ''}`);
   }
 
   private defeat(): void {
+    audio.playSfx('defeat');
     const s = this.state;
     let nearest = PORTS[0];
     let best = Number.MAX_VALUE;

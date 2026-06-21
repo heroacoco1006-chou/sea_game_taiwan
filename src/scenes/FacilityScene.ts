@@ -7,6 +7,7 @@ import {
   addXp, levelUpMessage,
 } from '../state';
 import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { audio } from '../audio';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
 
@@ -244,6 +245,8 @@ export default class FacilityScene extends Phaser.Scene {
           s.gold += q.reward;
           s.quest = null;
           const lv = levelUpMessage(addXp(s, 60));
+          audio.playSfx('coin');
+          if (lv) audio.playSfx('levelup');
           saveGame(s);
           this.refreshInfo();
           toast(this, `委託完成！獲得 ${q.reward} 兩`);
@@ -265,6 +268,9 @@ export default class FacilityScene extends Phaser.Scene {
         const unlocked = unlockCodex(s, q.codexIds);
         s.quest = null;
         const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
+        audio.playSfx('coin');
+        if (unlocked.length) audio.playSfx('unlock');
+        if (lv) audio.playSfx('levelup');
         saveGame(s);
         this.refreshInfo();
         toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}`);

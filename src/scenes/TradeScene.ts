@@ -3,6 +3,7 @@ import {
   GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost, tradeBonus,
 } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { audio } from '../audio';
 
 const LIST_TOP = 150;
 const ROW_H = 40;
@@ -301,6 +302,7 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   private afterTrade(): void {
+    audio.playSfx('coin');
     this.rebuildCargoList();
     // 賣光後選取可能失效，退回商店側
     if (this.selectedId && !(this.state.cargo[this.selectedId] ?? 0) && this.side === 'cargo') {

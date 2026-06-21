@@ -5,6 +5,24 @@
 
 ---
 
+## [2026-06-21] M5-5a/b 音訊系統與合成音效已實作
+
+- 接續「M5-5 音樂音效架構」：a＋b 完成。
+- 記憶（已實作，後續沿用）：
+  - `src/audio.ts` 單例 `audio`：`playSfx(name)` 用 Web Audio 即時合成；三軌音量 master/bgm/sfx＋muted，存 `localStorage('seagame_audio')`；`unlock()` 在首次互動 resume AudioContext（main.ts 監聽 pointerdown/keydown/touchstart）；`window.__audio` 供測試。
+  - 11 種 SFX 配方集中在 `SFX` 物件；要加新音效＝加配方＋在觸發點 `audio.playSfx(name)`。
+  - 接入點：`ui.ts` makeButton 全域 click、TradeScene afterTrade=coin、BattleScene cannon/board/victory/defeat＋levelup、FacilityScene 領賞 coin＋unlock＋levelup、StoryScene 圖鑑卡 unlock。
+  - `playBgm/stopBgm` 目前空殼，BGM 載入與切換留 M5-5c（art.ts 加 BGM_URLS、BootScene load.audio、依 region playBgm）。
+  - 驗證：dev 5173 被佔時改用 `npm run preview`（serve dist）＋ launch.json `sea-game-preview`＋`vite.config preview.port` 讓出 PORT；headless 只驗不丟錯與設定持久化，聽感需老闆親耳確認。
+
+## [2026-06-21] 船隻方向幀二次修正與 sea_chart 停用
+
+- 背景：老闆指出世界地圖船隻四方向大小不一致，向上幀右側有殘影；同時 V2 `sea_chart` 底板本身含台灣等地形，和 `map.json` 陸地不對齊時會像地形浮在海上。
+- 決策／實作：
+  - `tools/slice-m5-3-ship-directional-art.py` 改為 connected-component 清理小殘影，並讓同一船型四方向共用縮放比例，不再每格各自放大。
+  - 重切 `assets/m5/v2/ships/world_directional/`、逐格 frames、contact sheet 與 manifest；manifest 增加 `postprocess` 與 `sharedScale`。
+  - `WorldMapScene` Phase B 先停用未對齊的 `sea_chart` 全圖底板，避免底板中的台灣／島嶼圖形出現在目前海面；Phase C 再用 `map.json` land-mask 產出對齊的 `full_map_v2`。
+- 協作注意：本次不碰小航 M5-5 音效模組相關檔案；若工作區有 `src/audio.ts`、`src/main.ts`、音效事件等變更，視為小航工作，Codex 不 stage。
 ## [2026-06-21] M5-5 音樂音效架構（待實作）
 
 - 背景：老闆指派小航做 M5-5；音效程式合成、BGM 用 CC-BY。架構與分項已寫進 status「🎵 M5-5 音樂音效」。
