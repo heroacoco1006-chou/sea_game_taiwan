@@ -158,11 +158,95 @@ def crop_grid(img: Image.Image, cols: int, rows: int, index: int) -> Image.Image
 
 def contain_rgb(img: Image.Image, size: tuple[int, int] = SIZE, bg=(238, 222, 176)) -> Image.Image:
     canvas = Image.new("RGB", size, bg)
-    work = img.convert("RGB")
+    work = img.convert("RGBA") if img.mode == "RGBA" else img.convert("RGB")
     work.thumbnail(size, Image.Resampling.LANCZOS)
     x = (size[0] - work.width) // 2
     y = (size[1] - work.height) // 2
-    canvas.paste(work, (x, y))
+    if work.mode == "RGBA":
+        canvas.paste(work, (x, y), work)
+    else:
+        canvas.paste(work, (x, y))
+    return canvas
+
+
+def trim_alpha(img: Image.Image) -> Image.Image:
+    bbox = img.getbbox()
+    if not bbox:
+        return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+    return img.crop(bbox)
+
+
+def color_distance(a: tuple[int, int, int], b: tuple[int, int, int]) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+
+
+def edge_background_color(img: Image.Image) -> tuple[int, int, int]:
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    samples: list[tuple[int, int, int]] = []
+    margin = min(12, w // 6, h // 6)
+    for x in range(margin):
+        for y in range(margin):
+            samples.append(rgb.getpixel((x, y)))
+            samples.append(rgb.getpixel((w - 1 - x, y)))
+            samples.append(rgb.getpixel((x, h - 1 - y)))
+            samples.append(rgb.getpixel((w - 1 - x, h - 1 - y)))
+    channels = []
+    for idx in range(3):
+        values = sorted(px[idx] for px in samples)
+        channels.append(values[len(values) // 2])
+    return channels[0], channels[1], channels[2]
+
+
+def remove_edge_background(img: Image.Image, tolerance: int = 52) -> Image.Image:
+    rgba = img.convert("RGBA")
+    rgb = img.convert("RGB")
+    w, h = rgba.size
+    bg = edge_background_color(rgb)
+    pixels = rgba.load()
+    seen = bytearray(w * h)
+    queue: list[tuple[int, int]] = []
+
+    def is_background(x: int, y: int) -> bool:
+        r, g, b = rgb.getpixel((x, y))
+        spread = max(r, g, b) - min(r, g, b)
+        light_plain = r > 145 and g > 125 and b > 95 and spread < 70
+        return color_distance((r, g, b), bg) <= tolerance or light_plain
+
+    for x in range(w):
+        for y in (0, h - 1):
+            if is_background(x, y):
+                seen[y * w + x] = 1
+                queue.append((x, y))
+    for y in range(h):
+        for x in (0, w - 1):
+            if is_background(x, y):
+                seen[y * w + x] = 1
+                queue.append((x, y))
+
+    head = 0
+    while head < len(queue):
+        x, y = queue[head]
+        head += 1
+        pixels[x, y] = (0, 0, 0, 0)
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if nx < 0 or nx >= w or ny < 0 or ny >= h:
+                continue
+            idx = ny * w + nx
+            if seen[idx] or not is_background(nx, ny):
+                continue
+            seen[idx] = 1
+            queue.append((nx, ny))
+    return rgba
+
+
+def normalize_tile(tile: Image.Image, size: tuple[int, int] = SIZE, pad: int = 10) -> Image.Image:
+    cleaned = trim_alpha(remove_edge_background(tile))
+    canvas = Image.new("RGB", size, (238, 222, 176))
+    cleaned.thumbnail((size[0] - pad * 2, size[1] - pad * 2), Image.Resampling.LANCZOS)
+    x = (size[0] - cleaned.width) // 2
+    y = (size[1] - cleaned.height) // 2
+    canvas.paste(cleaned, (x, y), cleaned)
     return canvas
 
 
@@ -189,7 +273,7 @@ def slice_history() -> dict[str, Path]:
     source = Image.open(HISTORY_SOURCE).convert("RGB")
     out: dict[str, Path] = {}
     for idx, item_id in enumerate(HISTORY_TILE_IDS):
-        tile = contain_rgb(crop_grid(source, 7, 6, idx), SIZE)
+        tile = normalize_tile(crop_grid(source, 7, 6, idx), SIZE)
         path = GENERATED / "history_trade" / f"{item_id}.png"
         tile.save(path)
         out[item_id] = path
@@ -210,7 +294,7 @@ def slice_species() -> dict[str, Path]:
     source = Image.open(SPECIES_SOURCE).convert("RGB")
     out: dict[str, Path] = {}
     for idx, item_id in enumerate(SPECIES_IDS):
-        tile = contain_rgb(crop_grid(source, 6, 5, idx), SIZE)
+        tile = normalize_tile(crop_grid(source, 6, 5, idx), SIZE)
         path = GENERATED / "species" / f"{item_id}.png"
         tile.save(path)
         out[item_id] = path
@@ -259,7 +343,7 @@ def build_illustrations(history: dict[str, Path], species: dict[str, Path]) -> l
         if asset is None or not asset.exists():
             missing.append(entry_id)
             continue
-        img = contain_rgb(Image.open(asset).convert("RGB"), SIZE)
+        img = contain_rgb(Image.open(asset).convert("RGBA"), SIZE)
         out_path = ILLUSTRATIONS / f"{entry_id}.png"
         img.save(out_path)
         manifest_entries.append(

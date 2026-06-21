@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-06-21] M5-3/M5-4 頭像與圖鑑插圖需先清格邊再輸出
+
+- 背景：人物頭像與圖鑑插圖 source sheet 不是可直接等分後放進遊戲的最終圖；直接 resize 會保留格線、淡色邊框或鄰格殘影。
+- 決策／實作：
+  - `tools/slice-m5-3-v2-art.py` 的人物頭像輸出走 `render_portrait()`：移除 edge-connected 淡色背景、依 alpha bbox 裁切、置中到 256×256 羊皮紙底。
+  - `tools/build-m5-4-v2-codex-art.py` 的 generated history/species 走 `normalize_tile()`；reuse 透明素材時 `contain_rgb()` 必須用 alpha mask 合成，不能直接 `convert("RGB")`。
+  - 後續若重繪人物或圖鑑 source，必須重跑腳本並先看 contact sheet，再接 UI。
 ## [2026-06-21] M5-2 探索圖示改用透明 marker 切片
 
 - 背景：M5-2 探索／風景 source 是 6×5 圖板；舊腳本直接等分後補成 256×256 羊皮紙方卡，放在世界地圖上會像未切齊的卡片，且容易壓住港口與地名。
