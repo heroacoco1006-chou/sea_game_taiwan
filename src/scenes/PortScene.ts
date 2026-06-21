@@ -45,28 +45,28 @@ interface TownStyle {
 
 const CULTURE_STYLE: Record<string, TownStyle> = {
   han: {
-    roof: 0x8a3024, wall: 0xd8c8a8, ground: 0xb99f71, ground2: 0xc9b485, road: 0x9a8a66, roadEdge: 0x6f5934,
-    plaza: 0xd0bf91, shadow: 0x3a2a14, water: 0x285f73, dock: 0x6b4a2a, label: 0x4b3118, labelText: '#fff4d6',
+    roof: 0x8a3024, wall: 0xd8c8a8, ground: 0xd7c69a, ground2: 0xe8d9b0, road: 0xa99770, roadEdge: 0x72583a,
+    plaza: 0xeadba8, shadow: 0x3a2a14, water: 0x285f73, dock: 0x6b4a2a, label: 0x4b3118, labelText: '#fff4d6',
     propGreen: 0x4a7a3a, propTrunk: 0x5a4530,
   },
   wa: {
-    roof: 0x4a4a52, wall: 0xe8e0d0, ground: 0xc2b18d, ground2: 0xd2c5a6, road: 0x8f8168, roadEdge: 0x5a4a36,
-    plaza: 0xd8cfb4, shadow: 0x2f2a21, water: 0x24586f, dock: 0x5b4630, label: 0x332c23, labelText: '#fff8e8',
+    roof: 0x4a4a52, wall: 0xe8e0d0, ground: 0xd8caa8, ground2: 0xeadfc2, road: 0x9e9076, roadEdge: 0x5f4e39,
+    plaza: 0xeee3c7, shadow: 0x2f2a21, water: 0x24586f, dock: 0x5b4630, label: 0x332c23, labelText: '#fff8e8',
     propGreen: 0x3f6a48, propTrunk: 0x4d3a2a,
   },
   euro: {
-    roof: 0xa85a28, wall: 0xd8b89a, ground: 0xb49a76, ground2: 0xcdb68d, road: 0x7f725d, roadEdge: 0x584631,
-    plaza: 0xd6c39e, shadow: 0x322417, water: 0x265b76, dock: 0x614228, label: 0x4a321f, labelText: '#fff2dc',
+    roof: 0xa85a28, wall: 0xd8b89a, ground: 0xd2bd93, ground2: 0xe6d4aa, road: 0x928267, roadEdge: 0x5d4831,
+    plaza: 0xe8d6ae, shadow: 0x322417, water: 0x265b76, dock: 0x614228, label: 0x4a321f, labelText: '#fff2dc',
     propGreen: 0x4d7041, propTrunk: 0x57412e,
   },
   ryu: {
-    roof: 0xb84a30, wall: 0xe8d8b8, ground: 0xc2aa7c, ground2: 0xd4bf8e, road: 0x99886c, roadEdge: 0x675132,
-    plaza: 0xdcc999, shadow: 0x392616, water: 0x25637a, dock: 0x68452a, label: 0x553019, labelText: '#fff4d6',
+    roof: 0xb84a30, wall: 0xe8d8b8, ground: 0xdac59a, ground2: 0xebd9ae, road: 0xa3906d, roadEdge: 0x6c5234,
+    plaza: 0xf0ddb4, shadow: 0x392616, water: 0x25637a, dock: 0x68452a, label: 0x553019, labelText: '#fff4d6',
     propGreen: 0x477b43, propTrunk: 0x5a4028,
   },
   sea: {
-    roof: 0x7a6a3a, wall: 0xc8a878, ground: 0xa99667, ground2: 0xc0ae79, road: 0x846b47, roadEdge: 0x564027,
-    plaza: 0xcdb77d, shadow: 0x332416, water: 0x1f6478, dock: 0x644225, label: 0x4f351d, labelText: '#fff3d0',
+    roof: 0x7a6a3a, wall: 0xc8a878, ground: 0xceba88, ground2: 0xe2d09e, road: 0x94734d, roadEdge: 0x5b4127,
+    plaza: 0xe5d09e, shadow: 0x332416, water: 0x1f6478, dock: 0x644225, label: 0x4f351d, labelText: '#fff3d0',
     propGreen: 0x3f7a45, propTrunk: 0x5a3b24,
   },
 };
@@ -77,6 +77,10 @@ const TOWN_H = 1100;
 const MINI_W = 180;
 const MINI_H = 100;
 const WALK_BACK_ORIGIN_X = 0.5;
+const SHORE_WALK_LIMIT = TOWN_H - 128;
+const MAIN_ROAD_X = TOWN_W / 2;
+const MAIN_ROAD_Y = 455;
+const BUILDING_CROP = { x: 10, y: 36, w: 236, h: 164 };
 
 const FACILITY_SLOTS: LayoutSlot[] = [
   { x: 320, y: 285 },
@@ -140,14 +144,13 @@ export default class PortScene extends Phaser.Scene {
 
     this.createTownBase(style);
     this.addHarborBackdrop(style);
+    this.buildings = this.createTownBuildings();
     this.createRoads(style);
     this.createDock(style);
     const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
     const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
     if (shipKey === 'ship') dockShip.setScale(1.5);
     else dockShip.setDisplaySize(82, 62);
-
-    this.buildings = this.createTownBuildings();
 
     this.createBuildings(style);
 
@@ -183,7 +186,7 @@ export default class PortScene extends Phaser.Scene {
       } else {
         this.moveTarget = {
           x: Phaser.Math.Clamp(wx, 16, TOWN_W - 16),
-          y: Phaser.Math.Clamp(wy, 96, TOWN_H - 86),
+          y: Phaser.Math.Clamp(wy, 96, SHORE_WALK_LIMIT),
         };
         this.autoEnterKey = null;
       }
@@ -282,26 +285,48 @@ export default class PortScene extends Phaser.Scene {
 
   private createRoads(style: TownStyle): void {
     const g = this.add.graphics().setDepth(1);
-    g.fillStyle(style.roadEdge, 0.55);
-    g.fillRoundedRect(-35, 398, TOWN_W + 70, 126, 30);
-    g.fillRoundedRect(TOWN_W / 2 - 68, 92, 136, TOWN_H - 190, 36);
-    g.fillStyle(style.road, 0.94);
-    g.fillRoundedRect(-30, 408, TOWN_W + 60, 102, 24);
-    g.fillRoundedRect(TOWN_W / 2 - 52, 106, 104, TOWN_H - 214, 28);
-    g.fillStyle(style.plaza, 0.82);
-    g.fillEllipse(TOWN_W / 2, 455, 260, 128);
+    const drawRoad = (x: number, y: number, w: number, h: number, radius = 20): void => {
+      g.fillStyle(style.roadEdge, 0.5);
+      g.fillRoundedRect(x - 6, y - 6, w + 12, h + 12, radius + 5);
+      g.fillStyle(style.road, 0.95);
+      g.fillRoundedRect(x, y, w, h, radius);
+      g.lineStyle(2, style.roadEdge, 0.28);
+      g.strokeRoundedRect(x, y, w, h, radius);
+    };
+
+    drawRoad(-30, MAIN_ROAD_Y - 50, TOWN_W + 60, 108, 24);
+    drawRoad(MAIN_ROAD_X - 56, 96, 112, SHORE_WALK_LIMIT - 70, 28);
+    g.fillStyle(style.plaza, 0.86);
+    g.fillEllipse(MAIN_ROAD_X, MAIN_ROAD_Y, 292, 146);
+    g.lineStyle(2, style.roadEdge, 0.35);
+    g.strokeEllipse(MAIN_ROAD_X, MAIN_ROAD_Y, 292, 146);
+
+    for (const b of this.buildings) {
+      const doorX = b.x;
+      const doorY = Math.min(b.y + b.h / 2 + 18, SHORE_WALK_LIMIT - 8);
+      const toMainY = Math.abs(doorY - MAIN_ROAD_Y);
+      if (b.key === 'harbor') {
+        drawRoad(MAIN_ROAD_X - 62, MAIN_ROAD_Y + 40, 124, SHORE_WALK_LIMIT - MAIN_ROAD_Y - 16, 26);
+      } else if (toMainY > 44) {
+        drawRoad(doorX - 28, Math.min(doorY, MAIN_ROAD_Y), 56, toMainY + 44, 16);
+        drawRoad(Math.min(doorX, MAIN_ROAD_X) - 24, MAIN_ROAD_Y - 24, Math.abs(doorX - MAIN_ROAD_X) + 48, 48, 16);
+      } else {
+        drawRoad(Math.min(doorX, MAIN_ROAD_X) - 24, doorY - 23, Math.abs(doorX - MAIN_ROAD_X) + 48, 46, 16);
+      }
+      g.fillStyle(style.plaza, 0.8);
+      g.fillEllipse(doorX, doorY, Math.max(92, b.w * 0.55), 48);
+      g.lineStyle(2, style.roadEdge, 0.22);
+      g.strokeEllipse(doorX, doorY, Math.max(92, b.w * 0.55), 48);
+    }
 
     const seed = this.hashPortId(`${this.port.id}-roads`);
-    for (let i = 0; i < 120; i += 1) {
-      const horizontal = i % 2 === 0;
-      const x = horizontal ? this.seededRange(seed, i, 0, TOWN_W) : this.seededRange(seed, i, TOWN_W / 2 - 45, TOWN_W / 2 + 45);
-      const y = horizontal ? this.seededRange(seed, i + 97, 420, 492) : this.seededRange(seed, i + 197, 130, TOWN_H - 140);
-      g.lineStyle(1, style.shadow, 0.12);
-      g.lineBetween(x, y, x + this.seededRange(seed, i + 17, 18, 58), y + this.seededRange(seed, i + 29, -2, 2));
+    for (let i = 0; i < 190; i += 1) {
+      const horizontal = i % 3 !== 0;
+      const x = horizontal ? this.seededRange(seed, i, 0, TOWN_W) : this.seededRange(seed, i, MAIN_ROAD_X - 48, MAIN_ROAD_X + 48);
+      const y = horizontal ? this.seededRange(seed, i + 97, MAIN_ROAD_Y - 38, MAIN_ROAD_Y + 42) : this.seededRange(seed, i + 197, 130, SHORE_WALK_LIMIT - 60);
+      g.lineStyle(1, style.shadow, 0.13);
+      g.lineBetween(x, y, x + this.seededRange(seed, i + 17, 16, 62), y + this.seededRange(seed, i + 29, -2, 2));
     }
-    g.lineStyle(2, style.roadEdge, 0.35);
-    g.strokeRoundedRect(-30, 408, TOWN_W + 60, 102, 24);
-    g.strokeRoundedRect(TOWN_W / 2 - 52, 106, 104, TOWN_H - 214, 28);
   }
 
   private createDock(style: TownStyle): void {
@@ -310,6 +335,10 @@ export default class PortScene extends Phaser.Scene {
     g.fillRect(0, TOWN_H - 88, TOWN_W, 88);
     g.fillStyle(style.roadEdge, 0.42);
     g.fillRect(0, TOWN_H - 94, TOWN_W, 12);
+    g.fillStyle(style.shadow, 0.18);
+    g.fillRect(0, SHORE_WALK_LIMIT + 28, TOWN_W, 8);
+    g.lineStyle(3, style.roadEdge, 0.55);
+    g.lineBetween(0, SHORE_WALK_LIMIT + 28, TOWN_W, SHORE_WALK_LIMIT + 28);
     g.lineStyle(2, 0xf0dfb0, 0.2);
     for (let x = 20; x < TOWN_W; x += 96) {
       g.beginPath();
@@ -333,12 +362,14 @@ export default class PortScene extends Phaser.Scene {
     for (const b of this.buildings) {
       shadow.fillStyle(style.shadow, 0.2);
       shadow.fillEllipse(b.x, b.y + b.h / 2 + 9, b.w * 0.78, 26);
-      shadow.fillStyle(style.plaza, 0.44);
-      shadow.fillRoundedRect(b.x - b.w / 2 + 18, b.y + b.h / 2 - 18, b.w - 36, 28, 7);
+      shadow.fillStyle(style.ground2, 0.82);
+      shadow.fillRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
+      shadow.lineStyle(2, style.roadEdge, 0.24);
+      shadow.strokeRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
 
       const artKey = this.m5Texture(portBuildingKey(b.artId), '');
       if (artKey) {
-        this.add.image(b.x, b.y, artKey).setDisplaySize(b.w, b.h).setDepth(5);
+        this.add.image(b.x, b.y, artKey).setCrop(BUILDING_CROP.x, BUILDING_CROP.y, BUILDING_CROP.w, BUILDING_CROP.h).setDisplaySize(b.w, b.h).setDepth(5);
       } else {
         fallback.fillStyle(style.wall, 1);
         fallback.fillRoundedRect(b.x - b.w / 2, b.y - b.h / 2 + 18, b.w, b.h - 18, 4);
@@ -601,7 +632,7 @@ export default class PortScene extends Phaser.Scene {
   /** 回傳是否實際移動（撞牆回 false） */
   private movePlayer(nx: number, ny: number, dt: number): boolean {
     const px = Phaser.Math.Clamp(this.player.x + nx * PLAYER_SPEED * dt, 16, TOWN_W - 16);
-    const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, TOWN_H - 60);
+    const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, SHORE_WALK_LIMIT);
     if (this.hitsBuilding(px, py)) return false;
     this.player.setPosition(px, py);
     this.updatePlayerWalkFrame(nx, ny);
