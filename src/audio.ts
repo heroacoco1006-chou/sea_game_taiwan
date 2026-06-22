@@ -129,6 +129,18 @@ function degToFreq(root: number, scale: number[], deg: number): number {
   return root * Math.pow(2, semis / 12);
 }
 
+// 真實 BGM 音檔（CC-BY／CC0，放 assets/m5/audio/bgm/<key>.mp3|ogg）。
+// 有對應檔案的 key 會用音檔播放（覆蓋程式合成）；沒有就退回上面的合成樂句。
+const BGM_FILE_URLS: Record<string, string> = (() => {
+  const g = import.meta.glob('/assets/m5/audio/bgm/*.{mp3,ogg}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+  const out: Record<string, string> = {};
+  for (const p in g) {
+    const base = p.split('/').pop()!.replace(/\.(mp3|ogg)$/i, '');
+    out[base] = g[p];
+  }
+  return out;
+})();
+
 class AudioManager {
   private ctx: AudioContext | null = null;
   private settings: AudioSettings;
@@ -140,6 +152,8 @@ class AudioManager {
   private bgmTimer: number | null = null;
   private bgmStep = 0;
   private nextNoteTime = 0;
+  private bgmSource: AudioBufferSourceNode | null = null; // 音檔播放中的來源節點
+  private bgmBuffers: Record<string, AudioBuffer> = {};
 
   constructor() {
     this.settings = this.load();
@@ -246,11 +260,9 @@ class AudioManager {
     }
   }
 
-  // ---- 背景音樂（程式合成的循環樂句，依場景切換）----
+  // ---- 背景音樂（有 CC-BY 音檔就播音檔，否則程式合成循環樂句）----
   playBgm(key: BgmKey): void {
-    if (this.bgmKey === key && this.bgmTimer !== null) return; // 同曲播放中，不重起
-    const spec = BGM[key];
-    if (!spec) { this.stopBgm(); return; }
+    if (this.bgmKey === key && (this.bgmTimer !== null || this.bgmSource !== null)) return; // 同曲播放中
     const ctx = this.ensureCtx();
     if (!ctx) return;
     if (!this.bgmGain) {
@@ -261,19 +273,60 @@ class AudioManager {
       this.refreshBgmGain();
     }
     this.bgmKey = key;
-    this.bgmSpec = spec;
+    // 停掉前一首（兩種模式都停）
+    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    this.bgmSpec = null;
+    this.stopBgmSource();
+
+    if (BGM_FILE_URLS[key]) {
+      void this.playBgmFile(key, BGM_FILE_URLS[key]); // 真實音檔
+      return;
+    }
+    const spec = BGM[key];
+    if (!spec) return;
+    this.bgmSpec = spec; // 程式合成
     this.bgmStep = 0;
     this.nextNoteTime = ctx.currentTime;
-    if (this.bgmTimer === null) {
-      this.bgmTimer = window.setInterval(() => this.scheduleBgm(), 25);
-    }
+    this.bgmTimer = window.setInterval(() => this.scheduleBgm(), 25);
   }
 
   stopBgm(): void {
     if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    this.stopBgmSource();
     this.bgmKey = null;
     this.bgmSpec = null;
     if (this.bgmGain && this.ctx) this.bgmGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
+  }
+
+  private stopBgmSource(): void {
+    if (this.bgmSource) {
+      try { this.bgmSource.stop(); } catch { /* 已停 */ }
+      try { this.bgmSource.disconnect(); } catch { /* ignore */ }
+      this.bgmSource = null;
+    }
+  }
+
+  /** 播放循環音檔（fetch→decode→loop），decode 結果快取。 */
+  private async playBgmFile(key: BgmKey, url: string): Promise<void> {
+    const ctx = this.ctx;
+    if (!ctx || !this.bgmGain) return;
+    let buf = this.bgmBuffers[key];
+    if (!buf) {
+      try {
+        const resp = await fetch(url);
+        const ab = await resp.arrayBuffer();
+        buf = await ctx.decodeAudioData(ab);
+        this.bgmBuffers[key] = buf;
+      } catch { return; }
+    }
+    if (this.bgmKey !== key) return; // 載入期間已切走
+    this.stopBgmSource();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.connect(this.bgmGain);
+    src.start();
+    this.bgmSource = src;
   }
 
   /** 排程器：用 lookahead 把循環樂句的音符排到 AudioContext 時間軸上。 */

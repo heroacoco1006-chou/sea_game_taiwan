@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-22] 開發 | 操作者：小航 | M5-5d 加入真實 CC-BY 城町音樂（台/日比較測試）
+
+- 背景：老闆實測 M5-5c 程式合成 BGM，覺得「太過簡單」，要求用 CC-BY 音檔測試「城町・台灣」「城町・日本」兩首，親耳比較真實音檔 vs 合成。
+- 完成事項：
+  - `src/audio.ts` 新增**音檔覆蓋管線**：`import.meta.glob('/assets/m5/audio/bgm/*.{mp3,ogg}')` 掃描；`playBgm` 改為——該 key 有對應音檔則走 `playBgmFile`（fetch→`decodeAudioData`→loop，buffer 快取），無檔則維持原程序化合成。`stopBgm` 同時停合成排程與音檔 source，切場景不重疊。
+  - 下載 2 首 Kevin MacLeod（CC-BY 4.0, incompetech）：`town_taiwan.mp3`＝Shenyang（中國風，配漢人／台灣港）、`town_japan.mp3`＝Mountain Emperor（和風，配日本港），放 `assets/m5/audio/bgm/`；`assets/CREDITS.md` 已標註作者／來源／授權。
+  - 其餘 5 首（sailing/battle/adventure/town_china/town_seasia）無音檔，仍走合成，邏輯不變。
+- 驗證：preview headless 實測——`town_taiwan`、`town_japan` 皆 `fileSource:true`（音檔解碼播放成功，首播 fetch+decode 約數秒、之後快取）；切 `sailing`、`town_china` 正確回到合成（`synthTimer:true`、無 fileSource）。`npm run build` 通過，兩首 MP3 已 bundle 進 dist。
+- 待追蹤：等老闆於 5173 親耳比較台/日兩首真實音檔 vs 其餘合成，再決定是否其餘 5 首也換真實 CC-BY 音檔。
+
 ## [2026-06-22] 修正 | 操作者：Codex | 修正 M5-4 圖鑑插圖並接入說明頁
 
 - 背景：老闆指出 M5-4 圖鑑插圖仍有多張切割問題，且圖鑑說明頁目前只有文字、尚未導入圖片。

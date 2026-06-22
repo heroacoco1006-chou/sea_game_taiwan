@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-22] BGM 採「合成為底、音檔可覆蓋」混合管線
+
+- 背景：M5-5c 先全部用程序化合成 BGM（不下載檔案）。老闆實測覺得合成「太過簡單」，要求改用 CC-BY 真實音檔比較。為兼顧兩者、又不必一次換完七首，定為混合管線。
+- 技術約定（`src/audio.ts`）：
+  - 音檔放 `assets/m5/audio/bgm/<bgmKey>.mp3`（或 .ogg），檔名（去副檔名）＝ `BgmKey`。用 `import.meta.glob('/assets/m5/audio/bgm/*.{mp3,ogg}', { eager, query:'?url', import:'default' })` 在 build/dev 都產生正確 URL（素材放專案根 `assets/`，非 `public/`）。
+  - `playBgm(key)`：該 key 有對應音檔 → `playBgmFile`（`fetch`→`decodeAudioData`→loop `AudioBufferSourceNode` 經 `bgmGain`，buffer 以 `bgmBuffers` 快取）；無檔 → 原程序化合成排程。切場景時 `stopBgm` 要同時停合成排程與音檔 source，避免重疊。
+  - 首播音檔需 fetch+decode 數秒才出聲（檔案大時更久），之後快取即時；屬可接受，勿誤判為失效。
+  - 新增／替換某場景音樂只需丟一個 `<bgmKey>.mp3` 進該資料夾即可覆蓋合成，不必改程式。
+- 版權：音檔只用 CC0／CC-BY；CC-BY 當下登錄 `assets/CREDITS.md`（作者／來源／授權／必附標註）。目前測試曲：`town_taiwan`＝Shenyang、`town_japan`＝Mountain Emperor（皆 Kevin MacLeod, CC-BY 4.0, incompetech）。
+- 後續：等老闆比較定案後，再決定其餘 5 首（sailing/battle/adventure/town_china/town_seasia）是否也換真實音檔。
+
 ## [2026-06-22] M5-4 圖鑑插圖需用實際邊界切片並由 InfoScene 顯示
 
 - 背景：M5-4 history／species source 圖板雖規劃為 7×6、6×5，但 imagegen 輸出的卡片邊界與平均格不完全一致；平均切片會把鄰格、黑邊或半張圖帶入圖鑑插圖。
