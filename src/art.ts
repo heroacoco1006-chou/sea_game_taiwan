@@ -7,6 +7,7 @@
 // - 主角行走圖：key = 主角 id（lin、peter、chiyo），7 格 spritesheet
 // - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
 // - 劇情背景：key = 檔名（lin_story_bg、peter_story_bg、chiyo_story_bg）
+// - 圖鑑插圖：key = 圖鑑 entry id（codex_lin_1_0、sp_swinhoe_frog…）
 
 type UrlMap = Record<string, string>;
 
@@ -70,6 +71,10 @@ export const STORY_BACKGROUND_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/story/backgrounds/*_story_bg.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
+export const CODEX_ILLUSTRATION_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/m5-4/codex/illustrations/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
 /** Phaser 材質 key 命名（避免和程式生成的材質撞名） */
 export const portraitKey = (id: string): string => `portrait_${id}`;
 export const shipWorldKey = (typeId: string): string => `shipw_${typeId}`;
@@ -84,3 +89,4 @@ export const harborSceneKey = (id: string): string => `m5h_${id}`;
 export const explorationIconKey = (id: string): string => `m5x_${id}`;
 export const facilityIconKey = (id: string): string => `m5u_${id}`;
 export const storyBackgroundKey = (id: string): string => `storybg_${id}`;
+export const codexIllustrationKey = (id: string): string => `codeximg_${id}`;

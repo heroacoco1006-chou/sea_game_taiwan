@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import {
   PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_WORLD_DIRECTIONAL_URLS, SHIP_BATTLE_URLS,
   SHIP_CARD_URLS, CHARACTER_WALK_URLS, SHIP_EQUIPMENT_URLS,
-  WORLD_ART_URLS, PORT_BUILDING_URLS, HARBOR_SCENE_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS, STORY_BACKGROUND_URLS,
+  WORLD_ART_URLS, PORT_BUILDING_URLS, HARBOR_SCENE_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS, STORY_BACKGROUND_URLS, CODEX_ILLUSTRATION_URLS,
   portraitKey, shipWorldKey, shipWorldDirectionalKey, shipBattleKey, shipCardKey, characterWalkKey, shipEquipmentKey,
-  worldArtKey, portBuildingKey, harborSceneKey, explorationIconKey, facilityIconKey, storyBackgroundKey,
+  worldArtKey, portBuildingKey, harborSceneKey, explorationIconKey, facilityIconKey, storyBackgroundKey, codexIllustrationKey,
 } from '../art';
 
 /** 程式產生基礎貼圖；M5 起載入 V2 美術素材，缺圖時仍保留 fallback */
@@ -28,6 +28,7 @@ export default class BootScene extends Phaser.Scene {
     for (const [id, url] of Object.entries(EXPLORATION_ICON_URLS)) this.load.image(explorationIconKey(id), url);
     for (const [id, url] of Object.entries(FACILITY_ICON_URLS)) this.load.image(facilityIconKey(id), url);
     for (const [id, url] of Object.entries(STORY_BACKGROUND_URLS)) this.load.image(storyBackgroundKey(id), url);
+    for (const [id, url] of Object.entries(CODEX_ILLUSTRATION_URLS)) this.load.image(codexIllustrationKey(id), url);
   }
 
   create(): void {

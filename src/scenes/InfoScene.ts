@@ -10,7 +10,7 @@ import {
   codexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
 } from '../state';
-import { shipCardKey, shipEquipmentKey } from '../art';
+import { codexIllustrationKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
 import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
@@ -418,6 +418,7 @@ export default class InfoScene extends Phaser.Scene {
       { ...textStyle(16), wordWrap: { width: 430, useAdvancedWrap: true }, lineSpacing: 8 }
     );
     this.dyn.push(detail);
+    this.drawCodexIllustration(selected);
     this.dyn.push(makeButton(this, 1065, 135, 120, 34, '返回圖鑑', () => {
       this.codexDetailOpen = false;
       this.codexDetailPage = 0;
@@ -430,6 +431,26 @@ export default class InfoScene extends Phaser.Scene {
     }
   }
 
+  private drawCodexIllustration(selected: CodexListEntry): void {
+    const frameX = 800;
+    const frameY = 190;
+    const frameW = 320;
+    const frameH = 320;
+    this.dyn.push(this.add.rectangle(frameX + frameW / 2, frameY + frameH / 2, frameW + 18, frameH + 18, 0x3a2a14, 0.18));
+    this.dyn.push(drawPanel(this, frameX, frameY, frameW, frameH));
+
+    if (!selected.unlocked) {
+      this.dyn.push(this.add.text(frameX + frameW / 2, frameY + frameH / 2, '???', textStyle(42, '#8a7650')).setOrigin(0.5));
+      return;
+    }
+
+    const key = this.m5Texture(codexIllustrationKey(selected.id), '');
+    if (key) {
+      this.dyn.push(this.add.image(frameX + frameW / 2, frameY + frameH / 2, key).setDisplaySize(286, 286));
+    } else {
+      this.dyn.push(this.add.text(frameX + frameW / 2, frameY + frameH / 2, '插圖準備中', textStyle(18, '#8a7650')).setOrigin(0.5));
+    }
+  }
   private splitCodexPages(text: string, maxLines: number): string[] {
     const lines = this.wrapCodexBody(text).split('\n');
     const pages: string[] = [];

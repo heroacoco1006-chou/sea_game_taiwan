@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-22] 修正 | 操作者：Codex | 修正 M5-4 圖鑑插圖並接入說明頁
+
+- 背景：老闆指出 M5-4 圖鑑插圖仍有多張切割問題，且圖鑑說明頁目前只有文字、尚未導入圖片。
+- 完成事項：
+  - `tools/build-m5-4-v2-codex-art.py` 新增 source 前景元件偵測與實際邊界分群，history／species source 不再用平均格硬切。
+  - 重新輸出 `assets/m5/v2/m5-4/codex/generated/`、`illustrations/` 全 120 張圖鑑插圖與三張 contact sheet。
+  - `src/art.ts` 新增 `CODEX_ILLUSTRATION_URLS` 與 `codexIllustrationKey()`；BootScene 預載 120 張圖鑑插圖。
+  - InfoScene 圖鑑說明頁右側新增插圖框；已解鎖顯示對應插圖，未解鎖維持 `???`。
+- 驗證：Pillow 檢查 generated／illustrations 尺寸皆為 384×384 且非空白；`npm run build` 通過（僅既有 bundle size warning）；5173 遊戲頁可載入且 console 無錯誤。
+
 ## [2026-06-22] 修正 | 操作者：Codex | 修正 V2 頭像切片並接入劇情背景
 
 - 背景：老闆在測試劇情章節時發現部分人物頭像偏移，並指出劇情對話只有頭像、缺少場景背景，帶入感不足。

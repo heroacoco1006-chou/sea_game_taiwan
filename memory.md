@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-22] M5-4 圖鑑插圖需用實際邊界切片並由 InfoScene 顯示
+
+- 背景：M5-4 history／species source 圖板雖規劃為 7×6、6×5，但 imagegen 輸出的卡片邊界與平均格不完全一致；平均切片會把鄰格、黑邊或半張圖帶入圖鑑插圖。
+- 決策／實作：
+  - `tools/build-m5-4-v2-codex-art.py` 的 `slice_history()`、`slice_species()` 必須先用 `detect_grid_boxes()` 依前景元件邊界分群，取得實際欄列邊界後再切；不要退回 `crop_grid()` 平均切法。
+  - M5-4 最終插圖仍統一輸出到 `assets/m5/v2/m5-4/codex/illustrations/`，每張 384×384；manifest 與 contact sheets 要同步重建。
+  - `src/art.ts` 以 `CODEX_ILLUSTRATION_URLS` 收 120 張圖，BootScene 用 `codexIllustrationKey(id)` 預載；InfoScene 的 `drawCodexIllustration()` 在圖鑑說明頁右側顯示已解鎖插圖，未解鎖維持 `???`。
+- 後續：若圖鑑項目新增或 source 重繪，需重跑 M5-4 腳本並用 contact sheet 先檢查切片，再更新 `status.md`／`log.md`。
+
 ## [2026-06-22] M5-3 頭像切片與 StoryScene 劇情背景規則
 
 - 背景：V2 characters source 的人物卡片雖接近規則網格，但 imagegen 輸出的實際人物主體有內縮與位置差；只依平均格輸出會讓部分劇情頭像偏移或縮得太小。

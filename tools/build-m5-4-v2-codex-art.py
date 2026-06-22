@@ -156,6 +156,95 @@ def crop_grid(img: Image.Image, cols: int, rows: int, index: int) -> Image.Image
     return img.crop((left, top, right, bottom))
 
 
+def detect_foreground_components(img: Image.Image, threshold: int = 44) -> list[tuple[int, int, int, int]]:
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    bg = edge_background_color(rgb)
+    pixels = rgb.load()
+    mask = bytearray(w * h)
+    for y in range(h):
+        for x in range(w):
+            if color_distance(pixels[x, y], bg) > threshold:
+                mask[y * w + x] = 1
+
+    seen = bytearray(w * h)
+    boxes: list[tuple[int, int, int, int]] = []
+    min_area = max(1800, (w * h) // 900)
+    for y in range(h):
+        for x in range(w):
+            idx = y * w + x
+            if not mask[idx] or seen[idx]:
+                continue
+            queue = [(x, y)]
+            seen[idx] = 1
+            head = 0
+            area = 0
+            min_x = max_x = x
+            min_y = max_y = y
+            while head < len(queue):
+                cx, cy = queue[head]
+                head += 1
+                area += 1
+                min_x = min(min_x, cx)
+                max_x = max(max_x, cx)
+                min_y = min(min_y, cy)
+                max_y = max(max_y, cy)
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if nx < 0 or nx >= w or ny < 0 or ny >= h:
+                        continue
+                    nidx = ny * w + nx
+                    if mask[nidx] and not seen[nidx]:
+                        seen[nidx] = 1
+                        queue.append((nx, ny))
+            box = (min_x, min_y, max_x + 1, max_y + 1)
+            bw = box[2] - box[0]
+            bh = box[3] - box[1]
+            if area >= min_area and bw >= 60 and bh >= 60:
+                boxes.append(box)
+    return boxes
+
+
+def cluster_values(values: list[int], expected: int, tolerance: int = 8) -> list[int]:
+    if not values:
+        raise ValueError("No component edges found for codex sheet")
+    groups: list[list[int]] = []
+    for value in sorted(values):
+        if not groups or abs(value - groups[-1][-1]) > tolerance:
+            groups.append([value])
+        else:
+            groups[-1].append(value)
+
+    while len(groups) > expected:
+        best = min(range(len(groups) - 1), key=lambda i: abs(sum(groups[i]) / len(groups[i]) - sum(groups[i + 1]) / len(groups[i + 1])))
+        groups[best].extend(groups.pop(best + 1))
+
+    if len(groups) != expected:
+        raise ValueError(f"Expected {expected} edge clusters, found {len(groups)}")
+    return [round(sum(group) / len(group)) for group in groups]
+
+
+def detect_grid_boxes(img: Image.Image, cols: int, rows: int) -> list[tuple[int, int, int, int]]:
+    boxes = detect_foreground_components(img)
+    lefts = cluster_values([box[0] for box in boxes], cols)
+    rights = cluster_values([box[2] for box in boxes], cols)
+    tops = cluster_values([box[1] for box in boxes], rows)
+    bottoms = cluster_values([box[3] for box in boxes], rows)
+    grid: list[tuple[int, int, int, int]] = []
+    for row in range(rows):
+        for col in range(cols):
+            grid.append((
+                max(0, lefts[col]),
+                max(0, tops[row]),
+                min(img.width, rights[col]),
+                min(img.height, bottoms[row]),
+            ))
+    return grid
+
+
+def crop_detected_grid(img: Image.Image, boxes: list[tuple[int, int, int, int]], index: int) -> Image.Image:
+    return img.crop(boxes[index])
+
+
 def contain_rgb(img: Image.Image, size: tuple[int, int] = SIZE, bg=(238, 222, 176)) -> Image.Image:
     canvas = Image.new("RGB", size, bg)
     work = img.convert("RGBA") if img.mode == "RGBA" else img.convert("RGB")
@@ -271,9 +360,10 @@ def make_contact_sheet(thumbs: list[tuple[str, Image.Image]], cols: int, thumb_s
 
 def slice_history() -> dict[str, Path]:
     source = Image.open(HISTORY_SOURCE).convert("RGB")
+    boxes = detect_grid_boxes(source, 7, 6)
     out: dict[str, Path] = {}
     for idx, item_id in enumerate(HISTORY_TILE_IDS):
-        tile = normalize_tile(crop_grid(source, 7, 6, idx), SIZE)
+        tile = normalize_tile(crop_detected_grid(source, boxes, idx), SIZE)
         path = GENERATED / "history_trade" / f"{item_id}.png"
         tile.save(path)
         out[item_id] = path
@@ -292,9 +382,10 @@ def slice_history() -> dict[str, Path]:
 
 def slice_species() -> dict[str, Path]:
     source = Image.open(SPECIES_SOURCE).convert("RGB")
+    boxes = detect_grid_boxes(source, 6, 5)
     out: dict[str, Path] = {}
     for idx, item_id in enumerate(SPECIES_IDS):
-        tile = normalize_tile(crop_grid(source, 6, 5, idx), SIZE)
+        tile = normalize_tile(crop_detected_grid(source, boxes, idx), SIZE)
         path = GENERATED / "species" / f"{item_id}.png"
         tile.save(path)
         out[item_id] = path
