@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-22] 開發 | 操作者：Codex | 完成 M5-2.6 對齊世界地圖
+
+- 背景：老闆要求繼續 M5-2.6，將世界地圖從 Phase B 程式材質推進到對齊互動資料的精緻舊海圖。
+- 完成事項：
+  - 新增 `tools/build-m5-2-6-full-map.py`，由 `map.json` 輸出 `full_map_v2.png`、land mask、preview、validation overlay 與驗收 notes。
+  - `src/art.ts` 改載 M5-2 world 目錄全部 PNG；`WorldMapScene` 優先顯示 `full_map_v2`，小地圖優先使用 `full_map_v2_preview`，碰撞仍以 `map.json` 為準。
+  - Phase D 可達性驗收：22 港、12 探索點、15 風景皆在互動半徑內；修正 `exp_java_volcano` 為近岸入口 `(2260, 5370)`。
+  - 更新 M5-2 manifest、架構文件、`status.md`、`memory.md` 與 `assets/CREDITS.md`。
+- 協作：偵測到小航 M5-5 的 `assets/m5/audio/bgm/*.mp3` 未追蹤檔，本輪未 stage、未修改。
+- 驗證：`tools/build-m5-2-6-full-map.py` 可重跑；`full_map_v2_notes.md` 顯示港口／探索點／風景待校正皆為 0。
+
 ## [2026-06-22] 開發 | 操作者：小航 | M5-5d 七首 BGM 全換真實 CC-BY 音檔
 
 - 背景：老闆實測上一筆的台/日真實音檔後回覆「效果蠻好的」，指示其餘 5 首也找合適 CC-BY 換上。並提醒 Codex 同時改 M5-2.6，要避免兩邊衝突。

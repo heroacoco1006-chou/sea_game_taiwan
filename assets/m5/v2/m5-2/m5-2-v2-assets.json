@@ -14,7 +14,16 @@
     "id": "sea_chart",
     "source": "assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png",
     "path": "assets/m5/v2/m5-2/world/sea_chart.png",
-    "preview": "assets/m5/v2/m5-2/world/sea_chart_preview.png"
+    "preview": "assets/m5/v2/m5-2/world/sea_chart_preview.png",
+    "alignedFullMap": {
+      "id": "full_map_v2",
+      "path": "assets/m5/v2/m5-2/world/full_map_v2.png",
+      "mask": "assets/m5/v2/m5-2/world/full_map_v2_mask.png",
+      "preview": "assets/m5/v2/m5-2/world/full_map_v2_preview.png",
+      "validation": "assets/m5/v2/m5-2/world/full_map_v2_validation.png",
+      "notes": "assets/m5/v2/m5-2/world/full_map_v2_notes.md",
+      "generator": "tools/build-m5-2-6-full-map.py"
+    }
   },
   "portBuildings": [
     {

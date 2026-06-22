@@ -66,16 +66,16 @@
 - **素材位置**：`assets/m5/v2/m5-2/`
 - **內容**：
   - `assets/m5/v2/m5-2/source/`：imagegen 產出的海圖背景、港町建築、港口場景、探索圖示、地圖／設施圖示 source 原圖。
-  - `assets/m5/v2/m5-2/world/`：精緻海圖背景與預覽圖。
+  - `assets/m5/v2/m5-2/world/`：精緻海圖背景、對齊 `map.json` 的 `full_map_v2.png`、遮罩、預覽與驗收疊圖。
   - `assets/m5/v2/m5-2/ports/buildings/`：漢式、和式、南洋、歐式殖民、台灣平原社等港町建築，共 16 張 256×256 PNG。
   - `assets/m5/v2/m5-2/ports/harbors/`：大員、福建、日本、琉球、南洋、歐式殖民港口場景卡，共 6 張 512×512 PNG。
   - `assets/m5/v2/m5-2/exploration/icons/`：探索點與風景圖示，共 30 張 256×256 PNG。
   - `assets/m5/v2/m5-2/ui/icons/`：世界地圖標記、設施、補給、海上狀態與消耗品圖示，共 24 張 256×256 PNG。
   - `assets/m5/v2/m5-2/m5-2-v2-assets.json`：素材 manifest；`assets/m5/v2/m5-2/m5-2-v2-prompts.md`：prompt 紀錄。
 - **作者／操作者**：Codex
-- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest。
+- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 直接讀取 `map.json` 產生對齊互動資料的舊海圖底圖。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。海圖背景為美術 source，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
+- **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。舊 `sea_chart` 為美術 source；M5-2.6 起遊戲優先使用對齊 `map.json` 的 `full_map_v2`，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
 
 ## M5-3 角色與船隻精緻素材 v2（2026-06-18）
 

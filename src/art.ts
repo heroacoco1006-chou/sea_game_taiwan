@@ -5,7 +5,7 @@
 // - 船隻 sprite：key = 船型 id（junk_small、galleon…）；世界地圖方向幀另用 shipwd_
 // - 船卡／船隻裝備：key = 船型 id／裝備 id
 // - 主角行走圖：key = 主角 id（lin、peter、chiyo），7 格 spritesheet
-// - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
+// - M5-2 世界／港町素材：key = 檔名（full_map_v2、sea_chart、han_item_shop、unknown_exploration…）
 // - 劇情背景：key = 檔名（lin_story_bg、peter_story_bg、chiyo_story_bg）
 // - 圖鑑插圖：key = 圖鑑 entry id（codex_lin_1_0、sp_swinhoe_frog…）
 
@@ -49,7 +49,7 @@ export const SHIP_EQUIPMENT_URLS = byBaseName(
 );
 
 export const WORLD_ART_URLS = byBaseName(
-  import.meta.glob('/assets/m5/v2/m5-2/world/sea_chart.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+  import.meta.glob('/assets/m5/v2/m5-2/world/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
 export const PORT_BUILDING_URLS = byBaseName(

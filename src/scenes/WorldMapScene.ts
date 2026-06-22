@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
 } from '../state';
-import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey } from '../art';
+import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
 import { COLORS, textStyle, showModal, makeButton } from '../ui';
 
@@ -60,6 +60,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private nearbySceneryHint: DiscoveryEntry | null = null;
   private nearExplorePoint: ExplorationPoint | null = null;
   private nearPirate = false;
+  private usingFullMapArt = false;
 
   constructor() {
     super('WorldMap');
@@ -142,9 +143,16 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   private createSeaBase(): void {
+    const fullMapKey = worldArtKey('full_map_v2');
+    this.usingFullMapArt = this.textures.exists(fullMapKey);
+    if (this.usingFullMapArt) {
+      this.add.image(WORLD_W / 2, WORLD_H / 2, fullMapKey).setDisplaySize(WORLD_W, WORLD_H).setDepth(0);
+      return;
+    }
+
     this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H, COLORS.seaDeep).setDepth(0);
     // The old V2 sea_chart contains decorative land shapes that do not match map.json.
-    // Keep the sea procedural until Phase C produces a map.json-aligned full map.
+    // Keep the sea procedural unless Phase C full_map_v2 is available.
 
     const sea = this.add.graphics().setDepth(1);
     sea.fillStyle(COLORS.sea, 0.28);
@@ -175,6 +183,7 @@ export default class WorldMapScene extends Phaser.Scene {
       const pts = land.points;
       const poly = new Phaser.Geom.Polygon(pts.flat());
       this.landPolys.push(poly);
+      if (this.usingFullMapArt) continue;
 
       this.strokePolygon(shallow, pts, 34, COAST_SHALLOW, 0.22);
       this.strokePolygon(shallow, pts, 20, COAST_LIGHT, 0.18);
@@ -346,14 +355,20 @@ export default class WorldMapScene extends Phaser.Scene {
     g.fillRoundedRect(mx - 5, my - 5, MINIMAP_W + 10, MINIMAP_H + 10, 6);
     g.fillStyle(COLORS.seaDeep, 1);
     g.fillRect(mx, my, MINIMAP_W, MINIMAP_H);
-    g.fillStyle(LAND_BASE, 1);
-    for (const land of LANDS) {
-      const pts = land.points;
-      g.beginPath();
-      g.moveTo(mx + pts[0][0] * sx, my + pts[0][1] * sy);
-      for (let i = 1; i < pts.length; i++) g.lineTo(mx + pts[i][0] * sx, my + pts[i][1] * sy);
-      g.closePath();
-      g.fillPath();
+
+    const miniMapKey = this.textures.exists(worldArtKey('full_map_v2_preview')) ? worldArtKey('full_map_v2_preview') : worldArtKey('full_map_v2');
+    if (this.usingFullMapArt && this.textures.exists(miniMapKey)) {
+      this.add.image(mx, my, miniMapKey).setOrigin(0).setDisplaySize(MINIMAP_W, MINIMAP_H).setDepth(100).setScrollFactor(0).setAlpha(0.96);
+    } else {
+      g.fillStyle(LAND_BASE, 1);
+      for (const land of LANDS) {
+        const pts = land.points;
+        g.beginPath();
+        g.moveTo(mx + pts[0][0] * sx, my + pts[0][1] * sy);
+        for (let i = 1; i < pts.length; i++) g.lineTo(mx + pts[i][0] * sx, my + pts[i][1] * sy);
+        g.closePath();
+        g.fillPath();
+      }
     }
     g.fillStyle(0xe8554a, 1);
     for (const p of PORTS) g.fillRect(mx + p.x * sx - 1.5, my + p.y * sy - 1.5, 3, 3);
@@ -921,4 +936,3 @@ export default class WorldMapScene extends Phaser.Scene {
     this.updateWindHud();
   }
 }
-

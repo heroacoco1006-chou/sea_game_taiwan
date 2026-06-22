@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-22] M5-2.6 full_map_v2 對齊地圖已接入
+
+- 背景：Phase B 已改善陸地材質，但仍是程式多邊形分層；M5-2.6 Phase C 需要一張和 `map.json` 互動資料完全對齊的精緻大地圖，避免舊 `sea_chart` 內建地形浮在海上。
+- 決策／實作：
+  - 新增 `tools/build-m5-2-6-full-map.py`，由 `map.json` 產生 `assets/m5/v2/m5-2/world/full_map_v2.png`、`full_map_v2_mask.png`、preview、validation overlay 與 notes。
+  - `src/art.ts` 的世界圖 glob 改載 `world/*.png`；`WorldMapScene` 有 `full_map_v2` 時優先顯示該圖，小地圖優先顯示 `full_map_v2_preview`，碰撞仍用 `map.json`。
+  - Phase D 驗收報告在 `full_map_v2_notes.md`；22 港、12 探索點、15 風景皆通過互動半徑檢查。
+  - `exp_java_volcano` 座標改為 `(2260, 5370)`，代表爪哇北岸登陸後往火山地帶探索。
+- 協作注意：本輪不 stage 小航 M5-5 音效的 `assets/m5/audio/bgm/*.mp3` 未追蹤檔。
+
 ## [2026-06-22] 七首場景 BGM 全用 Kevin MacLeod CC-BY，須遊戲內標註
 
 - 現況：7 首場景音樂全部採 Kevin MacLeod（incompetech.com, CC BY 4.0）真實音檔，放 `assets/m5/audio/bgm/`，檔名＝BgmKey：`sailing`=Achaidh Cheide、`battle`=Crusade、`adventure`=Crossing the Chasm、`town_china`=Guzheng City、`town_taiwan`=Shenyang、`town_japan`=Mountain Emperor、`town_seasia`=Chee Zee Beach。合成 BGM 仍留作後備（見 [[bgm-hybrid-pipeline 那篇]]）。
