@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-22] 開發 | 操作者：小航 | M5-5d 七首 BGM 全換真實 CC-BY 音檔
+
+- 背景：老闆實測上一筆的台/日真實音檔後回覆「效果蠻好的」，指示其餘 5 首也找合適 CC-BY 換上。並提醒 Codex 同時改 M5-2.6，要避免兩邊衝突。
+- 衝突避免：本次只新增 `assets/m5/audio/bgm/` 音檔與更新 `CREDITS.md`／docs，**不碰 `audio.ts` 程式**（管線早已做好，丟檔即覆蓋），更不碰任何 M5-2／art 相關檔，與 Codex 的 M5-2.6 零交集。
+- 完成事項：
+  - 用 incompetech 直連 URL 比對曲風後，下載 5 首 Kevin MacLeod（CC-BY 4.0）：`sailing`=Achaidh Cheide（凱爾特輕快）、`battle`=Crusade（史詩進行曲）、`adventure`=Crossing the Chasm（史詩冒險）、`town_china`=Guzheng City（古箏・明亮悠閒）、`town_seasia`=Chee Zee Beach（馬林巴/鋼鼓・熱帶輕快）。原想用的 Chee Zee Jungle 因偏陰森緊張不適合城町而改用 Beach 版。
+  - 連同既有 town_taiwan（Shenyang）、town_japan（Mountain Emperor），7 首場景音樂全部為真實 CC-BY 音檔。
+  - `CREDITS.md` 改成 7 首全表（作者／曲名／場景／風格／授權／必附標註）。
+- 驗證：`npm run build` 7 首 mp3 全 bundle 進 dist；preview 實測 7 首逐一播放皆 `fileSource:true`、`buffered:true`，且 `bgmTimer=null`（合成排程無殘留）。檔案 magic=ID3、大小 3.6～8.1MB 正常。
+- 待追蹤：CC BY 4.0 要求**遊戲內**標註作者，目前僅在 CREDITS.md，已在 status 開 M5-5g 待辦（上架前在標題/製作群頁顯示「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」）。
+
 ## [2026-06-22] 開發 | 操作者：小航 | M5-5d 加入真實 CC-BY 城町音樂（台/日比較測試）
 
 - 背景：老闆實測 M5-5c 程式合成 BGM，覺得「太過簡單」，要求用 CC-BY 音檔測試「城町・台灣」「城町・日本」兩首，親耳比較真實音檔 vs 合成。

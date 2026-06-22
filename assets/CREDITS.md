@@ -108,11 +108,22 @@
 - **授權**：本專案自製素材，可隨本專案使用與修改。
 - **備註**：`art/` 目錄內圖片僅作時代氛圍、構圖方向與使用者偏好參考；未複製、裁切、描圖或改作任何商業遊戲素材。
 
-## M5-5 背景音樂（CC-BY 測試曲，2026-06-22，操作者：小航）
+## M5-5 背景音樂（CC-BY 全套，2026-06-22，操作者：小航）
 
-- `assets/m5/audio/bgm/town_taiwan.mp3` — 「Shenyang」by **Kevin MacLeod** (incompetech.com)
-- `assets/m5/audio/bgm/town_japan.mp3` — 「Mountain Emperor」by **Kevin MacLeod** (incompetech.com)
+七首場景 BGM 全部採用 **Kevin MacLeod**（incompetech.com）的 CC-BY 音樂，位於 `assets/m5/audio/bgm/`：
+
+| 檔名 | 曲目 | 對應場景 | 風格 |
+|------|------|----------|------|
+| `sailing.mp3` | Achaidh Cheide | 航海 | 凱爾特輕快民謠 |
+| `battle.mp3` | Crusade | 海戰 | 史詩進行曲 |
+| `adventure.mp3` | Crossing the Chasm | 冒險／劇情 | 史詩冒險 |
+| `town_china.mp3` | Guzheng City | 城町・中國 | 古箏・明亮悠閒 |
+| `town_taiwan.mp3` | Shenyang | 城町・台灣 | 中國民樂（二胡／琵琶） |
+| `town_japan.mp3` | Mountain Emperor | 城町・日本 | 和風太鼓 |
+| `town_seasia.mp3` | Chee Zee Beach | 城町・東南亞 | 馬林巴／鋼鼓・熱帶 |
+
+- **作者**：Kevin MacLeod（全部七首）
 - **授權**：Creative Commons Attribution 4.0（CC BY 4.0）https://creativecommons.org/licenses/by/4.0/
 - **來源**：https://incompetech.com/music/royalty-free/
-- **必附標註**：使用時需於遊戲內或說明標明「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」。
-- **備註**：城町・台灣（Shenyang 中國風）與城町・日本（Mountain Emperor 和風）兩首為「真實音檔 vs 程式合成」比較測試用；其餘場景仍為程式合成。
+- **必附標註（遊戲內必放）**：「Music: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0」
+- **備註**：原 M5-5c 的程式合成 BGM 仍保留在 `audio.ts` 作為無音檔時的後備；目前七首皆有音檔，故實際播放的全是上述 CC-BY 真實音檔。

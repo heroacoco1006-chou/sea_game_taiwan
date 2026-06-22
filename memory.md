@@ -5,6 +5,12 @@
 
 ---
 
+## [2026-06-22] 七首場景 BGM 全用 Kevin MacLeod CC-BY，須遊戲內標註
+
+- 現況：7 首場景音樂全部採 Kevin MacLeod（incompetech.com, CC BY 4.0）真實音檔，放 `assets/m5/audio/bgm/`，檔名＝BgmKey：`sailing`=Achaidh Cheide、`battle`=Crusade、`adventure`=Crossing the Chasm、`town_china`=Guzheng City、`town_taiwan`=Shenyang、`town_japan`=Mountain Emperor、`town_seasia`=Chee Zee Beach。合成 BGM 仍留作後備（見 [[bgm-hybrid-pipeline 那篇]]）。
+- **CC-BY 合規硬性要求**：CC BY 4.0 必須標註作者。`CREDITS.md` 已列，但**遊戲畫面內也要顯示**才算完整合規——上架／公開前一定要在標題或製作群頁放上「Music: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0」。已記為 status 待辦 M5-5g。日後若新增/換 CC-BY 素材，同樣要同步遊戲內標註，不能只寫 CREDITS。
+- 選曲教訓：incompetech 同系列曲風差很多（如 Chee Zee **Jungle** 偏陰森緊張、Chee Zee **Beach** 才是輕快熱帶）。城町要選明亮悠閒（Bright/Calm/Relaxed）的，挑曲前先查該曲 feel/genre，別只看系列名。
+
 ## [2026-06-22] BGM 採「合成為底、音檔可覆蓋」混合管線
 
 - 背景：M5-5c 先全部用程序化合成 BGM（不下載檔案）。老闆實測覺得合成「太過簡單」，要求改用 CC-BY 真實音檔比較。為兼顧兩者、又不必一次換完七首，定為混合管線。
