@@ -1,10 +1,10 @@
 # M5-2.6 full_map_v2 生成與驗收紀錄
 
-- 產生日期：2026-06-22
+- 產生日期：2026-06-23
 - 操作者：Codex
-- 產生方式：`tools/build-m5-2-6-full-map.py` 讀取 `src/data/map.json` 的 land polygons，並以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作為 image2.0 海圖主視覺，輸出正式 V2 full map；互動座標仍沿用現有資料檔。
+- 產生方式：`tools/build-m5-2-6-full-map.py` 讀取 `src/data/map.json` 的 land polygons，並以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作為 image2.0 海圖風格母版，搭配 `map.json` 生成正式 V2 full map；互動座標與視覺海岸線保持一致。
 - 重要原則：本圖只作視覺底圖；港口、探索點、風景、碰撞仍以 `map.json`、`ports.json`、`exploration_points.json`、`discoveries.json` 為權威。
-- 視覺修正：2026-06-22 依老闆畫面回報，移除過度明顯的白色航線、厚重海岸線與陸地大斑塊；source 圖改為主要世界地圖畫面，不再使用程式重畫的厚重多邊形陸地；互動碰撞與可達性仍以現有資料為準，後續若要更細緻，可再進行 source 地形到 `map.json` 的二次校正。
+- 視覺修正：2026-06-22 依老闆畫面回報，移除過度明顯的白色航線、厚重海岸線與陸地大斑塊；改採資料座標優先模式：image2.0 source 只保留為海圖色調與紙張紋理參考，正式海岸線由 `map.json` 生成，確保港口、探索點、風景與碰撞一致。
 
 ## 輸出檔案
 

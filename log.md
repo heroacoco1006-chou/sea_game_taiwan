@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-06-23] 修正 | 操作者：Codex | 重新對齊世界地圖港口與海岸
+
+- 背景：老闆截圖指出多個港口沒有貼合精緻世界地圖海岸，安海、月港、本港與台灣周邊尤其明顯；若只搬港口座標，會破壞入港、碰撞、任務與存檔一致性。
+- 完成事項：
+  - `tools/build-m5-2-6-full-map.py` 改回資料座標優先：`SOURCE_PRIMARY = False`，正式 `full_map_v2` 由 `map.json` 生成海岸線，`m5-2-world-sea-chart-source.png` 僅作 image2.0 風格母版。
+  - 強化資料座標地圖的視覺：海岸線平滑、加深墨線與淺灘、提高陸地山脈線稿與紙張紋理密度，降低方塊感。
+  - 重新產出 `full_map_v2.png`、preview、validation overlay 與 notes；validation 顯示港口／探索點／風景回到資料海岸線附近。
+  - 更新 `status.md`、`memory.md`、`assets/CREDITS.md`，明確註記 source 原圖不可再直接作正式世界地圖。
+- 驗證：已目視檢查 `full_map_v2_preview.png` 與 `full_map_v2_validation.png`；`npm run build` 通過（僅既有 chunk size warning）。
 ## [2026-06-22] 開發 | 操作者：小航 | 日本城町 BGM 換 PeriTune「Oboro」
 
 - 背景：老闆找到偏好的日本曲風 https://peritune.com/blog/2019/04/08/oboro/ ，指示換上。

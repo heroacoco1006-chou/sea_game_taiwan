@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-23] M5-2.6 世界地圖不得再用 source 原圖直貼
+
+- 背景：2026-06-22 將 `m5-2-world-sea-chart-source.png` 直接作為 `full_map_v2` 主視覺後，畫面質感提升，但多個港口（如安海、月港、本港與台灣周邊）與視覺海岸明顯不對齊；原因是 source 原圖的地理投影與本遊戲 `ports.json`／`map.json` 座標系不同。
+- 決策／實作：
+  - 正式 `full_map_v2.png` 必須由 `map.json` land polygons 生成海岸線，讓港口、探索點、風景與碰撞同一套座標；`m5-2-world-sea-chart-source.png` 只能作 image2.0 海圖風格母版、海面紙紋與色調參考。
+  - `tools/build-m5-2-6-full-map.py` 的 `SOURCE_PRIMARY` 維持 `False`；不要再改回 source 原圖直貼，除非同時重做 `map.json`、`ports.json`、`exploration_points.json` 與存檔遷移。
+  - 若未來要更像 source 原圖，應在資料座標地圖上加強美術層（海岸墨線、山脈、紙紋、裝飾航線），而不是搬動港口座標去追圖片。
+- 驗證方向：每次重產都看 `full_map_v2_validation.png`；紅點港口、綠點探索點、黃三角風景必須貼近視覺海岸與實際碰撞海岸。
 ## [2026-06-22] 日本城町 BGM 改用 PeriTune「Oboro」（修正同日較早記錄）
 
 - 老闆偏好 PeriTune（sei）的「Oboro（朧）」安靜空靈和風，2026-06-22 把 `town_japan.mp3` 從 Kevin MacLeod「Mountain Emperor」換成 Oboro。

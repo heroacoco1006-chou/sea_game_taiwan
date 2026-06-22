@@ -14,7 +14,7 @@ MAP_PATH = ROOT / "src" / "data" / "map.json"
 PORTS_PATH = ROOT / "src" / "data" / "ports.json"
 EXPLORATION_PATH = ROOT / "src" / "data" / "exploration_points.json"
 DISCOVERIES_PATH = ROOT / "src" / "data" / "discoveries.json"
-SOURCE_PRIMARY = True
+SOURCE_PRIMARY = False
 STYLE_SOURCE = ROOT / "assets" / "m5" / "v2" / "m5-2" / "source" / "m5-2-world-sea-chart-source.png"
 STYLE_FALLBACK = ROOT / "assets" / "m5" / "v2" / "m5-2" / "world" / "sea_chart.png"
 OUT_DIR = ROOT / "assets" / "m5" / "v2" / "m5-2" / "world"
@@ -96,6 +96,19 @@ def draw_poly(draw: ImageDraw.ImageDraw, pts: list[Point], fill=None, outline=No
     draw.polygon(pts, fill=fill)
     if outline and width > 0:
         draw.line([*pts, pts[0]], fill=outline, width=width, joint="curve")
+
+
+def smooth_closed_points(pts: list[Point], iterations: int = 1) -> list[Point]:
+    smoothed = list(pts)
+    for _ in range(iterations):
+        next_pts: list[Point] = []
+        for i, a in enumerate(smoothed):
+            b = smoothed[(i + 1) % len(smoothed)]
+            q = (a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25)
+            r = (a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75)
+            next_pts.extend([q, r])
+        smoothed = next_pts
+    return smoothed
 
 
 def draw_route(draw: ImageDraw.ImageDraw, rng: random.Random) -> None:
@@ -210,7 +223,7 @@ def draw_land_texture(base: Image.Image, mask: Image.Image, scaled_pts: list[Poi
     grain_layer.putalpha(grain_alpha)
     base.alpha_composite(grain_layer, dest=(min_x, min_y))
 
-    flecks = min(240, max(12, area_hint // 44000))
+    flecks = min(520, max(24, area_hint // 22000))
     for _ in range(flecks):
         x = rng.randrange(min_x, max_x)
         y = rng.randrange(min_y, max_y)
@@ -219,20 +232,20 @@ def draw_land_texture(base: Image.Image, mask: Image.Image, scaled_pts: list[Poi
         length = rng.randrange(16, 46)
         draw.line(
             [(x - length // 2, y), (x + length // 2, y + rng.randrange(-2, 3))],
-            fill=(*LAND_DARK, 18),
+            fill=(*LAND_DARK, 22),
             width=1,
         )
 
-    reliefs = min(96, max(5, area_hint // 85000))
+    reliefs = min(360, max(10, area_hint // 30000))
     for _ in range(reliefs):
         x = rng.randrange(min_x, max_x)
         y = rng.randrange(min_y, max_y)
         if mask.getpixel((x, y)) == 0:
             continue
-        size = rng.randrange(9, 24)
-        draw.line([(x - size, y + size // 2), (x, y - size), (x + size, y + size // 2)], fill=(*LAND_DARK, 34), width=1)
+        size = rng.randrange(11, 30)
+        draw.line([(x - size, y + size // 2), (x, y - size), (x + size, y + size // 2)], fill=(*LAND_DARK, 44), width=1)
         if rng.random() < 0.45:
-            draw.line([(x - size // 3, y), (x, y - size)], fill=(*LAND_DARK, 28), width=1)
+            draw.line([(x - size // 3, y), (x, y - size)], fill=(*LAND_DARK, 34), width=1)
 
 
 def draw_coast_ripples(draw: ImageDraw.ImageDraw, pts: list[Point], rng: random.Random) -> None:
@@ -288,13 +301,14 @@ def make_map() -> None:
         scaled = [scale_point(point, scale_x, scale_y) for point in land["points"]]
         local_mask = Image.new("L", image.size, 0)
         ImageDraw.Draw(local_mask).polygon(scaled, fill=255)
-        for width, alpha in ((34, 34), (18, 42), (8, 30)):
+        for width, alpha in ((44, 34), (26, 44), (10, 34)):
             shallow_draw.line([*scaled, scaled[0]], fill=(*SEA_LIGHT, alpha), width=width, joint="curve")
-        draw_poly(land_draw, scaled, fill=(*LAND, 244), outline=(*LAND_DARK, 88), width=2)
+        visual = smooth_closed_points(scaled, 1)
+        draw_poly(land_draw, visual, fill=(*LAND, 244), outline=(*LAND_DARK, 112), width=3)
         draw_land_texture(land_layer, local_mask, scaled, land["name"])
-        coast_draw.line([*scaled, scaled[0]], fill=(*COAST, 118), width=2, joint="curve")
-        coast_draw.line([*scaled, scaled[0]], fill=(*COAST_LIGHT, 68), width=1, joint="curve")
-        draw_coast_ripples(coast_draw, scaled, random.Random(land["name"]))
+        coast_draw.line([*visual, visual[0]], fill=(*COAST, 150), width=4, joint="curve")
+        coast_draw.line([*visual, visual[0]], fill=(*COAST_LIGHT, 92), width=1, joint="curve")
+        draw_coast_ripples(coast_draw, visual, random.Random(land["name"]))
 
     image = Image.alpha_composite(image, shallow.filter(ImageFilter.GaussianBlur(5)))
     image = Image.alpha_composite(image, land_layer)
@@ -360,11 +374,11 @@ def write_notes(map_data: dict) -> None:
     lines = [
         "# M5-2.6 full_map_v2 生成與驗收紀錄",
         "",
-        "- 產生日期：2026-06-22",
+        "- 產生日期：2026-06-23",
         "- 操作者：Codex",
-        "- 產生方式：`tools/build-m5-2-6-full-map.py` 讀取 `src/data/map.json` 的 land polygons，並以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作為 image2.0 海圖主視覺，輸出正式 V2 full map；互動座標仍沿用現有資料檔。",
+        "- 產生方式：`tools/build-m5-2-6-full-map.py` 讀取 `src/data/map.json` 的 land polygons，並以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作為 image2.0 海圖風格母版，搭配 `map.json` 生成正式 V2 full map；互動座標與視覺海岸線保持一致。",
         "- 重要原則：本圖只作視覺底圖；港口、探索點、風景、碰撞仍以 `map.json`、`ports.json`、`exploration_points.json`、`discoveries.json` 為權威。",
-        "- 視覺修正：2026-06-22 依老闆畫面回報，移除過度明顯的白色航線、厚重海岸線與陸地大斑塊；source 圖改為主要世界地圖畫面，不再使用程式重畫的厚重多邊形陸地；互動碰撞與可達性仍以現有資料為準，後續若要更細緻，可再進行 source 地形到 `map.json` 的二次校正。",
+        "- 視覺修正：2026-06-22 依老闆畫面回報，移除過度明顯的白色航線、厚重海岸線與陸地大斑塊；改採資料座標優先模式：image2.0 source 只保留為海圖色調與紙張紋理參考，正式海岸線由 `map.json` 生成，確保港口、探索點、風景與碰撞一致。",
         "",
         "## 輸出檔案",
         "",
