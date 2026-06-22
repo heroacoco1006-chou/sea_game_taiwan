@@ -48,9 +48,10 @@ export const SHIP_EQUIPMENT_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/ships/equipment/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
-export const WORLD_ART_URLS = byBaseName(
-  import.meta.glob('/assets/m5/v2/m5-2/world/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
-);
+export const WORLD_ART_URLS = byBaseName({
+  ...import.meta.glob('/assets/m5/v2/m5-2/world/full_map_v2.png', { eager: true, query: '?url', import: 'default' }),
+  ...import.meta.glob('/assets/m5/v2/m5-2/world/full_map_v2_preview.png', { eager: true, query: '?url', import: 'default' }),
+} as Record<string, string>);
 
 export const PORT_BUILDING_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/ports/buildings/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>

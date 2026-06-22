@@ -14,6 +14,9 @@ MAP_PATH = ROOT / "src" / "data" / "map.json"
 PORTS_PATH = ROOT / "src" / "data" / "ports.json"
 EXPLORATION_PATH = ROOT / "src" / "data" / "exploration_points.json"
 DISCOVERIES_PATH = ROOT / "src" / "data" / "discoveries.json"
+SOURCE_PRIMARY = True
+STYLE_SOURCE = ROOT / "assets" / "m5" / "v2" / "m5-2" / "source" / "m5-2-world-sea-chart-source.png"
+STYLE_FALLBACK = ROOT / "assets" / "m5" / "v2" / "m5-2" / "world" / "sea_chart.png"
 OUT_DIR = ROOT / "assets" / "m5" / "v2" / "m5-2" / "world"
 
 OUT_W = 3840
@@ -21,14 +24,13 @@ OUT_H = 2880
 PREVIEW_W = 1280
 PREVIEW_H = 960
 
-SEA_DEEP = (26, 84, 103)
-SEA = (42, 112, 128)
-SEA_LIGHT = (115, 166, 164)
-PARCHMENT = (231, 210, 161)
-LAND = (208, 184, 121)
-LAND_LIGHT = (231, 209, 152)
-LAND_DARK = (112, 88, 51)
-COAST = (93, 70, 38)
+SEA_DEEP = (28, 84, 101)
+SEA = (43, 108, 121)
+SEA_LIGHT = (111, 158, 153)
+LAND = (207, 182, 113)
+LAND_LIGHT = (225, 205, 150)
+LAND_DARK = (111, 89, 55)
+COAST = (86, 72, 50)
 COAST_LIGHT = (244, 226, 185)
 PORT_RED = (206, 72, 54)
 EXPLORE_GREEN = (63, 134, 89)
@@ -96,21 +98,27 @@ def draw_poly(draw: ImageDraw.ImageDraw, pts: list[Point], fill=None, outline=No
         draw.line([*pts, pts[0]], fill=outline, width=width, joint="curve")
 
 
-def draw_route(draw: ImageDraw.ImageDraw, rng: random.Random, width: int, height: int) -> None:
-    for _ in range(22):
-        sx = rng.randrange(-200, width + 200)
-        sy = rng.randrange(-120, height + 120)
-        ex = rng.randrange(-200, width + 200)
-        ey = rng.randrange(-120, height + 120)
-        mx = (sx + ex) / 2 + rng.randrange(-260, 260)
-        my = (sy + ey) / 2 + rng.randrange(-180, 180)
+def draw_route(draw: ImageDraw.ImageDraw, rng: random.Random) -> None:
+    routes = [
+        ((-180, 720), (1420, -120), (3370, 470)),
+        ((-260, 2050), (1360, 1460), (4050, 1850)),
+        ((520, 3100), (1420, 1720), (2050, -180)),
+        ((2320, 3060), (2620, 1620), (3260, -180)),
+        ((-220, 1180), (1480, 1080), (4040, 930)),
+    ]
+    for sx_sy, mx_my, ex_ey in routes:
+        sx, sy = sx_sy
+        mx, my = mx_my
+        ex, ey = ex_ey
         points: list[Point] = []
-        for step in range(40):
-            t = step / 39
+        for step in range(56):
+            t = step / 55
             x = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * mx + t * t * ex
             y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * my + t * t * ey
             points.append((x, y))
-        draw.line(points, fill=(238, 223, 177, 32), width=2)
+        draw.line(points, fill=(236, 220, 170, 22), width=2)
+        if rng.random() < 0.55:
+            draw.line(points, fill=(44, 68, 66, 16), width=1)
 
 
 def draw_compass_rose(draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
@@ -121,9 +129,65 @@ def draw_compass_rose(draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> No
         y1 = cy + math.sin(ang) * 14
         x2 = cx + math.cos(ang) * long
         y2 = cy + math.sin(ang) * long
-        draw.line([(x1, y1), (x2, y2)], fill=(220, 198, 142, 96), width=3 if i % 2 == 0 else 2)
-    draw.ellipse((cx - r, cy - r, cx + r, cy + r), outline=(220, 198, 142, 72), width=3)
-    draw.ellipse((cx - 18, cy - 18, cx + 18, cy + 18), outline=(220, 198, 142, 96), width=2)
+        draw.line([(x1, y1), (x2, y2)], fill=(220, 198, 142, 44), width=2 if i % 2 == 0 else 1)
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), outline=(220, 198, 142, 36), width=2)
+    draw.ellipse((cx - 18, cy - 18, cx + 18, cy + 18), outline=(220, 198, 142, 48), width=1)
+
+
+def cover_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    src_w, src_h = image.size
+    dst_w, dst_h = size
+    scale = max(dst_w / src_w, dst_h / src_h)
+    next_size = (int(src_w * scale + 0.5), int(src_h * scale + 0.5))
+    resized = image.resize(next_size, Image.Resampling.LANCZOS)
+    left = (resized.width - dst_w) // 2
+    top = (resized.height - dst_h) // 2
+    return resized.crop((left, top, left + dst_w, top + dst_h))
+
+
+def make_source_primary_map() -> Image.Image:
+    source_path = STYLE_SOURCE if STYLE_SOURCE.exists() else STYLE_FALLBACK
+    base = cover_resize(Image.open(source_path).convert("RGB"), (OUT_W, OUT_H)).convert("RGBA")
+    # A light parchment wash keeps the source illustration readable after Phaser
+    # scales it up to the 7680x5760 world size.
+    wash = Image.new("RGBA", base.size, (246, 228, 181, 18))
+    base = Image.alpha_composite(base, wash)
+    vignette = Image.new("L", base.size, 0)
+    vd = ImageDraw.Draw(vignette)
+    vd.rectangle((0, 0, OUT_W, OUT_H), fill=18)
+    vd.ellipse((-OUT_W * 0.12, -OUT_H * 0.12, OUT_W * 1.12, OUT_H * 1.12), fill=0)
+    dark = Image.new("RGBA", base.size, (54, 39, 22, 0))
+    dark.putalpha(vignette.filter(ImageFilter.GaussianBlur(80)))
+    return Image.alpha_composite(base, dark)
+
+def make_sea_background() -> Image.Image:
+    source_path = STYLE_SOURCE if STYLE_SOURCE.exists() else STYLE_FALLBACK
+    source = cover_resize(Image.open(source_path).convert("RGB"), (OUT_W, OUT_H))
+
+    # Use the image2.0 sea chart as the visual mother plate. It is blurred so
+    # the source image's decorative land silhouettes become texture only; the
+    # playable coastline still comes from map.json.
+    soft_source = source.filter(ImageFilter.GaussianBlur(18))
+    sea_tint = Image.new("RGB", source.size, SEA)
+    base = Image.blend(soft_source, sea_tint, 0.56).convert("RGBA")
+
+    detail = ImageChops.difference(source.convert("L"), source.convert("L").filter(ImageFilter.GaussianBlur(5)))
+    detail = ImageEnhance.Contrast(detail).enhance(1.35)
+    detail_layer = Image.new("RGBA", source.size, (233, 221, 174, 0))
+    detail_layer.putalpha(detail.point(lambda p: max(0, min(26, p // 7))))
+    base = Image.alpha_composite(base, detail_layer)
+    base = Image.alpha_composite(base, Image.new("RGBA", source.size, (*SEA_DEEP, 46)))
+
+    draw = ImageDraw.Draw(base, "RGBA")
+    for y in range(38, OUT_H, 54):
+        for x in range(25, OUT_W, 82):
+            offset = 41 if (y // 54) % 2 else 0
+            draw.arc((x + offset - 13, y - 8, x + offset + 13, y + 14), 20, 160, fill=(154, 192, 188, 34), width=1)
+
+    draw_route(draw, random.Random(1628))
+    draw_compass_rose(draw, OUT_W - 360, 330, 150)
+    draw_compass_rose(draw, 420, OUT_H - 330, 120)
+    return base
 
 
 def draw_land_texture(base: Image.Image, mask: Image.Image, scaled_pts: list[Point], name: str) -> None:
@@ -137,28 +201,38 @@ def draw_land_texture(base: Image.Image, mask: Image.Image, scaled_pts: list[Poi
         return
 
     area_hint = max(1, (max_x - min_x) * (max_y - min_y))
-    flecks = min(360, max(18, area_hint // 26000))
-    for i in range(flecks):
+    crop_box = (min_x, min_y, max_x + 1, max_y + 1)
+    crop_size = (crop_box[2] - crop_box[0], crop_box[3] - crop_box[1])
+    grain = Image.effect_noise(crop_size, 32).convert("L")
+    mask_crop = mask.crop(crop_box)
+    grain_alpha = ImageChops.multiply(grain.point(lambda p: max(0, min(20, p // 12))), mask_crop)
+    grain_layer = Image.new("RGBA", crop_size, (*LAND_LIGHT, 0))
+    grain_layer.putalpha(grain_alpha)
+    base.alpha_composite(grain_layer, dest=(min_x, min_y))
+
+    flecks = min(240, max(12, area_hint // 44000))
+    for _ in range(flecks):
         x = rng.randrange(min_x, max_x)
         y = rng.randrange(min_y, max_y)
         if mask.getpixel((x, y)) == 0:
             continue
-        rx = rng.randrange(18, 78)
-        ry = rng.randrange(8, 32)
-        color = LAND_LIGHT if i % 4 == 0 else LAND_DARK
-        alpha = 36 if i % 4 == 0 else 21
-        draw.ellipse((x - rx, y - ry, x + rx, y + ry), fill=(*color, alpha))
+        length = rng.randrange(16, 46)
+        draw.line(
+            [(x - length // 2, y), (x + length // 2, y + rng.randrange(-2, 3))],
+            fill=(*LAND_DARK, 18),
+            width=1,
+        )
 
-    reliefs = min(120, max(6, area_hint // 70000))
+    reliefs = min(96, max(5, area_hint // 85000))
     for _ in range(reliefs):
         x = rng.randrange(min_x, max_x)
         y = rng.randrange(min_y, max_y)
         if mask.getpixel((x, y)) == 0:
             continue
-        size = rng.randrange(10, 28)
-        draw.line([(x - size, y + size // 2), (x, y - size), (x + size, y + size // 2)], fill=(*LAND_DARK, 45), width=2)
+        size = rng.randrange(9, 24)
+        draw.line([(x - size, y + size // 2), (x, y - size), (x + size, y + size // 2)], fill=(*LAND_DARK, 34), width=1)
         if rng.random() < 0.45:
-            draw.line([(x - size // 3, y), (x, y - size)], fill=(*LAND_DARK, 38), width=1)
+            draw.line([(x - size // 3, y), (x, y - size)], fill=(*LAND_DARK, 28), width=1)
 
 
 def draw_coast_ripples(draw: ImageDraw.ImageDraw, pts: list[Point], rng: random.Random) -> None:
@@ -167,7 +241,7 @@ def draw_coast_ripples(draw: ImageDraw.ImageDraw, pts: list[Point], rng: random.
         dx = b[0] - a[0]
         dy = b[1] - a[1]
         length = math.hypot(dx, dy)
-        count = max(1, int(length // 70))
+        count = max(1, int(length // 80))
         if length <= 0:
             continue
         nx = -dy / length
@@ -176,8 +250,8 @@ def draw_coast_ripples(draw: ImageDraw.ImageDraw, pts: list[Point], rng: random.
             t = (j + 0.5) / count
             x = a[0] + dx * t + nx * rng.randrange(-10, 11)
             y = a[1] + dy * t + ny * rng.randrange(-10, 11)
-            radius = rng.randrange(7, 19)
-            draw.arc((x + nx * 10 - radius, y + ny * 10 - radius, x + nx * 10 + radius, y + ny * 10 + radius), 20, 160, fill=(*COAST_LIGHT, 52), width=2)
+            radius = rng.randrange(7, 17)
+            draw.arc((x + nx * 10 - radius, y + ny * 10 - radius, x + nx * 10 + radius, y + ny * 10 + radius), 20, 160, fill=(*COAST_LIGHT, 34), width=1)
 
 
 def make_map() -> None:
@@ -187,27 +261,7 @@ def make_map() -> None:
     scale_x = OUT_W / map_data["worldWidth"]
     scale_y = OUT_H / map_data["worldHeight"]
 
-    rng = random.Random(1628)
-    image = Image.new("RGB", (OUT_W, OUT_H), SEA_DEEP)
-    draw = ImageDraw.Draw(image, "RGBA")
-
-    sea_overlay = Image.new("RGBA", image.size, (*SEA, 72))
-    image = Image.alpha_composite(image.convert("RGBA"), sea_overlay)
-    noise = Image.effect_noise(image.size, 22).convert("L")
-    noise = ImageEnhance.Contrast(noise).enhance(1.45)
-    paper = Image.new("RGBA", image.size, (238, 221, 171, 0))
-    paper.putalpha(noise.point(lambda p: max(0, min(40, p // 8))))
-    image = Image.alpha_composite(image, paper)
-    draw = ImageDraw.Draw(image, "RGBA")
-
-    for y in range(30, OUT_H, 48):
-        for x in range(20, OUT_W, 72):
-            offset = 36 if (y // 48) % 2 else 0
-            draw.arc((x + offset - 10, y - 7, x + offset + 10, y + 11), 20, 160, fill=(143, 191, 193, 38), width=1)
-
-    draw_route(draw, rng, OUT_W, OUT_H)
-    draw_compass_rose(draw, OUT_W - 360, 330, 150)
-    draw_compass_rose(draw, 420, OUT_H - 330, 120)
+    image = make_source_primary_map() if SOURCE_PRIMARY else make_sea_background()
 
     land_mask = Image.new("L", image.size, 0)
     land_mask_draw = ImageDraw.Draw(land_mask)
@@ -215,6 +269,14 @@ def make_map() -> None:
         scaled = [scale_point(point, scale_x, scale_y) for point in land["points"]]
         land_mask_draw.polygon(scaled, fill=255)
 
+    if SOURCE_PRIMARY:
+        full = image.convert("RGB")
+        full.save(OUT_DIR / "full_map_v2.png", compress_level=6)
+        land_mask.save(OUT_DIR / "full_map_v2_mask.png", compress_level=6)
+        full.resize((PREVIEW_W, PREVIEW_H), Image.Resampling.LANCZOS).save(OUT_DIR / "full_map_v2_preview.png", compress_level=6)
+        make_validation_overlay(full, map_data, scale_x, scale_y)
+        write_notes(map_data)
+        return
     shallow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shallow_draw = ImageDraw.Draw(shallow, "RGBA")
     land_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -226,31 +288,30 @@ def make_map() -> None:
         scaled = [scale_point(point, scale_x, scale_y) for point in land["points"]]
         local_mask = Image.new("L", image.size, 0)
         ImageDraw.Draw(local_mask).polygon(scaled, fill=255)
-        for width, alpha in ((42, 44), (24, 58), (10, 42)):
+        for width, alpha in ((34, 34), (18, 42), (8, 30)):
             shallow_draw.line([*scaled, scaled[0]], fill=(*SEA_LIGHT, alpha), width=width, joint="curve")
-        draw_poly(land_draw, scaled, fill=(*LAND, 255), outline=(*LAND_DARK, 130), width=5)
+        draw_poly(land_draw, scaled, fill=(*LAND, 244), outline=(*LAND_DARK, 88), width=2)
         draw_land_texture(land_layer, local_mask, scaled, land["name"])
-        coast_draw.line([*scaled, scaled[0]], fill=(*COAST, 170), width=3, joint="curve")
-        coast_draw.line([*scaled, scaled[0]], fill=(*COAST_LIGHT, 88), width=1, joint="curve")
+        coast_draw.line([*scaled, scaled[0]], fill=(*COAST, 118), width=2, joint="curve")
+        coast_draw.line([*scaled, scaled[0]], fill=(*COAST_LIGHT, 68), width=1, joint="curve")
         draw_coast_ripples(coast_draw, scaled, random.Random(land["name"]))
 
-    shallow = shallow.filter(ImageFilter.GaussianBlur(7))
-    image = Image.alpha_composite(image, shallow)
+    image = Image.alpha_composite(image, shallow.filter(ImageFilter.GaussianBlur(5)))
     image = Image.alpha_composite(image, land_layer)
     image = Image.alpha_composite(image, coast_layer)
 
     vignette = Image.new("L", image.size, 0)
     vd = ImageDraw.Draw(vignette)
-    vd.rectangle((0, 0, OUT_W, OUT_H), fill=32)
+    vd.rectangle((0, 0, OUT_W, OUT_H), fill=22)
     vd.ellipse((-OUT_W * 0.15, -OUT_H * 0.15, OUT_W * 1.15, OUT_H * 1.15), fill=0)
     dark = Image.new("RGBA", image.size, (54, 39, 22, 0))
     dark.putalpha(vignette.filter(ImageFilter.GaussianBlur(90)))
     image = Image.alpha_composite(image, dark)
 
     full = image.convert("RGB")
-    full.save(OUT_DIR / "full_map_v2.png", optimize=True)
-    land_mask.save(OUT_DIR / "full_map_v2_mask.png", optimize=True)
-    full.resize((PREVIEW_W, PREVIEW_H), Image.Resampling.LANCZOS).save(OUT_DIR / "full_map_v2_preview.png", optimize=True)
+    full.save(OUT_DIR / "full_map_v2.png", compress_level=6)
+    land_mask.save(OUT_DIR / "full_map_v2_mask.png", compress_level=6)
+    full.resize((PREVIEW_W, PREVIEW_H), Image.Resampling.LANCZOS).save(OUT_DIR / "full_map_v2_preview.png", compress_level=6)
     make_validation_overlay(full, map_data, scale_x, scale_y)
     write_notes(map_data)
 
@@ -272,7 +333,7 @@ def make_validation_overlay(full: Image.Image, map_data: dict, scale_x: float, s
         x = int(entry["x"] * scale_x)
         y = int(entry["y"] * scale_y)
         draw.polygon([(x, y - 8), (x + 8, y + 7), (x - 8, y + 7)], fill=(237, 196, 95, 220), outline=(54, 39, 22, 190))
-    overlay.resize((PREVIEW_W, PREVIEW_H), Image.Resampling.LANCZOS).save(OUT_DIR / "full_map_v2_validation.png", optimize=True)
+    overlay.resize((PREVIEW_W, PREVIEW_H), Image.Resampling.LANCZOS).save(OUT_DIR / "full_map_v2_validation.png", compress_level=6)
 
 
 def validate_points(title: str, rows: list[dict], lands: list[dict], radius: float, name_key: str = "name") -> list[str]:
@@ -301,8 +362,9 @@ def write_notes(map_data: dict) -> None:
         "",
         "- 產生日期：2026-06-22",
         "- 操作者：Codex",
-        "- 產生方式：`tools/build-m5-2-6-full-map.py` 直接讀取 `src/data/map.json` 的 land polygons，輸出與遊戲互動座標對齊的 V2 舊海圖 full map。",
+        "- 產生方式：`tools/build-m5-2-6-full-map.py` 讀取 `src/data/map.json` 的 land polygons，並以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作為 image2.0 海圖主視覺，輸出正式 V2 full map；互動座標仍沿用現有資料檔。",
         "- 重要原則：本圖只作視覺底圖；港口、探索點、風景、碰撞仍以 `map.json`、`ports.json`、`exploration_points.json`、`discoveries.json` 為權威。",
+        "- 視覺修正：2026-06-22 依老闆畫面回報，移除過度明顯的白色航線、厚重海岸線與陸地大斑塊；source 圖改為主要世界地圖畫面，不再使用程式重畫的厚重多邊形陸地；互動碰撞與可達性仍以現有資料為準，後續若要更細緻，可再進行 source 地形到 `map.json` 的二次校正。",
         "",
         "## 輸出檔案",
         "",
