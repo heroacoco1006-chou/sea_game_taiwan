@@ -6,6 +6,7 @@
 // - 船卡／船隻裝備：key = 船型 id／裝備 id
 // - 主角行走圖：key = 主角 id（lin、peter、chiyo），7 格 spritesheet
 // - M5-2 世界／港町素材：key = 檔名（sea_chart、han_item_shop、unknown_exploration…）
+// - 劇情背景：key = 檔名（lin_story_bg、peter_story_bg、chiyo_story_bg）
 
 type UrlMap = Record<string, string>;
 
@@ -65,6 +66,9 @@ export const EXPLORATION_ICON_URLS = byBaseName(
 export const FACILITY_ICON_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/ui/icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
+export const STORY_BACKGROUND_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/story/backgrounds/*_story_bg.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
 
 /** Phaser 材質 key 命名（避免和程式生成的材質撞名） */
 export const portraitKey = (id: string): string => `portrait_${id}`;
@@ -79,3 +83,4 @@ export const portBuildingKey = (id: string): string => `m5b_${id}`;
 export const harborSceneKey = (id: string): string => `m5h_${id}`;
 export const explorationIconKey = (id: string): string => `m5x_${id}`;
 export const facilityIconKey = (id: string): string => `m5u_${id}`;
+export const storyBackgroundKey = (id: string): string => `storybg_${id}`;

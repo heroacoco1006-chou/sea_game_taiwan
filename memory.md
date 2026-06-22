@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-22] M5-3 頭像切片與 StoryScene 劇情背景規則
+
+- 背景：V2 characters source 的人物卡片雖接近規則網格，但 imagegen 輸出的實際人物主體有內縮與位置差；只依平均格輸出會讓部分劇情頭像偏移或縮得太小。
+- 決策／實作：
+  - `tools/slice-m5-3-v2-art.py` 的 `slice_characters()` 必須先用 `detect_component_grid(source, 7, 4)` 找出實際 28 張人物卡片，再用 `crop_component()` 輸出；不要退回單純 `crop_grid()` 平均切片。
+  - `render_portrait()` 輸出劇情頭像時以清背景後的頭胸像 cover crop 為準，讓 StoryScene 顯示為清楚頭像，而不是縮小的全身人物卡。
+  - 三位主角劇情背景放在 `assets/m5/v2/story/backgrounds/`，檔名固定 `lin_story_bg.png`、`peter_story_bg.png`、`chiyo_story_bg.png`；prompt 與 source 留在同資料夾方便重繪追溯。
+  - `src/art.ts` 以 `STORY_BACKGROUND_URLS` 載入背景，BootScene preload 後由 StoryScene 用 `storyBackgroundKey(`${heroId}_story_bg`)` 取圖；缺圖時保留舊海色 fallback。
+- 後續：若新增主角線或重繪劇情背景，需同步更新 `assets/CREDITS.md`、prompt md 與 StoryScene 對應檔名，不要在劇情程式中寫死單一背景。
+
 ## [2026-06-21] M5-2 exploration source 不可平均等分切片
 
 - 背景：M5-2 exploration source 雖然看起來是 6×5 圖板，但 imagegen 輸出的卡片沒有平均分布在整張 1536×1024 畫布上；用 `img.width / 6` 直接等分會切掉最後一欄或把鄰格殘影帶進來。

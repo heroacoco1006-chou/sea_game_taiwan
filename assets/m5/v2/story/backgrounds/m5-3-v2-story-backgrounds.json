@@ -1,0 +1,27 @@
+{
+  "version": "m5-3-v2-story-backgrounds",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen/image2.0 built-in tool plus local Pillow 16:9 crop and dialogue-zone toning",
+  "style": "V2 refined 2D painterly maritime RPG story backgrounds",
+  "backgrounds": [
+    {
+      "id": "lin",
+      "path": "assets/m5/v2/story/backgrounds/lin_story_bg.png",
+      "source": "assets/m5/v2/story/backgrounds/source/lin_story_bg_source.png"
+    },
+    {
+      "id": "peter",
+      "path": "assets/m5/v2/story/backgrounds/peter_story_bg.png",
+      "source": "assets/m5/v2/story/backgrounds/source/peter_story_bg_source.png"
+    },
+    {
+      "id": "chiyo",
+      "path": "assets/m5/v2/story/backgrounds/chiyo_story_bg.png",
+      "source": "assets/m5/v2/story/backgrounds/source/chiyo_story_bg_source.png"
+    }
+  ],
+  "notes": [
+    "Three hero-line story backgrounds for StoryScene: lin, peter, chiyo.",
+    "No KOEI or other commercial game pixels were copied, cropped, traced, or adapted."
+  ]
+}

@@ -4,7 +4,7 @@ import {
   getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
 } from '../state';
 import type { StoryLine } from '../state';
-import { portraitKey } from '../art';
+import { portraitKey, storyBackgroundKey } from '../art';
 import { audio } from '../audio';
 import { COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
@@ -79,9 +79,7 @@ export default class StoryScene extends Phaser.Scene {
     audio.playBgm('adventure');
     this.heroName = heroDefById(this.heroId).name;
 
-    // 背景：海色＋暗角，營造劇情氛圍
-    this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep);
-    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.35);
+    this.createStoryBackground(W, H);
 
     // 說話者名 → 頭像 id（三主角＋25 夥伴）
     this.nameToId = {};
@@ -121,6 +119,16 @@ export default class StoryScene extends Phaser.Scene {
     this.renderBeat();
   }
 
+  private createStoryBackground(W: number, H: number): void {
+    const bgKey = storyBackgroundKey(`${this.heroId}_story_bg`);
+    if (this.textures.exists(bgKey)) {
+      this.add.image(W / 2, H / 2, bgKey).setDisplaySize(W, H).setDepth(-20);
+    } else {
+      this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep).setDepth(-20);
+    }
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.22).setDepth(-10);
+    this.add.rectangle(W / 2, H - 125, W, 250, 0x1f160c, 0.22).setDepth(-9);
+  }
   private advance(): void {
     if (this.finished) return;
     this.index += 1;

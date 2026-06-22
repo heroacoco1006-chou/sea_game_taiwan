@@ -4,6 +4,21 @@
 
 ---
 
+## M5-3 劇情對話背景精緻素材 v2（2026-06-22）
+
+- **素材位置**：`assets/m5/v2/story/backgrounds/`
+- **內容**：
+  - `lin_story_bg.png`：林海生線，福建月港／漢人海商港口背景。
+  - `peter_story_bg.png`：彼得線，巴達維亞 VOC 商館背景。
+  - `chiyo_story_bg.png`：千代線，平戶朱印船港口背景。
+  - `source/`：imagegen／image2.0 原始生成圖。
+  - `m5-3-v2-story-backgrounds.json`：素材 manifest；`m5-3-v2-story-backgrounds-prompts.md`：prompt 紀錄。
+  - `m5-3-v2-story-backgrounds-contact-sheet.png`：總覽圖。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖，再以專案內 Pillow 流程裁成 1280×720，並加上對話框區域暗化處理。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：背景用於 `StoryScene`，依主角線切換；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
 ## M5-3 船隻方向幀精緻素材 v2（2026-06-21）
 
 - **素材位置**：`assets/m5/v2/ships/world_directional/`

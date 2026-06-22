@@ -88,6 +88,15 @@ def contain_resize(img: Image.Image, size: tuple[int, int], bg: tuple[int, int, 
     return canvas
 
 
+def cover_resize_rgba(img: Image.Image, size: tuple[int, int]) -> Image.Image:
+    work = img.convert("RGBA")
+    scale = max(size[0] / work.width, size[1] / work.height)
+    resized = work.resize((round(work.width * scale), round(work.height * scale)), Image.Resampling.LANCZOS)
+    left = max(0, (resized.width - size[0]) // 2)
+    top = max(0, (resized.height - size[1]) // 2)
+    return resized.crop((left, top, left + size[0], top + size[1]))
+
+
 def trim_alpha(img: Image.Image) -> Image.Image:
     bbox = img.getbbox()
     if not bbox:
@@ -159,13 +168,90 @@ def remove_edge_background(img: Image.Image, tolerance: int = 48) -> Image.Image
     return rgba
 
 
+def detect_component_grid(img: Image.Image, cols: int, rows: int) -> list[tuple[int, int, int, int]]:
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    bg = edge_background_color(rgb)
+    pixels = rgb.load()
+    mask = bytearray(w * h)
+
+    for y in range(h):
+        for x in range(w):
+            r, g, b = pixels[x, y]
+            if color_distance((r, g, b), bg) > 44:
+                mask[y * w + x] = 1
+
+    seen = bytearray(w * h)
+    components: list[tuple[int, tuple[int, int, int, int], tuple[float, float]]] = []
+    min_area = max(1800, (w * h) // 900)
+    for y in range(h):
+        for x in range(w):
+            idx = y * w + x
+            if not mask[idx] or seen[idx]:
+                continue
+            queue = [(x, y)]
+            seen[idx] = 1
+            head = 0
+            area = 0
+            min_x = max_x = x
+            min_y = max_y = y
+            while head < len(queue):
+                cx, cy = queue[head]
+                head += 1
+                area += 1
+                min_x = min(min_x, cx)
+                max_x = max(max_x, cx)
+                min_y = min(min_y, cy)
+                max_y = max(max_y, cy)
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if nx < 0 or nx >= w or ny < 0 or ny >= h:
+                        continue
+                    nidx = ny * w + nx
+                    if mask[nidx] and not seen[nidx]:
+                        seen[nidx] = 1
+                        queue.append((nx, ny))
+            box = (min_x, min_y, max_x + 1, max_y + 1)
+            bw = box[2] - box[0]
+            bh = box[3] - box[1]
+            if area >= min_area and bw >= 80 and bh >= 100:
+                components.append((area, box, ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)))
+
+    expected = cols * rows
+    if len(components) < expected:
+        raise ValueError(f"Expected {expected} character cards, found {len(components)}")
+
+    largest = sorted(components, key=lambda item: item[0], reverse=True)[:expected]
+    by_row = sorted(largest, key=lambda item: item[2][1])
+    boxes: list[tuple[int, int, int, int]] = []
+    for row_start in range(0, expected, cols):
+        row = sorted(by_row[row_start:row_start + cols], key=lambda item: item[2][0])
+        boxes.extend(item[1] for item in row)
+    return boxes
+
+
+def crop_component(img: Image.Image, box: tuple[int, int, int, int], pad: int = 2) -> Image.Image:
+    left, top, right, bottom = box
+    return img.crop((
+        max(0, left - pad),
+        max(0, top - pad),
+        min(img.width, right + pad),
+        min(img.height, bottom + pad),
+    ))
+
+
 def render_portrait(tile: Image.Image, size: tuple[int, int] = (256, 256)) -> Image.Image:
     cleaned = trim_alpha(remove_edge_background(tile))
+    if cleaned.width > 12 and cleaned.height > 12:
+        # Source cards contain a full framed figure. Crop to the upper bust so
+        # StoryScene portraits read as headshots instead of tiny full cards.
+        mx = max(2, round(cleaned.width * 0.075))
+        top = max(0, round(cleaned.height * 0.02))
+        bottom = max(top + 10, round(cleaned.height * 0.80))
+        cleaned = cleaned.crop((mx, top, cleaned.width - mx, bottom))
+
     canvas = Image.new("RGB", size, (238, 222, 176))
-    cleaned.thumbnail((size[0] - 12, size[1] - 12), Image.Resampling.LANCZOS)
-    x = (size[0] - cleaned.width) // 2
-    y = (size[1] - cleaned.height) // 2
-    canvas.paste(cleaned, (x, y), cleaned)
+    portrait = cover_resize_rgba(cleaned, (size[0] - 14, size[1] - 14))
+    canvas.paste(portrait, (7, 7), portrait)
     return canvas
 
 
@@ -193,13 +279,12 @@ def make_contact_sheet(thumbs: list[tuple[str, Image.Image]], cols: int, thumb_s
 
 def slice_characters() -> list[dict[str, str]]:
     source = Image.open(CHARACTER_SOURCE).convert("RGB")
-    if source.width % 7 or source.height % 4:
-        raise ValueError(f"Unexpected character sheet size: {source.size}")
+    boxes = detect_component_grid(source, 7, 4)
 
     entries: list[dict[str, str]] = []
     thumbs: list[tuple[str, Image.Image]] = []
     for idx, char_id in enumerate(CHARACTER_IDS):
-        tile = crop_grid(source, 7, 4, idx)
+        tile = crop_component(source, boxes[idx])
         portrait = render_portrait(tile)
         out_path = OUT / "characters" / "portraits" / f"{char_id}.png"
         portrait.save(out_path)
@@ -208,10 +293,9 @@ def slice_characters() -> list[dict[str, str]]:
 
     if CORRECTION_SOURCE.exists():
         corrections = Image.open(CORRECTION_SOURCE).convert("RGB")
-        if corrections.width % 2:
-            raise ValueError(f"Unexpected character correction sheet size: {corrections.size}")
+        boxes = detect_component_grid(corrections, 2, 1)
         for idx, char_id in enumerate(["adika", "jana"]):
-            tile = crop_grid(corrections, 2, 1, idx)
+            tile = crop_component(corrections, boxes[idx])
             portrait = render_portrait(tile)
             out_path = OUT / "characters" / "portraits" / f"{char_id}.png"
             portrait.save(out_path)

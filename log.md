@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-22] 修正 | 操作者：Codex | 修正 V2 頭像切片並接入劇情背景
+
+- 背景：老闆在測試劇情章節時發現部分人物頭像偏移，並指出劇情對話只有頭像、缺少場景背景，帶入感不足。
+- 完成事項：
+  - `tools/slice-m5-3-v2-art.py` 的人物 source 改為偵測實際 28 張人物卡片元件，不再只依固定平均格切片。
+  - 重新輸出 `assets/m5/v2/characters/portraits/` 全 28 張頭像與角色 contact sheet；頭像改為頭胸像 cover crop，降低整張人物卡縮太小或偏移的情況。
+  - 用 imagegen／image2.0 產出林、彼得、千代三條主角線的 1280×720 劇情對話背景，輸出到 `assets/m5/v2/story/backgrounds/`，並登錄 `assets/CREDITS.md`。
+  - `src/art.ts`、`BootScene`、`StoryScene` 接入劇情背景；StoryScene 依 `heroId` 顯示對應背景，缺圖時保留原本海色 fallback。
+- 驗證：Pillow 檢查全 28 張頭像輸出尺寸與邊界一致；`npm run build` 通過（僅既有 bundle size warning）。
+
 ## [2026-06-21] 修正 | 操作者：Codex | 重切 M5-2 exploration 探索圖示
 
 - 背景：老闆指出 M5-2 exploration 多張素材仍嚴重切割錯誤，要求先修素材再往程式推。
@@ -43,6 +53,7 @@
   - 重新輸出 `assets/m5/v2/m5-2/exploration/icons/` 30 張探索／風景圖示與 exploration contact sheet。
   - `WorldMapScene` 縮小風景與探索圖示，並把探索點文字改成較小的半透明底標籤，減少密集海岸地區互相壓住。
 - 驗證：抽查輸出 PNG 四角已透明；`npm run build` 通過（僅既有 bundle size warning）。
+
 ## [2026-06-21] 開發 | 操作者：小航 | M5-5a/b 音訊系統與合成音效
 
 - 背景：老闆指派小航做 M5-5；先做 a＋b（音訊系統＋程式合成音效，零外部檔）。
