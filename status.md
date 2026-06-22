@@ -17,7 +17,7 @@ status: draft
 
 ## 目前階段
 
-**M4＋等級系統＋M5-0 船隻裝備完成（2026-06-17）；M5 美術階段已啟動，V2 精緻 2D 手繪航海 RPG 風格已定調為全遊戲正式美術方向；M5-1 載入管線、M5-2 世界／港口／探索素材、M5-3 角色與船隻素材已完成第一輪接入，世界地圖船隻方向幀已接入，劇情對話背景已接入 StoryScene；M5-2.5 港町場景整體化 Phase B 已導入 PortScene，M5-2.6 世界地圖整體化 Phase C/D 已導入與驗收；M5-4 圖鑑插圖已接入 InfoScene。**
+**M4＋等級系統＋M5-0 船隻裝備完成（2026-06-17）；M5 美術階段已啟動，V2 精緻 2D 手繪航海 RPG 風格已定調為全遊戲正式美術方向；M5-1 載入管線、M5-2 世界／港口／探索素材、M5-3 角色與船隻素材已完成第一輪接入，世界地圖船隻方向幀已接入，劇情對話背景已接入 StoryScene；M5-2.5 港町場景整體化 Phase B 已導入 PortScene，M5-2.6 世界地圖整體化 Phase C/D 已導入與驗收，並改以 image2.0 海圖 source 作正式主視覺；M5-4 圖鑑插圖已接入 InfoScene。**
 
 ---
 
@@ -30,7 +30,7 @@ status: draft
 | M2 世界完成 | 全 22 港、24 貿易品（含圖示）、行情、走動式港町＋全設施、補給、海上事件、季風、羅盤＋小地圖、鏡頭跟隨 | 自由貿易玩法完整可玩 | ✅ 完成（2026-06-12，已實測，待老闆試玩） |
 | M3 船與戰鬥 | 8 船型、購買/建造/改造、艦隊（5 艘編隊）、回合制海戰、委託任務、裝備系統、夥伴職位框架 | 可組艦隊、改造船、裝備、打海戰 | ✅ 完成（2026-06-13，已實測，待老闆試玩） |
 | M4 主線劇情 | 三主人翁主線（各 8～10 章）＋歷史 NPC＋25 位夥伴 NPC 專屬任務＋圖鑑 | 三條主線可玩到結局，各線可招募夥伴齊備 | ✅ 完成（2026-06-17，三線各 10 章可通關、25 夥伴招募＋12 高星劇情、客座離隊、120 圖鑑＋收集稱號、三分流平衡；已自動驗收，待老闆試玩） |
-| M5 美術音樂整合 | 全素材到位、分區 BGM、UI 美化、新手教學 | 觀感接近「仿大航海2」目標 | 🟨 進行中（M5-1／M5-2／M5-3 第一輪接入完成，世界地圖船隻方向幀與劇情背景已接入；M5-2.5 Phase B 已導入；M5-2.6 Phase C/D 已導入與驗收；M5-4 圖鑑插圖已接 UI） |
+| M5 美術音樂整合 | 全素材到位、分區 BGM、UI 美化、新手教學 | 觀感接近「仿大航海2」目標 | 🟨 進行中（M5-1／M5-2／M5-3 第一輪接入完成，世界地圖船隻方向幀與劇情背景已接入；M5-2.5 Phase B 已導入；M5-2.6 Phase C/D 已導入與驗收，世界地圖改以 image2.0 海圖 source 作主視覺；M5-4 圖鑑插圖已接 UI） |
 | M6 打包與測試 | Electron 打包、平衡調整、校對、試玩回饋修正 | 老闆拿到 Windows 安裝檔，安裝即玩 | ⬜ 未開始 |
 
 ---
@@ -138,8 +138,8 @@ status: draft
 - [x] **M5-2.6 世界地圖整體化**：把大地圖從「復古海面＋方塊陸地」改為同一套 V2 舊海圖語言，並保留港口／探索點可達性。
   - [x] 架構文件建立（2026-06-21）：新增 `2026-06-21_世界地圖整體美術一致化架構.md`，定義世界地圖分層、互動資料優先原則、快速止血、精緻 full map source、資料校正與驗收地點。
   - [x] Phase B 快速視覺止血（2026-06-21）：不改 `map.json` 座標，`WorldMapScene` 已加入海面疊層、陸地多層材質、海岸描邊、淺灘光暈、岸邊浪線與小地圖陸地描邊；2026-06-21 二次修正停用未對齊的 `sea_chart` 全圖底板，避免底板內建台灣／島嶼圖形浮在海上。
-  - [x] Phase C 精緻大地圖 source（2026-06-22）：新增 `tools/build-m5-2-6-full-map.py`，由 `map.json` 直接輸出 `full_map_v2.png`、`full_map_v2_mask.png`、preview、validation overlay 與 notes，避免美術圖與碰撞資料漂移。
-  - [x] Phase D 座標／可達性驗收（2026-06-22）：`full_map_v2_notes.md` 檢查 22 港、12 探索點、15 風景皆在互動半徑內；同步把爪哇火山地帶改為近岸登陸入口 `(2260, 5370)`。
+  - [x] Phase C 精緻大地圖 source（2026-06-22）：新增 `tools/build-m5-2-6-full-map.py`，正式 `full_map_v2.png` 改以 `m5-2-world-sea-chart-source.png` 作 image2.0 海圖主視覺輸出；同步輸出 `full_map_v2_mask.png`、preview、validation overlay 與 notes。
+  - [x] Phase D 座標／可達性驗收（2026-06-22）：`full_map_v2_notes.md` 檢查 22 港、12 探索點、15 風景皆在互動半徑內；同步把爪哇火山地帶改為近岸登陸入口 `(2260, 5370)`。2026-06-22 二次視覺修正：依老闆截圖回報，捨棄程式重畫的厚重多邊形底圖，改以 image2.0 source 原圖作主要世界地圖，避免台灣等地形出現怪斑與粗框。
 - [ ] **M5-2.5 港町場景整體化**：把走動式港町從原型期色塊場景升級為完整 V2 港町場景，避免精緻設施卡片浮在簡單地圖上。
   - [x] 架構文件建立（2026-06-20）：新增 `2026-06-20_港町整體美術一致化架構.md`，定義場景分層、素材規格、資料檔、PortScene 拆分與分階段導入。
   - [x] Phase B 快速視覺止血（2026-06-21）：`PortScene` 已導入舊紙／石板質感地面、手繪道路、整合式港景、碼頭水面與較精緻的民宅／樹／水井／貨箱；設施牌匾改到建築下緣，降低卡片浮貼感；2026-06-21 二次修正設施圖裁到卡片邊框、港町底色貼近設施羊皮紙色、道路分支連到各設施門口，並限制玩家不可走進底部海面。
@@ -228,7 +228,8 @@ status: draft
 - [x] **M5-5b 音效合成**（2026-06-21）：11 種 SFX 配方（click/coin/cannon/board/victory/defeat/levelup/unlock/port/page/confirm/cancel）；接入 makeButton 全域點擊、TradeScene 買賣（coin）、BattleScene 砲擊/接舷/勝/敗＋升級、FacilityScene 領賞 coin＋解鎖 unlock＋升級、StoryScene 圖鑑卡 unlock。
 - [x] **M5-5c BGM（程式合成）＋場景對應**（2026-06-21）：老闆指示 BGM 也用簡單程式合成（不下載音檔）。`audio.ts` 加程序化 BGM 引擎（lookahead 排程循環樂句），7 首各用不同音階／速度／波形：sailing（大調五聲・慢・triangle）、battle（小調・快・sawtooth）、adventure（小調・神祕・sine）、town_china／taiwan（五聲）、town_japan（平調子）、town_seasia（五聲・快・square）。場景接入：Title／WorldMap=sailing、Battle=battle、Story=adventure、Port 及設施（Facility/Trade/Shipyard/ItemShop/Mates）依 `townBgmForRegion(port.region)`、Info 依來源。實測：各場景 bgmKey 正確（月港=china、平戶=japan、巴達維亞=seasia、大員=taiwan）、7 首切換不丟錯。
 - [x] **M5-5d 真實 CC-BY 音檔（混合管線＋全 7 首換上）**（2026-06-22）：老闆比較後覺得真實音檔效果好，指示其餘 5 首也換。`audio.ts` 的**音檔覆蓋管線**——`import.meta.glob('/assets/m5/audio/bgm/*.{mp3,ogg}')`，有對應檔的 key 用 `fetch→decodeAudioData→loop`（buffer 快取）覆蓋合成，無檔則維持合成（程式無需改動，丟檔即覆蓋）。**7 首全部採 Kevin MacLeod / CC-BY 4.0 / incompetech**：sailing=Achaidh Cheide（凱爾特）、battle=Crusade（史詩進行曲）、adventure=Crossing the Chasm（史詩冒險）、town_china=Guzheng City（古箏）、town_taiwan=Shenyang（中國民樂）、town_japan=Mountain Emperor（和風）、town_seasia=Chee Zee Beach（馬林巴/鋼鼓熱帶）。實測：7 首皆 `fileSource:true`、合成排程已無殘留（`bgmTimer=null`）。`CREDITS.md` 已列全表。首播需數秒 fetch+decode、之後快取。
-- [ ] **M5-5g 遊戲內音樂標註（CC-BY 合規）**：CC BY 4.0 要求標註作者。需在遊戲內（標題/製作群頁）顯示「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」。目前僅在 `CREDITS.md`，**尚未在遊戲畫面顯示**——上架前必補。
+- [x] **M5-5d-2 日本城町換曲**（2026-06-22）：老闆偏好 PeriTune（sei）「Oboro（朧）」的安靜空靈和風（竹笛／箏，CC BY 4.0），`town_japan.mp3` 從 Kevin MacLeod「Mountain Emperor」換成 Oboro；實測 `fileSource:true`（此首無 ID3、解碼略久約 6～11 秒，之後快取）。CREDITS 已更新作者欄與來源。現況＝6 首 Kevin MacLeod＋1 首 PeriTune。
+- [ ] **M5-5g 遊戲內音樂標註（CC-BY 合規）**：CC BY 4.0 要求標註作者。需在遊戲內（標題/製作群頁）顯示**兩行**：「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」與「Music: PeriTune (peritune.com), CC BY 4.0」（town_japan＝Oboro 為 PeriTune）。目前僅在 `CREDITS.md`，**尚未在遊戲畫面顯示**——上架前必補。
 - [ ] **M5-5e 設定 UI**：音量滑桿×3＋靜音鈕（與 M5-6 一起美化）。
 - [ ] **M5-5f 聽感平衡**：headless 已驗不丟錯與切換正確；**音量／旋律好不好聽需老闆親耳於 5173 確認**後再微調配方。
 

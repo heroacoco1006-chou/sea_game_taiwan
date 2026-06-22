@@ -66,16 +66,16 @@
 - **素材位置**：`assets/m5/v2/m5-2/`
 - **內容**：
   - `assets/m5/v2/m5-2/source/`：imagegen 產出的海圖背景、港町建築、港口場景、探索圖示、地圖／設施圖示 source 原圖。
-  - `assets/m5/v2/m5-2/world/`：精緻海圖背景、對齊 `map.json` 的 `full_map_v2.png`、遮罩、預覽與驗收疊圖。
+  - `assets/m5/v2/m5-2/world/`：精緻海圖背景、以 image2.0 source 作主視覺的 `full_map_v2.png`、對齊資料檔的遮罩、預覽與驗收疊圖。
   - `assets/m5/v2/m5-2/ports/buildings/`：漢式、和式、南洋、歐式殖民、台灣平原社等港町建築，共 16 張 256×256 PNG。
   - `assets/m5/v2/m5-2/ports/harbors/`：大員、福建、日本、琉球、南洋、歐式殖民港口場景卡，共 6 張 512×512 PNG。
   - `assets/m5/v2/m5-2/exploration/icons/`：探索點與風景圖示，共 30 張 256×256 PNG。
   - `assets/m5/v2/m5-2/ui/icons/`：世界地圖標記、設施、補給、海上狀態與消耗品圖示，共 24 張 256×256 PNG。
   - `assets/m5/v2/m5-2/m5-2-v2-assets.json`：素材 manifest；`assets/m5/v2/m5-2/m5-2-v2-prompts.md`：prompt 紀錄。
 - **作者／操作者**：Codex
-- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 直接讀取 `map.json` 產生對齊互動資料的舊海圖底圖。
+- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 以 `m5-2-world-sea-chart-source.png` 為主視覺輸出，並同步讀取 `map.json` 產生遮罩與 validation。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。舊 `sea_chart` 為美術 source；M5-2.6 起遊戲優先使用對齊 `map.json` 的 `full_map_v2`，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
+- **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。`m5-2-world-sea-chart-source` 為正式世界地圖主視覺來源；M5-2.6 起遊戲優先使用 `full_map_v2`，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
 
 ## M5-3 角色與船隻精緻素材 v2（2026-06-18）
 
@@ -110,20 +110,23 @@
 
 ## M5-5 背景音樂（CC-BY 全套，2026-06-22，操作者：小航）
 
-七首場景 BGM 全部採用 **Kevin MacLeod**（incompetech.com）的 CC-BY 音樂，位於 `assets/m5/audio/bgm/`：
+七首場景 BGM 全部採用 CC BY 4.0 授權音樂，位於 `assets/m5/audio/bgm/`：
 
-| 檔名 | 曲目 | 對應場景 | 風格 |
-|------|------|----------|------|
-| `sailing.mp3` | Achaidh Cheide | 航海 | 凱爾特輕快民謠 |
-| `battle.mp3` | Crusade | 海戰 | 史詩進行曲 |
-| `adventure.mp3` | Crossing the Chasm | 冒險／劇情 | 史詩冒險 |
-| `town_china.mp3` | Guzheng City | 城町・中國 | 古箏・明亮悠閒 |
-| `town_taiwan.mp3` | Shenyang | 城町・台灣 | 中國民樂（二胡／琵琶） |
-| `town_japan.mp3` | Mountain Emperor | 城町・日本 | 和風太鼓 |
-| `town_seasia.mp3` | Chee Zee Beach | 城町・東南亞 | 馬林巴／鋼鼓・熱帶 |
+| 檔名 | 曲目 | 作者 | 對應場景 | 風格 |
+|------|------|------|----------|------|
+| `sailing.mp3` | Achaidh Cheide | Kevin MacLeod | 航海 | 凱爾特輕快民謠 |
+| `battle.mp3` | Crusade | Kevin MacLeod | 海戰 | 史詩進行曲 |
+| `adventure.mp3` | Crossing the Chasm | Kevin MacLeod | 冒險／劇情 | 史詩冒險 |
+| `town_china.mp3` | Guzheng City | Kevin MacLeod | 城町・中國 | 古箏・明亮悠閒 |
+| `town_taiwan.mp3` | Shenyang | Kevin MacLeod | 城町・台灣 | 中國民樂（二胡／琵琶） |
+| `town_japan.mp3` | Oboro（朧） | PeriTune（sei） | 城町・日本 | 竹笛／箏・安靜空靈和風 |
+| `town_seasia.mp3` | Chee Zee Beach | Kevin MacLeod | 城町・東南亞 | 馬林巴／鋼鼓・熱帶 |
 
-- **作者**：Kevin MacLeod（全部七首）
-- **授權**：Creative Commons Attribution 4.0（CC BY 4.0）https://creativecommons.org/licenses/by/4.0/
-- **來源**：https://incompetech.com/music/royalty-free/
-- **必附標註（遊戲內必放）**：「Music: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0」
-- **備註**：原 M5-5c 的程式合成 BGM 仍保留在 `audio.ts` 作為無音檔時的後備；目前七首皆有音檔，故實際播放的全是上述 CC-BY 真實音檔。
+- **授權**：全部 Creative Commons Attribution 4.0（CC BY 4.0）https://creativecommons.org/licenses/by/4.0/
+- **來源**：
+  - Kevin MacLeod（6 首）：https://incompetech.com/music/royalty-free/
+  - PeriTune（1 首，town_japan＝Oboro）：https://peritune.com/blog/2019/04/08/oboro/
+- **必附標註（遊戲內必放）**：
+  - 「Music: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0」
+  - 「Music: PeriTune (peritune.com), Licensed under Creative Commons: By Attribution 4.0」
+- **備註**：原 M5-5c 的程式合成 BGM 仍保留在 `audio.ts` 作為無音檔時的後備；目前七首皆有音檔，故實際播放的全是上述 CC-BY 真實音檔。日本城町原為 Kevin MacLeod「Mountain Emperor」，老闆偏好 PeriTune「Oboro」的安靜和風，2026-06-22 換上。

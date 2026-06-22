@@ -7,6 +7,26 @@
 
 ---
 
+## [2026-06-22] 開發 | 操作者：小航 | 日本城町 BGM 換 PeriTune「Oboro」
+
+- 背景：老闆找到偏好的日本曲風 https://peritune.com/blog/2019/04/08/oboro/ ，指示換上。
+- 完成事項：
+  - 確認授權＝CC BY 4.0、作者 PeriTune（sei），下載 `PerituneMaterial_Oboro.mp3` 覆蓋 `assets/m5/audio/bgm/town_japan.mp3`（原 Kevin MacLeod「Mountain Emperor」）。
+  - `CREDITS.md` 七首表加「作者」欄；town_japan 改 Oboro／PeriTune；標註區改列 Kevin MacLeod 與 PeriTune 兩行；來源加 peritune.com。
+  - status M5-5g（遊戲內標註待辦）更新為兩行標註；memory 修正「七首全 Kevin MacLeod」為 6+1。
+- 驗證：檔案 magic=fffb（有效 MP3 音框）、6.89MB；`npm run build` 通過、town_japan bundle 進 dist；preview 實測 `town_japan` `fileSource:true`。註：此首無 ID3 標頭、首播解碼較久（約 6～11 秒），之後快取。
+- 協作：本次只動 `town_japan.mp3`＋`CREDITS.md`＋docs，未碰 audio.ts 程式，與 Codex 同時進行的 M5-2.6 世界地圖零交集。
+
+## [2026-06-22] 修正 | 操作者：Codex | 重作 M5-2.6 世界地圖主視覺
+
+- 背景：老闆截圖指出前一版世界地圖畫面很奇怪，台灣與海岸出現 source 地形與程式多邊形疊圖造成的怪斑、粗框與失真；指定喜歡 `m5-2-world-sea-chart-source` 的 image2.0 海圖風格。
+- 完成事項：
+  - `tools/build-m5-2-6-full-map.py` 改為以 `m5-2-world-sea-chart-source.png` 作正式 `full_map_v2.png` 主視覺，不再用程式重畫厚重多邊形陸地。
+  - 保留 `map.json` 產生的 `full_map_v2_mask.png`、validation overlay 與 `full_map_v2_notes.md`，用於檢查既有港口／探索點／風景點可達性。
+  - `src/art.ts` 改成只把正式世界地圖與預覽圖載入 runtime，排除 mask／validation 診斷圖。
+  - 更新 `status.md`、`memory.md`、`assets/CREDITS.md` 與 full map notes，標明目前視覺主圖與互動碰撞資料的分工。
+- 驗證：重新產出 `full_map_v2_preview.png` 與 `full_map_v2_validation.png`，目視確認已回到 image2.0 海圖質感；5173 本機頁可載入 Phaser canvas。`npm run build` 通過。
+- 協作：未修改小航 M5-5 音效模組與 BGM 音檔。
 ## [2026-06-22] 開發 | 操作者：Codex | 完成 M5-2.6 對齊世界地圖
 
 - 背景：老闆要求繼續 M5-2.6，將世界地圖從 Phase B 程式材質推進到對齊互動資料的精緻舊海圖。

@@ -5,6 +5,21 @@
 
 ---
 
+## [2026-06-22] 日本城町 BGM 改用 PeriTune「Oboro」（修正同日較早記錄）
+
+- 老闆偏好 PeriTune（sei）的「Oboro（朧）」安靜空靈和風，2026-06-22 把 `town_japan.mp3` 從 Kevin MacLeod「Mountain Emperor」換成 Oboro。
+- **因此本檔同日較早那筆「七首全用 Kevin MacLeod」已不正確**：正解是 6 首 Kevin MacLeod（incompetech）＋1 首 PeriTune（town_japan＝Oboro），全為 CC BY 4.0。
+- 合規連帶：遊戲內標註現在要**兩行**——「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」與「Music: PeriTune (peritune.com), CC BY 4.0」（status 待辦 M5-5g）。日後換不同作者的 CC-BY 素材，每個作者都要各自列標註。
+- 教訓：素材是老闆會反覆換的，挑曲/標註不要寫死「單一作者」假設；換素材時務必同步更新 CREDITS 表的「作者」欄與遊戲內標註。
+
+## [2026-06-22] M5-2.6 世界地圖以 image2.0 sea chart source 為主視覺
+
+- 背景：第一次 `full_map_v2` 由程式依 `map.json` 重畫海面與陸地，座標雖對齊，但畫面出現厚重海岸線、怪異陸地斑塊與過強航線，與老闆指定的 `m5-2-world-sea-chart-source` image2.0 海圖風格不一致。
+- 決策／實作：
+  - `tools/build-m5-2-6-full-map.py` 仍保留 `map.json` 產生 land mask、validation overlay 與可達性 notes，但正式 `full_map_v2.png` 以 `assets/m5/v2/m5-2/source/m5-2-world-sea-chart-source.png` 作主視覺，不再用程式重畫多邊形陸地。
+  - `src/art.ts` 的 `WORLD_ART_URLS` 不再載入 `full_map_v2_mask.png`、`full_map_v2_validation.png` 等診斷圖，只載正式 runtime 圖，避免把驗收素材打進遊戲。
+  - `WorldMapScene` 碰撞、港口、探索點、風景互動仍以現有資料檔為準；若之後要讓碰撞完全貼合 source 細緻海岸，需另開資料校正工作，不要退回粗糙程式底圖。
+- 協作注意：這次只動 M5-2.6 世界地圖與文件，未碰小航 M5-5 音效檔。
 ## [2026-06-22] M5-2.6 full_map_v2 對齊地圖已接入
 
 - 背景：Phase B 已改善陸地材質，但仍是程式多邊形分層；M5-2.6 Phase C 需要一張和 `map.json` 互動資料完全對齊的精緻大地圖，避免舊 `sea_chart` 內建地形浮在海上。
