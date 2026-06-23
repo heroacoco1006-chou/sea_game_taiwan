@@ -7,6 +7,28 @@
 
 ---
 
+## [2026-06-23] 修正 | 操作者：Codex | 校正安海設施到空地位置
+
+- 背景：老闆截圖指出安海高精緻港町融合感不錯，但多數設施仍壓在石板街道上，應移到空地，並要求務必做視覺辨識確認。
+- 完成事項：
+  - 調整 `ANHAI_TOWN_LAYOUT`：酒館、造船廠、旅館、官府從上方橫向石板街下移到前方空地；交易所與道具屋微調到下方空地；港口維持碼頭位置。
+  - 同步更新 `tools/build-m5-2-5-town-background-prototype.py` 與 `m5-2-5-town-backgrounds.json`，避免 preview 與實際程式座標不一致。
+  - 重產 `anhai-town-bg-v1-preview.png` 與 `anhai-town-bg-v1-preview-review.png`。
+- 視覺確認：已用重產後的 review 圖檢查，設施已離開橫向石板街，旅館／官府避開中間縱向主街，主要設施落在空地上。
+- 驗證：`npx tsc --noEmit` 通過；`npm run build` 通過（僅既有 chunk size warning）。
+
+## [2026-06-23] 開發 | 操作者：Codex | 試接安海港町高精緻底圖
+
+- 背景：老闆初步接受安海 image2.0 高精緻港町底圖方向，要求先接入遊戲並調整設施位置迎合底圖。
+- 完成事項：
+  - `src/art.ts`／`BootScene` 新增港町高精緻底圖載入管線，材質 key 為 `m5town_`。
+  - `PortScene` 先只對安海啟用 `anhai-town-bg-v1.png`，其他城市仍維持既有程序化港町，避免一次影響所有港口。
+  - 安海設施改為固定 layout：酒館、造船廠、旅館、官府、交易所、道具屋、港口各自貼合底圖道路與廣場位置。
+  - 高精緻底圖啟用時跳過舊地面、道路、港景卡、裝飾物繪製，降低舊風格與 image2.0 底圖互相疊加的突兀感。
+  - 補上安海專用走路下緣限制，避免人物沿用舊港町底線走入底部海面。
+  - `tools/build-m5-2-5-town-background-prototype.py` 同步成與程式相同的安海固定 layout，供後續重產 review 圖。
+- 驗證：`npm run build` 通過（僅既有 chunk size warning）；安海走路下緣小改後 `npx tsc --noEmit` 通過。瀏覽器工具因本機安全政策拒絕開啟 `localhost:5173`，Python preview 重產也被 sandbox／用量限制阻擋，因此本輪未完成實機截圖驗證。
+
 ## [2026-06-23] 開發 | 操作者：Codex | 建立安海港町高精緻底圖試驗素材
 
 - 背景：老闆確認建築 cutout 方向後，要求下一步把城町地圖也改成 image2.0 高精緻畫面，先以中國安海作試驗。

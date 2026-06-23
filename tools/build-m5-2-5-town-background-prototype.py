@@ -44,21 +44,17 @@ def would_overlap(key: str, slot: dict[str, int], buildings: list[dict]) -> bool
     return any(abs(slot['x'] - b['x']) < (size['w'] + b['w']) / 2 + 24 and abs(slot['y'] - b['y']) < (size['h'] + b['h']) / 2 + 48 for b in buildings)
 
 def anhai_buildings() -> list[dict]:
-    seed = hash_port_id('anhai')
-    buildings = [{'key': 'harbor', 'label': HARBOR_LABEL, 'townArtId': 'han_harbor', 'x': TOWN_W // 2, 'y': TOWN_H - 250, **BUILDING_SIZE['harbor']}]
-    item_slot = ITEM_SLOTS[seed % len(ITEM_SLOTS)]
-    used = {slot_key(item_slot)}
-    def add(key: str, label: str, slot: dict[str, int]) -> None:
-        buildings.append({'key': key, 'label': label, 'townArtId': f'han_{key}', 'x': slot['x'], 'y': slot['y'], **BUILDING_SIZE[key]})
-        used.add(slot_key(slot))
-    add('item', ITEM_LABEL, item_slot)
-    slots = sorted(FACILITY_SLOTS, key=lambda s: slot_score(s, seed))
-    for key, label in LABELS:
-        for candidate in slots:
-            if slot_key(candidate) not in used and not would_overlap(key, candidate, buildings):
-                add(key, label, candidate)
-                break
-    return buildings
+    # Keep this in sync with ANHAI_TOWN_LAYOUT in src/scenes/PortScene.ts.
+    layout = [
+        {'key': 'tavern', 'label': '\u9152\u9928', 'townArtId': 'han_tavern', 'x': 315, 'y': 430, **BUILDING_SIZE['tavern']},
+        {'key': 'shipyard', 'label': '\u9020\u8239\u5ee0', 'townArtId': 'han_shipyard', 'x': 610, 'y': 430, **BUILDING_SIZE['shipyard']},
+        {'key': 'inn', 'label': '\u65c5\u9928', 'townArtId': 'han_inn', 'x': 1240, 'y': 430, **BUILDING_SIZE['inn']},
+        {'key': 'office', 'label': '\u5b98\u5e9c', 'townArtId': 'han_office', 'x': 1580, 'y': 430, **BUILDING_SIZE['office']},
+        {'key': 'trade', 'label': '\u4ea4\u6613\u6240', 'townArtId': 'han_trade', 'x': 300, 'y': 672, **BUILDING_SIZE['trade']},
+        {'key': 'item', 'label': '\u9053\u5177\u5c4b', 'townArtId': 'han_item', 'x': 1665, 'y': 674, **BUILDING_SIZE['item']},
+        {'key': 'harbor', 'label': HARBOR_LABEL, 'townArtId': 'han_harbor', 'x': TOWN_W // 2, 'y': 842, **BUILDING_SIZE['harbor']},
+    ]
+    return layout
 
 def fit_background() -> Image.Image:
     src = Image.open(SOURCE).convert('RGB')
@@ -116,9 +112,9 @@ manifest = {
     'size': {'w': TOWN_W, 'h': TOWN_H},
     'buildingsPreviewed': anhai_buildings(),
     'notes': [
-        'Prototype image2.0 high-detail town background for Anhai only; not wired into PortScene yet.',
+        'Prototype image2.0 high-detail town background for Anhai; wired into PortScene for Anhai-only runtime trial.',
         'Background intentionally excludes UI text and facility labels so existing cutout buildings and interaction labels can remain data-driven.',
-        'If approved, next step is adding a town background loading key and a per-port/per-culture background map.'
+        'Next step after visual approval: generalize this into per-port/per-culture town background layout data.'
     ],
 }
 MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')

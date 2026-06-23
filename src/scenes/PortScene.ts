@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
-import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBuildingKey, shipWorldKey } from '../art';
+import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBackgroundKey, portTownBuildingKey, shipWorldKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
@@ -112,6 +112,16 @@ const BUILDING_SIZE: Record<FacilityKey, { w: number; h: number }> = {
   shipyard: { w: 240, h: 130 },
 };
 
+const ANHAI_TOWN_LAYOUT: Array<{ key: FacilityKey | 'harbor'; label: string; x: number; y: number; w: number; h: number }> = [
+  { key: 'tavern', label: '酒館', x: 315, y: 430, w: 200, h: 130 },
+  { key: 'shipyard', label: '造船廠', x: 610, y: 430, w: 240, h: 130 },
+  { key: 'inn', label: '旅館', x: 1240, y: 430, w: 210, h: 135 },
+  { key: 'office', label: '官府', x: 1580, y: 430, w: 210, h: 125 },
+  { key: 'trade', label: '交易所', x: 300, y: 672, w: 230, h: 140 },
+  { key: 'item', label: '道具屋', x: 1665, y: 674, w: 200, h: 125 },
+  { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: 842, w: 280, h: 150 },
+];
+
 export default class PortScene extends Phaser.Scene {
   private port!: Port;
   private player!: Phaser.GameObjects.Sprite;
@@ -145,11 +155,14 @@ export default class PortScene extends Phaser.Scene {
     audio.playBgm(townBgmForRegion(this.port.region));
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
-    this.createTownBase(style);
-    this.addHarborBackdrop(style);
+    const townBackground = this.addTownBackground();
     this.buildings = this.createTownBuildings();
-    this.createRoads(style);
-    this.createDock(style);
+    if (!townBackground) {
+      this.createTownBase(style);
+      this.addHarborBackdrop(style);
+      this.createRoads(style);
+      this.createDock(style);
+    }
     const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
     const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
     if (shipKey === 'ship') dockShip.setScale(1.5);
@@ -157,8 +170,8 @@ export default class PortScene extends Phaser.Scene {
 
     this.createBuildings(style);
 
-    // 裝飾：民宅、樹、水井、貨箱（豐富城景）
-    this.addDecorations(style);
+    // 裝飾：民宅、樹、水井、貨箱（豐富城景）；高精緻底圖已內建場景物件。
+    if (!townBackground) this.addDecorations(style);
 
     // 主角與鏡頭
     const start = this.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
@@ -184,12 +197,12 @@ export default class PortScene extends Phaser.Scene {
         (b) => wx > b.x - b.w / 2 && wx < b.x + b.w / 2 && wy > b.y - b.h / 2 - 26 && wy < b.y + b.h / 2
       );
       if (hit) {
-        this.moveTarget = { x: hit.x, y: hit.y + hit.h / 2 + 22 };
+        this.moveTarget = { x: hit.x, y: Phaser.Math.Clamp(hit.y + hit.h / 2 + 22, 96, this.townWalkMaxY()) };
         this.autoEnterKey = hit.key;
       } else {
         this.moveTarget = {
           x: Phaser.Math.Clamp(wx, 16, TOWN_W - 16),
-          y: Phaser.Math.Clamp(wy, 96, SHORE_WALK_LIMIT),
+          y: Phaser.Math.Clamp(wy, 96, this.townWalkMaxY()),
         };
         this.autoEnterKey = null;
       }
@@ -237,6 +250,23 @@ export default class PortScene extends Phaser.Scene {
     showModal(this, title, body, [
       { label: firstTime ? '開始探索！' : '知道了', onPick: () => { this.input.keyboard!.enabled = true; } },
     ]);
+  }
+
+  private addTownBackground(): boolean {
+    const key = this.townBackgroundTextureKey();
+    if (!key) return false;
+    this.add.image(TOWN_W / 2, TOWN_H / 2, key).setDisplaySize(TOWN_W, TOWN_H).setDepth(0);
+    return true;
+  }
+
+  private townBackgroundTextureKey(): string | null {
+    if (this.port.id !== 'anhai') return null;
+    const key = portTownBackgroundKey('anhai-town-bg-v1');
+    return this.textures.exists(key) ? key : null;
+  }
+
+  private townWalkMaxY(): number {
+    return this.port.id === 'anhai' ? TOWN_H - 150 : SHORE_WALK_LIMIT;
   }
 
   private createTownBase(style: TownStyle): void {
@@ -447,6 +477,16 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private createTownBuildings(): Building[] {
+    if (this.port.id === 'anhai') {
+      return ANHAI_TOWN_LAYOUT
+        .filter((entry) => entry.key !== 'shipyard' || this.port.shipyard)
+        .map((entry) => ({
+          ...entry,
+          artId: this.buildingArtFor(entry.key),
+          townArtId: this.townBuildingArtFor(entry.key),
+        }));
+    }
+
     const buildings: Building[] = [
       // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
       { key: 'harbor', label: '港口（補給・出航）', artId: this.buildingArtFor('harbor'), townArtId: this.townBuildingArtFor('harbor'), x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 150 },
@@ -642,7 +682,7 @@ export default class PortScene extends Phaser.Scene {
   /** 回傳是否實際移動（撞牆回 false） */
   private movePlayer(nx: number, ny: number, dt: number): boolean {
     const px = Phaser.Math.Clamp(this.player.x + nx * PLAYER_SPEED * dt, 16, TOWN_W - 16);
-    const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, SHORE_WALK_LIMIT);
+    const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, this.townWalkMaxY());
     if (this.hitsBuilding(px, py)) return false;
     this.player.setPosition(px, py);
     this.updatePlayerWalkFrame(nx, ny);
