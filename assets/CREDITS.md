@@ -67,13 +67,15 @@
 - **內容**：
   - `assets/m5/v2/m5-2/source/`：imagegen 產出的海圖背景、港町建築、港口場景、探索圖示、地圖／設施圖示 source 原圖。
   - `assets/m5/v2/m5-2/world/`：精緻海圖背景、以 `map.json` 座標生成且套用 image2.0 風格的 `full_map_v2.png`、對齊資料檔的遮罩、預覽與驗收疊圖。
-  - `assets/m5/v2/m5-2/ports/buildings/`：漢式、和式、南洋、歐式殖民、台灣平原社等港町建築，共 16 張 256×256 PNG。
+  - `assets/m5/v2/m5-2/ports/buildings/`：漢式、和式、南洋、歐式殖民、台灣平原社等港町建築卡，共 16 張 256×256 PNG。
+  - `assets/m5/v2/m5-2/ports/town-buildings/`：港町走動場景用透明 cutout 建築，5 文化圈 × 7 設施，共 35 張 512×384 PNG。
   - `assets/m5/v2/m5-2/ports/harbors/`：大員、福建、日本、琉球、南洋、歐式殖民港口場景卡，共 6 張 512×512 PNG。
   - `assets/m5/v2/m5-2/exploration/icons/`：探索點與風景圖示，共 30 張 256×256 PNG。
   - `assets/m5/v2/m5-2/ui/icons/`：世界地圖標記、設施、補給、海上狀態與消耗品圖示，共 24 張 256×256 PNG。
   - `assets/m5/v2/m5-2/m5-2-v2-assets.json`：素材 manifest；`assets/m5/v2/m5-2/m5-2-v2-prompts.md`：prompt 紀錄。
+  - `assets/m5/v2/m5-2/m5-2-5-town-buildings.json`、`m5-2-5-town-buildings-contact-sheet.png`：M5-2.5 Phase C cutout 建築索引與總覽。
 - **作者／操作者**：Codex
-- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 讀取 `map.json` 生成正式海岸線，並以 `m5-2-world-sea-chart-source.png` 作 image2.0 風格母版，產生遮罩與 validation。
+- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 讀取 `map.json` 生成正式海岸線，並以 `m5-2-world-sea-chart-source.png` 作 image2.0 風格母版，產生遮罩與 validation；M5-2.5 Phase C 由 `tools/build-m5-2-5-town-cutouts.py` 從既有 image2.0 建築卡抽出透明 cutout，未新增外部素材來源。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
 - **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。`m5-2-world-sea-chart-source` 為世界地圖風格母版，不直接作正式底圖；M5-2.6 起遊戲優先使用 `full_map_v2`，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
 

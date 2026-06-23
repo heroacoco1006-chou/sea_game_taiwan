@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
-import { characterWalkKey, harborSceneKey, portBuildingKey, shipWorldKey } from '../art';
+import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBuildingKey, shipWorldKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { COLORS, textStyle, makeButton, showModal } from '../ui';
 
@@ -14,6 +14,7 @@ interface Building {
   key: string; // trade/tavern/inn/harbor/shipyard/office/item
   label: string;
   artId: string;
+  townArtId: string;
   x: number;
   y: number;
   w: number;
@@ -364,13 +365,15 @@ export default class PortScene extends Phaser.Scene {
     for (const b of this.buildings) {
       shadow.fillStyle(style.shadow, 0.2);
       shadow.fillEllipse(b.x, b.y + b.h / 2 + 9, b.w * 0.78, 26);
-      shadow.fillStyle(style.ground2, 0.82);
-      shadow.fillRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
-      shadow.lineStyle(2, style.roadEdge, 0.24);
-      shadow.strokeRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
-
+      const townArtKey = this.m5Texture(portTownBuildingKey(b.townArtId), '');
       const artKey = this.m5Texture(portBuildingKey(b.artId), '');
-      if (artKey) {
+      if (townArtKey) {
+        this.add.image(b.x, b.y + 2, townArtKey).setDisplaySize(b.w * 1.26, b.h * 1.34).setDepth(5);
+      } else if (artKey) {
+        shadow.fillStyle(style.ground2, 0.82);
+        shadow.fillRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
+        shadow.lineStyle(2, style.roadEdge, 0.24);
+        shadow.strokeRoundedRect(b.x - b.w / 2 - 5, b.y - b.h / 2 - 4, b.w + 10, b.h + 8, 3);
         this.add.image(b.x, b.y, artKey).setCrop(BUILDING_CROP.x, BUILDING_CROP.y, BUILDING_CROP.w, BUILDING_CROP.h).setDisplaySize(b.w, b.h).setDepth(5);
       } else {
         fallback.fillStyle(style.wall, 1);
@@ -446,14 +449,14 @@ export default class PortScene extends Phaser.Scene {
   private createTownBuildings(): Building[] {
     const buildings: Building[] = [
       // 港口擺在碼頭正中央、玩家入港的落腳處：補給與出航都在這裡，最直覺
-      { key: 'harbor', label: '港口（補給・出航）', artId: this.buildingArtFor('harbor'), x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 150 },
+      { key: 'harbor', label: '港口（補給・出航）', artId: this.buildingArtFor('harbor'), townArtId: this.townBuildingArtFor('harbor'), x: TOWN_W / 2, y: TOWN_H - 250, w: 280, h: 150 },
     ];
     const seed = this.hashPortId(this.port.id);
     const itemSlot = ITEM_SLOTS[seed % ITEM_SLOTS.length];
     const usedSlots = new Set<string>([this.slotKey(itemSlot)]);
     const addFacility = (key: FacilityKey, label: string, slot: LayoutSlot) => {
       const size = BUILDING_SIZE[key];
-      buildings.push({ key, label, artId: this.buildingArtFor(key), x: slot.x, y: slot.y, w: size.w, h: size.h });
+      buildings.push({ key, label, artId: this.buildingArtFor(key), townArtId: this.townBuildingArtFor(key), x: slot.x, y: slot.y, w: size.w, h: size.h });
       usedSlots.add(this.slotKey(slot));
     };
 
@@ -484,6 +487,11 @@ export default class PortScene extends Phaser.Scene {
     if (this.port.culture === 'ryu') return 'ryukyu_naha_shuri_harbor';
     if (this.port.culture === 'euro') return 'european_colonial_harbor';
     return 'southeast_spice_port';
+  }
+
+  private townBuildingArtFor(key: FacilityKey | 'harbor'): string {
+    const culture = ['han', 'wa', 'ryu', 'sea', 'euro'].includes(this.port.culture) ? this.port.culture : 'han';
+    return `${culture}_${key}`;
   }
 
   private buildingArtFor(key: FacilityKey | 'harbor'): string {

@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-23] 開發 | 操作者：Codex | 完成 M5-2.5 Phase C 港町 cutout 建築
+
+- 背景：老闆要求先做 M5-2.5 Phase C；依架構文件，本階段目標是把港町設施從帶框建築卡改為透明背景的城鎮建築 cutout，Phase D layout／hitbox 資料化另行處理。
+- 完成事項：
+  - 新增 `tools/build-m5-2-5-town-cutouts.py`，從既有 image2.0 建築卡產出 5 文化圈 × 7 設施，共 35 張透明 cutout，路徑 `assets/m5/v2/m5-2/ports/town-buildings/`。
+  - 新增 `m5-2-5-town-buildings.json` 與 `m5-2-5-town-buildings-contact-sheet.png`，方便後續追蹤素材來源與人工檢查。
+  - `src/art.ts`／`BootScene` 新增 `PORT_TOWN_BUILDING_URLS`、`portTownBuildingKey()` 與預載流程。
+  - `PortScene` 改為優先使用 `m5tb_<culture>_<facility>` cutout；缺素材時保留舊 `m5b_` building card fallback。
+  - 更新 `status.md`、`memory.md`、`assets/CREDITS.md` 與港町整體美術架構文件。
+- 驗證：35 張 cutout 尺寸 512×384、四角透明、非空白檢查通過；contact sheet 已目視檢查；`npm run build` 通過（僅既有 chunk size warning）。
 ## [2026-06-23] 修正 | 操作者：Codex | 重新對齊世界地圖港口與海岸
 
 - 背景：老闆截圖指出多個港口沒有貼合精緻世界地圖海岸，安海、月港、本港與台灣周邊尤其明顯；若只搬港口座標，會破壞入港、碰撞、任務與存檔一致性。

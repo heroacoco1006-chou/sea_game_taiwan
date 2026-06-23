@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-23] M5-2.5 Phase C 港町改用 town-building cutout
+
+- 背景：港町 Phase B 已改善地面、道路、碼頭與設施牌匾，但設施仍沿用帶框 building card；在走動式港町中仍像卡片浮貼，不像城鎮建築。
+- 決策／實作：
+  - 新增 `tools/build-m5-2-5-town-cutouts.py`，從既有 image2.0 建築卡抽出建築本體，輸出 `assets/m5/v2/m5-2/ports/town-buildings/` 35 張透明 cutout（文化圈 `han/wa/ryu/sea/euro` × 設施 `trade/tavern/inn/office/item/shipyard/harbor`）。
+  - `src/art.ts` 新增 `PORT_TOWN_BUILDING_URLS` 與 `portTownBuildingKey(id)`，key 格式 `m5tb_<culture>_<facility>`；`BootScene` 預載；`PortScene` 優先用 cutout，缺圖才退回舊 `m5b_` building card。
+  - 舊 `assets/m5/v2/m5-2/ports/buildings/` 不刪除，保留給圖鑑、選單或 fallback。
+- 後續：Phase D 才做 `portTownThemes.json`／`portTownLayouts.json` 與 hitbox、door、labelAnchor 資料化；不要把 Phase C 的素材接入誤當成 layout 已資料化。
 ## [2026-06-23] M5-2.6 世界地圖不得再用 source 原圖直貼
 
 - 背景：2026-06-22 將 `m5-2-world-sea-chart-source.png` 直接作為 `full_map_v2` 主視覺後，畫面質感提升，但多個港口（如安海、月港、本港與台灣周邊）與視覺海岸明顯不對齊；原因是 source 原圖的地理投影與本遊戲 `ports.json`／`map.json` 座標系不同。

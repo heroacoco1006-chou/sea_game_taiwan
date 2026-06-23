@@ -1,0 +1,279 @@
+{
+  "version": "m5-2-5-phase-c-town-buildings-v1",
+  "license": "original_generated_for_project_from_existing_image2_style_sources",
+  "generator": "tools/build-m5-2-5-town-cutouts.py",
+  "sourcePack": "assets/m5/v2/m5-2/ports/buildings image2.0 generated building cards",
+  "outputSize": {
+    "w": 512,
+    "h": 384
+  },
+  "cultures": [
+    "han",
+    "wa",
+    "ryu",
+    "sea",
+    "euro"
+  ],
+  "facilities": [
+    "trade",
+    "tavern",
+    "inn",
+    "office",
+    "item",
+    "shipyard",
+    "harbor"
+  ],
+  "entries": [
+    {
+      "id": "han_trade",
+      "culture": "han",
+      "facility": "trade",
+      "sourceBuilding": "han_guild_hall",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_trade.png"
+    },
+    {
+      "id": "han_tavern",
+      "culture": "han",
+      "facility": "tavern",
+      "sourceBuilding": "han_mazu_temple",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_tavern.png"
+    },
+    {
+      "id": "han_inn",
+      "culture": "han",
+      "facility": "inn",
+      "sourceBuilding": "han_mazu_temple",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_inn.png"
+    },
+    {
+      "id": "han_office",
+      "culture": "han",
+      "facility": "office",
+      "sourceBuilding": "han_guild_hall",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_office.png"
+    },
+    {
+      "id": "han_item",
+      "culture": "han",
+      "facility": "item",
+      "sourceBuilding": "han_item_shop",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_item.png"
+    },
+    {
+      "id": "han_shipyard",
+      "culture": "han",
+      "facility": "shipyard",
+      "sourceBuilding": "han_shipyard_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_shipyard.png"
+    },
+    {
+      "id": "han_harbor",
+      "culture": "han",
+      "facility": "harbor",
+      "sourceBuilding": "han_shipyard_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/han_harbor.png"
+    },
+    {
+      "id": "wa_trade",
+      "culture": "wa",
+      "facility": "trade",
+      "sourceBuilding": "japanese_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_trade.png"
+    },
+    {
+      "id": "wa_tavern",
+      "culture": "wa",
+      "facility": "tavern",
+      "sourceBuilding": "japanese_tavern",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_tavern.png"
+    },
+    {
+      "id": "wa_inn",
+      "culture": "wa",
+      "facility": "inn",
+      "sourceBuilding": "japanese_inn",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_inn.png"
+    },
+    {
+      "id": "wa_office",
+      "culture": "wa",
+      "facility": "office",
+      "sourceBuilding": "japanese_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_office.png"
+    },
+    {
+      "id": "wa_item",
+      "culture": "wa",
+      "facility": "item",
+      "sourceBuilding": "japanese_machiya",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_item.png"
+    },
+    {
+      "id": "wa_shipyard",
+      "culture": "wa",
+      "facility": "shipyard",
+      "sourceBuilding": "japanese_machiya",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_shipyard.png"
+    },
+    {
+      "id": "wa_harbor",
+      "culture": "wa",
+      "facility": "harbor",
+      "sourceBuilding": "japanese_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/wa_harbor.png"
+    },
+    {
+      "id": "ryu_trade",
+      "culture": "ryu",
+      "facility": "trade",
+      "sourceBuilding": "han_guild_hall",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_trade.png"
+    },
+    {
+      "id": "ryu_tavern",
+      "culture": "ryu",
+      "facility": "tavern",
+      "sourceBuilding": "han_mazu_temple",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_tavern.png"
+    },
+    {
+      "id": "ryu_inn",
+      "culture": "ryu",
+      "facility": "inn",
+      "sourceBuilding": "siraya_meeting_house",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_inn.png"
+    },
+    {
+      "id": "ryu_office",
+      "culture": "ryu",
+      "facility": "office",
+      "sourceBuilding": "han_guild_hall",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_office.png"
+    },
+    {
+      "id": "ryu_item",
+      "culture": "ryu",
+      "facility": "item",
+      "sourceBuilding": "siraya_meeting_house",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_item.png"
+    },
+    {
+      "id": "ryu_shipyard",
+      "culture": "ryu",
+      "facility": "shipyard",
+      "sourceBuilding": "han_shipyard_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_shipyard.png"
+    },
+    {
+      "id": "ryu_harbor",
+      "culture": "ryu",
+      "facility": "harbor",
+      "sourceBuilding": "han_shipyard_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/ryu_harbor.png"
+    },
+    {
+      "id": "sea_trade",
+      "culture": "sea",
+      "facility": "trade",
+      "sourceBuilding": "southeast_spice_market",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_trade.png"
+    },
+    {
+      "id": "sea_tavern",
+      "culture": "sea",
+      "facility": "tavern",
+      "sourceBuilding": "southeast_tropical_inn",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_tavern.png"
+    },
+    {
+      "id": "sea_inn",
+      "culture": "sea",
+      "facility": "inn",
+      "sourceBuilding": "southeast_tropical_inn",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_inn.png"
+    },
+    {
+      "id": "sea_office",
+      "culture": "sea",
+      "facility": "office",
+      "sourceBuilding": "southeast_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_office.png"
+    },
+    {
+      "id": "sea_item",
+      "culture": "sea",
+      "facility": "item",
+      "sourceBuilding": "southeast_spice_market",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_item.png"
+    },
+    {
+      "id": "sea_shipyard",
+      "culture": "sea",
+      "facility": "shipyard",
+      "sourceBuilding": "southeast_trade_office",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_shipyard.png"
+    },
+    {
+      "id": "sea_harbor",
+      "culture": "sea",
+      "facility": "harbor",
+      "sourceBuilding": "southeast_stilt_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/sea_harbor.png"
+    },
+    {
+      "id": "euro_trade",
+      "culture": "euro",
+      "facility": "trade",
+      "sourceBuilding": "voc_trading_post",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_trade.png"
+    },
+    {
+      "id": "euro_tavern",
+      "culture": "euro",
+      "facility": "tavern",
+      "sourceBuilding": "spanish_church_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_tavern.png"
+    },
+    {
+      "id": "euro_inn",
+      "culture": "euro",
+      "facility": "inn",
+      "sourceBuilding": "spanish_church_warehouse",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_inn.png"
+    },
+    {
+      "id": "euro_office",
+      "culture": "euro",
+      "facility": "office",
+      "sourceBuilding": "voc_trading_post",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_office.png"
+    },
+    {
+      "id": "euro_item",
+      "culture": "euro",
+      "facility": "item",
+      "sourceBuilding": "european_fort_gate",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_item.png"
+    },
+    {
+      "id": "euro_shipyard",
+      "culture": "euro",
+      "facility": "shipyard",
+      "sourceBuilding": "european_fort_gate",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_shipyard.png"
+    },
+    {
+      "id": "euro_harbor",
+      "culture": "euro",
+      "facility": "harbor",
+      "sourceBuilding": "european_fort_gate",
+      "path": "assets/m5/v2/m5-2/ports/town-buildings/euro_harbor.png"
+    }
+  ],
+  "contactSheet": "assets/m5/v2/m5-2/m5-2-5-town-buildings-contact-sheet.png",
+  "notes": [
+    "These are transparent-background town building cutouts for PortScene walking towns.",
+    "Old framed building cards remain in assets/m5/v2/m5-2/ports/buildings as menu/fallback art.",
+    "Phase D will move layout, door, label anchor and hitbox data out of PortScene."
+  ]
+}
