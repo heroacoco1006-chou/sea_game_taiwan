@@ -75,7 +75,7 @@
   - `assets/m5/v2/m5-2/m5-2-v2-assets.json`：素材 manifest；`assets/m5/v2/m5-2/m5-2-v2-prompts.md`：prompt 紀錄。
   - `assets/m5/v2/m5-2/m5-2-5-town-buildings.json`、`m5-2-5-town-buildings-contact-sheet.png`：M5-2.5 Phase C cutout 建築索引與總覽。
 - **作者／操作者**：Codex
-- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 讀取 `map.json` 生成正式海岸線，並以 `m5-2-world-sea-chart-source.png` 作 image2.0 風格母版，產生遮罩與 validation；M5-2.5 Phase C 由 `tools/build-m5-2-5-town-cutouts.py` 從既有 image2.0 建築卡抽出透明 cutout，未新增外部素材來源。
+- **產生方式**：OpenAI imagegen 內建工具產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-2-v2-art.py` 切片、縮圖與產生 manifest；M5-2.6 `full_map_v2` 由 `tools/build-m5-2-6-full-map.py` 讀取 `map.json` 生成正式海岸線，並以 `m5-2-world-sea-chart-source.png` 作 image2.0 風格母版，產生遮罩與 validation；M5-2.5 Phase C 由 `tools/build-m5-2-5-town-cutouts.py` 從 image2.0 綠幕 source `m5-2-5-town-buildings-cutout-source.png` 偵測完整建築外框並去背輸出透明 cutout，未新增外部素材來源。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
 - **備註**：本批素材正式採用 M5-3 v2 定調的 V2 精緻 2D 手繪航海 RPG 風格；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。`m5-2-world-sea-chart-source` 為世界地圖風格母版，不直接作正式底圖；M5-2.6 起遊戲優先使用 `full_map_v2`，實際遊戲座標與碰撞仍以資料檔與程式邏輯為準。
 

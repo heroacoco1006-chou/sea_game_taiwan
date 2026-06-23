@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-23] M5-2.5 town-building cutout 必須用綠幕 source 去背
+
+- 背景：第一版 Phase C 從既有帶框 building card 中央裁切建築，會造成建築比例變小、邊緣被吃掉、仍像卡片截圖；老闆明確要求「去背，但保留完整建築物造型」。
+- 決策／實作：
+  - 正式港町 cutout source 改為 `assets/m5/v2/m5-2/source/m5-2-5-town-buildings-cutout-source.png`，由 image2.0 直接生成 5 文化圈 × 7 設施的完整建築綠幕圖板。
+  - `tools/build-m5-2-5-town-cutouts.py` 必須偵測綠幕以外的建築區塊，再依 row/column 排序輸出；不得再用舊卡片固定裁切或平均格線切片。
+  - 輸出 PNG 不包含卡片框、羊皮紙底、設施牌匾或烘焙橢圓陰影；`PortScene` 負責場景陰影、標籤、碰撞與互動熱區。
+- 後續：若要重繪港町設施，先重產綠幕 source，再重跑腳本與 contact sheet 目視檢查完整輪廓；不要只把舊卡片裁小。
 ## [2026-06-23] M5-2.5 Phase C 港町改用 town-building cutout
 
 - 背景：港町 Phase B 已改善地面、道路、碼頭與設施牌匾，但設施仍沿用帶框 building card；在走動式港町中仍像卡片浮貼，不像城鎮建築。

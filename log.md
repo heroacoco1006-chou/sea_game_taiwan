@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-06-23] 修正 | 操作者：Codex | 重製 M5-2.5 港町建築去背素材
+
+- 背景：老闆指出上一版 Phase C 只是把舊建築卡片裁小，且多處屋簷、牆角、旗幟與建築邊緣被切掉，並非真正去背。
+- 完成事項：
+  - 新增 `assets/m5/v2/m5-2/source/m5-2-5-town-buildings-cutout-source.png`，改用 image2.0 產生的綠幕建築 source 圖板。
+  - 重寫 `tools/build-m5-2-5-town-cutouts.py`：偵測綠幕以外的完整建築區塊，依列欄排序後輸出透明 PNG，不再從舊 building card 中央裁切。
+  - 重新輸出 `assets/m5/v2/m5-2/ports/town-buildings/` 35 張 512×384 cutout、manifest 與 contact sheet。
+  - 更新 `status.md`、`memory.md`、`assets/CREDITS.md` 與港町整體美術架構文件，註記正確流程為 image2.0 綠幕去背 source。
+- 驗證：`m5-2-5-town-buildings-contact-sheet.png` 已目視檢查，建築完整、透明底、無卡片框與固定格線切割殘影。
 ## [2026-06-23] 開發 | 操作者：Codex | 完成 M5-2.5 Phase C 港町 cutout 建築
 
 - 背景：老闆要求先做 M5-2.5 Phase C；依架構文件，本階段目標是把港町設施從帶框建築卡改為透明背景的城鎮建築 cutout，Phase D layout／hitbox 資料化另行處理。
