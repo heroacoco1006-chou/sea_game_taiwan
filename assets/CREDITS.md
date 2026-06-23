@@ -2,6 +2,19 @@
 
 > 本檔記錄遊戲正式採用或預備採用的素材來源。外部素材必須標明作者、來源與授權；專案內原創生成素材也需記錄產生方式。
 
+## M5-2.5 安海港町高精緻底圖試驗（2026-06-23）
+
+- **素材位置**：`assets/m5/v2/m5-2/ports/town-backgrounds/`
+- **內容**：
+  - `source/anhai-town-bg-v1-source.png`：imagegen／image2.0 產出的安海港町底圖 source。
+  - `anhai-town-bg-v1.png`：裁切／縮放為 `2000×1100` 的安海港町底圖試驗版。
+  - `anhai-town-bg-v1-preview.png`：疊上現有漢式設施 cutout 與標籤的驗收預覽圖。
+  - `m5-2-5-town-backgrounds.json`、`m5-2-5-town-background-prompts.md`：素材索引與 prompt 紀錄。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖，再以 `tools/build-m5-2-5-town-background-prototype.py` 裁切成遊戲尺寸並產生安海疊圖預覽。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：此批素材是安海單港試驗，尚未接入 `PortScene`；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
 ---
 
 ## M5-3 劇情對話背景精緻素材 v2（2026-06-22）

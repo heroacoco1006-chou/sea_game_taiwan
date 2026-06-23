@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-23] 開發 | 操作者：Codex | 建立安海港町高精緻底圖試驗素材
+
+- 背景：老闆確認建築 cutout 方向後，要求下一步把城町地圖也改成 image2.0 高精緻畫面，先以中國安海作試驗。
+- 完成事項：
+  - 產生 `assets/m5/v2/m5-2/ports/town-backgrounds/source/anhai-town-bg-v1-source.png`，作為安海港町 image2.0 高精緻底圖 source。
+  - 新增 `tools/build-m5-2-5-town-background-prototype.py`，將 source 裁切／縮放為 `2000×1100`，並依目前 `PortScene` 的安海設施位置疊上漢式 cutout 產生 preview。
+  - 新增 `anhai-town-bg-v1.png`、`anhai-town-bg-v1-preview.png`、縮小 review 圖、manifest 與 prompt 紀錄。
+  - 更新 `assets/CREDITS.md` 與 `status.md`，標明此批素材尚未接入程式，先供老闆確認方向。
+- 驗證：已目視檢查 review 圖，底圖為完整港町環境，沒有 UI 文字、人物或商業遊戲素材；preview 可看到現有設施 cutout 與新底圖風格明顯更接近。
+
 ## [2026-06-23] 修正 | 操作者：Codex | 重製 M5-2.5 港町建築去背素材
 
 - 背景：老闆指出上一版 Phase C 只是把舊建築卡片裁小，且多處屋簷、牆角、旗幟與建築邊緣被切掉，並非真正去背。

@@ -144,6 +144,7 @@ status: draft
   - [x] 架構文件建立（2026-06-20）：新增 `2026-06-20_港町整體美術一致化架構.md`，定義場景分層、素材規格、資料檔、PortScene 拆分與分階段導入。
   - [x] Phase B 快速視覺止血（2026-06-21）：`PortScene` 已導入舊紙／石板質感地面、手繪道路、整合式港景、碼頭水面與較精緻的民宅／樹／水井／貨箱；設施牌匾改到建築下緣，降低卡片浮貼感；2026-06-21 二次修正設施圖裁到卡片邊框、港町底色貼近設施羊皮紙色、道路分支連到各設施門口，並限制玩家不可走進底部海面。
   - [x] Phase C 正式 cutout 建築（2026-06-23／二次修正）：新增 `assets/m5/v2/m5-2/source/m5-2-5-town-buildings-cutout-source.png`，改用 image2.0 綠幕 source 偵測完整建築外框後去背，重新輸出 `assets/m5/v2/m5-2/ports/town-buildings/` 35 張透明 cutout；`art.ts`／`BootScene`／`PortScene` 已優先使用 `m5tb_` cutout；現有 building card 保留給圖鑑或 fallback，不再作港町 cutout 來源。
+  - [x] Phase D 前置試驗素材（2026-06-23）：新增安海單港 image2.0 高精緻城町底圖 `assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1.png` 與設施疊圖 preview，先供老闆確認整體風格；尚未接入 `PortScene`，確認後再做 per-port/per-culture 背景載入與熱區資料化。
   - [ ] Phase D layout 與熱區資料化：新增 `portTownThemes.json`、`portTownLayouts.json`，把 hitbox、door、labelAnchor 從場景硬編碼抽出。
   - [ ] Phase E 驗收：至少檢查漢式、日本、琉球、南洋、歐式港町各一座。
 - [x] **M5-3 角色與船隻**：三主角＋夥伴對話頭像／立繪（放進 StoryScene 對話框上方預留區）、港町行走圖、船隻 sprite（航行＋海戰）、船隻裝備外觀。

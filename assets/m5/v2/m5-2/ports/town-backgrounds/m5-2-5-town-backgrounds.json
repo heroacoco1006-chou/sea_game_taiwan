@@ -1,0 +1,87 @@
+{
+  "version": "m5-2-5-town-backgrounds-anhai-v1",
+  "operator": "Codex",
+  "portId": "anhai",
+  "culture": "han",
+  "source": "assets/m5/v2/m5-2/ports/town-backgrounds/source/anhai-town-bg-v1-source.png",
+  "background": "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1.png",
+  "preview": "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview.png",
+  "reviewImages": [
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-review.png",
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview-review.png"
+  ],
+  "size": {
+    "w": 2000,
+    "h": 1100
+  },
+  "buildingsPreviewed": [
+    {
+      "key": "harbor",
+      "label": "港口（補給・出航）",
+      "townArtId": "han_harbor",
+      "x": 1000,
+      "y": 850,
+      "w": 280,
+      "h": 150
+    },
+    {
+      "key": "item",
+      "label": "道具屋",
+      "townArtId": "han_item",
+      "x": 1700,
+      "y": 710,
+      "w": 200,
+      "h": 125
+    },
+    {
+      "key": "trade",
+      "label": "交易所",
+      "townArtId": "han_trade",
+      "x": 315,
+      "y": 650,
+      "w": 230,
+      "h": 140
+    },
+    {
+      "key": "tavern",
+      "label": "酒館",
+      "townArtId": "han_tavern",
+      "x": 320,
+      "y": 285,
+      "w": 200,
+      "h": 130
+    },
+    {
+      "key": "inn",
+      "label": "旅館",
+      "townArtId": "han_inn",
+      "x": 1010,
+      "y": 245,
+      "w": 210,
+      "h": 135
+    },
+    {
+      "key": "office",
+      "label": "官府",
+      "townArtId": "han_office",
+      "x": 1660,
+      "y": 310,
+      "w": 210,
+      "h": 125
+    },
+    {
+      "key": "shipyard",
+      "label": "造船廠",
+      "townArtId": "han_shipyard",
+      "x": 720,
+      "y": 240,
+      "w": 240,
+      "h": 130
+    }
+  ],
+  "notes": [
+    "Prototype image2.0 high-detail town background for Anhai only; not wired into PortScene yet.",
+    "Background intentionally excludes UI text and facility labels so existing cutout buildings and interaction labels can remain data-driven.",
+    "If approved, next step is adding a town background loading key and a per-port/per-culture background map."
+  ]
+}
