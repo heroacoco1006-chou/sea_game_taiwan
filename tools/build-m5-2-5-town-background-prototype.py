@@ -8,6 +8,7 @@ BG_DIR = ROOT / 'assets' / 'm5' / 'v2' / 'm5-2' / 'ports' / 'town-backgrounds'
 SOURCE = BG_DIR / 'source' / 'anhai-town-bg-v1-source.png'
 FINAL = BG_DIR / 'anhai-town-bg-v1.png'
 PREVIEW = BG_DIR / 'anhai-town-bg-v1-preview.png'
+BOUNDARY_PREVIEW = BG_DIR / 'anhai-town-bg-v1-boundary.png'
 MANIFEST = BG_DIR / 'm5-2-5-town-backgrounds.json'
 CUTOUT_DIR = ROOT / 'assets' / 'm5' / 'v2' / 'm5-2' / 'ports' / 'town-buildings'
 TOWN_W, TOWN_H = 2000, 1100
@@ -50,11 +51,17 @@ def anhai_buildings() -> list[dict]:
         {'key': 'shipyard', 'label': '\u9020\u8239\u5ee0', 'townArtId': 'han_shipyard', 'x': 610, 'y': 430, **BUILDING_SIZE['shipyard']},
         {'key': 'inn', 'label': '\u65c5\u9928', 'townArtId': 'han_inn', 'x': 1240, 'y': 430, **BUILDING_SIZE['inn']},
         {'key': 'office', 'label': '\u5b98\u5e9c', 'townArtId': 'han_office', 'x': 1580, 'y': 430, **BUILDING_SIZE['office']},
-        {'key': 'trade', 'label': '\u4ea4\u6613\u6240', 'townArtId': 'han_trade', 'x': 300, 'y': 672, **BUILDING_SIZE['trade']},
-        {'key': 'item', 'label': '\u9053\u5177\u5c4b', 'townArtId': 'han_item', 'x': 1665, 'y': 674, **BUILDING_SIZE['item']},
+        {'key': 'trade', 'label': '\u4ea4\u6613\u6240', 'townArtId': 'han_trade', 'x': 365, 'y': 545, **BUILDING_SIZE['trade']},
+        {'key': 'item', 'label': '\u9053\u5177\u5c4b', 'townArtId': 'han_item', 'x': 1575, 'y': 545, **BUILDING_SIZE['item']},
         {'key': 'harbor', 'label': HARBOR_LABEL, 'townArtId': 'han_harbor', 'x': TOWN_W // 2, 'y': 842, **BUILDING_SIZE['harbor']},
     ]
     return layout
+
+ANHAI_WALKABLE_POLYGONS = [
+    [(16, 96), (TOWN_W - 16, 96), (TOWN_W - 16, 742), (1805, 742), (1710, 778), (1540, 778), (1390, 742),
+     (1260, 760), (1175, 790), (1050, 780), (945, 760), (790, 790), (630, 770), (470, 790), (300, 770), (150, 790), (16, 770)],
+    [(825, 760), (1235, 748), (1310, 820), (1280, 1015), (930, 1015), (930, 915), (805, 862), (805, 795)],
+]
 
 def fit_background() -> Image.Image:
     src = Image.open(SOURCE).convert('RGB')
@@ -92,7 +99,14 @@ font = load_font(25)
 for building in anhai_buildings():
     draw_label(draw, building, font)
 preview.save(PREVIEW)
-for name in ['anhai-town-bg-v1', 'anhai-town-bg-v1-preview']:
+boundary = preview.copy()
+overlay = Image.new('RGBA', preview.size, (0, 0, 0, 0))
+bd = ImageDraw.Draw(overlay, 'RGBA')
+for poly in ANHAI_WALKABLE_POLYGONS:
+    bd.line([*poly, poly[0]], fill=(40, 220, 80, 240), width=8)
+boundary = Image.alpha_composite(boundary, overlay)
+boundary.save(BOUNDARY_PREVIEW)
+for name in ['anhai-town-bg-v1', 'anhai-town-bg-v1-preview', 'anhai-town-bg-v1-boundary']:
     p = BG_DIR / f'{name}.png'
     img = Image.open(p).convert('RGB')
     img.thumbnail((1200, 660), Image.Resampling.LANCZOS)
@@ -108,6 +122,7 @@ manifest = {
     'reviewImages': [
         str((BG_DIR / 'anhai-town-bg-v1-review.png').relative_to(ROOT)).replace('\\', '/'),
         str((BG_DIR / 'anhai-town-bg-v1-preview-review.png').relative_to(ROOT)).replace('\\', '/'),
+        str((BG_DIR / 'anhai-town-bg-v1-boundary-review.png').relative_to(ROOT)).replace('\\', '/'),
     ],
     'size': {'w': TOWN_W, 'h': TOWN_H},
     'buildingsPreviewed': anhai_buildings(),

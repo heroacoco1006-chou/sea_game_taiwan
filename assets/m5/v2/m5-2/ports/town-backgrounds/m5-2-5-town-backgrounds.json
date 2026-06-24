@@ -8,7 +8,8 @@
   "preview": "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview.png",
   "reviewImages": [
     "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-review.png",
-    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview-review.png"
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview-review.png",
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-boundary-review.png"
   ],
   "size": {
     "w": 2000,
@@ -55,8 +56,8 @@
       "key": "trade",
       "label": "交易所",
       "townArtId": "han_trade",
-      "x": 300,
-      "y": 672,
+      "x": 365,
+      "y": 545,
       "w": 230,
       "h": 140
     },
@@ -64,8 +65,8 @@
       "key": "item",
       "label": "道具屋",
       "townArtId": "han_item",
-      "x": 1665,
-      "y": 674,
+      "x": 1575,
+      "y": 545,
       "w": 200,
       "h": 125
     },

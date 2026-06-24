@@ -117,11 +117,27 @@ const ANHAI_TOWN_LAYOUT: Array<{ key: FacilityKey | 'harbor'; label: string; x: 
   { key: 'shipyard', label: '造船廠', x: 610, y: 430, w: 240, h: 130 },
   { key: 'inn', label: '旅館', x: 1240, y: 430, w: 210, h: 135 },
   { key: 'office', label: '官府', x: 1580, y: 430, w: 210, h: 125 },
-  { key: 'trade', label: '交易所', x: 300, y: 672, w: 230, h: 140 },
-  { key: 'item', label: '道具屋', x: 1665, y: 674, w: 200, h: 125 },
+  { key: 'trade', label: '交易所', x: 365, y: 545, w: 230, h: 140 },
+  { key: 'item', label: '道具屋', x: 1575, y: 545, w: 200, h: 125 },
   { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: 842, w: 280, h: 150 },
 ];
 
+type TownPoint = { x: number; y: number };
+
+const ANHAI_WALKABLE_POLYGONS: TownPoint[][] = [
+  [
+    { x: 16, y: 96 }, { x: TOWN_W - 16, y: 96 }, { x: TOWN_W - 16, y: 742 },
+    { x: 1805, y: 742 }, { x: 1710, y: 778 }, { x: 1540, y: 778 }, { x: 1390, y: 742 },
+    { x: 1260, y: 760 }, { x: 1175, y: 790 }, { x: 1050, y: 780 }, { x: 945, y: 760 },
+    { x: 790, y: 790 }, { x: 630, y: 770 }, { x: 470, y: 790 }, { x: 300, y: 770 },
+    { x: 150, y: 790 }, { x: 16, y: 770 },
+  ],
+  [
+    { x: 825, y: 760 }, { x: 1235, y: 748 }, { x: 1310, y: 820 },
+    { x: 1280, y: 1015 }, { x: 930, y: 1015 }, { x: 930, y: 915 },
+    { x: 805, y: 862 }, { x: 805, y: 795 },
+  ],
+];
 export default class PortScene extends Phaser.Scene {
   private port!: Port;
   private player!: Phaser.GameObjects.Sprite;
@@ -174,7 +190,8 @@ export default class PortScene extends Phaser.Scene {
     if (!townBackground) this.addDecorations(style);
 
     // 主角與鏡頭
-    const start = this.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
+    const rawStart = this.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
+    const start = this.clampTownTarget(rawStart.x, rawStart.y);
     this.playerWalkKey = this.textures.exists(characterWalkKey(this.state.story.heroId)) ? characterWalkKey(this.state.story.heroId) : null;
     this.player = this.add.sprite(start.x, start.y, this.playerWalkKey ?? 'player').setDepth(10);
     if (this.playerWalkKey) {
@@ -197,13 +214,10 @@ export default class PortScene extends Phaser.Scene {
         (b) => wx > b.x - b.w / 2 && wx < b.x + b.w / 2 && wy > b.y - b.h / 2 - 26 && wy < b.y + b.h / 2
       );
       if (hit) {
-        this.moveTarget = { x: hit.x, y: Phaser.Math.Clamp(hit.y + hit.h / 2 + 22, 96, this.townWalkMaxY()) };
+        this.moveTarget = this.clampTownTarget(hit.x, hit.y + hit.h / 2 + 22);
         this.autoEnterKey = hit.key;
       } else {
-        this.moveTarget = {
-          x: Phaser.Math.Clamp(wx, 16, TOWN_W - 16),
-          y: Phaser.Math.Clamp(wy, 96, this.townWalkMaxY()),
-        };
+        this.moveTarget = this.clampTownTarget(wx, wy);
         this.autoEnterKey = null;
       }
     });
@@ -267,6 +281,47 @@ export default class PortScene extends Phaser.Scene {
 
   private townWalkMaxY(): number {
     return this.port.id === 'anhai' ? TOWN_H - 150 : SHORE_WALK_LIMIT;
+  }
+
+  private clampTownTarget(x: number, y: number): { x: number; y: number } {
+    const cx = Phaser.Math.Clamp(x, 16, TOWN_W - 16);
+    const cy = Phaser.Math.Clamp(y, 96, this.townWalkMaxY());
+    if (this.isTownWalkable(cx, cy)) return { x: cx, y: cy };
+    if (this.port.id !== 'anhai') return { x: cx, y: cy };
+
+    for (let radius = 0; radius <= 260; radius += 14) {
+      const candidates: Array<{ x: number; y: number; d: number }> = [];
+      for (let dx = -radius; dx <= radius; dx += 14) {
+        for (let dy = -radius; dy <= radius; dy += 14) {
+          if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+          const px = Phaser.Math.Clamp(cx + dx, 16, TOWN_W - 16);
+          const py = Phaser.Math.Clamp(cy + dy, 96, this.townWalkMaxY());
+          if (!this.isTownWalkable(px, py)) continue;
+          candidates.push({ x: px, y: py, d: Math.hypot(px - cx, py - cy) });
+        }
+      }
+      candidates.sort((a, b) => a.d - b.d);
+      if (candidates[0]) return { x: candidates[0].x, y: candidates[0].y };
+    }
+    return { x: this.dock.x, y: 790 };
+  }
+
+  private isTownWalkable(x: number, y: number): boolean {
+    if (this.port.id !== 'anhai') return y <= SHORE_WALK_LIMIT;
+    return ANHAI_WALKABLE_POLYGONS.some((poly) => this.pointInPolygon(x, y, poly));
+  }
+
+  private pointInPolygon(x: number, y: number, polygon: TownPoint[]): boolean {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      const xi = polygon[i].x;
+      const yi = polygon[i].y;
+      const xj = polygon[j].x;
+      const yj = polygon[j].y;
+      const intersects = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      if (intersects) inside = !inside;
+    }
+    return inside;
   }
 
   private createTownBase(style: TownStyle): void {
@@ -683,7 +738,7 @@ export default class PortScene extends Phaser.Scene {
   private movePlayer(nx: number, ny: number, dt: number): boolean {
     const px = Phaser.Math.Clamp(this.player.x + nx * PLAYER_SPEED * dt, 16, TOWN_W - 16);
     const py = Phaser.Math.Clamp(this.player.y + ny * PLAYER_SPEED * dt, 96, this.townWalkMaxY());
-    if (this.hitsBuilding(px, py)) return false;
+    if (!this.isTownWalkable(px, py) || this.hitsBuilding(px, py)) return false;
     this.player.setPosition(px, py);
     this.updatePlayerWalkFrame(nx, ny);
     return true;
