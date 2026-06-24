@@ -9,7 +9,8 @@
   "reviewImages": [
     "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-review.png",
     "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-preview-review.png",
-    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-boundary-review.png"
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-boundary-review.png",
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-hitbox-review.png"
   ],
   "size": {
     "w": 2000,

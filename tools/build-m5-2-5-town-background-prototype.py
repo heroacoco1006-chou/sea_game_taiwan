@@ -9,6 +9,7 @@ SOURCE = BG_DIR / 'source' / 'anhai-town-bg-v1-source.png'
 FINAL = BG_DIR / 'anhai-town-bg-v1.png'
 PREVIEW = BG_DIR / 'anhai-town-bg-v1-preview.png'
 BOUNDARY_PREVIEW = BG_DIR / 'anhai-town-bg-v1-boundary.png'
+HITBOX_PREVIEW = BG_DIR / 'anhai-town-bg-v1-hitbox.png'
 MANIFEST = BG_DIR / 'm5-2-5-town-backgrounds.json'
 CUTOUT_DIR = ROOT / 'assets' / 'm5' / 'v2' / 'm5-2' / 'ports' / 'town-buildings'
 TOWN_W, TOWN_H = 2000, 1100
@@ -63,6 +64,22 @@ ANHAI_WALKABLE_POLYGONS = [
     [(825, 760), (1235, 748), (1310, 820), (1280, 1015), (930, 1015), (930, 915), (805, 862), (805, 795)],
 ]
 
+def collision_rect(b: dict) -> tuple[float, float, float, float]:
+    if b['key'] == 'harbor':
+        w = b['w'] * 0.62
+        h = b['h'] * 0.36
+        cy = b['y'] - b['h'] * 0.04
+    else:
+        w = b['w'] * 0.56
+        h = b['h'] * 0.42
+        cy = b['y'] - b['h'] * 0.08
+    return (b['x'] - w / 2, cy - h / 2, b['x'] + w / 2, cy + h / 2)
+
+def door_rect(b: dict) -> tuple[float, float, float, float]:
+    door_x = b['x']
+    door_y = b['y'] + b['h'] / 2 + 22
+    return (door_x - 46, door_y - 32, door_x + 46, door_y + 30)
+
 def fit_background() -> Image.Image:
     src = Image.open(SOURCE).convert('RGB')
     return ImageOps.fit(src, (TOWN_W, TOWN_H), method=Image.Resampling.LANCZOS, centering=(0.5, 0.58))
@@ -106,7 +123,15 @@ for poly in ANHAI_WALKABLE_POLYGONS:
     bd.line([*poly, poly[0]], fill=(40, 220, 80, 240), width=8)
 boundary = Image.alpha_composite(boundary, overlay)
 boundary.save(BOUNDARY_PREVIEW)
-for name in ['anhai-town-bg-v1', 'anhai-town-bg-v1-preview', 'anhai-town-bg-v1-boundary']:
+hitbox = preview.copy()
+hit_overlay = Image.new('RGBA', preview.size, (0, 0, 0, 0))
+hd = ImageDraw.Draw(hit_overlay, 'RGBA')
+for building in anhai_buildings():
+    hd.rounded_rectangle(collision_rect(building), radius=6, outline=(230, 40, 36, 235), width=7, fill=(230, 40, 36, 42))
+    hd.rounded_rectangle(door_rect(building), radius=6, outline=(40, 220, 80, 245), width=6, fill=(40, 220, 80, 40))
+hitbox = Image.alpha_composite(hitbox, hit_overlay)
+hitbox.save(HITBOX_PREVIEW)
+for name in ['anhai-town-bg-v1', 'anhai-town-bg-v1-preview', 'anhai-town-bg-v1-boundary', 'anhai-town-bg-v1-hitbox']:
     p = BG_DIR / f'{name}.png'
     img = Image.open(p).convert('RGB')
     img.thumbnail((1200, 660), Image.Resampling.LANCZOS)
@@ -123,6 +148,7 @@ manifest = {
         str((BG_DIR / 'anhai-town-bg-v1-review.png').relative_to(ROOT)).replace('\\', '/'),
         str((BG_DIR / 'anhai-town-bg-v1-preview-review.png').relative_to(ROOT)).replace('\\', '/'),
         str((BG_DIR / 'anhai-town-bg-v1-boundary-review.png').relative_to(ROOT)).replace('\\', '/'),
+        str((BG_DIR / 'anhai-town-bg-v1-hitbox-review.png').relative_to(ROOT)).replace('\\', '/'),
     ],
     'size': {'w': TOWN_W, 'h': TOWN_H},
     'buildingsPreviewed': anhai_buildings(),

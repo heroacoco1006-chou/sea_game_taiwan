@@ -21,6 +21,13 @@ interface Building {
   h: number;
 }
 
+interface RectBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 type FacilityKey = 'trade' | 'tavern' | 'inn' | 'office' | 'item' | 'shipyard';
 
 interface LayoutSlot {
@@ -214,7 +221,8 @@ export default class PortScene extends Phaser.Scene {
         (b) => wx > b.x - b.w / 2 && wx < b.x + b.w / 2 && wy > b.y - b.h / 2 - 26 && wy < b.y + b.h / 2
       );
       if (hit) {
-        this.moveTarget = this.clampTownTarget(hit.x, hit.y + hit.h / 2 + 22);
+        const door = this.buildingDoorPoint(hit);
+        this.moveTarget = this.clampTownTarget(door.x, door.y);
         this.autoEnterKey = hit.key;
       } else {
         this.moveTarget = this.clampTownTarget(wx, wy);
@@ -764,7 +772,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private enterBuilding(b: Building): void {
-    const ret = { x: b.x, y: b.y + b.h / 2 + 26 };
+    const ret = this.buildingDoorPoint(b);
     saveGame(this.state);
     if (b.key === 'trade') {
       this.scene.start('Trade', { portId: this.port.id, door: ret });
@@ -777,17 +785,45 @@ export default class PortScene extends Phaser.Scene {
     }
   }
 
+  private buildingDoorPoint(b: Building): { x: number; y: number } {
+    return { x: b.x, y: b.y + b.h / 2 + 22 };
+  }
+
+  private buildingCollisionRect(b: Building): RectBounds {
+    if (this.port.id === 'anhai') {
+      if (b.key === 'harbor') {
+        const w = b.w * 0.62;
+        const h = b.h * 0.36;
+        const cy = b.y - b.h * 0.04;
+        return { left: b.x - w / 2, right: b.x + w / 2, top: cy - h / 2, bottom: cy + h / 2 };
+      }
+      const w = b.w * 0.56;
+      const h = b.h * 0.42;
+      const cy = b.y - b.h * 0.08;
+      return { left: b.x - w / 2, right: b.x + w / 2, top: cy - h / 2, bottom: cy + h / 2 };
+    }
+    return { left: b.x - b.w / 2 - 8, right: b.x + b.w / 2 + 8, top: b.y - b.h / 2 - 20, bottom: b.y + b.h / 2 + 6 };
+  }
+
+  private isDoorApproach(x: number, y: number): boolean {
+    return this.buildings.some((b) => {
+      const door = this.buildingDoorPoint(b);
+      return Math.abs(x - door.x) < 46 && y > door.y - 32 && y < door.y + 30;
+    });
+  }
+
   private hitsBuilding(x: number, y: number): boolean {
-    return this.buildings.some(
-      (b) => x > b.x - b.w / 2 - 8 && x < b.x + b.w / 2 + 8 && y > b.y - b.h / 2 - 20 && y < b.y + b.h / 2 + 6
-    );
+    if (this.isDoorApproach(x, y)) return false;
+    return this.buildings.some((b) => {
+      const r = this.buildingCollisionRect(b);
+      return x > r.left && x < r.right && y > r.top && y < r.bottom;
+    });
   }
 
   private nearDoor(): Building | null {
     for (const b of this.buildings) {
-      const doorX = b.x;
-      const doorY = b.y + b.h / 2;
-      if (Math.abs(this.player.x - doorX) < 38 && this.player.y > doorY - 6 && this.player.y < doorY + 48) {
+      const door = this.buildingDoorPoint(b);
+      if (Math.abs(this.player.x - door.x) < 46 && this.player.y > door.y - 32 && this.player.y < door.y + 30) {
         return b;
       }
     }
