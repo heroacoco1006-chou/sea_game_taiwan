@@ -75,10 +75,9 @@ def collision_rect(b: dict) -> tuple[float, float, float, float]:
         cy = b['y'] - b['h'] * 0.08
     return (b['x'] - w / 2, cy - h / 2, b['x'] + w / 2, cy + h / 2)
 
-def door_rect(b: dict) -> tuple[float, float, float, float]:
-    door_x = b['x']
-    door_y = b['y'] + b['h'] / 2 + 22
-    return (door_x - 46, door_y - 32, door_x + 46, door_y + 30)
+def interaction_rect(b: dict) -> tuple[float, float, float, float]:
+    half_w = max(58, b['w'] * 0.5)
+    return (b['x'] - half_w, b['y'] - b['h'] * 0.34, b['x'] + half_w, b['y'] + b['h'] * 0.58)
 
 def fit_background() -> Image.Image:
     src = Image.open(SOURCE).convert('RGB')
@@ -127,8 +126,8 @@ hitbox = preview.copy()
 hit_overlay = Image.new('RGBA', preview.size, (0, 0, 0, 0))
 hd = ImageDraw.Draw(hit_overlay, 'RGBA')
 for building in anhai_buildings():
-    hd.rounded_rectangle(collision_rect(building), radius=6, outline=(230, 40, 36, 235), width=7, fill=(230, 40, 36, 42))
-    hd.rounded_rectangle(door_rect(building), radius=6, outline=(40, 220, 80, 245), width=6, fill=(40, 220, 80, 40))
+    hd.rounded_rectangle(interaction_rect(building), radius=6, outline=(40, 220, 80, 245), width=6, fill=(40, 220, 80, 36))
+    hd.rounded_rectangle(collision_rect(building), radius=6, outline=(230, 40, 36, 235), width=7, fill=(230, 40, 36, 38))
 hitbox = Image.alpha_composite(hitbox, hit_overlay)
 hitbox.save(HITBOX_PREVIEW)
 for name in ['anhai-town-bg-v1', 'anhai-town-bg-v1-preview', 'anhai-town-bg-v1-boundary', 'anhai-town-bg-v1-hitbox']:

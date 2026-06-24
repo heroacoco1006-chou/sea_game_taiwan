@@ -786,7 +786,21 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private buildingDoorPoint(b: Building): { x: number; y: number } {
+    if (this.port.id === 'anhai') return { x: b.x, y: b.y + b.h * 0.2 };
     return { x: b.x, y: b.y + b.h / 2 + 22 };
+  }
+
+  private buildingInteractionRect(b: Building): RectBounds {
+    if (this.port.id === 'anhai') {
+      const halfW = Math.max(58, b.w * 0.5);
+      return {
+        left: b.x - halfW,
+        right: b.x + halfW,
+        top: b.y - b.h * 0.34,
+        bottom: b.y + b.h * 0.58,
+      };
+    }
+    return { left: b.x - 38, right: b.x + 38, top: b.y + b.h / 2 - 6, bottom: b.y + b.h / 2 + 48 };
   }
 
   private buildingCollisionRect(b: Building): RectBounds {
@@ -806,10 +820,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private isDoorApproach(x: number, y: number): boolean {
-    return this.buildings.some((b) => {
-      const door = this.buildingDoorPoint(b);
-      return Math.abs(x - door.x) < 46 && y > door.y - 32 && y < door.y + 30;
-    });
+    return this.buildings.some((b) => this.pointInRect(x, y, this.buildingInteractionRect(b)));
   }
 
   private hitsBuilding(x: number, y: number): boolean {
@@ -821,13 +832,18 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private nearDoor(): Building | null {
-    for (const b of this.buildings) {
-      const door = this.buildingDoorPoint(b);
-      if (Math.abs(this.player.x - door.x) < 46 && this.player.y > door.y - 32 && this.player.y < door.y + 30) {
-        return b;
-      }
-    }
-    return null;
+    const candidates = this.buildings
+      .filter((b) => this.pointInRect(this.player.x, this.player.y, this.buildingInteractionRect(b)))
+      .map((b) => {
+        const door = this.buildingDoorPoint(b);
+        return { building: b, distance: Math.hypot(this.player.x - door.x, this.player.y - door.y) };
+      })
+      .sort((a, b) => a.distance - b.distance);
+    return candidates[0]?.building ?? null;
+  }
+
+  private pointInRect(x: number, y: number, rect: RectBounds): boolean {
+    return x > rect.left && x < rect.right && y > rect.top && y < rect.bottom;
   }
 
   private m5Texture(preferred: string, fallback: string): string {
