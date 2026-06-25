@@ -42,7 +42,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private shipHasDirectionalFrames = false;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key; ENTER: Phaser.Input.Keyboard.Key };
-  private hud!: Phaser.GameObjects.Text;
+  private hudVals: Record<string, Phaser.GameObjects.Text> = {};
   private hint!: Phaser.GameObjects.Text;
   private windText!: Phaser.GameObjects.Text;
   private windArrow!: Phaser.GameObjects.Triangle;
@@ -104,7 +104,7 @@ export default class WorldMapScene extends Phaser.Scene {
     const W = BASE_W;
     const H = BASE_H;
     this.add.rectangle(W / 2, 34, W, 68, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
-    this.hud = this.add.text(14, 8, '', { ...textStyle(17, '#f2e3bd'), lineSpacing: 6 }).setDepth(101).setScrollFactor(0);
+    this.createHudChips();
     makeButton(this, W - 62, 34, 96, 36, '選單', () => {
       saveGame(this.state);
       this.scene.start('Info', { from: 'WorldMap' });
@@ -920,19 +920,57 @@ export default class WorldMapScene extends Phaser.Scene {
     this.windText.setText(`${this.wind.name}・${windLabel(this.heading, this.wind)}`);
   }
 
+  /** 頂部資源列：圖示＋數字（取代原本兩行純文字 HUD），國小友善、一眼看懂。 */
+  private createHudChips(): void {
+    // [圖示, key, 圖示X, 數值X]
+    const row1: Array<[string, string, number, number]> = [
+      ['📅', 'date', 14, 40],
+      ['🪙', 'gold', 250, 276],
+      ['📦', 'cargo', 410, 436],
+      ['🛡', 'hull', 558, 584],
+      ['⚓', 'fleet', 706, 732],
+    ];
+    const row2: Array<[string, string, number, number]> = [
+      ['🍖', 'food', 14, 40],
+      ['💧', 'water', 132, 158],
+      ['⛵', 'days', 258, 284],
+      ['👥', 'crew', 420, 446],
+      ['😓', 'fatigue', 590, 616],
+      ['📜', 'status', 760, 786],
+    ];
+    const build = (rows: Array<[string, string, number, number]>, iconY: number, valY: number): void => {
+      for (const [icon, key, ix, vx] of rows) {
+        this.add.text(ix, iconY, icon, textStyle(17)).setDepth(101).setScrollFactor(0);
+        this.hudVals[key] = this.add
+          .text(vx, valY, '', textStyle(15, '#f2e3bd'))
+          .setDepth(101)
+          .setScrollFactor(0);
+      }
+    };
+    build(row1, 5, 8);
+    build(row2, 35, 38);
+  }
+
   private updateHud(): void {
     const s = this.state;
     const days = sailableDays(s);
-    const daysColor = days <= 2 ? '⚠' : '';
     const type = shipTypeOf(s);
     const minC = fleetMinCrew(s);
-    const crewWarn = s.crew < minC ? '⚠' : '';
-    const fleetLabel = s.escorts.length > 0 ? `${type.name}＋僚艦${s.escorts.length}（共${1 + s.escorts.length}艘）` : type.name;
-    this.hud.setText(
-      `${dateText(s.day)}　資金 ${s.gold} 兩　${fleetLabel}　貨艙 ${cargoCount(s)}/${cargoMax(s)}　旗艦 ${s.ship.hull}/${hullMax(s)}\n` +
-      `糧 ${s.food} 水 ${s.water}（${daysColor}約可再航行 ${days} 天）　水手 ${crewWarn}${s.crew}/${crewMax(s)}（最低 ${minC}）　疲勞 ${s.fatigue}/100　海上第 ${s.daysAtSea} 天`
-      + `　狀態：${statusSummary(s)}`
-    );
+    const v = this.hudVals;
+    const warn = '#ffb070';
+    const norm = '#f2e3bd';
+    v.date.setText(dateText(s.day));
+    v.gold.setText(`${s.gold} 兩`);
+    v.cargo.setText(`${cargoCount(s)}/${cargoMax(s)}`);
+    v.hull.setText(`${s.ship.hull}/${hullMax(s)}`);
+    v.fleet.setText(s.escorts.length > 0 ? `${type.name}＋僚艦${s.escorts.length}` : type.name);
+    v.food.setText(`${s.food}`);
+    v.water.setText(`${s.water}`);
+    v.days.setText(`約${days}天`).setColor(days <= 2 ? warn : norm);
+    v.crew.setText(`${s.crew}/${crewMax(s)}`).setColor(s.crew < minC ? warn : norm);
+    v.fatigue.setText(`${s.fatigue}/100`).setColor(s.fatigue >= 70 ? warn : norm);
+    const st = statusSummary(s);
+    v.status.setText(st && st !== '正常' ? st : '正常').setColor(st && st !== '正常' ? warn : norm);
     this.updateWindHud();
   }
 }
