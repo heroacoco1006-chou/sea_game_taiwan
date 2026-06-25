@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-25] UI 清晰度：文字超取樣已做、向量圖整體高清待整場景超取樣
+
+- 老闆對畫面清晰度標準高（要求對齊「大航海時代4」水平），且明確要連按鈕／面板邊框等向量圖都銳利。字體沿用系統黑體（不嵌入字體），但解析度要拉滿。
+- 已實作（`src/ui.ts`）：文字以 `textStyle().resolution` 超取樣，基準 3×、高 DPI 4×。`main.ts` render 開 `antialias/antialiasGL/mipmapFilter`。
+- **關鍵技術約定**：文字 resolution 只影響「文字材質」，對 Graphics 向量圖（按鈕、面板框線）無效。向量圖銳利度取決於**整個 canvas 後備解析度**；目前 game 1280×720 被 `Scale.FIT` 放大到視窗就會糊。
+- **整體高清正解（待辦 M5-6b-2）**：把 game 設 2560×1440（2× 超取樣），每個場景 `cameras.main.setZoom(2)`＋`centerOn(640,360)` 讓邏輯座標維持 1280×720 不變、但以 2× 像素渲染，FIT 再縮到螢幕→全畫面（含向量圖）銳利。注意 `setScrollFactor(0)` 的 HUD 在 zoom 下行為要逐一驗證。**牽涉每個場景、且 Codex 正在改場景，必須等 Codex 場景告一段落再由小航統一導入，否則衝突**。
+- 驗證清晰度別只靠 preview 截圖（會被工具縮小、且常 timeout）；以 `txt.style.resolution`、`game.config.antialias` 等程式值確認，真正清晰度由老闆在他自己螢幕判定。
+
 ## [2026-06-23] M5-2.5 town-building cutout 必須用綠幕 source 去背
 
 - 背景：第一版 Phase C 從既有帶框 building card 中央裁切建築，會造成建築比例變小、邊緣被吃掉、仍像卡片截圖；老闆明確要求「去背，但保留完整建築物造型」。
