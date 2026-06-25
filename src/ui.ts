@@ -15,10 +15,18 @@ export const COLORS = {
   gold: 0xf2c14e,
 };
 
-export const FONT = '"Microsoft JhengHei", "Noto Sans TC", sans-serif';
+export const FONT = '"Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif';
+
+/**
+ * 文字繪製解析度。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT 把 1280×720
+ * 畫布放大到視窗，導致文字在大螢幕上糊掉。改以 2×（或裝置像素比，上限 3）繪製，
+ * 字會明顯銳利清楚。整個遊戲只要走 textStyle() 都會自動受惠。
+ */
+export const TEXT_RES =
+  typeof window !== 'undefined' ? Math.min(3, Math.max(2, Math.ceil(window.devicePixelRatio || 1))) : 2;
 
 export function textStyle(size: number, color = '#3a2a14'): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: FONT, fontSize: `${size}px`, color };
+  return { fontFamily: FONT, fontSize: `${size}px`, color, resolution: TEXT_RES };
 }
 
 /** 木框羊皮紙面板 */
@@ -30,12 +38,29 @@ export function drawPanel(
   h: number
 ): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
-  g.fillStyle(COLORS.wood, 1);
-  g.fillRoundedRect(x - 6, y - 6, w + 12, h + 12, 10);
-  g.fillStyle(COLORS.woodLight, 1);
-  g.fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 8);
-  g.fillStyle(COLORS.parchment, 1);
-  g.fillRoundedRect(x, y, w, h, 6);
+  // 外木框（縱向漸層）＋投影
+  g.fillStyle(0x140c06, 0.25);
+  g.fillRoundedRect(x - 6, y - 2, w + 12, h + 12, 12);
+  g.fillGradientStyle(COLORS.woodLight, COLORS.woodLight, COLORS.wood, COLORS.wood, 1);
+  g.fillRoundedRect(x - 6, y - 6, w + 12, h + 12, 12);
+  // 羊皮紙底（上亮下暗）
+  g.fillGradientStyle(0xeaddb8, 0xeaddb8, COLORS.parchmentDark, COLORS.parchmentDark, 1);
+  g.fillRoundedRect(x, y, w, h, 7);
+  // 內框金線
+  g.lineStyle(1.5, 0xb08d4a, 0.6);
+  g.strokeRoundedRect(x + 6, y + 6, w - 12, h - 12, 5);
+  // 四角鉚釘
+  g.fillStyle(0x3a2a14, 0.85);
+  const studR = 4;
+  const inset = 16;
+  for (const [sx, sy] of [
+    [x + inset, y + inset],
+    [x + w - inset, y + inset],
+    [x + inset, y + h - inset],
+    [x + w - inset, y + h - inset],
+  ]) {
+    g.fillCircle(sx, sy, studR);
+  }
   return g;
 }
 
@@ -53,10 +78,32 @@ export function makeButton(
   const bg = scene.add.graphics();
   const draw = (hover: boolean) => {
     bg.clear();
-    bg.fillStyle(hover ? COLORS.woodLight : COLORS.wood, 1);
-    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
-    bg.fillStyle(hover ? 0xf5ecd2 : COLORS.parchment, 1);
-    bg.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, 6);
+    // 投影：木框下方一抹深色，增加立體感
+    bg.fillStyle(0x1c1108, 0.28);
+    bg.fillRoundedRect(-w / 2, -h / 2 + 4, w, h, 9);
+    // 木框：上淺下深的縱向漸層
+    bg.fillGradientStyle(
+      hover ? 0x8a5e36 : COLORS.woodLight,
+      hover ? 0x8a5e36 : COLORS.woodLight,
+      COLORS.wood,
+      COLORS.wood,
+      1
+    );
+    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 9);
+    // 內層羊皮紙：上亮下暗的縱向漸層
+    bg.fillGradientStyle(
+      hover ? 0xfaf1d8 : 0xf0e3bd,
+      hover ? 0xfaf1d8 : 0xf0e3bd,
+      hover ? 0xe5d3a4 : COLORS.parchmentDark,
+      hover ? 0xe5d3a4 : COLORS.parchmentDark,
+      1
+    );
+    bg.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, 7);
+    // hover 時加一圈金邊
+    if (hover) {
+      bg.lineStyle(2, COLORS.gold, 0.9);
+      bg.strokeRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, 7);
+    }
   };
   draw(false);
   const txt = scene.add
@@ -70,8 +117,13 @@ export function makeButton(
   c.setSize(w, h);
   c.setInteractive({ useHandCursor: true });
   c.on('pointerover', () => draw(true));
-  c.on('pointerout', () => draw(false));
-  c.on('pointerdown', () => { audio.playSfx('click'); onClick(); });
+  c.on('pointerout', () => { draw(false); c.setScale(1); });
+  c.on('pointerdown', () => {
+    audio.playSfx('click');
+    // 按下回饋：快速縮一下再彈回
+    scene.tweens.add({ targets: c, scale: 0.95, duration: 70, yoyo: true });
+    onClick();
+  });
   return c;
 }
 
@@ -126,6 +178,9 @@ export function showModal(
   const container = scene.add.container(0, 0, parts);
   container.setDepth(2000);
   container.setScrollFactor(0);
+  // 進場：輕微淡入＋放大
+  container.setAlpha(0);
+  scene.tweens.add({ targets: container, alpha: 1, duration: 140, ease: 'Quad.easeOut' });
 
   choices.forEach((c, i) => {
     const btn = makeButton(
