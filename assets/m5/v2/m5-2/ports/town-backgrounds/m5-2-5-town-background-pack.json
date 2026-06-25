@@ -1,0 +1,58 @@
+{
+  "version": "m5-2-5-town-background-pack-v1",
+  "operator": "Codex",
+  "generatedAt": "2026-06-25",
+  "purpose": "M5-2.5 port-town high-detail background source pack for later PortScene layout integration.",
+  "runtimeStatus": "assets prepared only; not wired into PortScene yet",
+  "baseSize": {
+    "w": 2000,
+    "h": 1100
+  },
+  "entries": [
+    {
+      "id": "wa-town-bg-v1",
+      "culture": "wa",
+      "displayName": "日本港町背景 v1",
+      "source": "assets/m5/v2/m5-2/ports/town-backgrounds/source/wa-town-bg-v1-source.png",
+      "background": "assets/m5/v2/m5-2/ports/town-backgrounds/wa-town-bg-v1.png",
+      "review": "assets/m5/v2/m5-2/ports/town-backgrounds/wa-town-bg-v1-review.png",
+      "size": {
+        "w": 2000,
+        "h": 1100
+      },
+      "notes": "日本港町共用背景；適合平戶、長崎、堺等和式港町後續試接。"
+    },
+    {
+      "id": "taiwan-town-bg-v1",
+      "culture": "taiwan",
+      "displayName": "台灣港町背景 v1",
+      "source": "assets/m5/v2/m5-2/ports/town-backgrounds/source/taiwan-town-bg-v1-source.png",
+      "background": "assets/m5/v2/m5-2/ports/town-backgrounds/taiwan-town-bg-v1.png",
+      "review": "assets/m5/v2/m5-2/ports/town-backgrounds/taiwan-town-bg-v1-review.png",
+      "size": {
+        "w": 2000,
+        "h": 1100
+      },
+      "notes": "台灣／澎湖港町共用背景；適合大員、淡水、雞籠、笨港、澎湖後續試接。"
+    },
+    {
+      "id": "sea-town-bg-v1",
+      "culture": "sea",
+      "displayName": "東南亞港町背景 v1",
+      "source": "assets/m5/v2/m5-2/ports/town-backgrounds/source/sea-town-bg-v1-source.png",
+      "background": "assets/m5/v2/m5-2/ports/town-backgrounds/sea-town-bg-v1.png",
+      "review": "assets/m5/v2/m5-2/ports/town-backgrounds/sea-town-bg-v1-review.png",
+      "size": {
+        "w": 2000,
+        "h": 1100
+      },
+      "notes": "東南亞港町共用背景；適合馬尼拉、會安、阿瑜陀耶、麻六甲、巴達維亞、萬丹、香料群島後續試接。"
+    }
+  ],
+  "contactSheet": "assets/m5/v2/m5-2/ports/town-backgrounds/m5-2-5-town-background-pack-contact-sheet.png",
+  "handoffNotes": [
+    "Anhai remains the only high-detail town background wired into PortScene at this point.",
+    "These backgrounds intentionally contain no facility labels, UI, or characters; facility cutouts and interaction zones should remain data-driven.",
+    "Next implementation step: add portTownThemes/portTownLayouts data and tune hitbox, door, labelAnchor, and walkable polygons per culture/port."
+  ]
+}

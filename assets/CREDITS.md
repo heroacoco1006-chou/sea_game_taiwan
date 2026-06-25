@@ -2,6 +2,21 @@
 
 > 本檔記錄遊戲正式採用或預備採用的素材來源。外部素材必須標明作者、來源與授權；專案內原創生成素材也需記錄產生方式。
 
+## M5-2.5 多文化港町高精緻底圖素材包（2026-06-25）
+
+- **素材位置**：`assets/m5/v2/m5-2/ports/town-backgrounds/`
+- **內容**：
+  - `source/wa-town-bg-v1-source.png`、`source/taiwan-town-bg-v1-source.png`、`source/sea-town-bg-v1-source.png`：imagegen／image2.0 產出的日本、台灣、東南亞港町底圖 source。
+  - `wa-town-bg-v1.png`、`taiwan-town-bg-v1.png`、`sea-town-bg-v1.png`：裁切／縮放為 `2000×1100` 的後續接入用 runtime 背景。
+  - `*-review.png`、`m5-2-5-town-background-pack-contact-sheet.png`：人工目視檢查用 review 圖與總覽圖。
+  - `m5-2-5-town-background-pack.json`、`m5-2-5-town-background-pack-prompts.md`：素材索引、交接備註與 prompt 紀錄。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 產生原始圖，再以 `tools/build-m5-2-5-town-background-pack.py` 裁切成遊戲尺寸、輸出 review／contact sheet／manifest。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：此批素材僅先產出日本、台灣、東南亞港町底圖，尚未接入 `PortScene`；後續需由小航或 Codex 依各港口調整設施座標、可走區、入口熱區與標籤位置。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
+---
+
 ## M5-2.5 安海港町高精緻底圖試驗（2026-06-23）
 
 - **素材位置**：`assets/m5/v2/m5-2/ports/town-backgrounds/`

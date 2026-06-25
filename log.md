@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-25] 素材 | 操作者：Codex | 產出日本／台灣／東南亞港町高精緻背景素材包
+
+- 背景：老闆要求仿照安海高精緻港町底圖，先用 image2.0 產出剩餘日本、台灣、東南亞街町背景素材，後續交由小航接續城町精緻化接入。
+- 完成事項：
+  - 使用內建 imagegen／image2.0 產出三張 source，並複製到 `assets/m5/v2/m5-2/ports/town-backgrounds/source/`。
+  - 新增 `tools/build-m5-2-5-town-background-pack.py`，統一輸出 `2000×1100` runtime、review 圖、contact sheet 與 manifest。
+  - 新增 `m5-2-5-town-background-pack-prompts.md` 紀錄三組 prompts。
+  - 同步更新 `assets/CREDITS.md` 與 `status.md`；本輪僅產出素材，未改 `PortScene` 接入邏輯，安海仍是目前唯一已接入高精緻底圖的港町。
+- 視覺確認：已檢查 `m5-2-5-town-background-pack-contact-sheet.png`，三張背景皆有底部港口、中央道路／空地，未見 UI、可讀文字、人物或現代元素。
+- 後續：小航接續時需建立 `portTownThemes.json`／`portTownLayouts.json` 或等效資料，並為各文化圈調整設施座標、walkable polygon、hitbox、door、labelAnchor。
+
 ## [2026-06-25] 開發 | 操作者：小航 | M5-6c 第二階段：六圍／星級／任務狀態小圖示
 
 - 背景：老闆於 5173 確認世界地圖 HUD emoji「正常、可完整辨識」，故續做 M5-6c 第二階段。
