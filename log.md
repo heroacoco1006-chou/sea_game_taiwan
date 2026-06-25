@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-06-25] 開發 | 操作者：小航 | M5-5 音樂收尾：設定 UI＋遊戲內 CC-BY 標註（M5-5e/g/f）
+
+- 背景：老闆指示音樂收尾——做音量設定 UI（M5-5e）與遊戲內音樂標註（M5-5g）；聽感（M5-5f）老闆已聽過確認「就先這樣」結案。
+- 完成事項：
+  - 新增 `src/scenes/SettingsScene.ts`（覆蓋式場景）：3 條音量滑桿（master/bgm/sfx，拖曳把手或點軌道即時 `audio.setVolume`、存 localStorage）＋靜音切換鈕；底部顯示兩行 CC-BY 標註（Kevin MacLeod／PeriTune）。以 `launch+pause` 開啟、`resume(caller)+stop` 關閉，可從任何場景開啟並原樣返回。
+  - `main.ts` 註冊 `Settings` 場景。
+  - `TitleScene`：右上加「設定／音量」鈕；底部加一行精簡 CC-BY 常駐標註。
+  - `InfoScene`：底部中央加「設定／音量」鈕（caller='Info'）。
+  - status：M5-5e/f/g 全 [x]，M5-5 母項標完成。
+- 驗證：`npm run build` 通過；preview 實測——標題開啟設定面板 26 個物件正確渲染、滑桿改值即時生效、靜音切換、localStorage 持久化（背景音樂值跨重載保留）、返回 resume 標題正常。
+- 踩雷備忘：用 preview_eval 連續多次呼叫 `scene.launch` 會把目標場景卡在 INIT 狀態（後續 launch 變 no-op）；單次點擊正常。驗證覆蓋式場景時，一次 eval 只觸發一次 launch，勿在 eval 內 `location.reload()`（會讓 preview 分頁卡住，需重啟 server）。
+- 協作：只動音訊／UI 場景檔（SettingsScene/main/Title/Info），未碰 Codex 的 M5-2.x 美術檔。
+
 ## [2026-06-24] 修正 | 操作者：Codex | 調整安海設施進入提示範圍
 
 - 背景：老闆截圖指出站到設施中間時不顯示進入提示，反而要離開到下方區域才會顯示，進入點位不符合直覺。

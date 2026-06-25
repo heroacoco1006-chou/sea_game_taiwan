@@ -54,8 +54,23 @@ export default class TitleScene extends Phaser.Scene {
     });
     if (!canLoad) loadBtn.setAlpha(0.45).disableInteractive();
 
+    // 設定／音量（右上角）
+    makeButton(this, width - 95, 40, 150, 40, '設定／音量', () => {
+      this.scene.launch('Settings', { caller: 'Title' });
+      this.scene.pause();
+    }, 16);
+
     this.add
       .text(width / 2, 655, 'M4 — 三主角主線骨架・事件圖鑑・自由航海', textStyle(16, '#9ab8c8'))
+      .setOrigin(0.5);
+    // 音樂版權標註（CC BY 4.0）— 詳細兩行於「設定」頁
+    this.add
+      .text(
+        width / 2,
+        700,
+        '音樂 Music: Kevin MacLeod (incompetech.com)・PeriTune (peritune.com)・CC BY 4.0',
+        textStyle(13, '#7fa0b2')
+      )
       .setOrigin(0.5);
   }
 }

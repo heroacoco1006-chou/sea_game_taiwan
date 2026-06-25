@@ -88,6 +88,12 @@ export default class InfoScene extends Phaser.Scene {
       });
     });
 
+    // 設定（音量／靜音／音樂版權）：覆蓋式開啟，關閉後原樣返回本選單
+    makeButton(this, W / 2, H - 44, 160, 46, '設定／音量', () => {
+      this.scene.launch('Settings', { caller: 'Info' });
+      this.scene.pause();
+    });
+
     this.render();
   }
 

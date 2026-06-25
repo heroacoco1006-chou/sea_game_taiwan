@@ -163,7 +163,7 @@ status: draft
 - [x] **M5-4 圖鑑插圖**：120 筆圖鑑的人物／地點／物種／事件插圖（說明頁右側已預留位置）。
   - [x] v2 插圖素材包建立（2026-06-19）：對應 `src/data/codex.json` 全 120 筆輸出 384×384 PNG，人物沿用 M5-3 頭像、地點／自然沿用 M5-2 素材，事件／制度／貿易／船舶／寶物／生物用新 imagegen 圖板補齊；路徑 `assets/m5/v2/m5-4/codex/illustrations/`；2026-06-21 二次修正圖鑑插圖切片，source 圖板先清格邊再置中，透明來源正確合成到底色；2026-06-22 三次修正改依 source 實際卡片邊界切片，重新輸出 generated／illustrations／contact sheets。
   - [x] 接入圖鑑說明頁右側插圖區（2026-06-22）：`src/art.ts` glob 載入 120 張插圖，BootScene 預載；InfoScene 圖鑑說明頁右側顯示已解鎖插圖，未解鎖項目維持 `???`。
-- [ ] **M5-5 音樂音效**（架構見下方專節，逐項完成）。詳見「## 🎵 M5-5 音樂音效 — 製作架構與分項」。
+- [x] **M5-5 音樂音效**（2026-06-25 完成）：音效程式合成、7 首 CC-BY 真實 BGM、場景對應、設定 UI（音量／靜音）、遊戲內 CC-BY 標註全部完成。詳見「## 🎵 M5-5 音樂音效 — 製作架構與分項」。
 - [ ] **M5-6 UI 美化**：統一按鈕／彈窗／面板樣式、字體可讀性（國小友善）、資源／能力／狀態圖示化、過場與提示動畫。
 - [ ] **M5-7 新手教學**：開場漸進式引導（移動→進港→交易→出航→接委託→海戰→招募→圖鑑），可跳過。
 - [ ] **M5-8 整合驗收**：全畫面觀感一致、`CREDITS.md` 完整、效能（學校低階機／Chromebook）OK、老闆驗收「接近仿大航海2」。
@@ -230,9 +230,9 @@ status: draft
 - [x] **M5-5c BGM（程式合成）＋場景對應**（2026-06-21）：老闆指示 BGM 也用簡單程式合成（不下載音檔）。`audio.ts` 加程序化 BGM 引擎（lookahead 排程循環樂句），7 首各用不同音階／速度／波形：sailing（大調五聲・慢・triangle）、battle（小調・快・sawtooth）、adventure（小調・神祕・sine）、town_china／taiwan（五聲）、town_japan（平調子）、town_seasia（五聲・快・square）。場景接入：Title／WorldMap=sailing、Battle=battle、Story=adventure、Port 及設施（Facility/Trade/Shipyard/ItemShop/Mates）依 `townBgmForRegion(port.region)`、Info 依來源。實測：各場景 bgmKey 正確（月港=china、平戶=japan、巴達維亞=seasia、大員=taiwan）、7 首切換不丟錯。
 - [x] **M5-5d 真實 CC-BY 音檔（混合管線＋全 7 首換上）**（2026-06-22）：老闆比較後覺得真實音檔效果好，指示其餘 5 首也換。`audio.ts` 的**音檔覆蓋管線**——`import.meta.glob('/assets/m5/audio/bgm/*.{mp3,ogg}')`，有對應檔的 key 用 `fetch→decodeAudioData→loop`（buffer 快取）覆蓋合成，無檔則維持合成（程式無需改動，丟檔即覆蓋）。**7 首全部採 Kevin MacLeod / CC-BY 4.0 / incompetech**：sailing=Achaidh Cheide（凱爾特）、battle=Crusade（史詩進行曲）、adventure=Crossing the Chasm（史詩冒險）、town_china=Guzheng City（古箏）、town_taiwan=Shenyang（中國民樂）、town_japan=Mountain Emperor（和風）、town_seasia=Chee Zee Beach（馬林巴/鋼鼓熱帶）。實測：7 首皆 `fileSource:true`、合成排程已無殘留（`bgmTimer=null`）。`CREDITS.md` 已列全表。首播需數秒 fetch+decode、之後快取。
 - [x] **M5-5d-2 日本城町換曲**（2026-06-22）：老闆偏好 PeriTune（sei）「Oboro（朧）」的安靜空靈和風（竹笛／箏，CC BY 4.0），`town_japan.mp3` 從 Kevin MacLeod「Mountain Emperor」換成 Oboro；實測 `fileSource:true`（此首無 ID3、解碼略久約 6～11 秒，之後快取）。CREDITS 已更新作者欄與來源。現況＝6 首 Kevin MacLeod＋1 首 PeriTune。
-- [ ] **M5-5g 遊戲內音樂標註（CC-BY 合規）**：CC BY 4.0 要求標註作者。需在遊戲內（標題/製作群頁）顯示**兩行**：「Music: Kevin MacLeod (incompetech.com), CC BY 4.0」與「Music: PeriTune (peritune.com), CC BY 4.0」（town_japan＝Oboro 為 PeriTune）。目前僅在 `CREDITS.md`，**尚未在遊戲畫面顯示**——上架前必補。
-- [ ] **M5-5e 設定 UI**：音量滑桿×3＋靜音鈕（與 M5-6 一起美化）。
-- [ ] **M5-5f 聽感平衡**：headless 已驗不丟錯與切換正確；**音量／旋律好不好聽需老闆親耳於 5173 確認**後再微調配方。
+- [x] **M5-5g 遊戲內音樂標註（CC-BY 合規）**（2026-06-25）：新增 `SettingsScene` 顯示兩行標註「Music: Kevin MacLeod (incompetech.com) — CC BY 4.0」「Music: PeriTune (peritune.com) — CC BY 4.0」；標題畫面底部另放一行精簡版常駐標註。合規達標。
+- [x] **M5-5e 設定 UI**（2026-06-25）：新增覆蓋式 `SettingsScene`——3 條音量滑桿（主／背景音樂／音效，拖曳或點軌道即時生效並存 localStorage）＋靜音切換鈕；入口在標題畫面右上「設定／音量」與資訊選單底部「設定／音量」，關閉後 resume 原場景。實測：滑桿即時套用、靜音切換、持久化、返回皆正常。樣式樸素，待 M5-6 統一美化。
+- [x] **M5-5f 聽感平衡**（2026-06-25）：老闆已親耳聽過七首並逐一確認（日本曲換 PeriTune Oboro），表示「就先這樣」，本項結案；日後試玩有感再微調。
 
 ---
 

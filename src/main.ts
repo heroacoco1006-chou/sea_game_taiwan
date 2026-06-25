@@ -13,6 +13,7 @@ import BattleScene from './scenes/BattleScene';
 import GameOverScene from './scenes/GameOverScene';
 import SaveSlotScene from './scenes/SaveSlotScene';
 import StoryScene from './scenes/StoryScene';
+import SettingsScene from './scenes/SettingsScene';
 import * as state from './state';
 import * as story from './story/parseStory';
 import { audio } from './audio';
@@ -27,7 +28,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene, StoryScene],
+  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene, StoryScene, SettingsScene],
 });
 
 // 首次使用者互動時解鎖音訊（瀏覽器自動播放限制）
