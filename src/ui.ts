@@ -18,12 +18,14 @@ export const COLORS = {
 export const FONT = '"Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif';
 
 /**
- * 文字繪製解析度。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT 把 1280×720
- * 畫布放大到視窗，導致文字在大螢幕上糊掉。改以 2×（或裝置像素比，上限 3）繪製，
- * 字會明顯銳利清楚。整個遊戲只要走 textStyle() 都會自動受惠。
+ * 文字繪製解析度（超取樣倍率）。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT
+ * 把 1280×720 畫布放大到視窗，文字會糊。這裡以較高倍率繪製文字材質，放大後仍銳利。
+ * 基準 3×，高 DPI 螢幕拉到 4×（再高記憶體效益遞減）。整個遊戲走 textStyle() 自動受惠。
  */
 export const TEXT_RES =
-  typeof window !== 'undefined' ? Math.min(3, Math.max(2, Math.ceil(window.devicePixelRatio || 1))) : 2;
+  typeof window !== 'undefined'
+    ? Math.min(4, Math.max(3, Math.ceil((window.devicePixelRatio || 1) * 2)))
+    : 3;
 
 export function textStyle(size: number, color = '#3a2a14'): Phaser.Types.GameObjects.Text.TextStyle {
   return { fontFamily: FONT, fontSize: `${size}px`, color, resolution: TEXT_RES };
@@ -38,28 +40,39 @@ export function drawPanel(
   h: number
 ): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
-  // 外木框（縱向漸層）＋投影
-  g.fillStyle(0x140c06, 0.25);
-  g.fillRoundedRect(x - 6, y - 2, w + 12, h + 12, 12);
-  g.fillGradientStyle(COLORS.woodLight, COLORS.woodLight, COLORS.wood, COLORS.wood, 1);
-  g.fillRoundedRect(x - 6, y - 6, w + 12, h + 12, 12);
+  // 投影
+  g.fillStyle(0x140c06, 0.22);
+  g.fillRoundedRect(x - 7, y - 1, w + 14, h + 14, 13);
+  // 外木框（縱向漸層）
+  g.fillGradientStyle(0x6a4827, 0x6a4827, 0x4a2f17, 0x4a2f17, 1);
+  g.fillRoundedRect(x - 7, y - 7, w + 14, h + 14, 13);
+  // 木框上緣高光細線（讓木框立體）
+  g.lineStyle(1, 0x9a6f40, 0.7);
+  g.strokeRoundedRect(x - 6, y - 6, w + 12, h + 12, 12);
+  // 木框與紙之間的深色凹槽，邊界更俐落
+  g.lineStyle(1, 0x2c1b0d, 0.85);
+  g.strokeRoundedRect(x - 1, y - 1, w + 2, h + 2, 8);
   // 羊皮紙底（上亮下暗）
-  g.fillGradientStyle(0xeaddb8, 0xeaddb8, COLORS.parchmentDark, COLORS.parchmentDark, 1);
+  g.fillGradientStyle(0xefe3c0, 0xefe3c0, COLORS.parchmentDark, COLORS.parchmentDark, 1);
   g.fillRoundedRect(x, y, w, h, 7);
-  // 內框金線
-  g.lineStyle(1.5, 0xb08d4a, 0.6);
-  g.strokeRoundedRect(x + 6, y + 6, w - 12, h - 12, 5);
-  // 四角鉚釘
-  g.fillStyle(0x3a2a14, 0.85);
-  const studR = 4;
-  const inset = 16;
+  // 內框雙線（深＋淺）做出細緻凹線
+  g.lineStyle(1, 0xb59a5f, 0.55);
+  g.strokeRoundedRect(x + 7, y + 7, w - 14, h - 14, 5);
+  g.lineStyle(1, 0xfdf6e0, 0.4);
+  g.strokeRoundedRect(x + 8, y + 8, w - 16, h - 16, 5);
+  // 四角鉚釘（深底＋高光點，立體）
+  const studR = 3.5;
+  const inset = 17;
   for (const [sx, sy] of [
     [x + inset, y + inset],
     [x + w - inset, y + inset],
     [x + inset, y + h - inset],
     [x + w - inset, y + h - inset],
   ]) {
+    g.fillStyle(0x2c1b0d, 0.9);
     g.fillCircle(sx, sy, studR);
+    g.fillStyle(0xc9a86a, 0.9);
+    g.fillCircle(sx - 1, sy - 1, 1.2);
   }
   return g;
 }
@@ -99,6 +112,12 @@ export function makeButton(
       1
     );
     bg.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6, 7);
+    // 頂部高光細線，讓立體感更明顯
+    bg.lineStyle(1.5, 0xfdf6e0, hover ? 0.85 : 0.6);
+    bg.beginPath();
+    bg.moveTo(-w / 2 + 9, -h / 2 + 5);
+    bg.lineTo(w / 2 - 9, -h / 2 + 5);
+    bg.strokePath();
     // hover 時加一圈金邊
     if (hover) {
       bg.lineStyle(2, COLORS.gold, 0.9);

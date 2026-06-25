@@ -24,6 +24,13 @@ const game = new Phaser.Game({
   width: 1280,
   height: 720,
   backgroundColor: '#153b54',
+  // 邊緣平滑＋縮放貼圖採線性 mipmap，讓向量框線與縮小的美術更乾淨
+  render: {
+    antialias: true,
+    antialiasGL: true,
+    roundPixels: false,
+    mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
