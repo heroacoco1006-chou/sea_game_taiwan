@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost, tradeBonus,
 } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 const LIST_TOP = 150;
@@ -50,8 +50,8 @@ export default class TradeScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     audio.playBgm(townBgmForRegion(this.port.region));
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
 

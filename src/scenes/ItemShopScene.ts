@@ -4,7 +4,7 @@ import {
   WEAPONS, ARMORS, ACCESSORIES, CONSUMABLES,
   addInventory, shopItemIdsForPort,
 } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 type Cat = 'weapon' | 'armor' | 'accessory' | 'consumable';
@@ -39,8 +39,8 @@ export default class ItemShopScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm(townBgmForRegion(this.port.region));
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 30, 16, W - 60, H - 32);
     this.add.text(W / 2, 44, `${this.port.name}・道具屋`, textStyle(26)).setOrigin(0.5);

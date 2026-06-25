@@ -7,7 +7,7 @@ import {
   HULL_PLATINGS, SAILS, CANNON_TYPES, shipArmor, shipSail, shipCannonType,
 } from '../state';
 import { shipCardKey, shipEquipmentKey } from '../art';
-import { COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 const REPAIR_PRICE = 2;
@@ -56,8 +56,8 @@ export default class ShipyardScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm(townBgmForRegion(this.port.region));
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
     drawPanel(this, 30, 16, W - 60, H - 32);
     this.add.text(W / 2, 40, `${this.port.name}・造船廠`, textStyle(26)).setOrigin(0.5);

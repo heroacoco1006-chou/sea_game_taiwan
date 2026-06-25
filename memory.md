@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-25] 全遊戲 2× 超取樣高清架構（已實作，所有場景必須遵守）
+
+- 老闆對畫面清晰度標準高（對齊「大航海4」），已導入**整體 2× 超取樣**：
+  - `ui.ts` 定義設計尺寸 `BASE_W=1280`、`BASE_H=720`。**所有場景排版一律用 BASE_W/BASE_H，嚴禁再用 `this.scale.width/height`**——因為 `main.ts` 把 game 後備尺寸設成 `BASE×SS`（SS=2 → 2560×1440），`this.scale.*` 會是 2560/1440，拿來排版會跑位。
+  - `main.ts`：game width/height＝`BASE_W*SS`／`BASE_H*SS`；`Phaser.Core.Events.READY` 時對每個場景 `cameras.main.setZoom(SS)` 與 `setOrigin(0,0)`。邏輯座標 1280×720 不變、以 SS 倍像素渲染、Scale.FIT 再縮到視窗。
+  - **`origin=(0,0)` 是關鍵**：使 `setScrollFactor(0)` 的 HUD 螢幕位置＝邏輯座標×zoom、與相機捲動無關，所以世界地圖／港町（會捲動）的 HUD 不必做雙相機就固定。改相機 origin 會牽動這個性質，勿亂改。
+  - `showModal`／`toast` 等共用 UI 也用 BASE 尺寸置中，勿用 `cam.width`。
+- 新增場景時：用 BASE_W/BASE_H 排版即可，相機由 main.ts hook 自動套用，不必自己設 zoom/origin。
+- 效能：2× 超取樣＝4 倍填充率，低階機（學校／Chromebook）效能待 M5-8 實測；必要時把 `SS` 改為依裝置或設定可調。
+- 文字 `textStyle().resolution` 仍保留（目前 3×），與 2× 畫布疊加，文字非常銳利。
+
 ## [2026-06-25] UI 清晰度：文字超取樣已做、向量圖整體高清待整場景超取樣
 
 - 老闆對畫面清晰度標準高（要求對齊「大航海時代4」水平），且明確要連按鈕／面板邊框等向量圖都銳利。字體沿用系統黑體（不嵌入字體），但解析度要拉滿。

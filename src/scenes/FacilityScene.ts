@@ -6,7 +6,7 @@ import {
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
   addXp, levelUpMessage,
 } from '../state';
-import { textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
@@ -39,8 +39,8 @@ export default class FacilityScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     audio.playBgm(townBgmForRegion(this.port.region));
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
 
@@ -74,7 +74,7 @@ export default class FacilityScene extends Phaser.Scene {
   }
 
   private buildContent(): void {
-    const W = this.scale.width;
+    const W = BASE_W;
     this.refreshInfo();
     const s = this.state;
 
@@ -175,7 +175,7 @@ export default class FacilityScene extends Phaser.Scene {
 
   /** 官府／商館：港口介紹＋運送委託 */
   private buildOffice(): void {
-    const W = this.scale.width;
+    const W = BASE_W;
     const s = this.state;
     const head = this.port.culture === 'han' ? '官爺' : '商館長';
 

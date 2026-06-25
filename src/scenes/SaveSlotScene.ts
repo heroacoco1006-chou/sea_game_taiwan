@@ -3,7 +3,7 @@ import {
   newGame, loadGame, saveGame, deleteSave, listSaveSlots,
 } from '../state';
 import type { GameState, HeroId, SaveSlotInfo } from '../state';
-import { COLORS, textStyle, makeButton, drawPanel, showModal, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, toast } from '../ui';
 
 type SlotMode = 'new' | 'load' | 'save';
 interface ReturnTo {
@@ -40,8 +40,8 @@ export default class SaveSlotScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep);
     drawPanel(this, 40, 24, W - 80, H - 48);
 

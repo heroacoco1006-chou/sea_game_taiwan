@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, textStyle, drawPanel, makeButton } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, drawPanel, makeButton } from '../ui';
 import { audio } from '../audio';
 
 type Track = 'master' | 'bgm' | 'sfx';
@@ -23,8 +23,8 @@ export default class SettingsScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     const cx = W / 2;
 
     // 半透明遮罩（同時攔截點擊，避免穿透到底下暫停中的場景）

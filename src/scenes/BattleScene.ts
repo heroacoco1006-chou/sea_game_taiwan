@@ -6,7 +6,7 @@ import {
 } from '../state';
 import { shipBattleKey } from '../art';
 import { audio } from '../audio';
-import { COLORS, textStyle, makeButton, drawPanel } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel } from '../ui';
 
 interface Enemy {
   name: string;
@@ -57,8 +57,8 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     audio.playBgm('battle');
     this.add.rectangle(W / 2, H / 2, W, H, 0x16384e);
     // 海面波紋
@@ -238,7 +238,7 @@ export default class BattleScene extends Phaser.Scene {
   private endBattle(note: string): void {
     this.setButtons(false);
     this.pushLog(note);
-    const W = this.scale.width;
+    const W = BASE_W;
     makeButton(this, W / 2, 660, 280, 54, '返回大海', () => {
       saveGame(this.state);
       this.scene.start('WorldMap');

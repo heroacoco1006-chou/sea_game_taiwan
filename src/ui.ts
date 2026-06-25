@@ -18,6 +18,15 @@ export const COLORS = {
 export const FONT = '"Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif';
 
 /**
+ * 設計（邏輯）解析度。整個遊戲以這個尺寸排版。實際 canvas 後備解析度是它的
+ * SS 倍（見 main.ts 超取樣），各場景攝影機 zoom=SS、origin=0，使這套座標不變、
+ * 只是以更多像素繪製 → 全畫面（文字／框線／美術）銳利。
+ * 場景請用 BASE_W/BASE_H 排版，不要再讀 this.scale.width/height（那是放大後的後備尺寸）。
+ */
+export const BASE_W = 1280;
+export const BASE_H = 720;
+
+/**
  * 文字繪製解析度（超取樣倍率）。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT
  * 把 1280×720 畫布放大到視窗，文字會糊。這裡以較高倍率繪製文字材質，放大後仍銳利。
  * 基準 3×，高 DPI 螢幕拉到 4×（再高記憶體效益遞減）。整個遊戲走 textStyle() 自動受惠。
@@ -158,14 +167,13 @@ export function showModal(
   body: string,
   choices: ModalChoice[]
 ): Phaser.GameObjects.Container {
-  const cam = scene.cameras.main;
-  const w = Math.min(820, cam.width - 80);
+  const w = Math.min(820, BASE_W - 80);
   const buttonH = choices.length * 58;
-  const h = Math.min(cam.height - 80, 220 + buttonH);
-  const cx = cam.width / 2;
-  const cy = cam.height / 2;
+  const h = Math.min(BASE_H - 80, 220 + buttonH);
+  const cx = BASE_W / 2;
+  const cy = BASE_H / 2;
 
-  const dim = scene.add.rectangle(cx, cy, cam.width, cam.height, 0x000000, 0.45);
+  const dim = scene.add.rectangle(cx, cy, BASE_W, BASE_H, 0x000000, 0.45);
   const panel = scene.add.graphics();
   panel.fillStyle(COLORS.wood, 1);
   panel.fillRoundedRect(cx - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 10);

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
 import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBackgroundKey, portTownBuildingKey, shipWorldKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
-import { COLORS, textStyle, makeButton, showModal } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -231,8 +231,8 @@ export default class PortScene extends Phaser.Scene {
     });
 
     // 頂部資訊列（固定）
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, 24, W, 48, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     // 左上角港名可點 → 跳出港口介紹
     const nameT = this.add
@@ -662,8 +662,8 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private createMinimap(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     const mx = W - MINI_W - 14;
     const my = H - MINI_H - 14;
     const sx = MINI_W / TOWN_W;

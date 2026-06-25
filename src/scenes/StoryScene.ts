@@ -6,7 +6,7 @@ import {
 import type { StoryLine } from '../state';
 import { portraitKey, storyBackgroundKey } from '../art';
 import { audio } from '../audio';
-import { COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
 type StoryMode = 'story' | 'mate';
 interface ReturnTo {
@@ -74,8 +74,8 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     audio.playBgm('adventure');
     this.heroName = heroDefById(this.heroId).name;
 
@@ -159,7 +159,7 @@ export default class StoryScene extends Phaser.Scene {
     this.dyn = [];
     const line = this.lines[this.index];
     if (!line) return;
-    const W = this.scale.width;
+    const W = BASE_W;
     this.updatePortrait(line);
     if (line.kind === 'codex') audio.playSfx('unlock');
 
@@ -194,7 +194,7 @@ export default class StoryScene extends Phaser.Scene {
 
   /** 對話框內的主文字（自動換行＋過長縮字） */
   private bodyText(text: string, color = '#3a2a14', size = 22, top = 512): Phaser.GameObjects.Text {
-    const W = this.scale.width;
+    const W = BASE_W;
     const t = this.add.text(110, top, text, {
       ...textStyle(size, color),
       wordWrap: { width: W - 220, useAdvancedWrap: true },
@@ -208,7 +208,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   private drawScene(line: StoryLine): void {
-    const W = this.scale.width;
+    const W = BASE_W;
     this.dyn.push(this.add.text(W / 2, 500, '✦', textStyle(22, '#a8884a')).setOrigin(0.5));
     this.dyn.push(this.add.text(W / 2, 545, line.text, textStyle(24, '#5a4a30')).setOrigin(0.5));
     this.dyn.push(
@@ -246,7 +246,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   private drawObjective(line: StoryLine): void {
-    const W = this.scale.width;
+    const W = BASE_W;
     const box = this.add.graphics();
     box.fillStyle(COLORS.gold, 0.25);
     box.fillRoundedRect(90, 500, W - 180, 70, 8);
@@ -258,7 +258,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   private drawCodex(line: StoryLine): void {
-    const W = this.scale.width;
+    const W = BASE_W;
     // 圖鑑解鎖卡：金框，標題＋史實說明
     const card = this.add.graphics();
     card.fillStyle(0xfff3d6, 1);

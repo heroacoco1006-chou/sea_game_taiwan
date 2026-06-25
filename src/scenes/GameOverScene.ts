@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { loadGame, hasSave, hasAnySave } from '../state';
-import { textStyle, makeButton, drawPanel } from '../ui';
+import { BASE_W, BASE_H, textStyle, makeButton, drawPanel } from '../ui';
 
 /** 水手全滅：可從上次存檔點繼續（教育：航海是高風險的事業） */
 export default class GameOverScene extends Phaser.Scene {
@@ -9,8 +9,8 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, H / 2, W, H, 0x101820);
 
     drawPanel(this, W / 2 - 360, 140, 720, 300);

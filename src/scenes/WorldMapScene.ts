@@ -13,7 +13,7 @@ import {
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
-import { COLORS, textStyle, showModal, makeButton } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton } from '../ui';
 
 const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
@@ -101,8 +101,8 @@ export default class WorldMapScene extends Phaser.Scene {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,ENTER') as typeof this.keys;
 
     // ----- HUD（固定於鏡頭，兩行） -----
-    const W = this.scale.width;
-    const H = this.scale.height;
+    const W = BASE_W;
+    const H = BASE_H;
     this.add.rectangle(W / 2, 34, W, 68, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     this.hud = this.add.text(14, 8, '', { ...textStyle(17, '#f2e3bd'), lineSpacing: 6 }).setDepth(101).setScrollFactor(0);
     makeButton(this, W - 62, 34, 96, 36, '選單', () => {

@@ -7,6 +7,18 @@
 
 ---
 
+## [2026-06-25] 開發 | 操作者：小航 | 全遊戲 2× 超取樣高清（老闆要求完整修正模糊）
+
+- 背景：老闆回報文字 3× 後「部分場景還是很模糊」，要完整修正到「大航海4」級。診斷：每段文字其實都已走 textStyle（res 3）；殘餘模糊是「整個 1280×720 畫布被 Scale.FIT 放大」造成，文字解析度救不了向量框線/按鈕。老闆裁示「現在立刻全面做」整體超取樣。
+- 做法（核心）：
+  - `main.ts`：game 尺寸＝`BASE_W×BASE_H ×SS`（SS=2 → 2560×1440）；READY hook 對每場景 `cameras.main.setZoom(2)＋setOrigin(0,0)`。如此邏輯座標 1280×720 不變、以 2× 像素渲染、再 FIT 縮到視窗 → 全畫面（文字/框線/美術）銳利。
+  - `ui.ts`：新增 `BASE_W=1280/BASE_H=720`；`showModal` 改用 BASE（原讀 cam.width 會變 2560）。
+  - 13 個場景：`this.scale.width/height` → `BASE_W/BASE_H`（PowerShell 機械替換＋補 import；TitleScene 解構另處理）。
+- 關鍵發現：相機 `origin=(0,0)` 時，`setScrollFactor(0)` 的 HUD 螢幕位置＝邏輯座標×zoom、與相機捲動無關 → 世界地圖／港町（會捲動）的 HUD 自動固定，**不需逐場景做雙相機**。用相機矩陣實測驗證（scroll 0 vs 500，scrollFactor0 物件螢幕位置不變）。
+- 驗證：build 通過；preview 實測——選單置中正確且 2× 畫布；世界地圖（相機捲到 3160,2572）HUD 固定左上、世界正常；港町正常；輸入命中測試正確（顯示 640,400→世界 640,400→命中按鈕）；無 console error。
+- 注意/待追蹤：①2× 超取樣＝4 倍填充率，低階機效能需 M5-8 實測（必要時 SS 可調）。②本次動到全部 13 個場景含 Codex 的 WorldMap/Port——當下 Codex 無未提交檔，乾淨提交；Codex 之後再改這些檔可能要處理合併。
+- 協作：老闆已知並同意此次全面改（含 Codex 場景檔）。
+
 ## [2026-06-25] 修正 | 操作者：小航 | 移除 mipmapFilter——它讓文字反而更糊（老闆回報）
 
 - 背景：上一筆加了 `mipmapFilter: LINEAR_MIPMAP_LINEAR` 想讓縮小美術更順，但老闆回報文字「解析度反而下降、比 2× 還差」。
