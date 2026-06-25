@@ -51,9 +51,52 @@ function applySupersample(scene: Phaser.Scene): void {
   cam.setZoom(SS);
   cam.setOrigin(0, 0);
 }
+
+/**
+ * origin=0 會讓 Phaser 原生 `startFollow` ＋ `setBounds` 的捲動夾值算錯而卡住
+ * （世界地圖船隻不置中、港町人物走出畫面）。對「會跟隨的場景」由我們接管攝影機：
+ * 停用原生跟隨與邊界，改每幀自己把目標置中、並夾在世界範圍內（origin=0 下正確）。
+ * 非跟隨場景（選單）沒有 _follow，不受影響。
+ */
+type FollowTarget = Phaser.GameObjects.GameObject & { x: number; y: number };
+type FollowData = { target: FollowTarget; worldW: number; worldH: number };
+const manualFollow = new WeakMap<Phaser.Scene, FollowData>();
+
+function maxScroll(worldSize: number, viewSize: number): number {
+  return Math.max(0, worldSize - viewSize);
+}
+
+function takeOverFollow(scene: Phaser.Scene): void {
+  const cam = scene.cameras?.main as
+    | (Phaser.Cameras.Scene2D.Camera & { _follow?: FollowTarget | null; _bounds?: Phaser.Geom.Rectangle })
+    | undefined;
+  if (!cam) return;
+
+  // 場景剛在 create 設好原生跟隨＋邊界 → 記下世界尺寸與目標，接管並立即置中。
+  if (cam._follow && cam._bounds && cam._bounds.width > 0) {
+    const data: FollowData = { target: cam._follow, worldW: cam._bounds.width, worldH: cam._bounds.height };
+    manualFollow.set(scene, data);
+    cam.stopFollow();
+    cam.removeBounds();
+    cam.setScroll(
+      Phaser.Math.Clamp(data.target.x - BASE_W / 2, 0, maxScroll(data.worldW, BASE_W)),
+      Phaser.Math.Clamp(data.target.y - BASE_H / 2, 0, maxScroll(data.worldH, BASE_H))
+    );
+    return;
+  }
+
+  const d = manualFollow.get(scene);
+  if (!d) return;
+  const sx = Phaser.Math.Clamp(d.target.x - BASE_W / 2, 0, maxScroll(d.worldW, BASE_W));
+  const sy = Phaser.Math.Clamp(d.target.y - BASE_H / 2, 0, maxScroll(d.worldH, BASE_H));
+  // 平滑跟隨（與原生 lerp 0.15 相近）
+  cam.setScroll(Phaser.Math.Linear(cam.scrollX, sx, 0.18), Phaser.Math.Linear(cam.scrollY, sy, 0.18));
+}
+
 game.events.once(Phaser.Core.Events.READY, () => {
   for (const scene of game.scene.scenes) {
     scene.events.on(Phaser.Scenes.Events.READY, () => applySupersample(scene));
+    scene.events.on(Phaser.Scenes.Events.UPDATE, () => takeOverFollow(scene));
     if (scene.scene.isActive()) applySupersample(scene);
   }
 });

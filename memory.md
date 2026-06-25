@@ -11,7 +11,9 @@
   - `ui.ts` 定義設計尺寸 `BASE_W=1280`、`BASE_H=720`。**所有場景排版一律用 BASE_W/BASE_H，嚴禁再用 `this.scale.width/height`**——因為 `main.ts` 把 game 後備尺寸設成 `BASE×SS`（SS=2 → 2560×1440），`this.scale.*` 會是 2560/1440，拿來排版會跑位。
   - `main.ts`：game width/height＝`BASE_W*SS`／`BASE_H*SS`；`Phaser.Core.Events.READY` 時對每個場景 `cameras.main.setZoom(SS)` 與 `setOrigin(0,0)`。邏輯座標 1280×720 不變、以 SS 倍像素渲染、Scale.FIT 再縮到視窗。
   - **`origin=(0,0)` 是關鍵**：使 `setScrollFactor(0)` 的 HUD 螢幕位置＝邏輯座標×zoom、與相機捲動無關，所以世界地圖／港町（會捲動）的 HUD 不必做雙相機就固定。改相機 origin 會牽動這個性質，勿亂改。
+  - **相機跟隨陷阱**：`origin=0` 會讓 Phaser 原生 `startFollow`＋`setBounds` 的捲動夾值算錯而卡住（船不置中、人物走出畫面）。故 `main.ts` hook 對「有 `_follow`＋`_bounds` 的場景」**接管相機**：`stopFollow()`＋`removeBounds()`，改每幀手動 `setScroll(target − BASE/2)` 並夾在 `[0, 世界尺寸−BASE]`（lerp 0.18）。**世界地圖／港町等會跟隨的場景請繼續用 `startFollow`＋`setBounds`（hook 會自動接管）；不要自己另寫相機捲動。**
   - `showModal`／`toast` 等共用 UI 也用 BASE 尺寸置中，勿用 `cam.width`。
+  - 驗證提醒：preview 分頁未聚焦時瀏覽器 RAF 暫停，跟隨類（依賴 update 迴圈）無法被動觀察，需用 `window.__game.step(t,16)` 手動驅動幀才能驗證。
 - 新增場景時：用 BASE_W/BASE_H 排版即可，相機由 main.ts hook 自動套用，不必自己設 zoom/origin。
 - 效能：2× 超取樣＝4 倍填充率，低階機（學校／Chromebook）效能待 M5-8 實測；必要時把 `SS` 改為依裝置或設定可調。
 - 文字 `textStyle().resolution` 仍保留（目前 3×），與 2× 畫布疊加，文字非常銳利。
