@@ -28,6 +28,11 @@ const TABS: Array<{ key: InfoTab; label: string }> = [
   { key: 'codex', label: '圖鑑' },
 ];
 
+/** 六圍能力的小圖示（M5-6c）：統率／砲術／武勇／航海／知識／交涉。 */
+const STAT_ICON: Record<string, string> = {
+  lead: '🎖', gun: '💥', val: '⚔', nav: '🧭', kno: '📚', neg: '🤝',
+};
+
 export default class InfoScene extends Phaser.Scene {
   private from: ReturnTarget = 'WorldMap';
   private portId?: string;
@@ -148,21 +153,21 @@ export default class InfoScene extends Phaser.Scene {
     const chapter = currentStoryChapter(s);
     const target = storyTargetPort(chapter);
     const storyText = chapter
-      ? `主線第 ${chapter.chapter} 章：${chapter.title}\n目標港口：${target?.name ?? chapter.targetPortId}\n任務內容：${chapter.objective}\n${storyRequirementText(chapter)}`
-      : '目前可玩的主線章節已完成，後續 M4 會繼續擴充。';
+      ? `🎯 主線第 ${chapter.chapter} 章：${chapter.title}\n📍 目標港口：${target?.name ?? chapter.targetPortId}\n📜 任務內容：${chapter.objective}\n${storyRequirementText(chapter)}`
+      : '🎯 目前可玩的主線章節已完成，後續 M4 會繼續擴充。';
     this.addWrapped(290, 130, storyText, 840, 17);
 
     if (s.quest) {
       this.addWrapped(
         290,
         310,
-        questProgressText(s, s.quest),
+        `📜 支線委託　${questProgressText(s, s.quest)}`,
         840,
         16,
         '#5a4a30'
       );
     } else {
-      this.addWrapped(290, 310, '目前沒有接支線委託。可到官府／商館接運貨任務。', 840, 16, '#5a4a30');
+      this.addWrapped(290, 310, '📜 目前沒有接支線委託。可到官府／商館接運貨任務。', 840, 16, '#5a4a30');
     }
   }
 
@@ -242,7 +247,7 @@ export default class InfoScene extends Phaser.Scene {
     const statLine = STAT_KEYS.map((k) => {
       const base = s.captain.stats[k];
       const eff = fleetStat(s, k);
-      return `${STAT_NAMES[k]} ${base}${eff > base ? `(隊${eff})` : ''}`;
+      return `${STAT_ICON[k]}${STAT_NAMES[k]} ${base}${eff > base ? `(隊${eff})` : ''}`;
     }).join('　');
     const lines = [
       `${hero.name}（${hero.role}）　${xpProgressText(s)}`,
@@ -298,8 +303,8 @@ export default class InfoScene extends Phaser.Scene {
       if (!def) return;
       const y = 424 + i * 48;
       const st = mateStats(def);
-      const statStr = STAT_KEYS.map((k) => `${STAT_NAMES[k]}${st[k]}`).join(' ');
-      this.addWrapped(300, y, `${def.name}：${roleName(mate.role)}\n${statStr}`, 240, 12);
+      const statStr = STAT_KEYS.map((k) => `${STAT_ICON[k]}${STAT_NAMES[k]}${st[k]}`).join(' ');
+      this.addWrapped(300, y, `${def.name} ★${def.star}：${roleName(mate.role)}\n${statStr}`, 240, 12);
       def.roles.forEach((roleKey, j) => {
         const role = ROLES.find((r) => r.key === roleKey);
         const btn = makeButton(this, 580 + j * 105, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);
