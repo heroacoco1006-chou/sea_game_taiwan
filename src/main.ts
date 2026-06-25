@@ -24,12 +24,9 @@ const game = new Phaser.Game({
   width: 1280,
   height: 720,
   backgroundColor: '#153b54',
-  // 邊緣平滑＋縮放貼圖採線性 mipmap，讓向量框線與縮小的美術更乾淨
+  // 只開抗鋸齒讓邊緣平滑；不要 mipmap——mipmap 會讓文字材質抓到預先模糊的縮圖，反而糊掉。
   render: {
     antialias: true,
-    antialiasGL: true,
-    roundPixels: false,
-    mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
   },
   scale: {
     mode: Phaser.Scale.FIT,

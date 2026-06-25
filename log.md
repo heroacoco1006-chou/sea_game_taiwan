@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-06-25] 修正 | 操作者：小航 | 移除 mipmapFilter——它讓文字反而更糊（老闆回報）
+
+- 背景：上一筆加了 `mipmapFilter: LINEAR_MIPMAP_LINEAR` 想讓縮小美術更順，但老闆回報文字「解析度反而下降、比 2× 還差」。
+- 根因：mipmap 會對所有貼圖（含 Text 動態材質）產生預先模糊的縮圖；文字幾乎都以非原生尺寸顯示，會抓到模糊 mip → 比沒 mipmap 還糊。
+- 修正：`main.ts` render 移除 `mipmapFilter` 與 `antialiasGL`，只留 `antialias: true`；文字 `resolution` 維持 3×。實測 `mipmapFilter=""`、`textResolution=3`、`antialias=true`。
+- 約定：**勿用全域 mipmapFilter**——對文字弊大於利。縮小美術若要更順，改用個別貼圖設定或在 source 端處理。
+- 邊框：老闆表示目前 OK，未來可能改請 Codex 導入同風格的「邊框底圖」（圖片化面板）取代程式畫的框，屆時再評估。
+- 協作：只動 `src/main.ts`，未碰 Codex 場景檔。
+
 ## [2026-06-25] 開發 | 操作者：小航 | M5-6 字體解析度再提升＋邊框細膩化（老闆回饋）
 
 - 背景：老闆看了第一階段，附兩張圖（本遊戲圖鑑頁 vs 大航海4 參考），要求：①字體解析度再往上拉到「大航海4」水平（字體本身沿用系統黑體 OK）②面板邊框再細膩③喜歡按鈕立體感、但解析度拉高質感更好。
