@@ -3,7 +3,7 @@ import {
   GameState, PORTS, Port, MATE_DEFS, ROLES, mateDefById, roleName, saveGame,
   mateRequirementStatus, mateQuestStageStatuses, recruitMate, getMateScript,
 } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal, selectionRing } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 /**
@@ -79,7 +79,7 @@ export default class MatesScene extends Phaser.Scene {
         const role = ROLES.find((r) => r.key === rk)!;
         const active = m.role === rk;
         const btn = makeButton(this, 110 + j * 132, y + 42, 122, 36, active ? `✓${role.name}` : role.name, () => this.assign(m.id, rk), 13);
-        if (active) btn.setAlpha(0.7);
+        if (active) this.dyn.push(selectionRing(this, 110 + j * 132, y + 42, 122, 36));
         this.dyn.push(btn);
       });
       // 解除職位

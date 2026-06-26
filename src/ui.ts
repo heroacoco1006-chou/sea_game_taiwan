@@ -155,6 +155,25 @@ export function makeButton(
   return c;
 }
 
+/**
+ * 在按鈕／卡片外圍畫一圈金色高光，標示「目前選中／當前頁籤」。回傳 Graphics
+ * 方便加入場景的動態清單（重繪時清除）。統一全遊戲的「選中態」樣式（M5-6d）。
+ */
+export function selectionRing(
+  scene: Phaser.Scene,
+  cx: number,
+  cy: number,
+  w: number,
+  h: number
+): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  g.lineStyle(3, COLORS.gold, 0.95);
+  g.strokeRoundedRect(cx - w / 2 - 3, cy - h / 2 - 3, w + 6, h + 6, 10);
+  g.lineStyle(1, 0xfff3c8, 0.5);
+  g.strokeRoundedRect(cx - w / 2 - 1, cy - h / 2 - 1, w + 2, h + 2, 9);
+  return g;
+}
+
 export interface ModalChoice {
   label: string;
   onPick: () => void;

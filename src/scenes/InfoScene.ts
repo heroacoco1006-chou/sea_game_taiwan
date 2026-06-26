@@ -13,7 +13,7 @@ import {
 import { codexIllustrationKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
 type EquipCat = 'weapon' | 'armor' | 'accessory';
@@ -108,11 +108,16 @@ export default class InfoScene extends Phaser.Scene {
 
     this.dyn.push(this.add.rectangle(145, 370, 190, 560, COLORS.parchmentDark, 0.5));
     TABS.forEach((tab, i) => {
-      const btn = makeButton(this, 145, 118 + i * 62, 150, 46, tab.label, () => {
+      const y = 118 + i * 62;
+      const btn = makeButton(this, 145, y, 150, 46, tab.label, () => {
         this.tab = tab.key;
         this.render();
       }, 17);
-      if (tab.key === this.tab) btn.setAlpha(0.7);
+      if (tab.key === this.tab) {
+        this.dyn.push(selectionRing(this, 145, y, 150, 46));
+      } else {
+        btn.setAlpha(0.72);
+      }
       this.dyn.push(btn);
     });
 
@@ -364,7 +369,11 @@ export default class InfoScene extends Phaser.Scene {
         this.codexDetailOpen = false;
         this.render();
       }, 11);
-      if (cat.id === this.codexCategory) btn.setAlpha(0.72);
+      if (cat.id === this.codexCategory) {
+        this.dyn.push(selectionRing(this, 385 + (i % 3) * 170, 120 + Math.floor(i / 3) * 38, 158, 32));
+      } else {
+        btn.setAlpha(0.72);
+      }
       this.dyn.push(btn);
     });
 
