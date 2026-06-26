@@ -291,7 +291,7 @@ export default class InfoScene extends Phaser.Scene {
       const type = shipTypeById(ship.typeId);
       const y = 202 + i * 44;
       this.addWrapped(300, y, `僚艦${i + 1}：${type.name}　船體 ${ship.hull}/${type.hullMax}　艙 ${ship.cargoSpace}/${ship.supplySpace}　砲 ${ship.cannons}`, 560, 14);
-      const btn = makeButton(this, 1000, y + 10, 160, 34, '升為旗艦', () => this.promoteEscort(i), 14);
+      const btn = makeButton(this, 770, y + 10, 130, 34, '升為旗艦', () => this.promoteEscort(i), 14);
       this.dyn.push(btn);
     });
     if (s.escorts.length === 0) {
@@ -306,16 +306,19 @@ export default class InfoScene extends Phaser.Scene {
     s.mates.slice(0, 5).forEach((mate, i) => {
       const def = mateDefById(mate.id);
       if (!def) return;
-      const y = 424 + i * 48;
+      const y = 432 + i * 48;
       const st = mateStats(def);
       const statStr = STAT_KEYS.map((k) => `${STAT_ICON[k]}${STAT_NAMES[k]}${st[k]}`).join(' ');
-      this.addWrapped(300, y, `${def.name} ★${def.star}：${roleName(mate.role)}\n${statStr}`, 240, 12);
+      // 能力欄加寬至 420，讓六項能力一行顯示（不再折行重疊）；職位按鈕整排右移避讓
+      this.addWrapped(300, y, `${def.name} ★${def.star}：${roleName(mate.role)}\n${statStr}`, 420, 12);
       def.roles.forEach((roleKey, j) => {
         const role = ROLES.find((r) => r.key === roleKey);
-        const btn = makeButton(this, 580 + j * 105, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);
+        const bx = 785 + j * 105;
+        const btn = makeButton(this, bx, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);
+        if (mate.role === roleKey) this.dyn.push(selectionRing(this, bx, y + 10, 94, 32));
         this.dyn.push(btn);
       });
-      const off = makeButton(this, 580 + def.roles.length * 105, y + 10, 82, 32, '不指派', () => this.assignRole(mate.id, null), 12);
+      const off = makeButton(this, 785 + def.roles.length * 105, y + 10, 82, 32, '不指派', () => this.assignRole(mate.id, null), 12);
       this.dyn.push(off);
     });
   }
