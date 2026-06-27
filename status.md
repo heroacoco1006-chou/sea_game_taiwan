@@ -3,14 +3,14 @@ title: sea_game 專案作戰盤
 type: status
 tags: [sea_game, 作戰盤, 里程碑]
 created: 2026-06-12
-updated: 2026-06-23
+updated: 2026-06-27
 author: Codex
 status: draft
 ---
 
 # 《大航海福爾摩沙》專案作戰盤
 
-> 最後更新：2026-06-23 | 作者：Codex
+> 最後更新：2026-06-27 | 作者：Codex
 > 設計依據：`2026-06-12_大航海福爾摩沙_遊戲建構書.md`
 
 ---
@@ -154,6 +154,8 @@ status: draft
   - [x] `assets/CREDITS.md` 建立並登錄本批素材來源；確認 `art/` 參考圖只作氛圍參考，不納入正式素材。
   - [x] 接入 BootScene／StoryScene（2026-06-19）：`src/art.ts` 用 import.meta.glob 收 V2 素材 URL；BootScene preload 載入頭像/船隻；StoryScene 對話框上方顯示說話者頭像（對白＝說話者、心聲＝主角、旁白隱藏）。
   - [x] 劇情背景接入（2026-06-22）：三位主角各一張 1280×720 劇情對話背景，路徑 `assets/m5/v2/story/backgrounds/`；`src/art.ts` 新增 `STORY_BACKGROUND_URLS`，BootScene 預載，StoryScene 依 `heroId` 顯示對應背景並保留舊海色 fallback。
+  - [x] 千代線逐章對話背景素材包（2026-06-27）：Codex 依 `src/data/story/chiyo_朱印船線.md` 使用 imagegen／image2.0 產出第 1～10 章各一張 V2 精緻背景，統一後製為 `1280×720`；source、runtime、review、contact sheet、manifest 與 prompt／使用表集中於 `assets/m5/v2/story/backgrounds/chiyo-chapters/`。逐章搭配為：①平戶朱印船繼承、②大員日荷舊衝突、③月港白銀換生絲、④那霸琉球中介、⑤大員父親真相、⑥平戶鎖國令、⑦長崎出島窗口、⑧出島跨國友誼、⑨出島收到攻台消息、⑩大員熱蘭遮城落幕。既有 `chiyo_story_bg.png` 保留作通用 fallback。
+  - [ ] 千代線逐章背景接入（交接小航）：本批目前只有素材，尚未修改 `BootScene`／`StoryScene`；建議依 `heroId === 'chiyo'`＋`chapterNo` 固定選取一章一張，主線以外劇情仍使用通用 fallback。精確素材 id、路徑與對話用途見 `m5-3-chiyo-story-backgrounds.json` 及 `m5-3-chiyo-story-backgrounds-prompts.md`。
   - [x] 接入 WorldMapScene／BattleScene（2026-06-19）：世界地圖旗艦依船型顯示 V2 world sprite；海戰雙方依船型顯示 V2 battle sprite（敵船依 tier 對應船型＋紅色 tint）。
   - [x] v2 主角行走圖補件（2026-06-19）：三主角各 7 格行走 sheet 與逐格 PNG，路徑 `assets/m5/v2/characters/walk/`；第一版仍有少量綠幕邊緣雜訊，已以較小顯示尺寸接入，後續可視畫面再精修。
   - [x] 船隻裝備外觀素材包（2026-06-19）：船首像 4、裝甲 3、船帆 3、大砲種類 3，另含 3 張預覽圖，路徑 `assets/m5/v2/ships/equipment/`。

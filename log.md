@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-27] 素材 | 操作者：Codex | 產出田中千代主線十章對話背景素材包
+
+- 背景：老闆希望日本女性主人翁田中千代的對話畫面不再全線只使用一張通用背景，要求依主線劇本製作不少於 10 張 image2.0 背景；本輪只建立素材，程式接入交由小航。
+- 完成事項：
+  - 依 `src/data/story/chiyo_朱印船線.md` 十章內容，逐章產出平戶、大員、月港、那霸、長崎出島與 1662 年大員外海等 10 張原創 V2 精緻 2D 手繪背景。
+  - 新增 `tools/build-m5-3-chiyo-story-backgrounds.py`，將 source 統一裁成 `1280×720`，輕度壓暗下方對話區，並輸出 review 圖、contact sheet 與 manifest。
+  - 新增 `m5-3-chiyo-story-backgrounds-prompts.md`，逐張記錄場景重點、建議搭配的劇情段落與小航後續接入方式。
+  - 更新 `status.md` 與 `assets/CREDITS.md`；既有 `chiyo_story_bg.png` 保留作通用 fallback。
+- 視覺確認：已檢查 `m5-3-chiyo-story-backgrounds-contact-sheet.png`，10 張章節辨識度清楚、情緒由晨港到戰後黎明連貫，未見 UI、可讀文字或前景人物，下方對話區保有足夠暗部。
+- 協作：本輪未修改任何遊戲場景程式，未碰小航正在修改的 `src/state.ts` 與 `src/scenes/TradeScene.ts`。待小航依 `heroId=chiyo`＋`chapterNo` 接入 `BootScene`／`StoryScene`。
 ## [2026-06-25] 修正 | 操作者：小航 | 交易系統三項修正（洗錢／供需／流行）
 
 - 完成老闆回報的三項交易修正（`src/state.ts`＋`src/scenes/TradeScene.ts`），存檔升 v16（新增 `demand`、`fad`，舊檔遷移補空值）：
