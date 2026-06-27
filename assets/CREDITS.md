@@ -1,6 +1,20 @@
 # 素材授權紀錄
 
 > 本檔記錄遊戲正式採用或預備採用的素材來源。外部素材必須標明作者、來源與授權；專案內原創生成素材也需記錄產生方式。
+## M5-3 林海生主線逐章對話背景素材包（2026-06-27）
+
+- **素材位置**：`assets/m5/v2/story/backgrounds/lin-chapters/`
+- **內容**：
+  - `source/`：林海生主線第 1～10 章的 imagegen／image2.0 原始生成圖。
+  - `lin_ch01_*.png`～`lin_ch10_*.png`：裁切／縮放為 `1280×720` 的章節對話背景，共 10 張。
+  - `review/`、`m5-3-lin-story-backgrounds-contact-sheet.png`：人工目視檢查用 review 圖與總覽圖。
+  - `m5-3-lin-story-backgrounds.json`、`m5-3-lin-story-backgrounds-prompts.md`：素材索引、章節搭配、交接備註與 prompt 紀錄。
+- **作者／操作者**：Codex
+- **產生方式**：OpenAI imagegen／image2.0 內建工具逐章產生原始圖，再以 `tools/build-m5-3-lin-story-backgrounds.py` 統一裁成遊戲尺寸、輕度壓暗對話區並輸出 review／contact sheet／manifest。
+- **授權**：本專案自製生成素材，可隨本專案使用與修改。
+- **備註**：此批素材依 `src/data/story/lin_海商線.md` 製作，僅完成素材，尚未接入 `StoryScene`；後續由小航依 `heroId=lin` 與章節編號接入。第 7 章曾因第一版出現類文字符號而重畫，正式 source 採無字純紅保護旗版本。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+
+---
 ## M5-3 彼得・范德堡主線逐章對話背景素材包（2026-06-27）
 
 - **素材位置**：`assets/m5/v2/story/backgrounds/peter-chapters/`

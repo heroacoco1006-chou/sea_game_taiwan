@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-27] 素材 | 操作者：Codex | 產出林海生主線十章對話背景素材包
+
+- 背景：老闆要求完成最後一位主人翁林海生的事件背景，使三條主線都有逐章對話背景素材；本輪只建立素材，程式接入交由小航。
+- 完成事項：
+  - 依 `src/data/story/lin_海商線.md` 十章內容，逐章產出月港、笨港、安海、大員、料羅灣、海邊小廟與鹿耳門等 10 張原創 V2 精緻 2D 手繪背景。
+  - 新增 `tools/build-m5-3-lin-story-backgrounds.py`，將 source 統一裁成 `1280×720`，輕度壓暗下方對話區，並輸出 review 圖、contact sheet 與 manifest。
+  - 新增 `m5-3-lin-story-backgrounds-prompts.md`，逐張記錄場景重點、建議搭配的劇情段落與小航後續接入方式。
+  - 第 7 章第一版因出現類文字符號而棄用，重新生成無字、無徽記的純紅鄭氏保護旗版本；更新 `status.md` 與 `assets/CREDITS.md`。
+- 視覺確認：已檢查 `m5-3-lin-story-backgrounds-contact-sheet.png`，10 張由月港出海、海商集團、料羅灣火攻一路收束到鹿耳門攻台；海戰無人物傷亡或血腥畫面，第 7 章正式版未見假文字、UI 或前景人物。
+- 協作：本輪未修改任何遊戲場景程式，也未碰小航目前正在修改的 `src/art.ts`。待小航依 `heroId=lin`＋`chapterNo` 接入 `BootScene`／`StoryScene`。
 ## [2026-06-27] 開發 | 操作者：小航 | 接入千代線各章專屬劇情背景
 
 - 背景：Codex 已產出千代線 10 章對話背景（`assets/m5/v2/story/backgrounds/chiyo-chapters/chiyo_ch01…ch10_*.png`）。
