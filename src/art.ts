@@ -80,9 +80,9 @@ export const FACILITY_ICON_URLS = byBaseName(
 export const STORY_BACKGROUND_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/story/backgrounds/*_story_bg.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
-// 各章專屬劇情背景：檔名 `<hero>_ch01_xxx.png`（目前千代線 10 章）。
+// 各章專屬劇情背景：放在 `<hero>-chapters/`，檔名 `<hero>_chNN_xxx.png`（千代、彼得…，林線日後補也自動生效）。
 export const STORY_CHAPTER_BG_URLS = byBaseName(
-  import.meta.glob('/assets/m5/v2/story/backgrounds/chiyo-chapters/*_ch*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+  import.meta.glob('/assets/m5/v2/story/backgrounds/*-chapters/*_ch*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
 export const CODEX_ILLUSTRATION_URLS = byBaseName(
