@@ -1,0 +1,220 @@
+{
+  "version": "m5-3-peter-story-backgrounds-v1",
+  "created": "2026-06-27",
+  "operator": "Codex",
+  "license": "original_generated_for_project",
+  "generator": "OpenAI imagegen/image2.0 built-in tool plus local Pillow crop, resize and dialogue-zone toning",
+  "style": "V2 refined 2D painterly maritime RPG story backgrounds",
+  "integration_status": "assets_only_not_wired_into_StoryScene",
+  "recommended_runtime_selector": "heroId=peter and chapter=1..10",
+  "existing_fallback": "assets/m5/v2/story/backgrounds/peter_story_bg.png",
+  "backgrounds": [
+    {
+      "id": "peter_ch01_batavia_orders",
+      "chapter": 1,
+      "chapter_title": "巴達維亞的命令",
+      "source": "peter_ch01_batavia_orders_source.png",
+      "output": "peter_ch01_batavia_orders.png",
+      "setting": "1622 年巴達維亞 VOC 商館與熱帶運河",
+      "usage": "本章全段；搭配彼得初抵亞洲、商館長攤開海圖、公司要求取得中國沿岸貿易據點。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 1
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch01_batavia_orders_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch01_batavia_orders.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch01_batavia_orders_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch02_penghu_withdrawal",
+      "chapter": 2,
+      "chapter_title": "澎湖受挫",
+      "source": "peter_ch02_penghu_withdrawal_source.png",
+      "output": "peter_ch02_penghu_withdrawal.png",
+      "setting": "1622～1624 年澎湖荷蘭堡壘與明朝水師",
+      "usage": "本章全段；搭配明朝通事交涉、水師逼近、荷蘭撤出澎湖並決定轉往大員。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 2
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch02_penghu_withdrawal_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch02_penghu_withdrawal.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch02_penghu_withdrawal_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch03_tayouan_construction",
+      "chapter": 3,
+      "chapter_title": "轉進大員建城",
+      "source": "peter_ch03_tayouan_construction_source.png",
+      "output": "peter_ch03_tayouan_construction.png",
+      "setting": "1624 年大員沙洲與熱蘭遮城工地",
+      "usage": "本章全段；搭配交付木材、沙洲打地基，以及建立東亞轉口貿易據點的期待。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 3
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch03_tayouan_construction_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch03_tayouan_construction.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch03_tayouan_construction_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch04_deer_sugar",
+      "chapter": 4,
+      "chapter_title": "鹿皮與蔗糖",
+      "source": "peter_ch04_deer_sugar_source.png",
+      "output": "peter_ch04_deer_sugar.png",
+      "setting": "1620 年代台灣南部草原、鹿群與蔗田",
+      "usage": "本章全段；搭配西拉雅獵人提醒鹿群有限、鹿皮與蔗糖出口，以及彼得反思土地不只是帳目。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 4
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch04_deer_sugar_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch04_deer_sugar.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch04_deer_sugar_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch05_hamada_dispute",
+      "chapter": 5,
+      "chapter_title": "濱田彌兵衛事件",
+      "source": "peter_ch05_hamada_dispute_source.png",
+      "output": "peter_ch05_hamada_dispute.png",
+      "setting": "1628 年熱蘭遮城日荷貿易談判破裂後的商館",
+      "usage": "本章全段；搭配日荷稅務與管轄權爭執、談判破裂、對日貿易中斷的代價。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 5
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch05_hamada_dispute_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch05_hamada_dispute.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch05_hamada_dispute_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch06_keelung_takeover",
+      "chapter": 6,
+      "chapter_title": "驅逐西班牙",
+      "source": "peter_ch06_keelung_takeover_source.png",
+      "output": "peter_ch06_keelung_takeover.png",
+      "setting": "1642 年雞籠港與聖薩爾瓦多城",
+      "usage": "本章全段；搭配荷蘭艦隊接收北台灣、西班牙撤離，以及彼得反思島上居民未被詢問。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 6
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch06_keelung_takeover_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch06_keelung_takeover.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch06_keelung_takeover_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch07_colonial_system",
+      "chapter": 7,
+      "chapter_title": "贌社與王田",
+      "source": "peter_ch07_colonial_system_source.png",
+      "output": "peter_ch07_colonial_system.png",
+      "setting": "1640 年代熱蘭遮城行政室與台灣田地",
+      "usage": "本章全段；搭配贌社、王田、稅收、傳教與學校制度，以及干治士對人心與負擔的質問。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 7
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch07_colonial_system_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch07_colonial_system.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch07_colonial_system_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch08_guo_huaiyi_aftermath",
+      "chapter": 8,
+      "chapter_title": "郭懷一事件",
+      "source": "peter_ch08_guo_huaiyi_aftermath_source.png",
+      "output": "peter_ch08_guo_huaiyi_aftermath.png",
+      "setting": "1652 年郭懷一事件後的台南農田",
+      "usage": "本章全段；搭配重稅引發反抗、事件被鎮壓，以及彼得理解公司獲利下累積的裂痕。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 8
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch08_guo_huaiyi_aftermath_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch08_guo_huaiyi_aftermath.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch08_guo_huaiyi_aftermath_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch09_storm_warning",
+      "chapter": 9,
+      "chapter_title": "風雨將至",
+      "source": "peter_ch09_storm_warning_source.png",
+      "output": "peter_ch09_storm_warning.png",
+      "setting": "1650 年代末熱蘭遮城海望室與台灣海峽風暴",
+      "usage": "本章全段；搭配情報官帶來鄭成功可能攻台的消息，以及彼得質疑城牆能否抵擋信念。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 9
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch09_storm_warning_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch09_storm_warning.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch09_storm_warning_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "id": "peter_ch10_zeelandia_surrender",
+      "chapter": 10,
+      "chapter_title": "熱蘭遮城的最後",
+      "source": "peter_ch10_zeelandia_surrender_source.png",
+      "output": "peter_ch10_zeelandia_surrender.png",
+      "setting": "1662 年熱蘭遮城最後清晨與投降撤離",
+      "usage": "本章全段；搭配糧盡援絕、揆一詢問是否守得住、簽署投降、荷蘭旗降下與彼得告別台灣。",
+      "selector": {
+        "heroId": "peter",
+        "chapter": 10
+      },
+      "source_path": "assets/m5/v2/story/backgrounds/peter-chapters/source/peter_ch10_zeelandia_surrender_source.png",
+      "runtime_path": "assets/m5/v2/story/backgrounds/peter-chapters/peter_ch10_zeelandia_surrender.png",
+      "review_path": "assets/m5/v2/story/backgrounds/peter-chapters/review/peter_ch10_zeelandia_surrender_review.png",
+      "runtime_size": [
+        1280,
+        720
+      ]
+    }
+  ],
+  "contact_sheet": "assets/m5/v2/story/backgrounds/peter-chapters/m5-3-peter-story-backgrounds-contact-sheet.png",
+  "handoff": [
+    "Keep peter_story_bg.png as the generic fallback.",
+    "Load these ten images with stable texture keys based on id.",
+    "In StoryScene, select by heroId plus chapterNo; mate stories should continue using the hero fallback unless separately mapped.",
+    "No runtime TypeScript files were changed in this asset-only delivery."
+  ]
+}

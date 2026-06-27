@@ -15,6 +15,17 @@
 - 後續：林／彼得線若補各章背景，沿用同命名（`<hero>_chNN_xxx.png` 放對應資料夾、調整 glob）即自動生效。
 - 協作：只動 art.ts／BootScene／StoryScene（接入程式），未改 Codex 的素材檔。
 
+## [2026-06-27] 素材 | 操作者：Codex | 產出彼得主線十章對話背景素材包
+
+- 背景：老闆要求接續田中千代素材規格，依荷蘭主人翁彼得・范德堡的完整主線劇本製作事件背景；本輪只建立素材，程式接入交由小航。
+- 完成事項：
+  - 依 `src/data/story/peter_VOC線.md` 十章內容，逐章產出巴達維亞、澎湖、大員、台灣南部、雞籠與 1662 年熱蘭遮城等 10 張原創 V2 精緻 2D 手繪背景。
+  - 新增 `tools/build-m5-3-peter-story-backgrounds.py`，將 source 統一裁成 `1280×720`，輕度壓暗下方對話區，並輸出 review 圖、contact sheet 與 manifest。
+  - 新增 `m5-3-peter-story-backgrounds-prompts.md`，逐張記錄場景重點、建議搭配的劇情段落與小航後續接入方式。
+  - 更新 `status.md` 與 `assets/CREDITS.md`；既有 `peter_story_bg.png` 保留作通用 fallback。
+- 視覺確認：已檢查 `m5-3-peter-story-backgrounds-contact-sheet.png`，10 張由 VOC 商業野心逐步轉向殖民反思與投降告別，章節辨識度清楚；郭懷一事件與圍城場景無屍體、血腥或近距離戰鬥，未見 UI、可讀文字或前景人物。
+- 協作：本輪未修改任何遊戲場景程式。待小航依 `heroId=peter`＋`chapterNo` 接入 `BootScene`／`StoryScene`。
+
 ## [2026-06-27] 素材 | 操作者：Codex | 產出田中千代主線十章對話背景素材包
 
 - 背景：老闆希望日本女性主人翁田中千代的對話畫面不再全線只使用一張通用背景，要求依主線劇本製作不少於 10 張 image2.0 背景；本輪只建立素材，程式接入交由小航。
