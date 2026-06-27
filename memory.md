@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-25] 交易經濟模型（買賣價分離＋供需＋流行，v16）
+
+- **買價** = `priceOf(state,port,good,day)`（市價：特產×0.6／需求×1.5／行情事件×1.5／每日雜訊）。只有 `port.sells` 的貨買得到。
+- **賣價** = `sellPriceOf(state,port,good,day)` = 市價 ×(1+交涉加成) ×流行倍率 ×(1−供需飽和)；**且若該貨也在 `port.sells`（本港有賣），賣價強制 ≤ 市價×0.9** → 杜絕同港買進立刻賣出獲利（原地洗錢防呆）。改賣價邏輯一律走 `sellPriceOf`，勿在場景各自重算。
+- **供需飽和** `state.demand['portId|goodId']={sat,day}`：賣出時 `recordSale` 累積（每件 +0.003、上限 0.5），讀取時 `currentSaturation` 依天數 −0.018/天回復（約 28 天回滿）。
+- **流行** `state.fad={portId,goodId,untilDay}`：全域同時僅一個（限該港不販售的貨），賣價 ×2，持續 `FAD_DAYS=30` 天，由 `refreshMarketEvents`（隨日推進呼叫）輪替。
+- 常數集中在 state.ts（SAT_PER_UNIT／SAT_MAX／SAT_RECOVER_PER_DAY／FAD_DAYS／FAD_MULT），**數值為首版、待試玩微調**。存檔含 demand/fad，動結構要升版＋遷移。
+
 ## [2026-06-25] 全遊戲 2× 超取樣高清架構（已實作，所有場景必須遵守）
 
 - 老闆對畫面清晰度標準高（對齊「大航海4」），已導入**整體 2× 超取樣**：

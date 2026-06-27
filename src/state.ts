@@ -338,6 +338,10 @@ export interface GameState {
   /** 本次出海已航行天數（入港歸零） */
   daysAtSea: number;
   events: MarketEvent[];
+  /** 供需飽和：玩家頻繁在某港賣某貨會壓低賣價，隨時間回復。key=`portId|goodId` */
+  demand: Record<string, { sat: number; day: number }>;
+  /** 流行事件：全世界同時只有一個「都市×商品」流行（該都市原本不販售該貨），賣價×2 */
+  fad: { portId: string; goodId: string; untilDay: number } | null;
   quest: Quest | null;
   /** 主角個人裝備 */
   equip: Equip;
@@ -526,7 +530,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 15,
+    version: 16,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -539,6 +543,8 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     fatigue: 0,
     daysAtSea: 0,
     events: [],
+    demand: {},
+    fad: null,
     quest: null,
     equip: { weapon: null, armor: null, accessory: null },
     mates: [],
@@ -1291,6 +1297,13 @@ function migrateSave(raw: string): GameState | null {
       (full.escorts ?? []).forEach(fixShip);
       full.version = 15;
     }
+    // v15 → v16：新增交易動態（供需飽和 demand、流行 fad），舊檔補空值。
+    if (s.version < 16) {
+      const full = s as GameState;
+      full.demand = full.demand ?? {};
+      full.fad = full.fad ?? null;
+      full.version = 16;
+    }
     return s as GameState;
   } catch {
     return null;
@@ -1608,7 +1621,8 @@ export function windLabel(headingDir: number, wind: Wind): string {
 
 // ---------- 價格 ----------
 
-/** 某港口某商品在某一天的市價（特產便宜、需求品貴、每日波動、行情事件加成） */
+/** 某港口某商品在某一天的「市價／買價」（特產便宜、需求品貴、每日波動、行情事件加成）。
+ *  賣價另見 sellPriceOf（含交涉加成、流行、供需飽和、原地洗錢防呆）。 */
 export function priceOf(state: GameState, port: Port, goodId: string, day: number): number {
   const good = GOODS.find((g) => g.id === goodId);
   if (!good) return 0;
@@ -1623,8 +1637,61 @@ export function priceOf(state: GameState, port: Port, goodId: string, day: numbe
   return Math.max(1, Math.round(good.basePrice * mod * noise));
 }
 
-/** 每 7 天產生新的行情事件（2 個港口的需求大增），並清掉過期事件 */
+// ---- 交易動態：供需飽和、流行、賣價（v16） ----
+const SAT_PER_UNIT = 0.003; // 每賣 1 件累積的供需飽和度（壓低後續賣價）
+const SAT_MAX = 0.5; // 飽和上限：賣價最多被壓 50%
+const SAT_RECOVER_PER_DAY = 0.018; // 每天回復的飽和度（約 28 天從滿回到 0）
+const FAD_DAYS = 30; // 流行持續天數（約一個月）
+const FAD_MULT = 2; // 流行時賣價倍率
+
+/** 某港某貨目前的供需飽和度（0~SAT_MAX）：隨時間自動回復。 */
+export function currentSaturation(state: GameState, portId: string, goodId: string, day: number): number {
+  const e = state.demand?.[portId + '|' + goodId];
+  if (!e) return 0;
+  const decayed = e.sat - SAT_RECOVER_PER_DAY * Math.max(0, day - e.day);
+  return Math.max(0, Math.min(SAT_MAX, decayed));
+}
+
+/** 玩家在某港賣出某貨後，累積供需飽和度（壓低後續賣價）。 */
+export function recordSale(state: GameState, port: Port, goodId: string, qty: number, day: number): void {
+  if (!state.demand) state.demand = {};
+  const cur = currentSaturation(state, port.id, goodId, day);
+  state.demand[port.id + '|' + goodId] = { sat: Math.min(SAT_MAX, cur + qty * SAT_PER_UNIT), day };
+}
+
+/** 該港該貨是否正在流行（賣價×2）：流行的貨必須是該港原本不販售的。 */
+export function isFad(state: GameState, port: Port, goodId: string, day: number): boolean {
+  const f = state.fad;
+  return !!f && f.portId === port.id && f.goodId === goodId && f.untilDay >= day && !port.sells.includes(goodId);
+}
+
+/**
+ * 賣價：市價 ×(1+交涉加成) ×流行倍率 ×(1−供需飽和)。
+ * 防原地洗錢：凡「本港也販售」的貨物，賣價一律壓在市價（買價）的 0.9 以下，
+ * 確保同港買進立刻賣出必定虧損。
+ */
+export function sellPriceOf(state: GameState, port: Port, goodId: string, day: number): number {
+  const market = priceOf(state, port, goodId, day);
+  let mult = 1 + tradeBonus(state);
+  if (isFad(state, port, goodId, day)) mult *= FAD_MULT;
+  mult *= 1 - currentSaturation(state, port.id, goodId, day);
+  let price = Math.round(market * mult);
+  if (port.sells.includes(goodId)) price = Math.min(price, Math.round(market * 0.9));
+  return Math.max(1, price);
+}
+
+/** 每 7 天產生新行情事件（2 港需求大增）＋輪替流行事件，並清掉過期事件 */
 export function refreshMarketEvents(state: GameState): void {
+  // 流行事件輪替（先做，避免被下方 early-return 跳過）：全世界同時僅一個都市×商品流行。
+  if (!state.fad || state.fad.untilDay < state.day) {
+    const period = Math.floor(state.day / FAD_DAYS);
+    const port = PORTS[Math.floor(hashNoise(period, 'fadp') * PORTS.length)];
+    const pool = GOODS.filter((g) => !port.sells.includes(g.id));
+    if (pool.length > 0) {
+      const good = pool[Math.floor(hashNoise(period, 'fadg' + port.id) * pool.length)];
+      state.fad = { portId: port.id, goodId: good.id, untilDay: state.day + FAD_DAYS };
+    }
+  }
   state.events = state.events.filter((e) => e.untilDay >= state.day);
   const week = Math.floor((state.day - 1) / 7);
   const have = state.events.length;

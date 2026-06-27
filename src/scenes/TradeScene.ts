@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, GOODS, Good, Port, priceOf, cargoCount, cargoMax, saveGame, avgCost, tradeBonus,
+  GameState, PORTS, GOODS, Good, Port, priceOf, sellPriceOf, recordSale, isFad, currentSaturation,
+  cargoCount, cargoMax, saveGame, avgCost,
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -60,6 +61,15 @@ export default class TradeScene extends Phaser.Scene {
     this.add
       .text(W / 2, 82, '左＝我的貨艙（看賺賠）　右＝本港販售（▼特產便宜）｜↑↓選貨、←→換欄、或滑鼠點選', textStyle(14, '#6b5530'))
       .setOrigin(0.5);
+    // 本港流行情報（流行商品賣價×2）：讓玩家知道帶什麼來賣最划算
+    if (this.state.fad && this.state.fad.portId === this.port.id && this.state.fad.untilDay >= this.state.day) {
+      const fg = GOODS.find((x) => x.id === this.state.fad!.goodId);
+      if (fg) {
+        this.add
+          .text(W / 2, 100, `🔥 本港正流行【${fg.name}】，賣到此地價格 ×2！`, textStyle(15, '#b8362a'))
+          .setOrigin(0.5);
+      }
+    }
 
     // 欄位標題
     this.add.text(LEFT_X + COL_W / 2, 118, '📦 我的貨艙', textStyle(20)).setOrigin(0.5);
@@ -208,11 +218,14 @@ export default class TradeScene extends Phaser.Scene {
     const own = s.cargo[g.id] ?? 0;
     let line = `${g.name}　市價 ${price} 兩`;
     if (!this.port.sells.includes(g.id)) line += '（本港不販售，只收購）';
+    if (isFad(s, this.port, g.id, s.day)) line += '　🔥此地正流行（賣價×2）';
+    else if (currentSaturation(s, this.port.id, g.id, s.day) > 0.05) line += '　📉此地需求漸滿（賣價下滑）';
     if (own > 0) {
+      const sell = this.sellPriceOf(g.id);
       const avg = avgCost(s, g.id);
-      const diff = this.sellPriceOf(g.id) - avg;
+      const diff = sell - avg;
       const tag = diff > 0 ? `每件賺 ${diff} 兩` : diff < 0 ? `每件賠 ${-diff} 兩` : '損益兩平';
-      line += `　持有 ${own}・均 ${avg} 兩（${tag}）`;
+      line += `　持有 ${own}・賣價 ${sell}・均 ${avg}（${tag}）`;
     }
     this.detailName.setText(line);
     this.detailDesc.setText(g.desc);
@@ -275,9 +288,10 @@ export default class TradeScene extends Phaser.Scene {
     if (can < qty) toast(this, `只買得起／裝得下 ${can} 件`);
   }
 
-  /** 賣出價（含算盤飾品加成；無算盤時等於市價） */
+  /** 賣出價（交涉加成＋流行＋供需飽和＋原地洗錢防呆，集中於 state.sellPriceOf）。
+   *  註：此處的裸名 sellPriceOf 指 state 匯入的函式，非本類別方法。 */
   private sellPriceOf(id: string): number {
-    return Math.round(priceOf(this.state, this.port, id, this.state.day) * (1 + tradeBonus(this.state)));
+    return sellPriceOf(this.state, this.port, id, this.state.day);
   }
 
   private sell(qty: number): void {
@@ -295,6 +309,8 @@ export default class TradeScene extends Phaser.Scene {
     s.costBasis[id] = Math.round(basis * ((own - can) / own));
     s.gold += price * can;
     s.cargo[id] = own - can;
+    // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）
+    recordSale(s, this.port, id, can, s.day);
     if (s.cargo[id] === 0) {
       delete s.cargo[id];
       delete s.costBasis[id];
