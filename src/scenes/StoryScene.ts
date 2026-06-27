@@ -4,7 +4,7 @@ import {
   getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
 } from '../state';
 import type { StoryLine } from '../state';
-import { portraitKey, storyBackgroundKey } from '../art';
+import { portraitKey, storyBackgroundKey, storyChapterBgKey } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
 
@@ -120,8 +120,17 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   private createStoryBackground(W: number, H: number): void {
-    const bgKey = storyBackgroundKey(`${this.heroId}_story_bg`);
-    if (this.textures.exists(bgKey)) {
+    // 優先用該章專屬背景（如千代線 chiyo_ch01…），沒有才退回主角通用背景。
+    let bgKey = '';
+    if (this.mode === 'story') {
+      const chKey = storyChapterBgKey(this.heroId, this.chapterNo);
+      if (this.textures.exists(chKey)) bgKey = chKey;
+    }
+    if (!bgKey) {
+      const heroKey = storyBackgroundKey(`${this.heroId}_story_bg`);
+      if (this.textures.exists(heroKey)) bgKey = heroKey;
+    }
+    if (bgKey) {
       this.add.image(W / 2, H / 2, bgKey).setDisplaySize(W, H).setDepth(-20);
     } else {
       this.add.rectangle(W / 2, H / 2, W, H, COLORS.seaDeep).setDepth(-20);

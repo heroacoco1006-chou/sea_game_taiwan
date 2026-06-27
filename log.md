@@ -7,6 +7,14 @@
 
 ---
 
+## [2026-06-27] 開發 | 操作者：小航 | 接入千代線各章專屬劇情背景
+
+- 背景：Codex 已產出千代線 10 章對話背景（`assets/m5/v2/story/backgrounds/chiyo-chapters/chiyo_ch01…ch10_*.png`）。
+- 完成：`art.ts` 新增 `STORY_CHAPTER_BG_URLS`（glob `chiyo-chapters/*_ch*.png`）＋`storyChapterBgKey(hero,chapter)`＋`STORY_CHAPTER_BG_BY_KEY`（把檔名 `<hero>_chNN_xxx` 正規化成材質 key→url）；`BootScene` 預載；`StoryScene.createStoryBackground` 在 story 模式優先用該章背景，無則退回 `<hero>_story_bg` 通用背景、再退回海色矩形。
+- 驗證：preview 實測——10 章材質皆載入；千代 ch1→storybgch_chiyo_1、ch5→_5、ch10→_10；林 ch1 正確 fallback 到 storybg_lin_story_bg；截圖確認千代 ch1 平戶港背景正常渲染。build 通過（千代 10 張背景已 bundle 進 dist）。
+- 後續：林／彼得線若補各章背景，沿用同命名（`<hero>_chNN_xxx.png` 放對應資料夾、調整 glob）即自動生效。
+- 協作：只動 art.ts／BootScene／StoryScene（接入程式），未改 Codex 的素材檔。
+
 ## [2026-06-27] 素材 | 操作者：Codex | 產出田中千代主線十章對話背景素材包
 
 - 背景：老闆希望日本女性主人翁田中千代的對話畫面不再全線只使用一張通用背景，要求依主線劇本製作不少於 10 張 image2.0 背景；本輪只建立素材，程式接入交由小航。

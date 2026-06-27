@@ -154,6 +154,7 @@ status: draft
   - [x] `assets/CREDITS.md` 建立並登錄本批素材來源；確認 `art/` 參考圖只作氛圍參考，不納入正式素材。
   - [x] 接入 BootScene／StoryScene（2026-06-19）：`src/art.ts` 用 import.meta.glob 收 V2 素材 URL；BootScene preload 載入頭像/船隻；StoryScene 對話框上方顯示說話者頭像（對白＝說話者、心聲＝主角、旁白隱藏）。
   - [x] 劇情背景接入（2026-06-22）：三位主角各一張 1280×720 劇情對話背景，路徑 `assets/m5/v2/story/backgrounds/`；`src/art.ts` 新增 `STORY_BACKGROUND_URLS`，BootScene 預載，StoryScene 依 `heroId` 顯示對應背景並保留舊海色 fallback。
+  - [x] 千代線各章專屬背景接入（2026-06-27）：Codex 產出千代線 10 章對話背景（`assets/m5/v2/story/backgrounds/chiyo-chapters/chiyo_ch01…ch10_*.png`）。`art.ts` 新增 `STORY_CHAPTER_BG_URLS`＋`storyChapterBgKey`＋`STORY_CHAPTER_BG_BY_KEY`（檔名 `<hero>_chNN` 正規化為材質 key），BootScene 預載，StoryScene 在 story 模式優先用該章背景、無則退回主角通用背景。實測：10 章材質皆載入、千代 ch1/5/10 各用對應背景、其餘主角正確 fallback、畫面渲染正常。日後林／彼得線若補各章背景，同命名規則即自動生效。
   - [x] 千代線逐章對話背景素材包（2026-06-27）：Codex 依 `src/data/story/chiyo_朱印船線.md` 使用 imagegen／image2.0 產出第 1～10 章各一張 V2 精緻背景，統一後製為 `1280×720`；source、runtime、review、contact sheet、manifest 與 prompt／使用表集中於 `assets/m5/v2/story/backgrounds/chiyo-chapters/`。逐章搭配為：①平戶朱印船繼承、②大員日荷舊衝突、③月港白銀換生絲、④那霸琉球中介、⑤大員父親真相、⑥平戶鎖國令、⑦長崎出島窗口、⑧出島跨國友誼、⑨出島收到攻台消息、⑩大員熱蘭遮城落幕。既有 `chiyo_story_bg.png` 保留作通用 fallback。
   - [ ] 千代線逐章背景接入（交接小航）：本批目前只有素材，尚未修改 `BootScene`／`StoryScene`；建議依 `heroId === 'chiyo'`＋`chapterNo` 固定選取一章一張，主線以外劇情仍使用通用 fallback。精確素材 id、路徑與對話用途見 `m5-3-chiyo-story-backgrounds.json` 及 `m5-3-chiyo-story-backgrounds-prompts.md`。
   - [x] 接入 WorldMapScene／BattleScene（2026-06-19）：世界地圖旗艦依船型顯示 V2 world sprite；海戰雙方依船型顯示 V2 battle sprite（敵船依 tier 對應船型＋紅色 tint）。

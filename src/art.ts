@@ -80,6 +80,10 @@ export const FACILITY_ICON_URLS = byBaseName(
 export const STORY_BACKGROUND_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/story/backgrounds/*_story_bg.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
+// 各章專屬劇情背景：檔名 `<hero>_ch01_xxx.png`（目前千代線 10 章）。
+export const STORY_CHAPTER_BG_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/story/backgrounds/chiyo-chapters/*_ch*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
 
 export const CODEX_ILLUSTRATION_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-4/codex/illustrations/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
@@ -101,4 +105,14 @@ export const harborSceneKey = (id: string): string => `m5h_${id}`;
 export const explorationIconKey = (id: string): string => `m5x_${id}`;
 export const facilityIconKey = (id: string): string => `m5u_${id}`;
 export const storyBackgroundKey = (id: string): string => `storybg_${id}`;
+export const storyChapterBgKey = (heroId: string, chapter: number): string => `storybgch_${heroId}_${chapter}`;
+/** 由章節背景檔名（如 chiyo_ch01_xxx）正規化為「材質 key → url」，供 BootScene 預載。 */
+export const STORY_CHAPTER_BG_BY_KEY: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const base in STORY_CHAPTER_BG_URLS) {
+    const m = base.match(/^([a-z]+)_ch(\d+)_/);
+    if (m) out[storyChapterBgKey(m[1], parseInt(m[2], 10))] = STORY_CHAPTER_BG_URLS[base];
+  }
+  return out;
+})();
 export const codexIllustrationKey = (id: string): string => `codeximg_${id}`;
