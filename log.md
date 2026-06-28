@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-06-27] 開發 | 操作者：小航 | M5-6e 過場與提示動畫
+
+- 完成三類動畫：
+  - 場景進場淡入：`main.ts` READY hook 加 `cam.fadeIn(200,0,0,0)`（排除 Settings 覆蓋層、Boot）。一處設定、全場景受惠、零場景改動。
+  - 金錢跳動：`ui.ts` 新增 `floatText(scene,x,y,text,color)`（冒字上飄淡出）；TradeScene 買 −X兩（紅）、賣 +X兩（綠）。
+  - 升級／解鎖閃光：`ui.ts` 新增 `flashFx(scene,x,y)`（金色光暈放大淡出）；StoryScene 圖鑑解鎖卡、FacilityScene 委託升級/解鎖、BattleScene 海戰升級。
+- 設計：每個效果單物件＋單 tween、onComplete 銷毀，低階機友善。
+- 驗證：`npm run build` 通過。**preview 本次背景分頁節流、Boot 卡 9% 無法渲染**，故未能截圖驗證；fadeIn/float/flash 皆標準 Phaser 相機效果與 tween，僅依賴遊戲迴圈（老闆瀏覽器正常），已請老闆於 5173 目視。若 fadeIn 有任何不適一行即可移除/調整。
+- 協作：動 `main.ts`、`ui.ts`、TradeScene／StoryScene／FacilityScene／BattleScene（UI 動畫接點），未碰美術／資料。
+
 ## [2026-06-27] 開發 | 操作者：小航 | 接入彼得＋林線各章劇情背景（通用化 glob，三線全到位）
 
 - 背景：Codex 陸續產出彼得線、林海生線各 10 章對話背景（`<hero>-chapters/<hero>_ch01…ch10_*.png`），加上先前千代線，三主角各章背景皆備齊。

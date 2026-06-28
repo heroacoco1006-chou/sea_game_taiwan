@@ -3,7 +3,7 @@ import {
   GameState, PORTS, GOODS, Good, Port, priceOf, sellPriceOf, recordSale, isFad, currentSaturation,
   cargoCount, cargoMax, saveGame, avgCost,
 } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, floatText } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 const LIST_TOP = 150;
@@ -284,6 +284,7 @@ export default class TradeScene extends Phaser.Scene {
     s.gold -= price * can;
     s.cargo[id] = (s.cargo[id] ?? 0) + can;
     s.costBasis[id] = (s.costBasis[id] ?? 0) + price * can;
+    floatText(this, 1047, BASE_H - 150, `−${price * can} 兩`, '#ffb0a0');
     this.afterTrade();
     if (can < qty) toast(this, `只買得起／裝得下 ${can} 件`);
   }
@@ -309,6 +310,7 @@ export default class TradeScene extends Phaser.Scene {
     s.costBasis[id] = Math.round(basis * ((own - can) / own));
     s.gold += price * can;
     s.cargo[id] = own - can;
+    floatText(this, 1047, BASE_H - 150, `+${price * can} 兩`, '#b8f0c0');
     // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）
     recordSale(s, this.port, id, can, s.day);
     if (s.cargo[id] === 0) {

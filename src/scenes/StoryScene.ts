@@ -6,7 +6,7 @@ import {
 import type { StoryLine } from '../state';
 import { portraitKey, storyBackgroundKey, storyChapterBgKey } from '../art';
 import { audio } from '../audio';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, flashFx } from '../ui';
 
 type StoryMode = 'story' | 'mate';
 interface ReturnTo {
@@ -275,6 +275,7 @@ export default class StoryScene extends Phaser.Scene {
     card.lineStyle(3, COLORS.gold, 1);
     card.strokeRoundedRect(90, 484, W - 180, 180, 10);
     this.dyn.push(card);
+    flashFx(this, 126, 508); // 解鎖閃光（M5-6e）
     this.dyn.push(this.add.text(110, 498, `✦ 解鎖圖鑑【${line.codexTitle ?? ''}】`, textStyle(19, '#7a5230')));
     const body = this.add.text(110, 532, line.text, {
       ...textStyle(18, '#4a3a22'),

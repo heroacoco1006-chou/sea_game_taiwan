@@ -6,7 +6,7 @@ import {
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
   addXp, levelUpMessage,
 } from '../state';
-import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
+import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
@@ -247,7 +247,7 @@ export default class FacilityScene extends Phaser.Scene {
           s.quest = null;
           const lv = levelUpMessage(addXp(s, 60));
           audio.playSfx('coin');
-          if (lv) audio.playSfx('levelup');
+          if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
           saveGame(s);
           this.refreshInfo();
           toast(this, `委託完成！獲得 ${q.reward} 兩`);
@@ -270,8 +270,8 @@ export default class FacilityScene extends Phaser.Scene {
         s.quest = null;
         const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
         audio.playSfx('coin');
-        if (unlocked.length) audio.playSfx('unlock');
-        if (lv) audio.playSfx('levelup');
+        if (unlocked.length) { audio.playSfx('unlock'); flashFx(this, 640, 130); }
+        if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
         saveGame(s);
         this.refreshInfo();
         toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}`);

@@ -6,7 +6,7 @@ import {
 } from '../state';
 import { shipBattleKey } from '../art';
 import { audio } from '../audio';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, flashFx } from '../ui';
 
 interface Enemy {
   name: string;
@@ -204,7 +204,7 @@ export default class BattleScene extends Phaser.Scene {
     }
     audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
-    if (lv) audio.playSfx('levelup');
+    if (lv) { audio.playSfx('levelup'); flashFx(this, BASE_W / 2, BASE_H / 2); }
     this.refreshPanels();
     this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}${lv ? `\n${lv}` : ''}`);
   }

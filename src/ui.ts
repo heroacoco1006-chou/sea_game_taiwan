@@ -263,3 +263,34 @@ export function toast(scene: Phaser.Scene, msg: string, x = 640, y = 80): void {
     onComplete: () => t.destroy(),
   });
 }
+
+/** 浮動數字（M5-6e）：在 (x,y) 冒出文字、向上飄並淡出。用於金錢增減、經驗等即時回饋。 */
+export function floatText(scene: Phaser.Scene, x: number, y: number, text: string, color = '#fff4d6'): void {
+  const t = scene.add
+    .text(x, y, text, textStyle(22, color))
+    .setOrigin(0.5)
+    .setDepth(1500)
+    .setScrollFactor(0);
+  t.setStroke('#2a1d0f', 5);
+  scene.tweens.add({
+    targets: t,
+    y: y - 40,
+    alpha: { from: 1, to: 0 },
+    duration: 850,
+    ease: 'Quad.easeOut',
+    onComplete: () => t.destroy(),
+  });
+}
+
+/** 閃光（M5-6e）：在 (x,y) 放一圈金色光暈快速放大淡出。用於升級、圖鑑解鎖等高光時刻。 */
+export function flashFx(scene: Phaser.Scene, x: number, y: number, color = 0xfff3c8): void {
+  const ring = scene.add.circle(x, y, 24, color, 0.55).setDepth(1500).setScrollFactor(0);
+  scene.tweens.add({
+    targets: ring,
+    scale: { from: 0.4, to: 3 },
+    alpha: { from: 0.7, to: 0 },
+    duration: 520,
+    ease: 'Quad.easeOut',
+    onComplete: () => ring.destroy(),
+  });
+}

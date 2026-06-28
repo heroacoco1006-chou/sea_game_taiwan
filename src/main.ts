@@ -50,6 +50,11 @@ function applySupersample(scene: Phaser.Scene): void {
   if (!cam) return;
   cam.setZoom(SS);
   cam.setOrigin(0, 0);
+  // M5-6e 過場：每個場景進場時相機淡入（黑→畫面），讓切換柔順、內容像「浮現」。
+  // 設定（覆蓋式，疊在暫停場景上）不淡入，避免閃黑遮住底下畫面。
+  if (scene.scene.key !== 'Settings' && scene.scene.key !== 'Boot') {
+    cam.fadeIn(200, 0, 0, 0);
+  }
 }
 
 /**
