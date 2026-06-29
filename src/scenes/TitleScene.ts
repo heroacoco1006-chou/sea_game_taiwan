@@ -14,15 +14,21 @@ export default class TitleScene extends Phaser.Scene {
     const height = BASE_H;
     audio.playBgm('sailing');
 
-    // 海色背景＋裝飾波紋
-    this.add.rectangle(width / 2, height / 2, width, height, COLORS.seaDeep);
-    const g = this.add.graphics();
-    g.lineStyle(2, 0x2a6a8e, 0.5);
-    for (let y = 80; y < height; y += 60) {
-      for (let x = 30; x < width; x += 90) {
-        g.beginPath();
-        g.arc(x + ((y / 60) % 2) * 45, y, 14, Math.PI * 0.15, Math.PI * 0.85);
-        g.strokePath();
+    // 入口背景：夕陽港灣精緻圖（1672×941＝16:9，剛好滿版不變形）；缺圖時退回海色＋波紋。
+    if (this.textures.exists('title_bg')) {
+      this.add.image(width / 2, height / 2, 'title_bg').setDisplaySize(width, height).setDepth(-10);
+      // 輕度壓暗，確保上方標題面板、按鈕與底部文字清楚易讀
+      this.add.rectangle(width / 2, height / 2, width, height, 0x140c06, 0.22).setDepth(-9);
+    } else {
+      this.add.rectangle(width / 2, height / 2, width, height, COLORS.seaDeep);
+      const g = this.add.graphics();
+      g.lineStyle(2, 0x2a6a8e, 0.5);
+      for (let y = 80; y < height; y += 60) {
+        for (let x = 30; x < width; x += 90) {
+          g.beginPath();
+          g.arc(x + ((y / 60) % 2) * 45, y, 14, Math.PI * 0.15, Math.PI * 0.85);
+          g.strokePath();
+        }
       }
     }
 

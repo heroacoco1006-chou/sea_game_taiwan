@@ -89,6 +89,11 @@ export const CODEX_ILLUSTRATION_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-4/codex/illustrations/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
+// 入口（標題）畫面背景圖（夕陽港灣）。
+export const TITLE_BG_URL: string | undefined = (
+  import.meta.glob('/assets/m5/login_001.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+)['/assets/m5/login_001.png'];
+
 /** Phaser 材質 key 命名（避免和程式生成的材質撞名） */
 export const portraitKey = (id: string): string => `portrait_${id}`;
 export const shipWorldKey = (typeId: string): string => `shipw_${typeId}`;

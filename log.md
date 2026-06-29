@@ -7,6 +7,14 @@
 
 ---
 
+## [2026-06-27] 開發 | 操作者：小航 | 標題畫面換成老闆提供的夕陽港灣背景圖
+
+- 背景：老闆放入 `assets/m5/login_001.png`（1672×941＝16:9，夕陽港灣中式帆船），要當入口畫面背景。
+- 完成：`art.ts` 新增 `TITLE_BG_URL`；BootScene 預載為材質 `title_bg`；`TitleScene` 把原本程式畫的海色＋波紋背景換成此圖（`setDisplaySize(1280,720)` 滿版、16:9 不變形），疊一層 0.22 暗化確保標題面板／按鈕／底部文字易讀；缺圖時自動退回原海色背景。
+- 驗證：preview 實測——title_bg 材質載入、Title 進場淡入完成（fadeAlpha 0，順帶確認 M5-6e fadeIn 正常）、截圖確認夕陽港灣背景滿版顯示、UI 在上方清楚可讀。build 通過（圖已 bundle）。
+- ⚠️ 版權待確認：此圖來源／授權未明，已於 `CREDITS.md` 標「待確認授權」並請老闆確認（須為 CC0／CC-BY／自製生成，非商業遊戲素材）。
+- 協作：動 art.ts／BootScene／TitleScene／CREDITS；新增 assets/m5/login_001.png。
+
 ## [2026-06-27] 開發 | 操作者：小航 | M5-6e 過場與提示動畫
 
 - 完成三類動畫：
