@@ -14,6 +14,21 @@ import {
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton } from '../ui';
+import mapCollisionV3Data from '../data/map_collision_v3.json';
+
+type MapCollisionGrid = {
+  worldWidth: number;
+  worldHeight: number;
+  gridWidth: number;
+  gridHeight: number;
+  landBitsBase64: string;
+};
+
+const MAP_COLLISION_V3 = mapCollisionV3Data as MapCollisionGrid;
+const MAP_COLLISION_V3_BYTES = Uint8Array.from(
+  atob(MAP_COLLISION_V3.landBitsBase64),
+  (char) => char.charCodeAt(0),
+);
 
 const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
@@ -61,6 +76,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private nearExplorePoint: ExplorationPoint | null = null;
   private nearPirate = false;
   private usingFullMapArt = false;
+  private usingV3MapArt = false;
 
   constructor() {
     super('WorldMap');
@@ -92,6 +108,7 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
+    this.ensureShipStartsOnWater();
     this.createPlayerShip();
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.ship, true, 0.12, 0.12);
@@ -143,7 +160,9 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   private createSeaBase(): void {
-    const fullMapKey = worldArtKey('full_map_v2');
+    const v3MapKey = worldArtKey('full_map_v3');
+    this.usingV3MapArt = this.textures.exists(v3MapKey);
+    const fullMapKey = this.usingV3MapArt ? v3MapKey : worldArtKey('full_map_v2');
     this.usingFullMapArt = this.textures.exists(fullMapKey);
     if (this.usingFullMapArt) {
       this.add.image(WORLD_W / 2, WORLD_H / 2, fullMapKey).setDisplaySize(WORLD_W, WORLD_H).setDepth(0);
@@ -356,7 +375,9 @@ export default class WorldMapScene extends Phaser.Scene {
     g.fillStyle(COLORS.seaDeep, 1);
     g.fillRect(mx, my, MINIMAP_W, MINIMAP_H);
 
-    const miniMapKey = this.textures.exists(worldArtKey('full_map_v2_preview')) ? worldArtKey('full_map_v2_preview') : worldArtKey('full_map_v2');
+    const preferredMiniMapKey = this.usingV3MapArt ? worldArtKey('full_map_v3_preview') : worldArtKey('full_map_v2_preview');
+    const fallbackMiniMapKey = this.usingV3MapArt ? worldArtKey('full_map_v3') : worldArtKey('full_map_v2');
+    const miniMapKey = this.textures.exists(preferredMiniMapKey) ? preferredMiniMapKey : fallbackMiniMapKey;
     if (this.usingFullMapArt && this.textures.exists(miniMapKey)) {
       this.add.image(mx, my, miniMapKey).setOrigin(0).setDisplaySize(MINIMAP_W, MINIMAP_H).setDepth(100).setScrollFactor(0).setAlpha(0.96);
     } else {
@@ -890,7 +911,39 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   private isLand(x: number, y: number): boolean {
+    if (this.usingV3MapArt) {
+      const gridX = Phaser.Math.Clamp(
+        Math.floor((x / MAP_COLLISION_V3.worldWidth) * MAP_COLLISION_V3.gridWidth),
+        0,
+        MAP_COLLISION_V3.gridWidth - 1,
+      );
+      const gridY = Phaser.Math.Clamp(
+        Math.floor((y / MAP_COLLISION_V3.worldHeight) * MAP_COLLISION_V3.gridHeight),
+        0,
+        MAP_COLLISION_V3.gridHeight - 1,
+      );
+      const bitIndex = gridY * MAP_COLLISION_V3.gridWidth + gridX;
+      return (MAP_COLLISION_V3_BYTES[bitIndex >> 3] & (1 << (bitIndex & 7))) !== 0;
+    }
     return this.landPolys.some((poly) => Phaser.Geom.Polygon.Contains(poly, x, y));
+  }
+
+  private ensureShipStartsOnWater(): void {
+    if (!this.isLand(this.state.ship.x, this.state.ship.y)) return;
+    const originX = this.state.ship.x;
+    const originY = this.state.ship.y;
+    for (let radius = 16; radius <= 640; radius += 16) {
+      const samples = Math.max(16, Math.ceil((Math.PI * 2 * radius) / 24));
+      for (let i = 0; i < samples; i += 1) {
+        const angle = (i / samples) * Math.PI * 2;
+        const x = Phaser.Math.Clamp(originX + Math.cos(angle) * radius, 10, WORLD_W - 10);
+        const y = Phaser.Math.Clamp(originY + Math.sin(angle) * radius, 10, WORLD_H - 10);
+        if (this.isLand(x, y)) continue;
+        this.state.ship.x = x;
+        this.state.ship.y = y;
+        return;
+      }
+    }
   }
 
   private explorationIconIdForPoint(pointId: string): string {

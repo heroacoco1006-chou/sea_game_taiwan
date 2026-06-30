@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-06-30] full_map_v3 改用圖面海岸位元網格，港口座標維持不變
+
+- 背景：老闆以 ChatGPT Images 2.0 重新產出 `assets/m5/full_map_v3_001.png`。直接沿用舊 `map.json` 多邊形會讓東南亞海岸嚴重錯位；用舊多邊形重畫又會犧牲新圖的山川與島嶼細節。
+- 決策／實作：
+  - 正式視覺圖為 `assets/m5/v2/m5-2/world/full_map_v3.png`；V2檔案保留作回退。
+  - 不移動 `ports.json`、`exploration_points.json`、`discoveries.json` 座標；從V3圖面抽取陸海遮罩，在必要點加入小型港灣／近岸入口。
+  - 碰撞改讀 `src/data/map_collision_v3.json` 的960×720位元網格；只在V3圖載入成功時啟用，V2／程序化回退仍使用 `map.json` 多邊形。
+  - 舊存檔若船位落到新陸地，`WorldMapScene.ensureShipStartsOnWater()` 會尋找640px內最近可航行海面，避免卡死。
+- 驗證：22港皆位於可航行海面且距海岸≤34px；12探索點≤58px；15風景≤52px。產圖與驗證工具為 `tools/build-m5-2-6-full-map-v3-collision-preview.py`。
+
 ## [2026-06-25] 交易經濟模型（買賣價分離＋供需＋流行，v16）
 
 - **買價** = `priceOf(state,port,good,day)`（市價：特產×0.6／需求×1.5／行情事件×1.5／每日雜訊）。只有 `port.sells` 的貨買得到。
