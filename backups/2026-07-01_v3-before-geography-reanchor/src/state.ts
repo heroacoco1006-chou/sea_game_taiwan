@@ -8,7 +8,6 @@ import storyData from './data/story.json';
 import explorationData from './data/exploration_points.json';
 import discoveriesData from './data/discoveries.json';
 import codexData from './data/codex.json';
-import mapReanchorV3Data from './data/map_reanchor_v3.json';
 import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
@@ -296,9 +295,6 @@ export interface DiscoveryEntry extends CodexEntry {
   kind: 'scenery' | 'species' | 'treasure' | 'geography' | 'culture' | 'place';
   x?: number;
   y?: number;
-  /** 地標顯示在陸地；船隻從此海面座標觸發觀察。 */
-  approachX?: number;
-  approachY?: number;
   rewardGold?: number;
   rewardItemId?: string;
 }
@@ -309,9 +305,6 @@ export interface ExplorationPoint {
   region: string;
   x: number;
   y: number;
-  /** 地標顯示在陸地；船隻從此海面座標觸發登陸探索。 */
-  approachX?: number;
-  approachY?: number;
   difficulty: number;
   baseDays: number;
   cost: { food: number; water: number };
@@ -425,14 +418,7 @@ const ACTIVE_SLOT_KEY = 'seagame_active_slot'; // 目前正在玩的格子（自
 function slotKey(slot: number): string {
   return `seagame_save_slot${slot}`;
 }
-const START_POS = { x: 3260, y: 2076 }; // V3 月港外海 fallback
-
-type MapReanchorV3 = {
-  saveVersion: number;
-  ports: Array<{ id: string; oldX: number; oldY: number; newX: number; newY: number }>;
-};
-
-const MAP_REANCHOR_V3 = mapReanchorV3Data as MapReanchorV3;
+const START_POS = { x: 3216, y: 2580 }; // 月港外海（座標 2.4 倍放大後）
 
 function dayForYear(year: number): number {
   return (year - START_YEAR) * 360 + 1;
@@ -441,7 +427,7 @@ function dayForYear(year: number): number {
 function portStartPos(portId: string): { x: number; y: number } {
   const port = PORTS.find((p) => p.id === portId);
   if (!port) return START_POS;
-  return { x: port.x, y: port.y };
+  return { x: port.x, y: port.y + 60 };
 }
 
 export function newPlayerShip(typeId: string, pos: { x: number; y: number }): PlayerShip {
@@ -544,7 +530,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 17,
+    version: 16,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -1317,26 +1303,6 @@ function migrateSave(raw: string): GameState | null {
       full.demand = full.demand ?? {};
       full.fad = full.fad ?? null;
       full.version = 16;
-    }
-    // v16 → v17：V3 地圖依精緻圖面重定位港口與海岸。
-    // 舊檔若停在舊港口附近，移到同一港口的新靠岸點；遠洋船位保留，
-    // 若剛好落在新陸地，WorldMapScene 仍會就近移到海面。
-    if (s.version < MAP_REANCHOR_V3.saveVersion) {
-      const full = s as GameState;
-      const nearest = MAP_REANCHOR_V3.ports
-        .map((port) => ({ port, distance: Math.hypot(full.ship.x - port.oldX, full.ship.y - port.oldY) }))
-        .sort((a, b) => a.distance - b.distance)[0];
-      if (nearest && nearest.distance <= 180) {
-        const dx = nearest.port.newX - full.ship.x;
-        const dy = nearest.port.newY - full.ship.y;
-        full.ship.x = nearest.port.newX;
-        full.ship.y = nearest.port.newY;
-        for (const escort of full.escorts ?? []) {
-          escort.x += dx;
-          escort.y += dy;
-        }
-      }
-      full.version = MAP_REANCHOR_V3.saveVersion;
     }
     return s as GameState;
   } catch {

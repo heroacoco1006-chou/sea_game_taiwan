@@ -6,11 +6,9 @@
       "type": "風景",
       "title": "清水斷崖",
       "body": "清水斷崖位在台灣東岸，高山幾乎直接落入太平洋。從海上望去，能感受到台灣東部海岸陡峭壯觀，也能理解航行時為什麼要小心風浪。",
-      "x": 4004,
-      "y": 2069,
-      "rewardGold": 80,
-      "approachX": 4124,
-      "approachY": 2076
+      "x": 3885,
+      "y": 2420,
+      "rewardGold": 80
     },
     {
       "id": "view_taiwan_west_lagoons",
@@ -18,11 +16,9 @@
       "type": "風景",
       "title": "台灣西南潟湖",
       "body": "大員附近有沙洲、潟湖與淺海，適合船隻停靠，也讓荷蘭人在這裡建立據點。這種地形是台灣南部早期港口發展的重要條件。",
-      "x": 3660,
-      "y": 2610,
-      "rewardGold": 60,
-      "approachX": 3588,
-      "approachY": 2628
+      "x": 3560,
+      "y": 2800,
+      "rewardGold": 60
     },
     {
       "id": "view_penghu_basalt",
@@ -30,11 +26,9 @@
       "type": "風景",
       "title": "澎湖玄武岩",
       "body": "澎湖有許多火山岩地形，柱狀玄武岩像一排排石柱立在海邊。它提醒玩家，島嶼不只有港口，也有獨特的地質故事。",
-      "x": 3347,
-      "y": 2318,
-      "rewardGold": 60,
-      "approachX": 3340,
-      "approachY": 2324
+      "x": 3390,
+      "y": 2650,
+      "rewardGold": 60
     },
     {
       "id": "view_quanzhou_mazu",
@@ -42,11 +36,9 @@
       "type": "風景",
       "title": "泉州媽祖廟",
       "body": "福建海商出海前常祭拜媽祖，祈求平安。媽祖信仰隨著移民與商船傳到台灣、澎湖與東南亞，是航海文化的一部分。",
-      "x": 3288,
-      "y": 1936,
-      "rewardGold": 60,
-      "approachX": 3348,
-      "approachY": 1940
+      "x": 3300,
+      "y": 2360,
+      "rewardGold": 60
     },
     {
       "id": "view_yuegang_river",
@@ -54,11 +46,9 @@
       "type": "風景",
       "title": "月港河道",
       "body": "月港是明代重要民間海外貿易港。河道連接內地市場與海船，讓福建貨物能走向台灣、日本與南洋。",
-      "x": 3235,
-      "y": 2058,
-      "rewardGold": 60,
-      "approachX": 3260,
-      "approachY": 2076
+      "x": 3160,
+      "y": 2490,
+      "rewardGold": 60
     },
     {
       "id": "view_macau_church",
@@ -66,11 +56,9 @@
       "type": "風景",
       "title": "澳門大三巴",
       "body": "澳門是葡萄牙人在中國沿海的重要據點。教堂、商館與港口讓這裡成為歐洲貨物進入東亞的窗口之一。",
-      "x": 3013,
-      "y": 2244,
-      "rewardGold": 70,
-      "approachX": 3076,
-      "approachY": 2292
+      "x": 2760,
+      "y": 2765,
+      "rewardGold": 70
     },
     {
       "id": "view_nagasaki_dejima",
@@ -78,11 +66,9 @@
       "type": "風景",
       "title": "長崎出島",
       "body": "出島是長崎港內的人工島。日本鎖國後，荷蘭商人主要透過這裡與日本貿易，使長崎成為重要的對外窗口。",
-      "x": 5288,
-      "y": 1082,
-      "rewardGold": 70,
-      "approachX": 5260,
-      "approachY": 1132
+      "x": 5330,
+      "y": 1085,
+      "rewardGold": 70
     },
     {
       "id": "view_hirado_trading_post",
@@ -90,11 +76,9 @@
       "type": "風景",
       "title": "平戶商館",
       "body": "平戶曾有荷蘭、英國與華人商人活動，是日本對外貿易的重要港口。朱印船時代，許多商人從這裡出海。",
-      "x": 5235,
-      "y": 939,
-      "rewardGold": 70,
-      "approachX": 5196,
-      "approachY": 996
+      "x": 5048,
+      "y": 800,
+      "rewardGold": 70
     },
     {
       "id": "view_shuri_castle",
@@ -102,11 +86,9 @@
       "type": "風景",
       "title": "首里城",
       "body": "首里城是琉球王國的政治中心。琉球夾在中國、日本與南洋之間，靠著外交與轉口貿易維持自己的位置。",
-      "x": 4742,
-      "y": 1846,
-      "rewardGold": 70,
-      "approachX": 4740,
-      "approachY": 1820
+      "x": 4560,
+      "y": 1900,
+      "rewardGold": 70
     },
     {
       "id": "view_manila_walls",
@@ -114,11 +96,9 @@
       "type": "風景",
       "title": "馬尼拉城牆",
       "body": "西班牙人在馬尼拉建立城牆城市，讓它成為跨太平洋大帆船貿易的中心。墨西哥白銀也從這裡流入亞洲市場。",
-      "x": 4248,
-      "y": 3182,
-      "rewardGold": 80,
-      "approachX": 4196,
-      "approachY": 3204
+      "x": 4000,
+      "y": 3560,
+      "rewardGold": 80
     },
     {
       "id": "view_hoian_bridge",
@@ -126,11 +106,9 @@
       "type": "風景",
       "title": "會安日本橋",
       "body": "會安曾有日本人町與唐人街。日本橋象徵不同商人社群在同一座港口城市中往來、交易與生活。",
-      "x": 2493,
-      "y": 2875,
-      "rewardGold": 70,
-      "approachX": 2556,
-      "approachY": 2884
+      "x": 2735,
+      "y": 3515,
+      "rewardGold": 70
     },
     {
       "id": "view_malacca_strait",
@@ -138,11 +116,9 @@
       "type": "風景",
       "title": "麻六甲海峽",
       "body": "麻六甲海峽連接印度洋與南海，是東西方船隊必經的航路。控制這裡，就能影響香料、絲綢與白銀的流動。",
-      "x": 1273,
-      "y": 4376,
-      "rewardGold": 90,
-      "approachX": 1332,
-      "approachY": 4380
+      "x": 1450,
+      "y": 4770,
+      "rewardGold": 90
     },
     {
       "id": "view_batavia_canal",
@@ -150,11 +126,9 @@
       "type": "風景",
       "title": "巴達維亞運河",
       "body": "巴達維亞是 VOC 在亞洲的總部。荷蘭人挖運河、建倉庫，把這裡變成管理東南亞貿易的重要城市。",
-      "x": 1745,
-      "y": 5272,
-      "rewardGold": 80,
-      "approachX": 1748,
-      "approachY": 5292
+      "x": 2300,
+      "y": 5315,
+      "rewardGold": 80
     },
     {
       "id": "view_banten_pepper",
@@ -162,11 +136,9 @@
       "type": "風景",
       "title": "萬丹胡椒市集",
       "body": "萬丹以胡椒聞名，許多國家的商船都想在這裡買到香料。市集反映出東南亞港口的熱鬧與競爭。",
-      "x": 1596,
-      "y": 5330,
-      "rewardGold": 80,
-      "approachX": 1604,
-      "approachY": 5340
+      "x": 1990,
+      "y": 5360,
+      "rewardGold": 80
     },
     {
       "id": "view_banda_islands",
@@ -174,11 +146,9 @@
       "type": "風景",
       "title": "班達群島",
       "body": "班達群島是肉豆蔻的重要產地。這種香料在歐洲非常昂貴，也讓各國勢力為了控制產地而競爭。",
-      "x": 5696,
-      "y": 5124,
-      "rewardGold": 90,
-      "approachX": 5692,
-      "approachY": 5156
+      "x": 4205,
+      "y": 5495,
+      "rewardGold": 90
     },
     {
       "id": "geo_yushan",

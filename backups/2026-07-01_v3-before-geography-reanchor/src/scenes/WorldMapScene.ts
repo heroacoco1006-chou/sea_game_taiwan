@@ -68,8 +68,8 @@ export default class WorldMapScene extends Phaser.Scene {
   private wind!: Wind;
   private heading = 0;
   private paused = false; // 事件對話框出現時暫停航行
-  private discoveryMarkers: Array<{ entry: DiscoveryEntry; icon: Phaser.GameObjects.Image; approachMarker: Phaser.GameObjects.Arc }> = [];
-  private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; approachMarker: Phaser.GameObjects.Arc }> = [];
+  private discoveryMarkers: Array<{ entry: DiscoveryEntry; icon: Phaser.GameObjects.Image }> = [];
+  private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }> = [];
   private pirateMarker: Phaser.GameObjects.Image | null = null;
   private nearDiscovery: DiscoveryEntry | null = null;
   private nearbySceneryHint: DiscoveryEntry | null = null;
@@ -109,7 +109,6 @@ export default class WorldMapScene extends Phaser.Scene {
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
     this.ensureShipStartsOnWater();
-    this.ensureCombatQuestTargetOnWater();
     this.createPlayerShip();
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.ship, true, 0.12, 0.12);
@@ -306,18 +305,10 @@ export default class WorldMapScene extends Phaser.Scene {
       const icon = this.add.image(entry.x!, entry.y!, key).setDepth(9).setAlpha(0.92);
       if (key !== 'marker_telescope') icon.setDisplaySize(SCENERY_ICON_SIZE, SCENERY_ICON_SIZE);
       else icon.setScale(0.72);
-      const approach = this.discoveryApproach(entry);
-      const approachMarker = this.add
-        .circle(approach.x, approach.y, 7, 0xf6c438, 0.78)
-        .setDepth(8)
-        .setStrokeStyle(2, 0xfff4d6, 0.9)
-        .setVisible(false)
-        .setInteractive({ useHandCursor: true });
       icon.setInteractive({ useHandCursor: true });
       icon.setVisible(false);
       icon.on('pointerdown', () => this.tryDiscoverScenery(entry));
-      approachMarker.on('pointerdown', () => this.tryDiscoverScenery(entry));
-      this.discoveryMarkers.push({ entry, icon, approachMarker });
+      this.discoveryMarkers.push({ entry, icon });
     }
 
     for (const point of EXPLORATION_POINTS) {
@@ -331,16 +322,9 @@ export default class WorldMapScene extends Phaser.Scene {
         .setPadding(4, 1, 4, 1)
         .setBackgroundColor('rgba(58, 42, 20, 0.58)')
         .setShadow(1, 1, '#000', 2);
-      const approach = this.explorationApproach(point);
-      const approachMarker = this.add
-        .circle(approach.x, approach.y, 8, 0x25b555, 0.78)
-        .setDepth(8)
-        .setStrokeStyle(2, 0xfff4d6, 0.9)
-        .setInteractive({ useHandCursor: true });
       icon.setInteractive({ useHandCursor: true });
       icon.on('pointerdown', () => this.tryExplorePoint(point));
-      approachMarker.on('pointerdown', () => this.tryExplorePoint(point));
-      this.exploreMarkers.push({ point, icon, label, approachMarker });
+      this.exploreMarkers.push({ point, icon, label });
     }
 
     const q = this.state.quest;
@@ -503,23 +487,18 @@ export default class WorldMapScene extends Phaser.Scene {
   private refreshExplorationMarkers(): void {
     const found = new Set(this.state.story.codex);
     for (const marker of this.discoveryMarkers) {
-      const approach = this.discoveryApproach(marker.entry);
-      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y);
-      const visible = !found.has(marker.entry.id) && dist <= DISCOVERY_RADIUS;
-      marker.icon.setVisible(visible);
-      marker.approachMarker.setVisible(visible);
+      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!);
+      marker.icon.setVisible(!found.has(marker.entry.id) && dist <= DISCOVERY_RADIUS);
     }
     for (const marker of this.exploreMarkers) {
       const activeQuest = this.state.quest?.type === 'exploration' && this.state.quest.pointId === marker.point.id && !this.state.quest.completed;
       const hasNewFind = marker.point.discoveries.some((id) => !found.has(id));
       const visible = activeQuest || hasNewFind;
-      const approach = this.explorationApproach(marker.point);
-      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y);
+      const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.point.x, marker.point.y);
       if (visible && dist <= EXPLORE_REVEAL_RADIUS) this.revealExplorationPoint(marker.point.id);
       const known = activeQuest || this.isExplorationPointKnown(marker.point);
       marker.icon.setVisible(visible);
       marker.label.setVisible(visible);
-      marker.approachMarker.setVisible(visible);
       marker.icon.setTexture(
         known
           ? this.m5Texture(explorationIconKey(this.explorationIconIdForPoint(marker.point.id)), 'marker_explore')
@@ -555,25 +534,10 @@ export default class WorldMapScene extends Phaser.Scene {
     return this.isExplorationPointKnown(point) ? point.name : '可疑地點';
   }
 
-  private discoveryApproach(entry: DiscoveryEntry): { x: number; y: number } {
-    return {
-      x: entry.approachX ?? entry.x ?? this.ship.x,
-      y: entry.approachY ?? entry.y ?? this.ship.y,
-    };
-  }
-
-  private explorationApproach(point: ExplorationPoint): { x: number; y: number } {
-    return {
-      x: point.approachX ?? point.x,
-      y: point.approachY ?? point.y,
-    };
-  }
-
   private findNearDiscovery(): DiscoveryEntry | null {
     for (const marker of this.discoveryMarkers) {
       if (!marker.icon.visible) continue;
-      const approach = this.discoveryApproach(marker.entry);
-      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y) <= DISCOVERY_RADIUS) {
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!) <= DISCOVERY_RADIUS) {
         return marker.entry;
       }
     }
@@ -583,8 +547,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private findNearbySceneryHint(): DiscoveryEntry | null {
     for (const marker of this.discoveryMarkers) {
       if (this.state.story.codex.includes(marker.entry.id)) continue;
-      const approach = this.discoveryApproach(marker.entry);
-      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y) <= SCENERY_HINT_RADIUS) {
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.entry.x!, marker.entry.y!) <= SCENERY_HINT_RADIUS) {
         return marker.entry;
       }
     }
@@ -594,8 +557,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private findNearExplorePoint(): ExplorationPoint | null {
     for (const marker of this.exploreMarkers) {
       if (!marker.icon.visible) continue;
-      const approach = this.explorationApproach(marker.point);
-      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y) <= EXPLORE_RADIUS) {
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, marker.point.x, marker.point.y) <= EXPLORE_RADIUS) {
         return marker.point;
       }
     }
@@ -610,8 +572,7 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private tryDiscoverScenery(entry: DiscoveryEntry): void {
     if (this.state.story.codex.includes(entry.id)) return;
-    const approach = this.discoveryApproach(entry);
-    if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y) > DISCOVERY_RADIUS) {
+    if (typeof entry.x === 'number' && Phaser.Math.Distance.Between(this.ship.x, this.ship.y, entry.x, entry.y ?? this.ship.y) > DISCOVERY_RADIUS) {
       this.pauseWithModal('還太遠', '再靠近一點，瞭望手才看得清楚。', [{ label: '繼續航行', onPick: () => {} }]);
       return;
     }
@@ -629,8 +590,7 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   private tryExplorePoint(point: ExplorationPoint): void {
-    const approach = this.explorationApproach(point);
-    if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y) > EXPLORE_RADIUS) {
+    if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, point.x, point.y) > EXPLORE_RADIUS) {
       this.pauseWithModal('還太遠', '那裡看起來有些可疑，但還看不清楚。再靠近一點，才能確認地點並派人上岸調查。', [
         { label: '繼續航行', onPick: () => {} },
       ]);
@@ -970,32 +930,20 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private ensureShipStartsOnWater(): void {
     if (!this.isLand(this.state.ship.x, this.state.ship.y)) return;
-    const water = this.nearestWaterPosition(this.state.ship.x, this.state.ship.y);
-    if (!water) return;
-    this.state.ship.x = water.x;
-    this.state.ship.y = water.y;
-  }
-
-  private ensureCombatQuestTargetOnWater(): void {
-    const quest = this.state.quest;
-    if (quest?.type !== 'combat' || !this.isLand(quest.targetX, quest.targetY)) return;
-    const water = this.nearestWaterPosition(quest.targetX, quest.targetY);
-    if (!water) return;
-    quest.targetX = water.x;
-    quest.targetY = water.y;
-  }
-
-  private nearestWaterPosition(originX: number, originY: number, maxRadius = 640): { x: number; y: number } | null {
-    for (let radius = 16; radius <= maxRadius; radius += 16) {
+    const originX = this.state.ship.x;
+    const originY = this.state.ship.y;
+    for (let radius = 16; radius <= 640; radius += 16) {
       const samples = Math.max(16, Math.ceil((Math.PI * 2 * radius) / 24));
       for (let i = 0; i < samples; i += 1) {
         const angle = (i / samples) * Math.PI * 2;
         const x = Phaser.Math.Clamp(originX + Math.cos(angle) * radius, 10, WORLD_W - 10);
         const y = Phaser.Math.Clamp(originY + Math.sin(angle) * radius, 10, WORLD_H - 10);
-        if (!this.isLand(x, y)) return { x, y };
+        if (this.isLand(x, y)) continue;
+        this.state.ship.x = x;
+        this.state.ship.y = y;
+        return;
       }
     }
-    return null;
   }
 
   private explorationIconIdForPoint(pointId: string): string {

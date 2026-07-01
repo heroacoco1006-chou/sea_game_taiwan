@@ -4,157 +4,312 @@
       "id": "exp_taroko",
       "name": "太魯閣峽谷",
       "region": "台灣東部",
-      "x": 3900,
-      "y": 2470,
+      "x": 3989,
+      "y": 2095,
       "difficulty": 2,
       "baseDays": 2,
-      "cost": { "food": 6, "water": 6 },
-      "discoveries": ["view_qingshui_cliff", "sp_taiwan_macaque", "sp_swinhoe_frog"],
-      "events": ["aid_indigenous", "lost", "wildlife"],
-      "hint": "台灣東岸高山逼近海邊，峽谷與峭壁藏著許多生物。"
+      "cost": {
+        "food": 6,
+        "water": 6
+      },
+      "discoveries": [
+        "view_qingshui_cliff",
+        "sp_taiwan_macaque",
+        "sp_swinhoe_frog"
+      ],
+      "events": [
+        "aid_indigenous",
+        "lost",
+        "wildlife"
+      ],
+      "hint": "台灣東岸高山逼近海邊，峽谷與峭壁藏著許多生物。",
+      "approachX": 4132,
+      "approachY": 2100
     },
     {
       "id": "exp_yushan",
       "name": "玉山遠望",
       "region": "台灣中部山地",
-      "x": 3600,
-      "y": 2800,
+      "x": 3808,
+      "y": 2281,
       "difficulty": 3,
       "baseDays": 3,
-      "cost": { "food": 9, "water": 9 },
-      "discoveries": ["geo_yushan", "sp_mikado_pheasant", "sp_taiwan_black_bear", "tr_old_compass"],
-      "events": ["lost", "cold_mountain", "landmark"],
-      "hint": "從內陸山路遠望高山雲海，路程辛苦但收穫珍貴。"
+      "cost": {
+        "food": 9,
+        "water": 9
+      },
+      "discoveries": [
+        "geo_yushan",
+        "sp_mikado_pheasant",
+        "sp_taiwan_black_bear",
+        "tr_old_compass"
+      ],
+      "events": [
+        "lost",
+        "cold_mountain",
+        "landmark"
+      ],
+      "hint": "從內陸山路遠望高山雲海，路程辛苦但收穫珍貴。",
+      "approachX": 3548,
+      "approachY": 2364
     },
     {
       "id": "exp_alishan",
       "name": "阿里山森林",
       "region": "台灣中南部",
-      "x": 3560,
-      "y": 2760,
+      "x": 3713,
+      "y": 2413,
       "difficulty": 2,
       "baseDays": 2,
-      "cost": { "food": 6, "water": 6 },
-      "discoveries": ["geo_alishan", "sp_taiwan_blue_magpie", "sp_taiwan_salamander"],
-      "events": ["aid_indigenous", "lost", "forest"],
-      "hint": "高大的山林與雲霧，適合記錄鳥類和山林地形。"
+      "cost": {
+        "food": 6,
+        "water": 6
+      },
+      "discoveries": [
+        "geo_alishan",
+        "sp_taiwan_blue_magpie",
+        "sp_taiwan_salamander"
+      ],
+      "events": [
+        "aid_indigenous",
+        "lost",
+        "forest"
+      ],
+      "hint": "高大的山林與雲霧，適合記錄鳥類和山林地形。",
+      "approachX": 3548,
+      "approachY": 2436
     },
     {
       "id": "exp_siraya",
       "name": "西拉雅平原社",
       "region": "台灣西南",
-      "x": 3565,
-      "y": 2865,
+      "x": 3670,
+      "y": 2546,
       "difficulty": 1,
       "baseDays": 1,
-      "cost": { "food": 3, "water": 3 },
-      "discoveries": ["culture_siraya", "sp_sika_deer", "sp_green_turtle"],
-      "events": ["aid_indigenous", "landmark"],
-      "hint": "靠近大員的平原社群，能了解鹿皮貿易與地方生活。"
+      "cost": {
+        "food": 3,
+        "water": 3
+      },
+      "discoveries": [
+        "culture_siraya",
+        "sp_sika_deer",
+        "sp_green_turtle"
+      ],
+      "events": [
+        "aid_indigenous",
+        "landmark"
+      ],
+      "hint": "靠近大員的平原社群，能了解鹿皮貿易與地方生活。",
+      "approachX": 3588,
+      "approachY": 2580
     },
     {
       "id": "exp_quanzhou_temple",
       "name": "泉州媽祖廟",
       "region": "福建",
       "x": 3288,
-      "y": 2340,
+      "y": 1936,
       "difficulty": 1,
       "baseDays": 1,
-      "cost": { "food": 2, "water": 2 },
-      "discoveries": ["view_quanzhou_mazu", "culture_mazu", "tr_mazu_amulet"],
-      "events": ["landmark", "aid_local"],
-      "hint": "福建海商出航前常祈求平安，信仰也是航海文化的一部分。"
+      "cost": {
+        "food": 2,
+        "water": 2
+      },
+      "discoveries": [
+        "view_quanzhou_mazu",
+        "culture_mazu",
+        "tr_mazu_amulet"
+      ],
+      "events": [
+        "landmark",
+        "aid_local"
+      ],
+      "hint": "福建海商出航前常祈求平安，信仰也是航海文化的一部分。",
+      "approachX": 3348,
+      "approachY": 1940
     },
     {
       "id": "exp_forbidden_city",
       "name": "紫禁城遠行",
       "region": "北京附近",
-      "x": 3900,
-      "y": 880,
+      "x": 2148,
+      "y": 955,
       "difficulty": 3,
       "baseDays": 3,
-      "cost": { "food": 10, "water": 10 },
-      "discoveries": ["place_forbidden_city", "culture_ming_court", "sp_giant_salamander", "tr_seafarer_telescope"],
-      "events": ["lost", "landmark"],
-      "hint": "由沿海港口接內陸遠行任務，觀察明末朝貢與宮城制度。"
+      "cost": {
+        "food": 10,
+        "water": 10
+      },
+      "discoveries": [
+        "place_forbidden_city",
+        "culture_ming_court",
+        "sp_giant_salamander",
+        "tr_seafarer_telescope"
+      ],
+      "events": [
+        "lost",
+        "landmark"
+      ],
+      "hint": "由沿海港口接內陸遠行任務，觀察明末朝貢與宮城制度。",
+      "approachX": 3772,
+      "approachY": 804
     },
     {
       "id": "exp_seoul",
       "name": "漢陽城",
       "region": "朝鮮",
-      "x": 4688,
-      "y": 790,
+      "x": 4773,
+      "y": 435,
       "difficulty": 2,
       "baseDays": 2,
-      "cost": { "food": 6, "water": 6 },
-      "discoveries": ["place_hanyang", "culture_korean_seowon", "sp_red_crowned_crane"],
-      "events": ["aid_local", "landmark"],
-      "hint": "朝鮮都城與書院文化能讓圖鑑補上東亞鄰國視角。"
+      "cost": {
+        "food": 6,
+        "water": 6
+      },
+      "discoveries": [
+        "place_hanyang",
+        "culture_korean_seowon",
+        "sp_red_crowned_crane"
+      ],
+      "events": [
+        "aid_local",
+        "landmark"
+      ],
+      "hint": "朝鮮都城與書院文化能讓圖鑑補上東亞鄰國視角。",
+      "approachX": 4652,
+      "approachY": 692
     },
     {
       "id": "exp_ryukyu_shuri",
       "name": "首里城周邊",
       "region": "琉球",
-      "x": 4562,
-      "y": 1900,
+      "x": 4742,
+      "y": 1846,
       "difficulty": 1,
       "baseDays": 1,
-      "cost": { "food": 3, "water": 3 },
-      "discoveries": ["view_shuri_castle", "sp_ryukyu_flying_fox", "sp_ryukyu_kingfisher"],
-      "events": ["aid_local", "landmark"],
-      "hint": "琉球位在中國、日本與南洋之間，是轉口貿易的重要中介。"
+      "cost": {
+        "food": 3,
+        "water": 3
+      },
+      "discoveries": [
+        "view_shuri_castle",
+        "sp_ryukyu_flying_fox",
+        "sp_ryukyu_kingfisher"
+      ],
+      "events": [
+        "aid_local",
+        "landmark"
+      ],
+      "hint": "琉球位在中國、日本與南洋之間，是轉口貿易的重要中介。",
+      "approachX": 4740,
+      "approachY": 1820
     },
     {
       "id": "exp_unzen",
       "name": "雲仙山路",
       "region": "日本九州",
-      "x": 5335,
-      "y": 1068,
+      "x": 5410,
+      "y": 981,
       "difficulty": 2,
       "baseDays": 2,
-      "cost": { "food": 5, "water": 5 },
-      "discoveries": ["geo_unzen", "sp_japanese_macaque", "sp_koi"],
-      "events": ["lost", "landmark", "wildlife"],
-      "hint": "長崎附近的火山山路，能觀察溫泉、火山與日本山林生物。"
+      "cost": {
+        "food": 5,
+        "water": 5
+      },
+      "discoveries": [
+        "geo_unzen",
+        "sp_japanese_macaque",
+        "sp_koi"
+      ],
+      "events": [
+        "lost",
+        "landmark",
+        "wildlife"
+      ],
+      "hint": "長崎附近的火山山路，能觀察溫泉、火山與日本山林生物。",
+      "approachX": 5380,
+      "approachY": 1092
     },
     {
       "id": "exp_sakai_route",
       "name": "堺商人古道",
       "region": "日本近畿",
-      "x": 6320,
-      "y": 1006,
+      "x": 6248,
+      "y": 769,
       "difficulty": 1,
       "baseDays": 1,
-      "cost": { "food": 3, "water": 3 },
-      "discoveries": ["culture_sakai_merchants", "view_sakai_workshops", "tr_merchant_abacus"],
-      "events": ["aid_local", "landmark"],
-      "hint": "堺是商人與工匠聚集的城市，能認識日本商業與手工業。"
+      "cost": {
+        "food": 3,
+        "water": 3
+      },
+      "discoveries": [
+        "culture_sakai_merchants",
+        "view_sakai_workshops",
+        "tr_merchant_abacus"
+      ],
+      "events": [
+        "aid_local",
+        "landmark"
+      ],
+      "hint": "堺是商人與工匠聚集的城市，能認識日本商業與手工業。",
+      "approachX": 6292,
+      "approachY": 788
     },
     {
       "id": "exp_java_volcano",
       "name": "爪哇火山地帶",
       "region": "爪哇",
-      "x": 2260,
-      "y": 5370,
+      "x": 2652,
+      "y": 5368,
       "difficulty": 2,
       "baseDays": 2,
-      "cost": { "food": 7, "water": 7 },
-      "discoveries": ["geo_java_volcano", "sp_javan_rhino", "sp_banteng_pepper", "tr_coral_specimen"],
-      "events": ["lost", "wildlife", "landmark"],
-      "hint": "爪哇火山讓土地肥沃，也讓胡椒與稻米貿易興盛。"
+      "cost": {
+        "food": 7,
+        "water": 7
+      },
+      "discoveries": [
+        "geo_java_volcano",
+        "sp_javan_rhino",
+        "sp_banteng_pepper",
+        "tr_coral_specimen"
+      ],
+      "events": [
+        "lost",
+        "wildlife",
+        "landmark"
+      ],
+      "hint": "爪哇火山讓土地肥沃，也讓胡椒與稻米貿易興盛。",
+      "approachX": 2612,
+      "approachY": 5380
     },
     {
       "id": "exp_moluccas_forest",
       "name": "香料群島森林",
       "region": "摩鹿加",
-      "x": 4245,
-      "y": 5485,
+      "x": 5696,
+      "y": 5124,
       "difficulty": 3,
       "baseDays": 3,
-      "cost": { "food": 9, "water": 9 },
-      "discoveries": ["view_banda_islands", "sp_bird_of_paradise", "sp_nutmeg_tree", "sp_clove_tree", "tr_spice_specimen"],
-      "events": ["lost", "wildlife", "forest"],
-      "hint": "肉豆蔻與丁香讓香料群島成為各國爭奪的焦點。"
+      "cost": {
+        "food": 9,
+        "water": 9
+      },
+      "discoveries": [
+        "view_banda_islands",
+        "sp_bird_of_paradise",
+        "sp_nutmeg_tree",
+        "sp_clove_tree",
+        "tr_spice_specimen"
+      ],
+      "events": [
+        "lost",
+        "wildlife",
+        "forest"
+      ],
+      "hint": "肉豆蔻與丁香讓香料群島成為各國爭奪的焦點。",
+      "approachX": 5692,
+      "approachY": 5156
     }
   ]
 }

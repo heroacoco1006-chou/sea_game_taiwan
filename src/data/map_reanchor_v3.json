@@ -1,0 +1,187 @@
+{
+  "saveVersion": 17,
+  "backup": "backups/2026-07-01_v3-before-geography-reanchor",
+  "channels": {
+    "台灣海峽南北航道": true,
+    "台灣東側南北航道": true,
+    "婆羅洲－爪哇東西航道": true
+  },
+  "ports": [
+    {
+      "id": "tayouan",
+      "name": "大員",
+      "oldX": 3569,
+      "oldY": 2820,
+      "newX": 3652,
+      "newY": 2684
+    },
+    {
+      "id": "keelung",
+      "name": "雞籠",
+      "oldX": 3845,
+      "oldY": 2244,
+      "newX": 4076,
+      "newY": 1612
+    },
+    {
+      "id": "tamsui",
+      "name": "淡水",
+      "oldX": 3684,
+      "oldY": 2196,
+      "newX": 3740,
+      "newY": 1900
+    },
+    {
+      "id": "ponkan",
+      "name": "笨港",
+      "oldX": 3523,
+      "oldY": 2616,
+      "newX": 3548,
+      "newY": 2476
+    },
+    {
+      "id": "penghu",
+      "name": "澎湖",
+      "oldX": 3391,
+      "oldY": 2688,
+      "newX": 3340,
+      "newY": 2324
+    },
+    {
+      "id": "yuegang",
+      "name": "月港",
+      "oldX": 3168,
+      "oldY": 2520,
+      "newX": 3260,
+      "newY": 2076
+    },
+    {
+      "id": "anhai",
+      "name": "安海",
+      "oldX": 3312,
+      "oldY": 2376,
+      "newX": 3348,
+      "newY": 1940
+    },
+    {
+      "id": "guangzhou",
+      "name": "廣州",
+      "oldX": 2880,
+      "oldY": 2724,
+      "newX": 3132,
+      "newY": 2204
+    },
+    {
+      "id": "macau",
+      "name": "澳門",
+      "oldX": 2760,
+      "oldY": 2808,
+      "newX": 3012,
+      "newY": 2340
+    },
+    {
+      "id": "hirado",
+      "name": "平戶",
+      "oldX": 5040,
+      "oldY": 790,
+      "newX": 5196,
+      "newY": 996
+    },
+    {
+      "id": "nagasaki",
+      "name": "長崎",
+      "oldX": 5315,
+      "oldY": 1128,
+      "newX": 5260,
+      "newY": 1132
+    },
+    {
+      "id": "sakai",
+      "name": "堺",
+      "oldX": 6372,
+      "oldY": 1012,
+      "newX": 6292,
+      "newY": 788
+    },
+    {
+      "id": "naha",
+      "name": "那霸",
+      "oldX": 4555,
+      "oldY": 1984,
+      "newX": 4740,
+      "newY": 1820
+    },
+    {
+      "id": "manila",
+      "name": "馬尼拉",
+      "oldX": 4003,
+      "oldY": 3600,
+      "newX": 4196,
+      "newY": 3204
+    },
+    {
+      "id": "hoian",
+      "name": "會安",
+      "oldX": 2736,
+      "oldY": 3552,
+      "newX": 2556,
+      "newY": 2884
+    },
+    {
+      "id": "ayutthaya",
+      "name": "阿瑜陀耶",
+      "oldX": 2136,
+      "oldY": 4464,
+      "newX": 1492,
+      "newY": 3892
+    },
+    {
+      "id": "malacca",
+      "name": "麻六甲",
+      "oldX": 1452,
+      "oldY": 4824,
+      "newX": 1332,
+      "newY": 4380
+    },
+    {
+      "id": "batavia",
+      "name": "巴達維亞",
+      "oldX": 2304,
+      "oldY": 5364,
+      "newX": 1748,
+      "newY": 5292
+    },
+    {
+      "id": "banten",
+      "name": "萬丹",
+      "oldX": 1992,
+      "oldY": 5400,
+      "newX": 1604,
+      "newY": 5340
+    },
+    {
+      "id": "ambon",
+      "name": "安汶",
+      "oldX": 4080,
+      "oldY": 5340,
+      "newX": 5788,
+      "newY": 4916
+    },
+    {
+      "id": "banda",
+      "name": "班達",
+      "oldX": 4205,
+      "oldY": 5532,
+      "newX": 5692,
+      "newY": 5156
+    },
+    {
+      "id": "ternate",
+      "name": "德那第",
+      "oldX": 4397,
+      "oldY": 4877,
+      "newX": 5404,
+      "newY": 4780
+    }
+  ]
+}

@@ -1,0 +1,739 @@
+{
+  "status": "review-only",
+  "worldWidth": 7680,
+  "worldHeight": 5760,
+  "channels": {
+    "台灣海峽南北航道": true,
+    "台灣東側南北航道": true,
+    "婆羅洲－爪哇東西航道": true
+  },
+  "ports": {
+    "tayouan": {
+      "name": "大員",
+      "oldX": 3569,
+      "oldY": 2820,
+      "x": 3652,
+      "y": 2684,
+      "delta": 159,
+      "anchorSource": [
+        686,
+        505
+      ]
+    },
+    "keelung": {
+      "name": "雞籠",
+      "oldX": 3845,
+      "oldY": 2244,
+      "x": 4076,
+      "y": 1612,
+      "delta": 673,
+      "anchorSource": [
+        770,
+        303
+      ]
+    },
+    "tamsui": {
+      "name": "淡水",
+      "oldX": 3684,
+      "oldY": 2196,
+      "x": 3740,
+      "y": 1900,
+      "delta": 301,
+      "anchorSource": [
+        704,
+        357
+      ]
+    },
+    "ponkan": {
+      "name": "笨港",
+      "oldX": 3523,
+      "oldY": 2616,
+      "x": 3548,
+      "y": 2476,
+      "delta": 142,
+      "anchorSource": [
+        672,
+        466
+      ]
+    },
+    "penghu": {
+      "name": "澎湖",
+      "oldX": 3391,
+      "oldY": 2688,
+      "x": 3340,
+      "y": 2324,
+      "delta": 368,
+      "anchorSource": [
+        631,
+        437
+      ]
+    },
+    "yuegang": {
+      "name": "月港",
+      "oldX": 3168,
+      "oldY": 2520,
+      "x": 3260,
+      "y": 2076,
+      "delta": 453,
+      "anchorSource": [
+        615,
+        390
+      ]
+    },
+    "anhai": {
+      "name": "安海",
+      "oldX": 3312,
+      "oldY": 2376,
+      "x": 3348,
+      "y": 1940,
+      "delta": 437,
+      "anchorSource": [
+        631,
+        367
+      ]
+    },
+    "guangzhou": {
+      "name": "廣州",
+      "oldX": 2880,
+      "oldY": 2724,
+      "x": 3132,
+      "y": 2204,
+      "delta": 578,
+      "anchorSource": [
+        590,
+        418
+      ]
+    },
+    "macau": {
+      "name": "澳門",
+      "oldX": 2760,
+      "oldY": 2808,
+      "x": 3012,
+      "y": 2340,
+      "delta": 532,
+      "anchorSource": [
+        570,
+        440
+      ]
+    },
+    "hirado": {
+      "name": "平戶",
+      "oldX": 5040,
+      "oldY": 790,
+      "x": 5196,
+      "y": 996,
+      "delta": 258,
+      "anchorSource": [
+        987,
+        177
+      ]
+    },
+    "nagasaki": {
+      "name": "長崎",
+      "oldX": 5315,
+      "oldY": 1128,
+      "x": 5260,
+      "y": 1132,
+      "delta": 55,
+      "anchorSource": [
+        998,
+        205
+      ]
+    },
+    "sakai": {
+      "name": "堺",
+      "oldX": 6372,
+      "oldY": 1012,
+      "x": 6292,
+      "y": 788,
+      "delta": 238,
+      "anchorSource": [
+        1168,
+        169
+      ]
+    },
+    "naha": {
+      "name": "那霸",
+      "oldX": 4555,
+      "oldY": 1984,
+      "x": 4740,
+      "y": 1820,
+      "delta": 247,
+      "anchorSource": [
+        894,
+        348
+      ]
+    },
+    "manila": {
+      "name": "馬尼拉",
+      "oldX": 4003,
+      "oldY": 3600,
+      "x": 4196,
+      "y": 3204,
+      "delta": 441,
+      "anchorSource": [
+        791,
+        603
+      ]
+    },
+    "hoian": {
+      "name": "會安",
+      "oldX": 2736,
+      "oldY": 3552,
+      "x": 2556,
+      "y": 2884,
+      "delta": 692,
+      "anchorSource": [
+        477,
+        547
+      ]
+    },
+    "ayutthaya": {
+      "name": "阿瑜陀耶",
+      "oldX": 2136,
+      "oldY": 4464,
+      "x": 1492,
+      "y": 3892,
+      "delta": 861,
+      "anchorSource": [
+        300,
+        720
+      ]
+    },
+    "malacca": {
+      "name": "麻六甲",
+      "oldX": 1452,
+      "oldY": 4824,
+      "x": 1332,
+      "y": 4380,
+      "delta": 460,
+      "anchorSource": [
+        249,
+        825
+      ]
+    },
+    "batavia": {
+      "name": "巴達維亞",
+      "oldX": 2304,
+      "oldY": 5364,
+      "x": 1748,
+      "y": 5292,
+      "delta": 561,
+      "anchorSource": [
+        329,
+        997
+      ]
+    },
+    "banten": {
+      "name": "萬丹",
+      "oldX": 1992,
+      "oldY": 5400,
+      "x": 1604,
+      "y": 5340,
+      "delta": 393,
+      "anchorSource": [
+        302,
+        1007
+      ]
+    },
+    "ambon": {
+      "name": "安汶",
+      "oldX": 4080,
+      "oldY": 5340,
+      "x": 5788,
+      "y": 4916,
+      "delta": 1760,
+      "anchorSource": [
+        1090,
+        926
+      ]
+    },
+    "banda": {
+      "name": "班達",
+      "oldX": 4205,
+      "oldY": 5532,
+      "x": 5692,
+      "y": 5156,
+      "delta": 1534,
+      "anchorSource": [
+        1074,
+        970
+      ]
+    },
+    "ternate": {
+      "name": "德那第",
+      "oldX": 4397,
+      "oldY": 4877,
+      "x": 5404,
+      "y": 4780,
+      "delta": 1012,
+      "anchorSource": [
+        1018,
+        902
+      ]
+    }
+  },
+  "exploration": {
+    "exp_taroko": {
+      "name": "太魯閣峽谷",
+      "oldX": 3900,
+      "oldY": 2470,
+      "displayX": 3989,
+      "displayY": 2095,
+      "approachX": 4132,
+      "approachY": 2100,
+      "displaySource": [
+        752,
+        395
+      ],
+      "approachAnchorSource": [
+        774,
+        395
+      ]
+    },
+    "exp_yushan": {
+      "name": "玉山遠望",
+      "oldX": 3600,
+      "oldY": 2800,
+      "displayX": 3808,
+      "displayY": 2281,
+      "approachX": 3548,
+      "approachY": 2364,
+      "displaySource": [
+        718,
+        430
+      ],
+      "approachAnchorSource": [
+        670,
+        445
+      ]
+    },
+    "exp_alishan": {
+      "name": "阿里山森林",
+      "oldX": 3560,
+      "oldY": 2760,
+      "displayX": 3713,
+      "displayY": 2413,
+      "approachX": 3548,
+      "approachY": 2436,
+      "displaySource": [
+        700,
+        455
+      ],
+      "approachAnchorSource": [
+        669,
+        458
+      ]
+    },
+    "exp_siraya": {
+      "name": "西拉雅平原社",
+      "oldX": 3565,
+      "oldY": 2865,
+      "displayX": 3670,
+      "displayY": 2546,
+      "approachX": 3588,
+      "approachY": 2580,
+      "displaySource": [
+        692,
+        480
+      ],
+      "approachAnchorSource": [
+        676,
+        486
+      ]
+    },
+    "exp_quanzhou_temple": {
+      "name": "泉州媽祖廟",
+      "oldX": 3288,
+      "oldY": 2340,
+      "displayX": 3288,
+      "displayY": 1936,
+      "approachX": 3348,
+      "approachY": 1940,
+      "displaySource": [
+        620,
+        365
+      ],
+      "approachAnchorSource": [
+        631,
+        367
+      ]
+    },
+    "exp_forbidden_city": {
+      "name": "紫禁城遠行",
+      "oldX": 3900,
+      "oldY": 880,
+      "displayX": 2148,
+      "displayY": 955,
+      "approachX": 3772,
+      "approachY": 804,
+      "displaySource": [
+        405,
+        180
+      ],
+      "approachAnchorSource": [
+        742,
+        180
+      ]
+    },
+    "exp_seoul": {
+      "name": "漢陽城",
+      "oldX": 4688,
+      "oldY": 790,
+      "displayX": 4773,
+      "displayY": 435,
+      "approachX": 4652,
+      "approachY": 692,
+      "displaySource": [
+        900,
+        82
+      ],
+      "approachAnchorSource": [
+        876,
+        132
+      ]
+    },
+    "exp_ryukyu_shuri": {
+      "name": "首里城周邊",
+      "oldX": 4562,
+      "oldY": 1900,
+      "displayX": 4742,
+      "displayY": 1846,
+      "approachX": 4740,
+      "approachY": 1820,
+      "displaySource": [
+        894,
+        348
+      ],
+      "approachAnchorSource": [
+        894,
+        348
+      ]
+    },
+    "exp_unzen": {
+      "name": "雲仙山路",
+      "oldX": 5335,
+      "oldY": 1068,
+      "displayX": 5410,
+      "displayY": 981,
+      "approachX": 5380,
+      "approachY": 1092,
+      "displaySource": [
+        1020,
+        185
+      ],
+      "approachAnchorSource": [
+        999,
+        198
+      ]
+    },
+    "exp_sakai_route": {
+      "name": "堺商人古道",
+      "oldX": 6320,
+      "oldY": 1006,
+      "displayX": 6248,
+      "displayY": 769,
+      "approachX": 6292,
+      "approachY": 788,
+      "displaySource": [
+        1178,
+        145
+      ],
+      "approachAnchorSource": [
+        1168,
+        169
+      ]
+    },
+    "exp_java_volcano": {
+      "name": "爪哇火山地帶",
+      "oldX": 2260,
+      "oldY": 5370,
+      "displayX": 2652,
+      "displayY": 5368,
+      "approachX": 2612,
+      "approachY": 5380,
+      "displaySource": [
+        500,
+        1012
+      ],
+      "approachAnchorSource": [
+        500,
+        996
+      ]
+    },
+    "exp_moluccas_forest": {
+      "name": "香料群島森林",
+      "oldX": 4245,
+      "oldY": 5485,
+      "displayX": 5696,
+      "displayY": 5124,
+      "approachX": 5692,
+      "approachY": 5156,
+      "displaySource": [
+        1074,
+        966
+      ],
+      "approachAnchorSource": [
+        1074,
+        970
+      ]
+    }
+  },
+  "scenery": {
+    "view_qingshui_cliff": {
+      "name": "清水斷崖",
+      "oldX": 3885,
+      "oldY": 2420,
+      "displayX": 4004,
+      "displayY": 2069,
+      "approachX": 4124,
+      "approachY": 2076,
+      "displaySource": [
+        755,
+        390
+      ],
+      "approachAnchorSource": [
+        774,
+        390
+      ]
+    },
+    "view_taiwan_west_lagoons": {
+      "name": "台灣西南潟湖",
+      "oldX": 3560,
+      "oldY": 2800,
+      "displayX": 3660,
+      "displayY": 2610,
+      "approachX": 3588,
+      "approachY": 2628,
+      "displaySource": [
+        690,
+        492
+      ],
+      "approachAnchorSource": [
+        676,
+        494
+      ]
+    },
+    "view_penghu_basalt": {
+      "name": "澎湖玄武岩",
+      "oldX": 3390,
+      "oldY": 2650,
+      "displayX": 3347,
+      "displayY": 2318,
+      "approachX": 3340,
+      "approachY": 2324,
+      "displaySource": [
+        631,
+        437
+      ],
+      "approachAnchorSource": [
+        631,
+        437
+      ]
+    },
+    "view_quanzhou_mazu": {
+      "name": "泉州媽祖廟",
+      "oldX": 3300,
+      "oldY": 2360,
+      "displayX": 3288,
+      "displayY": 1936,
+      "approachX": 3348,
+      "approachY": 1940,
+      "displaySource": [
+        620,
+        365
+      ],
+      "approachAnchorSource": [
+        631,
+        367
+      ]
+    },
+    "view_yuegang_river": {
+      "name": "月港河道",
+      "oldX": 3160,
+      "oldY": 2490,
+      "displayX": 3235,
+      "displayY": 2058,
+      "approachX": 3260,
+      "approachY": 2076,
+      "displaySource": [
+        610,
+        388
+      ],
+      "approachAnchorSource": [
+        615,
+        390
+      ]
+    },
+    "view_macau_church": {
+      "name": "澳門大三巴",
+      "oldX": 2760,
+      "oldY": 2765,
+      "displayX": 3013,
+      "displayY": 2244,
+      "approachX": 3076,
+      "approachY": 2292,
+      "displaySource": [
+        568,
+        423
+      ],
+      "approachAnchorSource": [
+        576,
+        427
+      ]
+    },
+    "view_nagasaki_dejima": {
+      "name": "長崎出島",
+      "oldX": 5330,
+      "oldY": 1085,
+      "displayX": 5288,
+      "displayY": 1082,
+      "approachX": 5260,
+      "approachY": 1132,
+      "displaySource": [
+        997,
+        204
+      ],
+      "approachAnchorSource": [
+        998,
+        205
+      ]
+    },
+    "view_hirado_trading_post": {
+      "name": "平戶商館",
+      "oldX": 5048,
+      "oldY": 800,
+      "displayX": 5235,
+      "displayY": 939,
+      "approachX": 5196,
+      "approachY": 996,
+      "displaySource": [
+        987,
+        177
+      ],
+      "approachAnchorSource": [
+        987,
+        177
+      ]
+    },
+    "view_shuri_castle": {
+      "name": "首里城",
+      "oldX": 4560,
+      "oldY": 1900,
+      "displayX": 4742,
+      "displayY": 1846,
+      "approachX": 4740,
+      "approachY": 1820,
+      "displaySource": [
+        894,
+        348
+      ],
+      "approachAnchorSource": [
+        894,
+        348
+      ]
+    },
+    "view_manila_walls": {
+      "name": "馬尼拉城牆",
+      "oldX": 4000,
+      "oldY": 3560,
+      "displayX": 4248,
+      "displayY": 3182,
+      "approachX": 4196,
+      "approachY": 3204,
+      "displaySource": [
+        801,
+        600
+      ],
+      "approachAnchorSource": [
+        791,
+        603
+      ]
+    },
+    "view_hoian_bridge": {
+      "name": "會安日本橋",
+      "oldX": 2735,
+      "oldY": 3515,
+      "displayX": 2493,
+      "displayY": 2875,
+      "approachX": 2556,
+      "approachY": 2884,
+      "displaySource": [
+        470,
+        542
+      ],
+      "approachAnchorSource": [
+        477,
+        547
+      ]
+    },
+    "view_malacca_strait": {
+      "name": "麻六甲海峽",
+      "oldX": 1450,
+      "oldY": 4770,
+      "displayX": 1273,
+      "displayY": 4376,
+      "approachX": 1332,
+      "approachY": 4380,
+      "displaySource": [
+        240,
+        825
+      ],
+      "approachAnchorSource": [
+        249,
+        825
+      ]
+    },
+    "view_batavia_canal": {
+      "name": "巴達維亞運河",
+      "oldX": 2300,
+      "oldY": 5315,
+      "displayX": 1745,
+      "displayY": 5272,
+      "approachX": 1748,
+      "approachY": 5292,
+      "displaySource": [
+        329,
+        994
+      ],
+      "approachAnchorSource": [
+        329,
+        997
+      ]
+    },
+    "view_banten_pepper": {
+      "name": "萬丹胡椒市集",
+      "oldX": 1990,
+      "oldY": 5360,
+      "displayX": 1596,
+      "displayY": 5330,
+      "approachX": 1604,
+      "approachY": 5340,
+      "displaySource": [
+        301,
+        1005
+      ],
+      "approachAnchorSource": [
+        302,
+        1007
+      ]
+    },
+    "view_banda_islands": {
+      "name": "班達群島",
+      "oldX": 4205,
+      "oldY": 5495,
+      "displayX": 5696,
+      "displayY": 5124,
+      "approachX": 5692,
+      "approachY": 5156,
+      "displaySource": [
+        1074,
+        966
+      ],
+      "approachAnchorSource": [
+        1074,
+        970
+      ]
+    }
+  }
+}
