@@ -168,12 +168,41 @@ export interface MateRequirement {
   cargo?: Array<{ goodId: string; qty: number }>;
   discoveredExplorationPoints?: string[];
   codexIds?: string[];
+  /** 聲望門檻（v18 聲望系統）：各軌道需達到的數值 */
+  reputation?: Partial<Record<RepKind, number>>;
+  /** 部族／勢力友好度門檻，key＝勢力 id（如 sinckan 新港社） */
+  friendship?: Record<string, number>;
+  /** 船長六圍能力值門檻（沿用既有等級系統） */
+  stats?: Partial<Record<StatKey, number>>;
+  /** 需造訪過的港口 id */
+  visitPorts?: string[];
+  /** 累積賣出貨物總額（全域，兩） */
+  tradeTotal?: number;
+  /** 在指定港口累積賣出貨物額（兩） */
+  tradeAtPort?: { portId: string; min: number };
+  /** 海戰勝利次數 */
+  battleWins?: number;
 }
 export interface MateQuestStage {
   title: string;
   desc: string;
   requirement?: MateRequirement;
+  /** 這一段需要回到夥伴所在港「回報」才算完成（對話類），不自動達成 */
+  reportAtPort?: boolean;
+  /** 回報時交付（扣除）requirement.cargo 指定的貨物 */
+  consumeCargo?: boolean;
 }
+/** 夥伴專屬任務的持久化進度：接下後寫入存檔；已完成的階段永久鎖存，不因資金貨物變動倒退。 */
+export interface MateQuestProgress {
+  status: 'active' | 'done';
+  stagesDone: boolean[];
+  acceptedDay: number;
+}
+/** 三軌聲望（v18）：冒險名聲／商人聲望／海上威名 */
+export type RepKind = 'adventure' | 'trade' | 'valor';
+export interface ReputationState { adventure: number; trade: number; valor: number; }
+export const REP_NAMES: Record<RepKind, string> = { adventure: '冒險名聲', trade: '商人聲望', valor: '海上威名' };
+export const FACTION_NAMES: Record<string, string> = { sinckan: '新港社' };
 /** 客座夥伴設定：主線推進到 leaveAfterChapter 之後會自動離隊（限定章節同行，不影響史實結局）。 */
 export interface MateGuest {
   leaveAfterChapter: number;
@@ -370,6 +399,16 @@ export interface GameState {
   shipOrders: ShipOrder[];
   /** 船長等級、經驗與六圍能力值 */
   captain: CaptainState;
+  /** 三軌聲望（v18）：只增不減 */
+  reputation: ReputationState;
+  /** 部族／勢力友好度（v18），key＝勢力 id（首版只有 sinckan 新港社） */
+  friendship: Record<string, number>;
+  /** 交易累積統計（v18，聲望與任務目標用）：總成交額與分港成交額 */
+  tradeStats: { total: number; byPort: Record<string, number> };
+  /** 海戰勝利次數（v18） */
+  battleWins: number;
+  /** 夥伴專屬任務進度（v18），key＝夥伴 id */
+  mateQuests: Record<string, MateQuestProgress>;
 }
 
 export interface ExplorationState {
@@ -544,7 +583,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   return {
-    version: 17,
+    version: 18,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -580,6 +619,11 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     },
     shipOrders: [],
     captain: { level: 1, xp: 0, stats: heroBaseStats(hero.id) },
+    reputation: { adventure: 0, trade: 0, valor: 0 },
+    friendship: {},
+    tradeStats: { total: 0, byPort: {} },
+    battleWins: 0,
+    mateQuests: {},
   };
 }
 
@@ -840,6 +884,38 @@ export function roleName(key: string | null): string {
   return ROLES.find((r) => r.key === key)?.name ?? key;
 }
 
+// ---------- 聲望系統（v18，設計依缺失清單第八節） ----------
+
+/** 增加聲望（只增不減）；回傳提示文字（amount<=0 回空字串）。 */
+export function addReputation(state: GameState, kind: RepKind, amount: number): string {
+  if (amount <= 0) return '';
+  if (!state.reputation) state.reputation = { adventure: 0, trade: 0, valor: 0 };
+  state.reputation[kind] += amount;
+  return `⚑ ${REP_NAMES[kind]} +${amount}`;
+}
+
+/** 增加部族／勢力友好度；回傳提示文字。 */
+export function addFriendship(state: GameState, factionId: string, amount: number): string {
+  if (amount <= 0) return '';
+  if (!state.friendship) state.friendship = {};
+  state.friendship[factionId] = (state.friendship[factionId] ?? 0) + amount;
+  return `💛 ${FACTION_NAMES[factionId] ?? factionId}友好度 +${amount}`;
+}
+
+/** 聲望白話級距描述（給人物資訊頁，用字以國小生能懂為準）。 */
+export function repLevelDesc(kind: RepKind, value: number): string {
+  const tiers: Record<RepKind, [string, string, string, string]> = {
+    adventure: ['還沒什麼探險事蹟', '港口開始流傳你的探險故事', '大家都知道你是勇敢的探險家', '傳說級的大航海探險家'],
+    trade: ['商人們還不認識你', '各港的商人都認得你了', '你是有信用的大商人', '名震四海的豪商'],
+    valor: ['海上還沒人聽過你', '海上開始流傳你的戰績', '海盜看到你的旗子會緊張', '威震七海的船長'],
+  };
+  const t = tiers[kind];
+  if (value >= 80) return t[3];
+  if (value >= 40) return t[2];
+  if (value >= 15) return t[1];
+  return t[0];
+}
+
 /** 夥伴條件清單項：text 為條件描述（含目前進度），met 為是否已達成。 */
 export interface MateConditionItem { text: string; met: boolean; }
 
@@ -883,6 +959,35 @@ export function mateConditionChecklist(state: GameState, req: MateRequirement | 
     const entry = CODEX_ENTRIES.find((x) => x.id === codexId);
     items.push({ text: `解鎖圖鑑【${entry?.title ?? codexId}】`, met: state.story.codex.includes(codexId) });
   }
+  for (const [kind, min] of Object.entries(req.reputation ?? {}) as Array<[RepKind, number]>) {
+    const cur = state.reputation?.[kind] ?? 0;
+    items.push({ text: `${REP_NAMES[kind]}達到 ${min}（目前 ${cur}）`, met: cur >= min });
+  }
+  for (const [factionId, min] of Object.entries(req.friendship ?? {})) {
+    const cur = state.friendship?.[factionId] ?? 0;
+    items.push({ text: `${FACTION_NAMES[factionId] ?? factionId}友好度達到 ${min}（目前 ${cur}）`, met: cur >= min });
+  }
+  for (const [key, min] of Object.entries(req.stats ?? {}) as Array<[StatKey, number]>) {
+    const cur = state.captain?.stats?.[key] ?? 0;
+    items.push({ text: `船長${STAT_NAMES[key]}達到 ${min}（目前 ${cur}）`, met: cur >= min });
+  }
+  for (const portId of req.visitPorts ?? []) {
+    const port = PORTS.find((p) => p.id === portId);
+    items.push({ text: `造訪過【${port?.name ?? portId}】`, met: state.visitedPorts.includes(portId) });
+  }
+  if (req.tradeTotal) {
+    const cur = state.tradeStats?.total ?? 0;
+    items.push({ text: `累積賣出貨物 ${req.tradeTotal} 兩（目前 ${cur}）`, met: cur >= req.tradeTotal });
+  }
+  if (req.tradeAtPort) {
+    const port = PORTS.find((p) => p.id === req.tradeAtPort!.portId);
+    const cur = state.tradeStats?.byPort?.[req.tradeAtPort.portId] ?? 0;
+    items.push({ text: `在【${port?.name ?? req.tradeAtPort.portId}】累積賣出 ${req.tradeAtPort.min} 兩（目前 ${cur}）`, met: cur >= req.tradeAtPort.min });
+  }
+  if (req.battleWins) {
+    const cur = state.battleWins ?? 0;
+    items.push({ text: `海戰勝利 ${req.battleWins} 次（目前 ${cur} 次）`, met: cur >= req.battleWins });
+  }
   return items;
 }
 
@@ -911,34 +1016,160 @@ export function mateUnavailableReason(state: GameState, def: MateDef): string | 
 
 /** 玩家下一個該做的招募條件（給卡片「下一步」提示用）；條件全達成回傳空字串。 */
 export function mateNextStepText(state: GameState, def: MateDef): string {
+  const stages = def.questStages ?? [];
+  const prog = stages.length ? state.mateQuests?.[def.id] : undefined;
+  // 有專屬任務且還沒接：接任務是玩家現在就能做的事，優先提示
+  if (stages.length && !prog) {
+    const portName = PORTS.find((p) => p.id === def.portId)?.name ?? def.portId;
+    return `到【${portName}】接下專屬任務「${def.questTitle}」`;
+  }
   const base = mateRequirementLines(state, def.requirement);
   if (base.length) return base[0];
-  for (const st of mateQuestStageStatuses(state, def)) {
-    if (!st.ok) return st.lines[0] ?? st.title;
+  if (stages.length) {
+    const portName = PORTS.find((p) => p.id === def.portId)?.name ?? def.portId;
+    const statuses = mateQuestStageStatuses(state, def);
+    for (let i = 0; i < statuses.length; i++) {
+      const st = statuses[i];
+      if (st.ok) continue;
+      const stage = stages[i];
+      if ((stage.reportAtPort || stage.consumeCargo) && mateRequirementLines(state, stage.requirement).length === 0) {
+        return `回【${portName}】向${def.name}回報「${st.title}」`;
+      }
+      return st.lines[0] ?? st.title;
+    }
   }
   return '';
 }
 
+// ---------- 夥伴專屬任務（v18 持久化進度） ----------
+
+/** 取得夥伴任務進度（未接取回傳 null）。 */
+export function mateQuestProgress(state: GameState, mateId: string): MateQuestProgress | null {
+  return state.mateQuests?.[mateId] ?? null;
+}
+
+/** 接下夥伴專屬任務：建立持久進度，並立即鎖存目前已達成的階段。 */
+export function acceptMateQuest(state: GameState, mateId: string): { ok: boolean; msg: string } {
+  const def = mateDefById(mateId);
+  if (!def || !(def.questStages ?? []).length) return { ok: false, msg: '這位夥伴沒有專屬任務。' };
+  if (state.mates.some((m) => m.id === mateId)) return { ok: false, msg: '已經是夥伴了。' };
+  if (!state.mateQuests) state.mateQuests = {};
+  if (state.mateQuests[mateId]) return { ok: false, msg: '任務已經在進行中了。' };
+  if (mateUnavailableReason(state, def)) return { ok: false, msg: '這條主角線無法進行這個任務。' };
+  state.mateQuests[mateId] = {
+    status: 'active',
+    stagesDone: (def.questStages ?? []).map(() => false),
+    acceptedDay: state.day,
+  };
+  const latched = updateMateQuestProgress(state);
+  return { ok: true, msg: [`📜 接下了${def.name}的專屬任務「${def.questTitle}」！`, ...latched].join('\n') };
+}
+
+/**
+ * 巡檢所有進行中的夥伴任務，把「條件已達成」的階段依序鎖存為永久完成
+ * （之後資金、貨物變動都不會倒退）。需玩家回報的階段（對話／交付）不自動完成。
+ * 回傳本次新完成階段的提示文字。
+ */
+export function updateMateQuestProgress(state: GameState): string[] {
+  const msgs: string[] = [];
+  for (const [mateId, prog] of Object.entries(state.mateQuests ?? {})) {
+    if (prog.status !== 'active') continue;
+    const def = mateDefById(mateId);
+    const stages = def?.questStages ?? [];
+    if (!def || !stages.length) continue;
+    while (prog.stagesDone.length < stages.length) prog.stagesDone.push(false);
+    for (let i = 0; i < stages.length; i++) {
+      if (prog.stagesDone[i]) continue;
+      const stage = stages[i];
+      if (stage.reportAtPort || stage.consumeCargo) break; // 需到夥伴所在港回報，不自動完成
+      if (mateRequirementLines(state, stage.requirement).length > 0) break; // 任務鏈依序進行
+      prog.stagesDone[i] = true;
+      msgs.push(`📜 ${def.name}的任務進度：完成「${stage.title}」（${i + 1}/${stages.length}）`);
+    }
+  }
+  return msgs;
+}
+
+/** 目前可回報的階段 index（進行中、輪到的階段是回報類、條件已達成）；沒有回傳 -1。 */
+export function reportableMateQuestStageIndex(state: GameState, def: MateDef): number {
+  const prog = state.mateQuests?.[def.id];
+  const stages = def.questStages ?? [];
+  if (!prog || prog.status !== 'active') return -1;
+  for (let i = 0; i < stages.length; i++) {
+    if (prog.stagesDone[i]) continue;
+    const stage = stages[i];
+    if (!stage.reportAtPort && !stage.consumeCargo) return -1; // 輪到的是自動階段，交給巡檢
+    return mateRequirementLines(state, stage.requirement).length === 0 ? i : -1;
+  }
+  return -1;
+}
+
+/** 在夥伴所在港回報任務階段：交付貨物（如有）、鎖存該階段，並巡檢後續階段。 */
+export function reportMateQuestStage(state: GameState, mateId: string): { ok: boolean; msg: string } {
+  const def = mateDefById(mateId);
+  if (!def) return { ok: false, msg: '' };
+  const idx = reportableMateQuestStageIndex(state, def);
+  if (idx < 0) return { ok: false, msg: '目前沒有可以回報的進度。' };
+  const stage = (def.questStages ?? [])[idx];
+  const prog = state.mateQuests![mateId];
+  const delivered: string[] = [];
+  if (stage.consumeCargo) {
+    for (const c of stage.requirement?.cargo ?? []) {
+      const own = state.cargo[c.goodId] ?? 0;
+      if (own < c.qty) return { ok: false, msg: '貨物不足，還不能交付。' };
+      const basis = state.costBasis[c.goodId] ?? 0;
+      state.costBasis[c.goodId] = Math.round(basis * ((own - c.qty) / own));
+      state.cargo[c.goodId] = own - c.qty;
+      if (state.cargo[c.goodId] === 0) {
+        delete state.cargo[c.goodId];
+        delete state.costBasis[c.goodId];
+      }
+      const good = GOODS.find((g) => g.id === c.goodId);
+      delivered.push(`${good?.name ?? c.goodId}×${c.qty}`);
+    }
+  }
+  prog.stagesDone[idx] = true;
+  const stages = def.questStages ?? [];
+  const msgs = [
+    `📜 向${def.name}回報：完成「${stage.title}」（${idx + 1}/${stages.length}）`,
+    delivered.length ? `交付了 ${delivered.join('、')}。` : '',
+    ...updateMateQuestProgress(state),
+  ];
+  return { ok: true, msg: msgs.filter(Boolean).join('\n') };
+}
+
+/**
+ * 各任務階段狀態：ok 讀「持久化鎖存進度」（接下任務後才會累積；完成後永久保持，
+ * 不因資金貨物變動倒退）；lines 為該階段目前尚缺的條件（供 UI 顯示）。
+ */
 export function mateQuestStageStatuses(state: GameState, def: MateDef): Array<{ title: string; desc: string; ok: boolean; lines: string[] }> {
-  return (def.questStages ?? []).map((stage) => {
-    const lines = mateRequirementLines(state, stage.requirement);
+  const prog = state.mateQuests?.[def.id];
+  return (def.questStages ?? []).map((stage, i) => {
+    const done = !!prog?.stagesDone?.[i];
     return {
       title: stage.title,
       desc: stage.desc,
-      ok: lines.length === 0,
-      lines,
+      ok: done,
+      lines: done ? [] : mateRequirementLines(state, stage.requirement),
     };
   });
 }
 
 export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boolean; lines: string[] } {
   const req = def.requirement;
-  const stageStatuses = mateQuestStageStatuses(state, def);
+  const stages = def.questStages ?? [];
   const lines = mateRequirementLines(state, req);
-  for (const stage of stageStatuses) {
-    if (!stage.ok) lines.push(`專屬任務未完成：${stage.title}。`);
+  if (stages.length) {
+    const prog = state.mateQuests?.[def.id];
+    if (!prog) {
+      lines.push(`先接下專屬任務「${def.questTitle}」。`);
+    } else {
+      for (const stage of mateQuestStageStatuses(state, def)) {
+        if (!stage.ok) lines.push(`專屬任務未完成：${stage.title}。`);
+      }
+    }
   }
-  if (!req && stageStatuses.length === 0) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
+  if (!req && stages.length === 0) return { ok: true, lines: ['條件：付出謝禮即可邀請。'] };
   return { ok: lines.length === 0, lines: lines.length ? lines : ['條件已達成。'] };
 }
 
@@ -958,6 +1189,7 @@ export function recruitMate(
     for (const m of state.mates) if (m.role === roleKey) m.role = null; // 同職位互斥
   }
   state.mates.push({ id: mateId, role: roleKey });
+  if (state.mateQuests?.[mateId]) state.mateQuests[mateId].status = 'done';
   const unlocked = unlockCodex(state, [mateCodexId(mateId)]);
   const levelMsg = levelUpMessage(addXp(state, 40));
   return { ok: true, unlocked, roleKey, levelMsg };
@@ -1378,6 +1610,19 @@ function migrateSave(raw: string): GameState | null {
       }
       full.version = MAP_REANCHOR_V3.saveVersion;
     }
+    // v17 → v18：聲望系統＋夥伴任務持久進度＋交易／海戰統計。
+    // 冒險名聲依已確認探索點數回填（每點 6），避免老玩家歸零；
+    // 曾確認西拉雅平原者回填新港社友好度 6。其餘統計從 0 起算。
+    if (s.version < 18) {
+      const full = s as GameState;
+      const explored = full.discoveredExplorationPoints ?? [];
+      full.reputation = full.reputation ?? { adventure: explored.length * 6, trade: 0, valor: 0 };
+      full.friendship = full.friendship ?? (explored.includes('exp_siraya') ? { sinckan: 6 } : {});
+      full.tradeStats = full.tradeStats ?? { total: 0, byPort: {} };
+      full.battleWins = full.battleWins ?? 0;
+      full.mateQuests = full.mateQuests ?? {};
+      full.version = 18;
+    }
     return s as GameState;
   } catch {
     return null;
@@ -1601,6 +1846,8 @@ export function completeStoryChapter(
 
   // 客座夥伴於劇情節點自動離隊
   const departures = processGuestDepartures(state);
+  // 章節推進可能使進行中的夥伴任務階段達成
+  const mateQuestMsgs = updateMateQuestProgress(state);
 
   const next = currentStoryChapter(state);
   const nextPort = storyTargetPort(next);
@@ -1613,6 +1860,7 @@ export function completeStoryChapter(
     unlocked.length > 0 ? `解鎖圖鑑：${unlocked.join('、')}` : '',
     levelMsg ? `\n${levelMsg}` : '',
     ...departures.map((d) => `\n${d}`),
+    ...mateQuestMsgs.map((m) => `\n${m}`),
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];
   return { ok: true, title: `完成：${chapter.title}`, message: lines.filter(Boolean).join('\n') };
@@ -1726,11 +1974,25 @@ export function currentSaturation(state: GameState, portId: string, goodId: stri
   return Math.max(0, Math.min(SAT_MAX, decayed));
 }
 
-/** 玩家在某港賣出某貨後，累積供需飽和度（壓低後續賣價）。 */
-export function recordSale(state: GameState, port: Port, goodId: string, qty: number, day: number): void {
+/**
+ * 玩家在某港賣出某貨後：累積供需飽和度（壓低後續賣價）；
+ * 傳入 revenue（成交總額）時同步累積交易統計、商人聲望（每 1000 兩 +1）並巡檢夥伴任務。
+ * 回傳聲望／任務進度提示文字（可能為空陣列）。
+ */
+export function recordSale(state: GameState, port: Port, goodId: string, qty: number, day: number, revenue = 0): string[] {
   if (!state.demand) state.demand = {};
   const cur = currentSaturation(state, port.id, goodId, day);
   state.demand[port.id + '|' + goodId] = { sat: Math.min(SAT_MAX, cur + qty * SAT_PER_UNIT), day };
+  const msgs: string[] = [];
+  if (revenue > 0) {
+    if (!state.tradeStats) state.tradeStats = { total: 0, byPort: {} };
+    state.tradeStats.total += revenue;
+    state.tradeStats.byPort[port.id] = (state.tradeStats.byPort[port.id] ?? 0) + revenue;
+    const rep = addReputation(state, 'trade', Math.floor(revenue / 1000));
+    if (rep) msgs.push(rep);
+    msgs.push(...updateMateQuestProgress(state));
+  }
+  return msgs;
 }
 
 /** 該港該貨是否正在流行（賣價×2）：流行的貨必須是該港原本不販售的。 */

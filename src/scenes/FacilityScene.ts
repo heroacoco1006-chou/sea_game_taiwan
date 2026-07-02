@@ -4,7 +4,7 @@ import {
   hullMax, supplyMax, crewMax, questOffersForPort, sailableDays,
   currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
-  addXp, levelUpMessage,
+  addXp, levelUpMessage, addReputation, updateMateQuestProgress,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -246,11 +246,12 @@ export default class FacilityScene extends Phaser.Scene {
           s.gold += q.reward;
           s.quest = null;
           const lv = levelUpMessage(addXp(s, 60));
+          const gains = [addReputation(s, 'trade', 5), ...updateMateQuestProgress(s)].filter(Boolean);
           audio.playSfx('coin');
           if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
           saveGame(s);
           this.refreshInfo();
-          toast(this, `委託完成！獲得 ${q.reward} 兩`);
+          toast(this, `委託完成！獲得 ${q.reward} 兩${gains.length ? `\n${gains.join('\n')}` : ''}`);
           if (lv) toast(this, lv, 640, 130);
           this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
         });
@@ -269,12 +270,16 @@ export default class FacilityScene extends Phaser.Scene {
         const unlocked = unlockCodex(s, q.codexIds);
         s.quest = null;
         const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
+        const gains = [
+          addReputation(s, q.type === 'combat' ? 'valor' : 'adventure', 5),
+          ...updateMateQuestProgress(s),
+        ].filter(Boolean);
         audio.playSfx('coin');
         if (unlocked.length) { audio.playSfx('unlock'); flashFx(this, 640, 130); }
         if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
         saveGame(s);
         this.refreshInfo();
-        toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}`);
+        toast(this, `委託完成！獲得 ${q.reward} 兩${unlocked.length ? `，解鎖圖鑑：${unlocked.join('、')}` : ''}${gains.length ? `\n${gains.join('\n')}` : ''}`);
         if (lv) toast(this, lv, 640, 130);
         this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
       });

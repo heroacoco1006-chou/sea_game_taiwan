@@ -9,6 +9,8 @@ import {
   CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
   codexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
+  REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
+  mateQuestStageStatuses, mateNextStepText, updateMateQuestProgress,
 } from '../state';
 import { codexIllustrationKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
@@ -174,6 +176,31 @@ export default class InfoScene extends Phaser.Scene {
     } else {
       this.addWrapped(290, 310, '📜 目前沒有接支線委託。可到官府／商館接運貨任務。', 840, 16, '#5a4a30');
     }
+
+    // 夥伴任務日誌：進行中的專屬任務，附所在港與下一步提示
+    updateMateQuestProgress(s);
+    const activeQuests = Object.entries(s.mateQuests ?? {})
+      .filter(([, prog]) => prog.status === 'active')
+      .map(([mateId]) => mateDefById(mateId))
+      .filter((def): def is NonNullable<typeof def> => !!def && !s.mates.some((m) => m.id === def.id));
+    const questLines = activeQuests.map((def) => {
+      const stages = mateQuestStageStatuses(s, def);
+      const doneCount = stages.filter((st) => st.ok).length;
+      const port = PORTS.find((p) => p.id === def.portId);
+      const next = mateNextStepText(s, def);
+      const tip = next ? `下一步：${next}` : `✅ 條件齊了！回【${port?.name ?? def.portId}】的酒館邀請入隊`;
+      return `🧭 ${def.name}「${def.questTitle}」進度 ${doneCount}/${stages.length}（所在港：${port?.name ?? def.portId}）\n　　${tip}`;
+    });
+    this.addWrapped(
+      290,
+      420,
+      questLines.length
+        ? `— 夥伴專屬任務 —\n${questLines.join('\n')}`
+        : '— 夥伴專屬任務 —\n目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。',
+      840,
+      15,
+      '#5a4a30'
+    );
   }
 
   private drawEquipment(): void {
@@ -260,11 +287,17 @@ export default class InfoScene extends Phaser.Scene {
       `目前日期：${dateText(s.day)}　資金：${s.gold} 兩`,
       `水手：${s.crew}/${crewMax(s)}　疲勞：${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
       `能力（括號為含在隊夥伴加成）：\n${statLine}`,
+      `聲望：\n${(['adventure', 'trade', 'valor'] as RepKind[])
+        .map((k) => `⚑${REP_NAMES[k]} ${s.reputation?.[k] ?? 0}——${repLevelDesc(k, s.reputation?.[k] ?? 0)}`)
+        .join('\n')}`,
+      ...Object.entries(s.friendship ?? {})
+        .filter(([, v]) => v > 0)
+        .map(([fid, v]) => `💛${FACTION_NAMES[fid] ?? fid}友好度 ${v}`),
       `主線方向：${hero.routeFocus}`,
       `已招募夥伴：${s.mates.length} 位`,
       `圖鑑收集：${codexCollection(s).unlocked}/${codexCollection(s).total}（${codexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
     ];
-    this.addWrapped(300, 124, lines.join('\n'), 840, 17);
+    this.addWrapped(300, 124, lines.join('\n'), 840, 16);
   }
 
   private drawFleet(): void {

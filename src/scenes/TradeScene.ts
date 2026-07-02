@@ -311,8 +311,9 @@ export default class TradeScene extends Phaser.Scene {
     s.gold += price * can;
     s.cargo[id] = own - can;
     floatText(this, 1047, BASE_H - 150, `+${price * can} 兩`, '#b8f0c0');
-    // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）
-    recordSale(s, this.port, id, can, s.day);
+    // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）；同時累積交易統計與商人聲望
+    const gainMsgs = recordSale(s, this.port, id, can, s.day, price * can);
+    if (gainMsgs.length) toast(this, gainMsgs.join('\n'), 640, 150);
     if (s.cargo[id] === 0) {
       delete s.cargo[id];
       delete s.costBasis[id];

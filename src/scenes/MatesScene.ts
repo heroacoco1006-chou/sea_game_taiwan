@@ -3,6 +3,8 @@ import {
   GameState, PORTS, Port, MATE_DEFS, ROLES, mateDefById, roleName, saveGame,
   mateRequirementStatus, mateQuestStageStatuses, recruitMate, getMateScript,
   mateConditionChecklist, mateNextStepText, mateUnavailableReason,
+  mateQuestProgress, acceptMateQuest, reportableMateQuestStageIndex, reportMateQuestStage,
+  updateMateQuestProgress,
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -40,6 +42,12 @@ export default class MatesScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm(townBgmForRegion(this.port.region));
+    // 進酒館先巡檢夥伴任務：把已達成的階段鎖存並提示
+    const questMsgs = updateMateQuestProgress(this.state);
+    if (questMsgs.length) {
+      saveGame(this.state);
+      toast(this, questMsgs.join('\n'), 640, 130);
+    }
     const W = BASE_W;
     const H = BASE_H;
     this.add.rectangle(W / 2, H / 2, W, H, 0x2b3a4a);
@@ -130,13 +138,32 @@ export default class MatesScene extends Phaser.Scene {
         line3Color = '#9a4a2a';
       }
       this.dyn.push(this.add.text(680, y + 54, line3, { ...textStyle(13, line3Color), wordWrap: { width: 430, useAdvancedWrap: true } }));
-      const label = unavailable ? '查看說明' : status.ok ? (def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入') : '查看條件';
-      const btn = makeButton(this, 1130, y + 34, 150, 42, label, () => {
-        if (!unavailable && status.ok) this.recruit(def.id);
-        else this.showMateDetail(def.id);
-      }, 13);
+      // 按鈕依任務狀態切換：接任務 → 回報任務 → 結識；不可招募＝查看說明；其餘＝查看條件
+      const hasQuest = (def.questStages ?? []).length > 0;
+      const prog = mateQuestProgress(s, def.id);
+      const canAccept = hasQuest && !prog && !unavailable;
+      const canReport = hasQuest && !!prog && reportableMateQuestStageIndex(s, def) >= 0;
+      let label: string;
+      let onClick: () => void;
+      if (unavailable) {
+        label = '查看說明';
+        onClick = () => this.showMateDetail(def.id);
+      } else if (status.ok) {
+        label = def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入';
+        onClick = () => this.recruit(def.id);
+      } else if (canAccept) {
+        label = '接任務';
+        onClick = () => this.acceptQuest(def.id);
+      } else if (canReport) {
+        label = '回報任務';
+        onClick = () => this.reportQuest(def.id);
+      } else {
+        label = '查看條件';
+        onClick = () => this.showMateDetail(def.id);
+      }
+      const btn = makeButton(this, 1130, y + 34, 150, 42, label, onClick, 13);
       if (unavailable) btn.setAlpha(0.55);
-      else if (!status.ok) btn.setAlpha(0.78);
+      else if (!status.ok && !canAccept && !canReport) btn.setAlpha(0.78);
       this.dyn.push(btn);
     });
     if (candidatePages > 1) {
@@ -144,6 +171,20 @@ export default class MatesScene extends Phaser.Scene {
       this.dyn.push(this.add.text(960, 620, `${this.candidatePage + 1}/${candidatePages}`, textStyle(14)).setOrigin(0.5));
       this.dyn.push(makeButton(this, 1050, 620, 120, 34, '下一頁', () => { this.candidatePage = Math.min(candidatePages - 1, this.candidatePage + 1); this.rebuild(); }, 13));
     }
+  }
+
+  private acceptQuest(id: string): void {
+    const res = acceptMateQuest(this.state, id);
+    saveGame(this.state);
+    this.rebuild();
+    toast(this, res.msg, 640, 130);
+  }
+
+  private reportQuest(id: string): void {
+    const res = reportMateQuestStage(this.state, id);
+    saveGame(this.state);
+    this.rebuild();
+    toast(this, res.msg, 640, 130);
   }
 
   private recruit(id: string): void {
@@ -263,15 +304,26 @@ export default class MatesScene extends Phaser.Scene {
       this.input.on('wheel', this.detailWheel);
     }
 
-    // 底部按鈕：條件達成時可直接結識
+    // 底部按鈕：依狀態提供 結識／接任務／回報任務，一律附關閉
     const canRecruit = !unavailable && status.ok;
+    const hasQuest = (def.questStages ?? []).length > 0;
+    const prog = mateQuestProgress(s, def.id);
+    const atOwnPort = def.portId === this.port.id;
+    let action: { label: string; onClick: () => void } | null = null;
     if (canRecruit) {
-      parts.push(makeButton(this, BASE_W / 2 - 130, y + h - 40, 230, 46, def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入', () => {
-        this.closeDetail();
-        this.recruit(def.id);
-      }, 17));
+      action = {
+        label: def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入',
+        onClick: () => { this.closeDetail(); this.recruit(def.id); },
+      };
+    } else if (hasQuest && !prog && !unavailable && atOwnPort) {
+      action = { label: '接下任務', onClick: () => { this.closeDetail(); this.acceptQuest(def.id); } };
+    } else if (hasQuest && prog && atOwnPort && reportableMateQuestStageIndex(s, def) >= 0) {
+      action = { label: '回報任務', onClick: () => { this.closeDetail(); this.reportQuest(def.id); } };
     }
-    parts.push(makeButton(this, canRecruit ? BASE_W / 2 + 130 : BASE_W / 2, y + h - 40, 230, 46, '知道了（關閉）', () => this.closeDetail(), 17));
+    if (action) {
+      parts.push(makeButton(this, BASE_W / 2 - 130, y + h - 40, 230, 46, action.label, action.onClick, 17));
+    }
+    parts.push(makeButton(this, action ? BASE_W / 2 + 130 : BASE_W / 2, y + h - 40, 230, 46, '知道了（關閉）', () => this.closeDetail(), 17));
 
     this.detail = this.add.container(0, 0, parts);
     this.detail.setDepth(2000);

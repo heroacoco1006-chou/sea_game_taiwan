@@ -3,6 +3,7 @@ import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
+  addReputation, updateMateQuestProgress,
 } from '../state';
 import { shipBattleKey } from '../art';
 import { audio } from '../audio';
@@ -31,6 +32,7 @@ export default class BattleScene extends Phaser.Scene {
   private buttons: Phaser.GameObjects.Container[] = [];
   private busy = false;
   private questCombat = false;
+  private tier = 1;
 
   constructor() {
     super('Battle');
@@ -45,6 +47,7 @@ export default class BattleScene extends Phaser.Scene {
     this.questCombat = Boolean(data?.questCombat);
     // 敵人規模隨遊戲天數成長
     const tier = s.quest?.type === 'combat' ? s.quest.enemyTier : s.day < 60 ? 1 : s.day < 180 ? 2 : 3;
+    this.tier = tier;
     if (tier <= 1) {
       this.enemy = { name: '海盜小船', hull: 60, hullMax: 60, cannons: 2, crew: 10, loot: 120 + Math.floor(Math.random() * 120), shipType: 'junk_small' };
     } else if (tier <= 2) {
@@ -202,11 +205,15 @@ export default class BattleScene extends Phaser.Scene {
     if (this.questCombat && s.quest?.type === 'combat') {
       s.quest.completed = true;
     }
+    // 海上威名（依敵方強度加權）＋海戰勝場統計＋夥伴任務巡檢
+    s.battleWins = (s.battleWins ?? 0) + 1;
+    const repMsg = addReputation(s, 'valor', 2 + this.tier);
+    const questMsgs = updateMateQuestProgress(s);
     audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
     if (lv) { audio.playSfx('levelup'); flashFx(this, BASE_W / 2, BASE_H / 2); }
     this.refreshPanels();
-    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}${lv ? `\n${lv}` : ''}`);
+    this.endBattle(`戰利品：${loot} 兩！${boarded ? '（接舷俘獲，繳獲加倍半）' : ''}${repMsg ? `\n${repMsg}` : ''}${this.questCombat ? '\n海戰委託已完成，回接任務的官府／商館領賞。' : ''}${lv ? `\n${lv}` : ''}${questMsgs.length ? `\n${questMsgs.join('\n')}` : ''}`);
   }
 
   private defeat(): void {

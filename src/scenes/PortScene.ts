@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText } from '../state';
+import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, updateMateQuestProgress } from '../state';
 import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBackgroundKey, portTownBuildingKey, shipWorldKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
@@ -176,6 +176,12 @@ export default class PortScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm(townBgmForRegion(this.port.region));
+    // 進港巡檢夥伴任務：資金／章節／造訪港口等被動條件在此鎖存
+    const mateQuestMsgs = updateMateQuestProgress(this.state);
+    if (mateQuestMsgs.length) {
+      saveGame(this.state);
+      this.time.delayedCall(400, () => showModal(this, '任務進度', mateQuestMsgs.join('\n'), [{ label: '知道了', onPick: () => {} }]));
+    }
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
     const townBackground = this.addTownBackground();

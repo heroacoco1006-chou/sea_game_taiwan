@@ -10,10 +10,11 @@ import {
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
+  addReputation, addFriendship, updateMateQuestProgress,
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
-import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
 
 type MapCollisionGrid = {
@@ -548,6 +549,12 @@ export default class WorldMapScene extends Phaser.Scene {
   private revealExplorationPoint(pointId: string): void {
     if (this.state.discoveredExplorationPoints.includes(pointId)) return;
     this.state.discoveredExplorationPoints.push(pointId);
+    // 冒險名聲：確認新探索點；西拉雅平原另加新港社友好度
+    const gains = [addReputation(this.state, 'adventure', 6)];
+    if (pointId === 'exp_siraya') gains.push(addFriendship(this.state, 'sinckan', 6));
+    gains.push(...updateMateQuestProgress(this.state));
+    const text = gains.filter(Boolean).join('\n');
+    if (text) toast(this, text, BASE_W / 2, 160);
     saveGame(this.state);
   }
 
@@ -618,12 +625,13 @@ export default class WorldMapScene extends Phaser.Scene {
     const unlocked = unlockCodex(this.state, [entry.id]);
     const reward = entry.rewardGold ?? 60;
     this.state.gold += reward;
+    const gains = [addReputation(this.state, 'adventure', 2), ...updateMateQuestProgress(this.state)].filter(Boolean);
     saveGame(this.state);
     this.refreshExplorationMarkers();
     this.updateHud();
     this.pauseWithModal(
       `發現風景：${entry.title}`,
-      `${entry.body}\n\n解鎖圖鑑：${unlocked.join('、')}\n獲得記錄獎金 ${reward} 兩。`,
+      `${entry.body}\n\n解鎖圖鑑：${unlocked.join('、')}\n獲得記錄獎金 ${reward} 兩。${gains.length ? `\n${gains.join('\n')}` : ''}`,
       [{ label: '記下來', onPick: () => {} }]
     );
   }
@@ -697,6 +705,7 @@ export default class WorldMapScene extends Phaser.Scene {
       q.codexIds = [...new Set([...q.codexIds, ...unlockedIds])];
     }
 
+    const mateQuestMsgs = updateMateQuestProgress(s);
     saveGame(s);
     this.refreshExplorationMarkers();
     this.updateHud();
@@ -707,6 +716,7 @@ export default class WorldMapScene extends Phaser.Scene {
       reward > 0 ? `\n獲得記錄獎金 ${reward} 兩。` : '',
       rewardItemId ? `\n取得寶物：${itemNameById(rewardItemId)}，已放入背包。` : '',
       q?.type === 'exploration' && q.pointId === point.id ? '\n探險委託已完成，回接任務的官府／商館領賞。' : '',
+      mateQuestMsgs.length ? `\n${mateQuestMsgs.join('\n')}` : '',
     ];
     this.pauseWithModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), [
       { label: '記下來', onPick: () => {} },
