@@ -840,43 +840,83 @@ export function roleName(key: string | null): string {
   return ROLES.find((r) => r.key === key)?.name ?? key;
 }
 
-function mateRequirementLines(state: GameState, req: MateRequirement | undefined): string[] {
-  const lines: string[] = [];
-  if (!req) return lines;
+/** 夥伴條件清單項：text 為條件描述（含目前進度），met 為是否已達成。 */
+export interface MateConditionItem { text: string; met: boolean; }
 
-  if (req.heroIds?.length && !req.heroIds.includes(state.story.heroId)) {
+/** 把一組招募條件展開成「全部條件＋達成狀態」清單（含已達成項，供條件視窗打勾顯示）。 */
+export function mateConditionChecklist(state: GameState, req: MateRequirement | undefined): MateConditionItem[] {
+  const items: MateConditionItem[] = [];
+  if (!req) return items;
+
+  if (req.heroIds?.length) {
     const names = req.heroIds.map((id) => heroDefById(id).name).join('／');
-    lines.push(`主角線限定：${names}。`);
+    items.push({ text: `主角線限定：${names}`, met: req.heroIds.includes(state.story.heroId) });
   }
-  if (req.minChapter && state.story.chapter < req.minChapter) {
-    lines.push(`主線進度不足：需要第 ${req.minChapter} 章以後。`);
+  if (req.minChapter) {
+    items.push({
+      text: `把主線推進到第 ${req.minChapter} 章（目前第 ${state.story.chapter} 章）`,
+      met: state.story.chapter >= req.minChapter,
+    });
   }
-  if (req.maxChapter && state.story.chapter > req.maxChapter) {
-    lines.push(`時機已過：需在第 ${req.maxChapter} 章以前完成。`);
+  if (req.maxChapter) {
+    items.push({
+      text: `在第 ${req.maxChapter} 章以前結識（目前第 ${state.story.chapter} 章）`,
+      met: state.story.chapter <= req.maxChapter,
+    });
   }
-  if (req.gold && state.gold < req.gold) {
-    lines.push(`資金不足：需要身上至少 ${req.gold} 兩。`);
+  if (req.gold) {
+    items.push({ text: `身上備妥 ${req.gold} 兩（目前 ${state.gold} 兩）`, met: state.gold >= req.gold });
   }
   for (const cargo of req.cargo ?? []) {
     const have = state.cargo[cargo.goodId] ?? 0;
-    if (have < cargo.qty) {
-      const good = GOODS.find((g) => g.id === cargo.goodId);
-      lines.push(`貨物不足：需要【${good?.name ?? cargo.goodId}×${cargo.qty}】。`);
-    }
+    const good = GOODS.find((g) => g.id === cargo.goodId);
+    items.push({ text: `攜帶【${good?.name ?? cargo.goodId}×${cargo.qty}】（目前 ${have}）`, met: have >= cargo.qty });
   }
   for (const pointId of req.discoveredExplorationPoints ?? []) {
-    if (!state.discoveredExplorationPoints.includes(pointId)) {
-      const point = EXPLORATION_POINTS.find((p) => p.id === pointId);
-      lines.push(`尚未確認探索點：${point?.name ?? pointId}。`);
-    }
+    const point = EXPLORATION_POINTS.find((p) => p.id === pointId);
+    items.push({
+      text: `前往確認探索點【${point?.name ?? pointId}】`,
+      met: state.discoveredExplorationPoints.includes(pointId),
+    });
   }
   for (const codexId of req.codexIds ?? []) {
-    if (!state.story.codex.includes(codexId)) {
-      const entry = CODEX_ENTRIES.find((x) => x.id === codexId);
-      lines.push(`尚未解鎖圖鑑：${entry?.title ?? codexId}。`);
+    const entry = CODEX_ENTRIES.find((x) => x.id === codexId);
+    items.push({ text: `解鎖圖鑑【${entry?.title ?? codexId}】`, met: state.story.codex.includes(codexId) });
+  }
+  return items;
+}
+
+function mateRequirementLines(state: GameState, req: MateRequirement | undefined): string[] {
+  return mateConditionChecklist(state, req).filter((it) => !it.met).map((it) => it.text);
+}
+
+/** 玩家在本輪主角線是否永遠無法招募此夥伴（主角線不符，或限時章節已過）；可招募回傳 null。 */
+export function mateUnavailableReason(state: GameState, def: MateDef): string | null {
+  const reqs: MateRequirement[] = [];
+  if (def.requirement) reqs.push(def.requirement);
+  for (const st of def.questStages ?? []) if (st.requirement) reqs.push(st.requirement);
+  for (const r of reqs) {
+    if (r.heroIds?.length && !r.heroIds.includes(state.story.heroId)) {
+      const names = r.heroIds.map((id) => heroDefById(id).name).join('／');
+      return `此主角線無法招募（限定：${names}）`;
     }
   }
-  return lines;
+  for (const r of reqs) {
+    if (r.maxChapter && state.story.chapter > r.maxChapter) {
+      return `時機已過（需在第 ${r.maxChapter} 章以前結識）`;
+    }
+  }
+  return null;
+}
+
+/** 玩家下一個該做的招募條件（給卡片「下一步」提示用）；條件全達成回傳空字串。 */
+export function mateNextStepText(state: GameState, def: MateDef): string {
+  const base = mateRequirementLines(state, def.requirement);
+  if (base.length) return base[0];
+  for (const st of mateQuestStageStatuses(state, def)) {
+    if (!st.ok) return st.lines[0] ?? st.title;
+  }
+  return '';
 }
 
 export function mateQuestStageStatuses(state: GameState, def: MateDef): Array<{ title: string; desc: string; ok: boolean; lines: string[] }> {

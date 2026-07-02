@@ -2,8 +2,9 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, MATE_DEFS, ROLES, mateDefById, roleName, saveGame,
   mateRequirementStatus, mateQuestStageStatuses, recruitMate, getMateScript,
+  mateConditionChecklist, mateNextStepText, mateUnavailableReason,
 } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal, selectionRing } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 /**
@@ -18,6 +19,8 @@ export default class MatesScene extends Phaser.Scene {
   private header!: Phaser.GameObjects.Text;
   private crewPage = 0;
   private candidatePage = 0;
+  private detail: Phaser.GameObjects.Container | null = null;
+  private detailWheel?: (pointer: Phaser.Input.Pointer, objects: unknown, dx: number, dy: number) => void;
 
   constructor() {
     super('Mates');
@@ -45,7 +48,7 @@ export default class MatesScene extends Phaser.Scene {
     this.header = this.add.text(W / 2, 76, '', textStyle(15, '#6b5530')).setOrigin(0.5);
 
     this.add.text(330, 108, '— 我的夥伴（點職位指派，同職位只能一人）—', textStyle(16)).setOrigin(0.5);
-    this.add.text(960, 108, '— 本港可結識的夥伴 —', textStyle(16)).setOrigin(0.5);
+    this.add.text(960, 108, '— 本港可結識的夥伴（點名字看詳情）—', textStyle(16)).setOrigin(0.5);
 
     makeButton(this, W / 2, H - 44, 220, 48, '離開（回到街上）', () => {
       saveGame(this.state);
@@ -104,17 +107,36 @@ export default class MatesScene extends Phaser.Scene {
       const y = 150 + i * 92;
       const roleNames = def.roles.map((rk) => roleName(rk)).join('／');
       const status = mateRequirementStatus(s, def);
+      const unavailable = mateUnavailableReason(s, def);
       const stages = mateQuestStageStatuses(s, def);
-      const stageText = stages.length ? `｜任務 ${stages.filter((stage) => stage.ok).length}/${stages.length}` : '';
-      this.dyn.push(this.add.text(680, y, `${def.name} ★${def.star}（${def.from}）`, textStyle(17)));
+      const stageText = stages.length ? `（任務 ${stages.filter((stage) => stage.ok).length}/${stages.length}）` : '';
+      // 名字可點開詳情視窗
+      const nameT = this.add.text(680, y, `${def.name} ★${def.star}（${def.from}）`, textStyle(17));
+      nameT.setInteractive({ useHandCursor: true });
+      nameT.on('pointerdown', () => this.showMateDetail(def.id));
+      this.dyn.push(nameT);
       this.dyn.push(this.add.text(680, y + 26, def.desc, { ...textStyle(12, '#5a4a30'), wordWrap: { width: 410, useAdvancedWrap: true } }));
-      this.dyn.push(this.add.text(680, y + 54, `可任：${roleNames}｜${def.questTitle}${stageText}`, { ...textStyle(13, status.ok ? '#6b5530' : '#9a4a2a'), wordWrap: { width: 430, useAdvancedWrap: true } }));
-      const label = status.ok ? (def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入') : '查看條件';
+      // 第三行：達成→可任職位；未達成→下一步提示；本線不可招募→明確標示
+      let line3: string;
+      let line3Color: string;
+      if (unavailable) {
+        line3 = `✖ ${unavailable}`;
+        line3Color = '#8a5a4a';
+      } else if (status.ok) {
+        line3 = `可任：${roleNames}｜${def.questTitle}`;
+        line3Color = '#6b5530';
+      } else {
+        line3 = `下一步：${mateNextStepText(s, def)}${stageText}`;
+        line3Color = '#9a4a2a';
+      }
+      this.dyn.push(this.add.text(680, y + 54, line3, { ...textStyle(13, line3Color), wordWrap: { width: 430, useAdvancedWrap: true } }));
+      const label = unavailable ? '查看說明' : status.ok ? (def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入') : '查看條件';
       const btn = makeButton(this, 1130, y + 34, 150, 42, label, () => {
-        if (status.ok) this.recruit(def.id);
-        else this.showRequirement(def.id);
+        if (!unavailable && status.ok) this.recruit(def.id);
+        else this.showMateDetail(def.id);
       }, 13);
-      if (!status.ok) btn.setAlpha(0.78);
+      if (unavailable) btn.setAlpha(0.55);
+      else if (!status.ok) btn.setAlpha(0.78);
       this.dyn.push(btn);
     });
     if (candidatePages > 1) {
@@ -130,7 +152,7 @@ export default class MatesScene extends Phaser.Scene {
     if (!def) return;
     const status = mateRequirementStatus(s, def);
     if (!status.ok) {
-      this.showRequirement(id);
+      this.showMateDetail(id);
       return;
     }
     if (s.gold < def.fee) {
@@ -157,24 +179,115 @@ export default class MatesScene extends Phaser.Scene {
     }
   }
 
-  private showRequirement(id: string): void {
+  /** 專用夥伴詳情視窗：完整條件打勾清單＋任務進度＋下一步，內容過長可捲動（取代會裁字的通用短彈窗）。 */
+  private showMateDetail(id: string): void {
+    if (this.detail) return;
+    const s = this.state;
     const def = mateDefById(id);
     if (!def) return;
-    const status = mateRequirementStatus(this.state, def);
-    const stages = mateQuestStageStatuses(this.state, def);
-    const stageText = stages.length
-      ? `\n\n專屬任務進度：\n${stages.map((stage, i) => {
-          const marker = stage.ok ? '✓' : '□';
-          const detail = stage.ok ? '已完成' : stage.lines.join('、');
-          return `${marker} ${i + 1}. ${stage.title}\n　${stage.desc}\n　${detail}`;
-        }).join('\n')}`
-      : '';
-    showModal(
-      this,
-      def.questTitle,
-      `${def.name}（${def.history}）\n\n${def.desc}${stageText}\n\n加入條件：\n${status.lines.map((line) => `・${line}`).join('\n')}`,
-      [{ label: '知道了', onPick: () => {} }]
-    );
+    const status = mateRequirementStatus(s, def);
+    const unavailable = mateUnavailableReason(s, def);
+    const stages = mateQuestStageStatuses(s, def);
+    const portName = PORTS.find((p) => p.id === def.portId)?.name ?? def.portId;
+    const roleNames = def.roles.map((rk) => roleName(rk)).join('／');
+
+    const w = 940;
+    const h = 620;
+    const x = (BASE_W - w) / 2;
+    const y = (BASE_H - h) / 2;
+
+    // 擋住下層互動的半透明底
+    const dim = this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, 0x000000, 0.5).setInteractive();
+    const panel = drawPanel(this, x, y, w, h);
+    const titleT = this.add.text(BASE_W / 2, y + 34, `${def.name} ★${def.star}｜${def.questTitle}`, textStyle(24)).setOrigin(0.5);
+    const infoT = this.add
+      .text(BASE_W / 2, y + 66, `所在港：${portName}　結識費：${def.fee > 0 ? `${def.fee} 兩` : '免費'}　可任職位：${roleNames}`, textStyle(15, '#6b5530'))
+      .setOrigin(0.5);
+
+    // 內文：人物介紹＋加入條件打勾清單＋專屬任務進度＋下一步
+    const lines: string[] = [];
+    lines.push(def.desc);
+    lines.push(`（${def.history}）`);
+    const baseItems = mateConditionChecklist(s, def.requirement);
+    lines.push('');
+    lines.push('【加入條件】');
+    if (baseItems.length === 0 && stages.length === 0) {
+      lines.push('・付出謝禮即可邀請。');
+    } else if (baseItems.length === 0) {
+      lines.push('・完成下方專屬任務。');
+    } else {
+      for (const it of baseItems) lines.push(`${it.met ? '✅' : '⬜'} ${it.text}`);
+    }
+    if (stages.length) {
+      lines.push('');
+      lines.push(`【專屬任務】進度 ${stages.filter((st) => st.ok).length}/${stages.length}`);
+      stages.forEach((st, i) => {
+        lines.push(`${st.ok ? '✅' : '⬜'} ${i + 1}. ${st.title}`);
+        lines.push(`　　${st.desc}`);
+        if (!st.ok) for (const l of st.lines) lines.push(`　　▸ ${l}`);
+      });
+    }
+    lines.push('');
+    if (unavailable) lines.push(`✖ ${unavailable}`);
+    else if (status.ok) lines.push('✅ 條件已達成，可以邀請加入！');
+    else lines.push(`👉 下一步：${mateNextStepText(s, def)}`);
+
+    const bodyTop = y + 92;
+    const bodyH = h - 92 - 76; // 底部留按鈕區
+    const bodyT = this.add.text(x + 46, bodyTop, lines.join('\n'), {
+      ...textStyle(17),
+      wordWrap: { width: w - 150, useAdvancedWrap: true },
+      lineSpacing: 8,
+    });
+    const maskG = this.add.graphics();
+    maskG.fillStyle(0xffffff, 1);
+    maskG.fillRect(x + 40, bodyTop, w - 80, bodyH);
+    maskG.setVisible(false);
+    bodyT.setMask(maskG.createGeometryMask());
+
+    const parts: Phaser.GameObjects.GameObject[] = [dim, panel, titleT, infoT, bodyT, maskG];
+
+    // 內容超出可視區時提供捲動（▲▼ 按鈕＋滑鼠滾輪）
+    const maxScroll = Math.max(0, bodyT.height - bodyH);
+    if (maxScroll > 0) {
+      let scroll = 0;
+      const step = 130;
+      const apply = () => { bodyT.y = bodyTop - scroll; };
+      const up = makeButton(this, x + w - 58, bodyTop + 26, 56, 44, '▲', () => { scroll = Math.max(0, scroll - step); apply(); }, 16);
+      const down = makeButton(this, x + w - 58, bodyTop + bodyH - 26, 56, 44, '▼', () => { scroll = Math.min(maxScroll, scroll + step); apply(); }, 16);
+      parts.push(up, down);
+      this.detailWheel = (_pointer, _objects, _dx, dy) => {
+        scroll = Phaser.Math.Clamp(scroll + dy * 0.5, 0, maxScroll);
+        apply();
+      };
+      this.input.on('wheel', this.detailWheel);
+    }
+
+    // 底部按鈕：條件達成時可直接結識
+    const canRecruit = !unavailable && status.ok;
+    if (canRecruit) {
+      parts.push(makeButton(this, BASE_W / 2 - 130, y + h - 40, 230, 46, def.fee > 0 ? `結識 ${def.fee}兩` : '邀請加入', () => {
+        this.closeDetail();
+        this.recruit(def.id);
+      }, 17));
+    }
+    parts.push(makeButton(this, canRecruit ? BASE_W / 2 + 130 : BASE_W / 2, y + h - 40, 230, 46, '知道了（關閉）', () => this.closeDetail(), 17));
+
+    this.detail = this.add.container(0, 0, parts);
+    this.detail.setDepth(2000);
+    this.detail.setScrollFactor(0);
+    this.detail.setAlpha(0);
+    this.tweens.add({ targets: this.detail, alpha: 1, duration: 140, ease: 'Quad.easeOut' });
+  }
+
+  private closeDetail(): void {
+    if (!this.detail) return;
+    this.detail.destroy();
+    this.detail = null;
+    if (this.detailWheel) {
+      this.input.off('wheel', this.detailWheel);
+      this.detailWheel = undefined;
+    }
   }
 
   private assign(mateId: string, roleKey: string | null): void {
