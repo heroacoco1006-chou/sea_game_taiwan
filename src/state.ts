@@ -207,10 +207,12 @@ export type RepKind = 'adventure' | 'trade' | 'valor';
 export interface ReputationState { adventure: number; trade: number; valor: number; }
 export const REP_NAMES: Record<RepKind, string> = { adventure: '冒險名聲', trade: '商人聲望', valor: '海上威名' };
 export const FACTION_NAMES: Record<string, string> = { sinckan: '新港社' };
-/** 客座夥伴設定：主線推進到 leaveAfterChapter 之後會自動離隊（限定章節同行，不影響史實結局）。 */
+/** 客座夥伴設定：主線推進到 leaveAfterChapter 之後會自動離隊（限定章節同行，不影響史實結局）。
+ *  heroIds 省略＝所有主角線適用；指定時只對該些主角線客座（如施琅只在彼得線短期雇用）。 */
 export interface MateGuest {
   leaveAfterChapter: number;
   leaveText: string;
+  heroIds?: HeroId[];
 }
 export interface MateDef {
   id: string;
@@ -230,8 +232,17 @@ export interface MateDef {
   codexBody: string;
   /** 入隊後可在夥伴頁反覆閱讀的專屬日常對話（建構書 §5-7：每人 5～10 句） */
   dialogues: string[];
-  guest?: MateGuest;
+  /** 客座設定：單組＝全線通用；多組＝依 heroIds 分線（如顏思齊林線／彼得線離隊章不同） */
+  guest?: MateGuest | MateGuest[];
+  /** 主線自動同行：指定主角線推進到該章時免費自動入隊（建構書：顏思齊林線、濱田千代線） */
+  autoJoin?: { heroId: HeroId; chapter: number };
   stats?: Partial<Stats>; // 可選手動微調，覆蓋規則產生的能力值
+}
+
+/** 取得某主角線適用的客座設定（無＝非客座，永久留隊）。 */
+export function mateGuestFor(def: MateDef, heroId: HeroId): MateGuest | null {
+  const guests = Array.isArray(def.guest) ? def.guest : def.guest ? [def.guest] : [];
+  return guests.find((g) => !g.heroIds || g.heroIds.includes(heroId)) ?? null;
 }
 
 export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
@@ -590,7 +601,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const hero = heroDefById(heroId);
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
-  return {
+  const state: GameState = {
     version: 18,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
@@ -633,6 +644,9 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     battleWins: 0,
     mateQuests: {},
   };
+  // 主線要角開局自動同行（如林線顏思齊第一章即同行）
+  processAutoJoins(state);
+  return state;
 }
 
 /** 每日糧食消耗量（水手越多吃越多） */
@@ -1227,13 +1241,16 @@ export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boo
  *  呼叫前請先用 mateRequirementStatus 確認條件、確認資金足夠。 */
 export function recruitMate(
   state: GameState,
-  mateId: string
+  mateId: string,
+  opts?: { free?: boolean }
 ): { ok: boolean; unlocked: string[]; roleKey: string | null; levelMsg: string } {
   const def = mateDefById(mateId);
   if (!def) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
   if (state.mates.some((m) => m.id === mateId)) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
-  if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
-  state.gold -= def.fee;
+  if (!opts?.free) {
+    if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
+    state.gold -= def.fee;
+  }
   const roleKey = def.roles[0] ?? null;
   if (roleKey) {
     for (const m of state.mates) if (m.role === roleKey) m.role = null; // 同職位互斥
@@ -1845,13 +1862,35 @@ export function processGuestDepartures(state: GameState): string[] {
   const remaining: typeof state.mates = [];
   for (const m of state.mates) {
     const def = mateDefById(m.id);
-    if (def?.guest && state.story.chapter > def.guest.leaveAfterChapter) {
-      messages.push(`${def.name}${def.guest.leaveText}`);
+    const guest = def ? mateGuestFor(def, state.story.heroId) : null;
+    if (def && guest && state.story.chapter > guest.leaveAfterChapter) {
+      messages.push(`${def.name}${guest.leaveText}`);
     } else {
       remaining.push(m);
     }
   }
   state.mates = remaining;
+  return messages;
+}
+
+/**
+ * 主線自動同行（建構書：顏思齊林線第一章、濱田千代線主線加入）：
+ * 章節推進後，符合 autoJoin 的夥伴免費自動入隊；若該線是客座且已過離隊章，不再加回。
+ */
+export function processAutoJoins(state: GameState): string[] {
+  const messages: string[] = [];
+  for (const def of MATE_DEFS) {
+    if (!def.autoJoin) continue;
+    if (def.autoJoin.heroId !== state.story.heroId) continue;
+    if (state.story.chapter < def.autoJoin.chapter) continue;
+    if (state.mates.some((m) => m.id === def.id)) continue;
+    const guest = mateGuestFor(def, state.story.heroId);
+    if (guest && state.story.chapter > guest.leaveAfterChapter) continue; // 客座窗口已過，不重複加入
+    const result = recruitMate(state, def.id, { free: true });
+    if (result.ok) {
+      messages.push(`👥 ${def.name}加入船隊同行${guest ? '（客座，會依劇情離隊）' : ''}，擔任${roleName(result.roleKey)}！`);
+    }
+  }
   return messages;
 }
 
@@ -1894,8 +1933,9 @@ export function completeStoryChapter(
   const xp = addXp(state, 400);
   state.story.chapter += 1;
 
-  // 客座夥伴於劇情節點自動離隊
+  // 客座夥伴於劇情節點自動離隊；主線要角於指定章節自動同行
   const departures = processGuestDepartures(state);
+  const autoJoins = processAutoJoins(state);
   // 章節推進可能使進行中的夥伴任務階段達成
   const mateQuestMsgs = updateMateQuestProgress(state);
 
@@ -1910,6 +1950,7 @@ export function completeStoryChapter(
     unlocked.length > 0 ? `解鎖圖鑑：${unlocked.join('、')}` : '',
     levelMsg ? `\n${levelMsg}` : '',
     ...departures.map((d) => `\n${d}`),
+    ...autoJoins.map((d) => `\n${d}`),
     ...mateQuestMsgs.map((m) => `\n${m}`),
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];

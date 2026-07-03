@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-07-03] 夥伴任務系統完成——主線要角規則機制（autoJoin／分線 guest）
+
+- M4 夥伴招募任務五階段全部完成（詳見缺失清單文件勾選）。後續新增夥伴內容須遵守以下機制約定：
+  - **主線自動同行** `MateDef.autoJoin = { heroId, chapter }`：指定主角線 `story.chapter >= chapter` 時免費自動入隊（`recruitMate(state, id, { free: true })`）；觸發點＝`newGame`（開局同行）與 `completeStoryChapter`。若該線同時是客座且已過離隊章，**不會**重複加入。現用：顏思齊（lin ch1）、濱田彌兵衛（chiyo ch6）。
+  - **分線客座** `MateDef.guest` 可為單組或陣列，`MateGuest.heroIds` 省略＝全線適用；取用一律走 `mateGuestFor(def, heroId)`。現用：顏思齊（lin 第3章後／peter 第4章後病逝）、鄭芝龍（chiyo 第8章後）、鄭成功（全線第10章後）、施琅（僅 peter 第8章後，lin 永久）。
+  - **資料完整性測試** `tools/validate-mates-data.mjs`：改 `mates.json` 後必跑（檢查 id 引用、階段數、對話句數、guest／autoJoin 一致性），錯誤 exit 1。
+  - 三主角可招募數基準：林 24／彼得 22／千代 22（史實約束：鄭成功不可彼得、鄭芝龍僅千代、施琅不可千代、顏思齊千代不可、鄭經僅林）；改資料後矩陣變動需先對照建構書 §5-7。
+
 ## [2026-07-03] 夥伴任務文本與日常對話資料規則
 
 - 夥伴任務內容維持在 `src/data/mates.json`：`questIntro` 是接取任務時的開場句，`questStages[].dialogue` 是該階段完成／回報時的角色台詞；不得把個別夥伴文本寫死在場景程式。
