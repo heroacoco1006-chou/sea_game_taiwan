@@ -4,7 +4,7 @@ import {
   hullMax, supplyMax, crewMax, questOffersForPort, sailableDays,
   currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
-  addXp, levelUpMessage, addReputation, updateMateQuestProgress,
+  addXp, levelUpMessage, addReputation, addFriendship, updateMateQuestProgress,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -246,7 +246,11 @@ export default class FacilityScene extends Phaser.Scene {
           s.gold += q.reward;
           s.quest = null;
           const lv = levelUpMessage(addXp(s, 60));
-          const gains = [addReputation(s, 'trade', 5), ...updateMateQuestProgress(s)].filter(Boolean);
+          const gains = [
+            addReputation(s, 'trade', 5),
+            ['tayouan', 'ponkan'].includes(this.port.id) ? addFriendship(s, 'sinckan', 3) : '',
+            ...updateMateQuestProgress(s),
+          ].filter(Boolean);
           audio.playSfx('coin');
           if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
           saveGame(s);
@@ -272,6 +276,7 @@ export default class FacilityScene extends Phaser.Scene {
         const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
         const gains = [
           addReputation(s, q.type === 'combat' ? 'valor' : 'adventure', 5),
+          ['tayouan', 'ponkan'].includes(this.port.id) ? addFriendship(s, 'sinckan', 3) : '',
           ...updateMateQuestProgress(s),
         ].filter(Boolean);
         audio.playSfx('coin');

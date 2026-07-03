@@ -24,12 +24,12 @@
       "roles": ["navigator", "scholar"],
       "desc": "白髮老舵手，熟記南洋航路。遊戲中為架空登場，圖鑑會註明真實年代。",
       "questTitle": "三寶太監的航海圖",
-      "requirement": { "minChapter": 8, "discoveredExplorationPoints": ["exp_forbidden_city", "exp_sakai_route", "exp_moluccas_forest"] },
+      "requirement": { "minChapter": 8 },
       "questStages": [
-        { "title": "聽聞三寶舊圖", "desc": "主線推進到後期，才會聽到老航海家與古海圖的傳聞。", "requirement": { "minChapter": 8 } },
-        { "title": "紫禁城殘頁", "desc": "前往北京附近探索，確認明代遠洋檔案的線索。", "requirement": { "discoveredExplorationPoints": ["exp_forbidden_city"] } },
-        { "title": "堺商人抄本", "desc": "在日本堺附近尋找商人收藏的海圖抄本。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } },
-        { "title": "香料群島航路", "desc": "抵達摩鹿加森林，補上南洋航路的最後一段。", "requirement": { "discoveredExplorationPoints": ["exp_moluccas_forest"] } }
+        { "title": "老舵手的考題", "desc": "鄭和要你先證明自己走得夠遠：造訪月港、平戶、麻六甲三座大港。", "requirement": { "visitPorts": ["yuegang", "hirado", "malacca"] } },
+        { "title": "紫禁城殘頁", "desc": "第一張航海圖殘頁的線索在北京的明代遠洋檔案。前往「紫禁城遠行」探索點確認。", "requirement": { "discoveredExplorationPoints": ["exp_forbidden_city"] } },
+        { "title": "堺商人抄本", "desc": "第二張殘頁被堺的商人收藏。前往「堺商人古道」探索點確認。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } },
+        { "title": "香料群島航路", "desc": "最後一張殘頁在南洋。前往「摩鹿加香料森林」探索點，補齊三寶太監的航海圖。", "requirement": { "discoveredExplorationPoints": ["exp_moluccas_forest"] } }
       ],
       "codexBody": "鄭和是明代著名航海人物，史實年代為 1371–1433，早於本遊戲主時代。本遊戲讓他以傳奇老航海家的方式架空登場，用來帶出明代遠洋航海與海圖知識。"
     },
@@ -82,8 +82,9 @@
       "questTitle": "平戶華商的帳冊",
       "requirement": { "minChapter": 4, "gold": 5000 },
       "questStages": [
-        { "title": "取得平戶商圈信任", "desc": "主線中期後，李旦才會讓玩家接觸真正的商帳。", "requirement": { "minChapter": 4 } },
-        { "title": "證明資本實力", "desc": "準備足夠資金，才能協助整理跨港帳冊與信用往來。", "requirement": { "gold": 5000 } }
+        { "title": "取得商圈信任", "desc": "把生意做出名聲，平戶的華商圈才會替你引見李旦。", "requirement": { "reputation": { "trade": 10 } } },
+        { "title": "平戶的生意", "desc": "在平戶把生意做起來：於平戶累積賣出 3000 兩的貨物。", "requirement": { "tradeAtPort": { "portId": "hirado", "min": 3000 } } },
+        { "title": "跨港帳冊的信物", "desc": "替李旦的商網帶 10 件生絲到平戶交帳，證明你的信用。", "requirement": { "cargo": [{ "goodId": "silk_raw", "qty": 10 }] }, "reportAtPort": true, "consumeCargo": true }
       ],
       "codexBody": "李旦是 17 世紀初活躍於平戶的華商領袖，參與中國、日本、東南亞之間的海上貿易，是理解東亞民間商網的重要人物。"
     },
@@ -136,8 +137,8 @@
       "questTitle": "海盜首領的試探",
       "requirement": { "minChapter": 6, "gold": 4000 },
       "questStages": [
-        { "title": "闖出海上名聲", "desc": "主線推進到後期，劉香才會把玩家視為值得試探的船隊。", "requirement": { "minChapter": 6 } },
-        { "title": "準備談判本錢", "desc": "備妥資金，才能處理海盜勢力要求的補給、情報與贖價談判。", "requirement": { "gold": 4000 } }
+        { "title": "闖出海上威名", "desc": "多打贏幾場海戰，讓華南海域都聽過你的旗號，劉香才肯出面見你。", "requirement": { "reputation": { "valor": 15 } } },
+        { "title": "海上的較量", "desc": "劉香派出旗艦來試探你的實力。出海航行時會遇到他的船隊——正面擊敗他！", "duel": { "name": "劉香的旗艦", "tier": 3 } }
       ],
       "codexBody": "劉香是明末華南海域的重要海盜勢力之一。遊戲中呈現海商與海盜界線模糊的時代，但不美化掠奪。"
     },
@@ -240,7 +241,11 @@
       "roles": ["guide", "interpreter"],
       "desc": "熟悉台灣西南平原與社群道路，能協助探索與溝通。",
       "questTitle": "頭目的渡海",
-      "requirement": { "discoveredExplorationPoints": ["exp_siraya"] },
+      "questStages": [
+        { "title": "走進西拉雅平原", "desc": "先拜訪新港社所在的西拉雅平原，認識這片土地原本的主人。", "requirement": { "discoveredExplorationPoints": ["exp_siraya"] } },
+        { "title": "部落的信任", "desc": "多與台灣的社群往來（探索西拉雅、在大員或笨港完成委託），累積新港社友好度。", "requirement": { "friendship": { "sinckan": 12 } } },
+        { "title": "頭目的渡海", "desc": "回大員找理加，聽他說當年隨商船渡海去日本的見聞。", "reportAtPort": true }
+      ],
       "codexBody": "理加是西拉雅族新港社相關的史實人物，曾與日本商船交流。遊戲中以他提醒玩家：荷蘭與漢人來到台灣前，這裡已有自己的社群與道路。"
     },
     {

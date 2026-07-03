@@ -10,7 +10,7 @@ import {
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
-  addReputation, addFriendship, updateMateQuestProgress,
+  addReputation, addFriendship, updateMateQuestProgress, pendingMateDuel,
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
@@ -875,6 +875,26 @@ export default class WorldMapScene extends Phaser.Scene {
         '海上的發現',
         `瞭望手大喊：「有漂流物！」\n\n撈起一個木箱，裡面的貨物賣了 ${find} 兩。`,
         [{ label: '運氣不錯！', onPick: () => {} }]
+      );
+      return;
+    }
+
+    // 夥伴任務海上決鬥：有待決鬥時，海上遭遇優先變成對方船隊（機率也提高，較快遇到）
+    const duel = pendingMateDuel(s);
+    if (duel && roll < stormP + 0.095 + 0.05 + 0.06 + 0.12 && s.day > 10) {
+      this.pauseWithModal(
+        `${duel.name}出現！`,
+        `一支掛著「${duel.mateName}」旗號的船隊擋在航路上，對方鳴砲挑戰！\n\n（夥伴任務：擊敗他，${duel.mateName}才會認可你的實力。）`,
+        [
+          {
+            label: '應戰！（進入海戰）',
+            onPick: () => {
+              saveGame(s);
+              this.scene.start('Battle', { mateDuelId: duel.mateId });
+            },
+          },
+          { label: '暫避鋒頭（之後還會遇到）', onPick: () => {} },
+        ]
       );
       return;
     }

@@ -191,6 +191,8 @@ export interface MateQuestStage {
   reportAtPort?: boolean;
   /** 回報時交付（扣除）requirement.cargo 指定的貨物 */
   consumeCargo?: boolean;
+  /** 海上決鬥：輪到此階段時，出海航行會遇到對方船隊，海戰擊敗後完成（例：劉香） */
+  duel?: { name: string; tier: number };
 }
 /** 夥伴專屬任務的持久化進度：接下後寫入存檔；已完成的階段永久鎖存，不因資金貨物變動倒退。 */
 export interface MateQuestProgress {
@@ -1082,12 +1084,50 @@ export function updateMateQuestProgress(state: GameState): string[] {
       if (prog.stagesDone[i]) continue;
       const stage = stages[i];
       if (stage.reportAtPort || stage.consumeCargo) break; // 需到夥伴所在港回報，不自動完成
+      if (stage.duel) break; // 需海上決鬥獲勝，不自動完成
       if (mateRequirementLines(state, stage.requirement).length > 0) break; // 任務鏈依序進行
       prog.stagesDone[i] = true;
       msgs.push(`📜 ${def.name}的任務進度：完成「${stage.title}」（${i + 1}/${stages.length}）`);
     }
   }
   return msgs;
+}
+
+/** 目前輪到的海上決鬥（任一進行中任務的當前階段為 duel）；沒有回傳 null。 */
+export interface PendingMateDuel { mateId: string; mateName: string; stageIndex: number; name: string; tier: number; }
+export function pendingMateDuel(state: GameState): PendingMateDuel | null {
+  for (const [mateId, prog] of Object.entries(state.mateQuests ?? {})) {
+    if (prog.status !== 'active') continue;
+    const def = mateDefById(mateId);
+    const stages = def?.questStages ?? [];
+    if (!def) continue;
+    for (let i = 0; i < stages.length; i++) {
+      if (prog.stagesDone[i]) continue;
+      const stage = stages[i];
+      if (stage.duel) return { mateId, mateName: def.name, stageIndex: i, name: stage.duel.name, tier: stage.duel.tier };
+      break; // 輪到的不是決鬥階段
+    }
+  }
+  return null;
+}
+
+/** 海上決鬥獲勝：鎖存該決鬥階段並巡檢後續；回傳提示文字。 */
+export function completeMateDuel(state: GameState, mateId: string): string[] {
+  const def = mateDefById(mateId);
+  const prog = state.mateQuests?.[mateId];
+  const stages = def?.questStages ?? [];
+  if (!def || !prog) return [];
+  for (let i = 0; i < stages.length; i++) {
+    if (prog.stagesDone[i]) continue;
+    const stage = stages[i];
+    if (!stage.duel) break;
+    prog.stagesDone[i] = true;
+    return [
+      `⚔ 擊敗了${stage.duel.name}！完成「${stage.title}」（${i + 1}/${stages.length}）`,
+      ...updateMateQuestProgress(state),
+    ];
+  }
+  return [];
 }
 
 /** 目前可回報的階段 index（進行中、輪到的階段是回報類、條件已達成）；沒有回傳 -1。 */
@@ -1150,7 +1190,7 @@ export function mateQuestStageStatuses(state: GameState, def: MateDef): Array<{ 
       title: stage.title,
       desc: stage.desc,
       ok: done,
-      lines: done ? [] : mateRequirementLines(state, stage.requirement),
+      lines: done ? [] : stage.duel ? [`出海航行，擊敗【${stage.duel.name}】`] : mateRequirementLines(state, stage.requirement),
     };
   });
 }

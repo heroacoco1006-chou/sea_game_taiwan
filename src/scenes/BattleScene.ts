@@ -3,7 +3,7 @@ import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
-  addReputation, updateMateQuestProgress,
+  addReputation, updateMateQuestProgress, pendingMateDuel, completeMateDuel,
 } from '../state';
 import { shipBattleKey } from '../art';
 import { audio } from '../audio';
@@ -33,6 +33,7 @@ export default class BattleScene extends Phaser.Scene {
   private busy = false;
   private questCombat = false;
   private tier = 1;
+  private duelMateId: string | null = null;
 
   constructor() {
     super('Battle');
@@ -42,9 +43,28 @@ export default class BattleScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data?: { questCombat?: boolean }): void {
+  init(data?: { questCombat?: boolean; mateDuelId?: string }): void {
     const s = this.state;
     this.questCombat = Boolean(data?.questCombat);
+    // 夥伴任務海上決鬥：專屬敵人（較強、有名字），勝利後鎖存任務階段
+    this.duelMateId = data?.mateDuelId ?? null;
+    if (this.duelMateId) {
+      const duel = pendingMateDuel(s);
+      const tier = duel?.tier ?? 3;
+      this.tier = tier;
+      this.enemy = {
+        name: duel?.name ?? '神秘船隊',
+        hull: 120 + tier * 40,
+        hullMax: 120 + tier * 40,
+        cannons: 4 + tier * 2,
+        crew: 16 + tier * 10,
+        loot: 300 + tier * 120,
+        shipType: 'fuchuan',
+      };
+      this.logLines = [];
+      this.busy = false;
+      return;
+    }
     // 敵人規模隨遊戲天數成長
     const tier = s.quest?.type === 'combat' ? s.quest.enemyTier : s.day < 60 ? 1 : s.day < 180 ? 2 : 3;
     this.tier = tier;
@@ -205,10 +225,12 @@ export default class BattleScene extends Phaser.Scene {
     if (this.questCombat && s.quest?.type === 'combat') {
       s.quest.completed = true;
     }
-    // 海上威名（依敵方強度加權）＋海戰勝場統計＋夥伴任務巡檢
+    // 海上威名（依敵方強度加權）＋海戰勝場統計＋夥伴任務巡檢（決鬥獲勝另外鎖存）
     s.battleWins = (s.battleWins ?? 0) + 1;
     const repMsg = addReputation(s, 'valor', 2 + this.tier);
-    const questMsgs = updateMateQuestProgress(s);
+    const questMsgs = this.duelMateId
+      ? completeMateDuel(s, this.duelMateId) // 內含後續階段巡檢
+      : updateMateQuestProgress(s);
     audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
     if (lv) { audio.playSfx('levelup'); flashFx(this, BASE_W / 2, BASE_H / 2); }
