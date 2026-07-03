@@ -187,6 +187,8 @@ export interface MateQuestStage {
   title: string;
   desc: string;
   requirement?: MateRequirement;
+  /** 完成這一階段時顯示的夥伴對話。 */
+  dialogue?: string;
   /** 這一段需要回到夥伴所在港「回報」才算完成（對話類），不自動達成 */
   reportAtPort?: boolean;
   /** 回報時交付（扣除）requirement.cargo 指定的貨物 */
@@ -221,9 +223,13 @@ export interface MateDef {
   roles: string[];
   desc: string;
   questTitle: string;
+  /** 玩家接下專屬任務時顯示的開場對話。 */
+  questIntro?: string;
   requirement?: MateRequirement;
   questStages?: MateQuestStage[];
   codexBody: string;
+  /** 入隊後可在夥伴頁反覆閱讀的專屬日常對話（建構書 §5-7：每人 5～10 句） */
+  dialogues: string[];
   guest?: MateGuest;
   stats?: Partial<Stats>; // 可選手動微調，覆蓋規則產生的能力值
 }
@@ -1064,7 +1070,8 @@ export function acceptMateQuest(state: GameState, mateId: string): { ok: boolean
     acceptedDay: state.day,
   };
   const latched = updateMateQuestProgress(state);
-  return { ok: true, msg: [`📜 接下了${def.name}的專屬任務「${def.questTitle}」！`, ...latched].join('\n') };
+  const intro = def.questIntro ? `${def.name}：「${def.questIntro}」` : '';
+  return { ok: true, msg: [`📜 接下了${def.name}的專屬任務「${def.questTitle}」！`, intro, ...latched].filter(Boolean).join('\n') };
 }
 
 /**
@@ -1088,6 +1095,7 @@ export function updateMateQuestProgress(state: GameState): string[] {
       if (mateRequirementLines(state, stage.requirement).length > 0) break; // 任務鏈依序進行
       prog.stagesDone[i] = true;
       msgs.push(`📜 ${def.name}的任務進度：完成「${stage.title}」（${i + 1}/${stages.length}）`);
+      if (stage.dialogue) msgs.push(`${def.name}：「${stage.dialogue}」`);
     }
   }
   return msgs;
@@ -1124,8 +1132,9 @@ export function completeMateDuel(state: GameState, mateId: string): string[] {
     prog.stagesDone[i] = true;
     return [
       `⚔ 擊敗了${stage.duel.name}！完成「${stage.title}」（${i + 1}/${stages.length}）`,
+      stage.dialogue ? `${def.name}：「${stage.dialogue}」` : '',
       ...updateMateQuestProgress(state),
-    ];
+    ].filter(Boolean);
   }
   return [];
 }
@@ -1173,6 +1182,7 @@ export function reportMateQuestStage(state: GameState, mateId: string): { ok: bo
   const msgs = [
     `📜 向${def.name}回報：完成「${stage.title}」（${idx + 1}/${stages.length}）`,
     delivered.length ? `交付了 ${delivered.join('、')}。` : '',
+    stage.dialogue ? `${def.name}：「${stage.dialogue}」` : '',
     ...updateMateQuestProgress(state),
   ];
   return { ok: true, msg: msgs.filter(Boolean).join('\n') };

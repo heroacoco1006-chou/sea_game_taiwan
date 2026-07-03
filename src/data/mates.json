@@ -1,16 +1,56 @@
 {
   "_note": "M4 夥伴系統：25 位具名夥伴。低星夥伴可直接或小條件招募；★4～5 夥伴使用 questStages 表示多段專屬任務鏈，後續可再接 StoryScene 劇情演出。",
   "roles": [
-    { "key": "vice", "name": "副隊長", "desc": "接舷戰時全隊氣勢提升（接舷戰力 +8）" },
-    { "key": "navigator", "name": "航海長", "desc": "航速提升、暴風損害再減輕" },
-    { "key": "gunner", "name": "砲術長", "desc": "海戰砲擊威力再提升" },
-    { "key": "boatswain", "name": "水手長", "desc": "船員疲勞累積再減緩" },
-    { "key": "purser", "name": "主計長", "desc": "買賣價格再優惠 5%" },
-    { "key": "strategist", "name": "軍師", "desc": "熟悉海戰局勢，後續可解鎖特殊戰術" },
-    { "key": "surgeon", "name": "醫師", "desc": "接舷戰減員緩衝，探索疲勞較少" },
-    { "key": "interpreter", "name": "通譯", "desc": "異文化港口交涉與情報品質提升" },
-    { "key": "guide", "name": "探險嚮導", "desc": "探索消耗降低，發現率提升" },
-    { "key": "scholar", "name": "書記", "desc": "探索紀錄更完整，發現率小幅提升" }
+    {
+      "key": "vice",
+      "name": "副隊長",
+      "desc": "接舷戰時全隊氣勢提升（接舷戰力 +8）"
+    },
+    {
+      "key": "navigator",
+      "name": "航海長",
+      "desc": "航速提升、暴風損害再減輕"
+    },
+    {
+      "key": "gunner",
+      "name": "砲術長",
+      "desc": "海戰砲擊威力再提升"
+    },
+    {
+      "key": "boatswain",
+      "name": "水手長",
+      "desc": "船員疲勞累積再減緩"
+    },
+    {
+      "key": "purser",
+      "name": "主計長",
+      "desc": "買賣價格再優惠 5%"
+    },
+    {
+      "key": "strategist",
+      "name": "軍師",
+      "desc": "熟悉海戰局勢，後續可解鎖特殊戰術"
+    },
+    {
+      "key": "surgeon",
+      "name": "醫師",
+      "desc": "接舷戰減員緩衝，探索疲勞較少"
+    },
+    {
+      "key": "interpreter",
+      "name": "通譯",
+      "desc": "異文化港口交涉與情報品質提升"
+    },
+    {
+      "key": "guide",
+      "name": "探險嚮導",
+      "desc": "探索消耗降低，發現率提升"
+    },
+    {
+      "key": "scholar",
+      "name": "書記",
+      "desc": "探索紀錄更完整，發現率小幅提升"
+    }
   ],
   "mates": [
     {
@@ -21,17 +61,68 @@
       "fee": 2200,
       "star": 5,
       "history": "架空登場（史實 1371–1433）",
-      "roles": ["navigator", "scholar"],
+      "roles": [
+        "navigator",
+        "scholar"
+      ],
       "desc": "白髮老舵手，熟記南洋航路。遊戲中為架空登場，圖鑑會註明真實年代。",
       "questTitle": "三寶太監的航海圖",
-      "requirement": { "minChapter": 8 },
+      "requirement": {
+        "minChapter": 8
+      },
       "questStages": [
-        { "title": "老舵手的考題", "desc": "鄭和要你先證明自己走得夠遠：造訪月港、平戶、麻六甲三座大港。", "requirement": { "visitPorts": ["yuegang", "hirado", "malacca"] } },
-        { "title": "紫禁城殘頁", "desc": "第一張航海圖殘頁的線索在北京的明代遠洋檔案。前往「紫禁城遠行」探索點確認。", "requirement": { "discoveredExplorationPoints": ["exp_forbidden_city"] } },
-        { "title": "堺商人抄本", "desc": "第二張殘頁被堺的商人收藏。前往「堺商人古道」探索點確認。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } },
-        { "title": "香料群島航路", "desc": "最後一張殘頁在南洋。前往「摩鹿加香料森林」探索點，補齊三寶太監的航海圖。", "requirement": { "discoveredExplorationPoints": ["exp_moluccas_forest"] } }
+        {
+          "title": "老舵手的考題",
+          "desc": "鄭和要你先證明自己走得夠遠：造訪月港、平戶、麻六甲三座大港。",
+          "requirement": {
+            "visitPorts": [
+              "yuegang",
+              "hirado",
+              "malacca"
+            ]
+          },
+          "dialogue": "三座大港都走過了，你已知道航路要靠腳下累積。"
+        },
+        {
+          "title": "紫禁城殘頁",
+          "desc": "第一張航海圖殘頁的線索在北京的明代遠洋檔案。前往「紫禁城遠行」探索點確認。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_forbidden_city"
+            ]
+          },
+          "dialogue": "第一張殘頁說的是北方遠行，不是眼前這個年代的現成航線。"
+        },
+        {
+          "title": "堺商人抄本",
+          "desc": "第二張殘頁被堺的商人收藏。前往「堺商人古道」探索點確認。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_sakai_route"
+            ]
+          },
+          "dialogue": "堺商人保存的是轉抄本，讀它時要分清原圖與後人補記。"
+        },
+        {
+          "title": "香料群島航路",
+          "desc": "最後一張殘頁在南洋。前往「摩鹿加香料森林」探索點，補齊三寶太監的航海圖。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_moluccas_forest"
+            ]
+          },
+          "dialogue": "三張線索合在一起了。這是架空任務，但航海知識值得傳下去。"
+        }
       ],
-      "codexBody": "鄭和是明代著名航海人物，史實年代為 1371–1433，早於本遊戲主時代。本遊戲讓他以傳奇老航海家的方式架空登場，用來帶出明代遠洋航海與海圖知識。"
+      "codexBody": "鄭和是明代著名航海人物，史實年代為 1371–1433，早於本遊戲主時代。本遊戲讓他以傳奇老航海家的方式架空登場，用來帶出明代遠洋航海與海圖知識。",
+      "questIntro": "四方海路散著舊航圖的線索。你若真想學，就親自走一遍。",
+      "dialogues": [
+        "看雲要看高低，看浪要看方向，兩樣合起來才知道天氣。",
+        "海圖記的是前人的路，不是命令你永遠走同一條路。",
+        "我在這個年代登場是遊戲的架空安排，真正的生卒年要看圖鑑。",
+        "船大不等於安全，補給、紀律和熟悉航路更重要。",
+        "把學到的航海知識交給下一個人，路才不會失傳。"
+      ]
     },
     {
       "id": "shen_yourong",
@@ -41,15 +132,62 @@
       "fee": 1600,
       "star": 5,
       "history": "史實",
-      "roles": ["gunner", "vice"],
+      "roles": [
+        "gunner",
+        "vice"
+      ],
       "desc": "曾在澎湖與荷蘭人交涉的明朝將領，熟悉水師軍務。",
       "questTitle": "澎湖退紅毛",
-      "requirement": { "minChapter": 4, "gold": 3000 },
+      "requirement": {
+        "minChapter": 4,
+        "gold": 3000
+      },
       "questStages": [
-        { "title": "備妥水師軍需", "desc": "累積足夠資金，證明船隊有能力支援沿海防務。", "requirement": { "gold": 3000 } },
-        { "title": "主線接觸澎湖局勢", "desc": "主線進度到中期後，沈有容才願意談澎湖防務。", "requirement": { "minChapter": 4 } }
+        {
+          "title": "讓水師聽見你的名聲",
+          "desc": "先累積冒險名聲，證明你熟悉台灣海峽與沿岸航路。",
+          "requirement": {
+            "reputation": {
+              "adventure": 15
+            }
+          },
+          "dialogue": "能把陌生海路走明白，才有資格談守住澎湖。"
+        },
+        {
+          "title": "運送澎湖軍需",
+          "desc": "帶 10 件米與 5 件木材回澎湖，交給水師整備船隻。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "rice",
+                "qty": 10
+              },
+              {
+                "goodId": "wood",
+                "qty": 5
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "糧食養人，木材修船；海防靠的是每天都備得齊。"
+        },
+        {
+          "title": "以交涉守住海口",
+          "desc": "向沈有容回報沿海局勢，聽他說明當年以交涉退敵的考量。",
+          "reportAtPort": true,
+          "dialogue": "能不讓百姓受戰火，就是最好的勝仗。"
+        }
       ],
-      "codexBody": "沈有容是明朝水師將領，曾在澎湖勸退荷蘭人。透過他可以理解明朝沿海防務，以及澎湖在台灣海峽中的戰略位置。"
+      "codexBody": "沈有容是明朝水師將領，曾在澎湖勸退荷蘭人。透過他可以理解明朝沿海防務，以及澎湖在台灣海峽中的戰略位置。",
+      "questIntro": "澎湖要守得住，靠的是情報、軍需與能避免衝突的判斷。",
+      "dialogues": [
+        "澎湖在海峽中間，往來船隻很難忽略它。",
+        "能交涉退敵時，不必急著讓百姓承受戰火。",
+        "砲務第一件事是安全，不是逞威風。",
+        "水師要守港，也要熟悉季風和補給。",
+        "史事有不同記錄時，要先比對，不能把傳說當定論。"
+      ]
     },
     {
       "id": "yamada",
@@ -59,15 +197,65 @@
       "fee": 1500,
       "star": 5,
       "history": "史實",
-      "roles": ["strategist", "vice"],
+      "roles": [
+        "strategist",
+        "vice"
+      ],
       "desc": "在暹羅活躍的日本武士商人，懂得指揮也懂外交。",
       "questTitle": "日本人町的危機",
-      "requirement": { "minChapter": 5, "gold": 2500 },
+      "requirement": {
+        "minChapter": 5,
+        "gold": 2500
+      },
       "questStages": [
-        { "title": "抵達暹羅商圈", "desc": "主線推進到能理解東南亞日本人町局勢的階段。", "requirement": { "minChapter": 5 } },
-        { "title": "籌措救援資金", "desc": "準備協助日本人町商人與武士維持秩序的資金。", "requirement": { "gold": 2500 } }
+        {
+          "title": "走進日本人町商圈",
+          "desc": "在阿瑜陀耶累積賣出 2000 兩貨物，了解當地商路。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "ayutthaya",
+              "min": 2000
+            }
+          },
+          "dialogue": "日本人町能立足，靠的不只刀，也靠守信用的生意。"
+        },
+        {
+          "title": "送去安定物資",
+          "desc": "帶 10 件米與 8 件棉布回阿瑜陀耶，協助聚落安定生活。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "rice",
+                "qty": 10
+              },
+              {
+                "goodId": "cotton",
+                "qty": 8
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "先讓大家吃得飽、穿得暖，人心才不會亂。"
+        },
+        {
+          "title": "護住南洋商路",
+          "desc": "累積贏得 2 場海戰，證明船隊有能力保護往來商船。",
+          "requirement": {
+            "battleWins": 2
+          },
+          "dialogue": "有力量卻不欺負弱小，這樣的船隊才值得結盟。"
+        }
       ],
-      "codexBody": "山田長政是活躍於暹羅阿瑜陀耶的日本人，代表朱印船時代日本人在東南亞建立聚落與商業網絡的歷史。"
+      "codexBody": "山田長政是活躍於暹羅阿瑜陀耶的日本人，代表朱印船時代日本人在東南亞建立聚落與商業網絡的歷史。",
+      "questIntro": "日本人町的商路不穩，我需要一支守信又有能力的船隊。",
+      "dialogues": [
+        "離鄉的人聚在一起，更需要守規矩、互相照應。",
+        "阿瑜陀耶是暹羅的重要城市，不只是日本人町的背景。",
+        "會打仗的人也要懂得何時不打。",
+        "南洋商路連著許多族群，別把誰只當成路人。",
+        "隊伍遇到危機時，先讓大家知道下一步要做什麼。"
+      ]
     },
     {
       "id": "li_dan",
@@ -77,16 +265,63 @@
       "fee": 1400,
       "star": 4,
       "history": "史實",
-      "roles": ["purser", "scholar"],
+      "roles": [
+        "purser",
+        "scholar"
+      ],
       "desc": "人稱 Captain China 的平戶華商，熟悉中日貿易與商館交涉。",
       "questTitle": "平戶華商的帳冊",
-      "requirement": { "minChapter": 4, "gold": 5000 },
+      "requirement": {
+        "minChapter": 4,
+        "gold": 5000
+      },
       "questStages": [
-        { "title": "取得商圈信任", "desc": "把生意做出名聲，平戶的華商圈才會替你引見李旦。", "requirement": { "reputation": { "trade": 10 } } },
-        { "title": "平戶的生意", "desc": "在平戶把生意做起來：於平戶累積賣出 3000 兩的貨物。", "requirement": { "tradeAtPort": { "portId": "hirado", "min": 3000 } } },
-        { "title": "跨港帳冊的信物", "desc": "替李旦的商網帶 10 件生絲到平戶交帳，證明你的信用。", "requirement": { "cargo": [{ "goodId": "silk_raw", "qty": 10 }] }, "reportAtPort": true, "consumeCargo": true }
+        {
+          "title": "取得商圈信任",
+          "desc": "把生意做出名聲，平戶的華商圈才會替你引見李旦。",
+          "requirement": {
+            "reputation": {
+              "trade": 10
+            }
+          },
+          "dialogue": "商人開始願意替你作保了。"
+        },
+        {
+          "title": "平戶的生意",
+          "desc": "在平戶把生意做起來：於平戶累積賣出 3000 兩的貨物。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "hirado",
+              "min": 3000
+            }
+          },
+          "dialogue": "平戶的帳目證明你不是只做一筆就走。"
+        },
+        {
+          "title": "跨港帳冊的信物",
+          "desc": "替李旦的商網帶 10 件生絲到平戶交帳，證明你的信用。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "silk_raw",
+                "qty": 10
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "生絲與帳冊都對上了，信用比謝禮更值錢。"
+        }
       ],
-      "codexBody": "李旦是 17 世紀初活躍於平戶的華商領袖，參與中國、日本、東南亞之間的海上貿易，是理解東亞民間商網的重要人物。"
+      "codexBody": "李旦是 17 世紀初活躍於平戶的華商領袖，參與中國、日本、東南亞之間的海上貿易，是理解東亞民間商網的重要人物。",
+      "questIntro": "先讓平戶商人看見你的信用，再來談這本跨港帳冊。",
+      "dialogues": [
+        "帳冊要每天記，拖到月底才補最容易出錯。",
+        "中日貿易靠許多小商人和水手一起維持。",
+        "價格可以談，答應的交貨日期不能亂改。",
+        "真正的信用，是沒人盯著時也把事情做好。",
+        "Captain China 是外人對我的稱呼，別忘了我也是平戶華商。"
+      ]
     },
     {
       "id": "hamada",
@@ -96,15 +331,57 @@
       "fee": 1000,
       "star": 4,
       "history": "史實",
-      "roles": ["gunner", "navigator"],
+      "roles": [
+        "gunner",
+        "navigator"
+      ],
       "desc": "熟悉日本與台灣航線的朱印船船長，行事強硬但重情義。",
       "questTitle": "朱印船的舊約",
-      "requirement": { "heroIds": ["chiyo"], "minChapter": 5 },
+      "requirement": {
+        "heroIds": [
+          "chiyo"
+        ],
+        "minChapter": 5
+      },
       "questStages": [
-        { "title": "千代線限定", "desc": "濱田彌兵衛只會信任同屬朱印船脈絡的千代。", "requirement": { "heroIds": ["chiyo"] } },
-        { "title": "追查舊約", "desc": "主線推進到日荷衝突浮現後，才能談朱印船舊約。", "requirement": { "minChapter": 5 } }
+        {
+          "title": "重走朱印船航線",
+          "desc": "造訪平戶與大員，確認日本商船往來台灣的兩端。",
+          "requirement": {
+            "visitPorts": [
+              "hirado",
+              "tayouan"
+            ]
+          },
+          "dialogue": "從平戶到大員，順風時很快，逆風時一步也不能急。"
+        },
+        {
+          "title": "查清舊約帳目",
+          "desc": "在平戶累積賣出 2000 兩貨物，找出商館保存的往來紀錄。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "hirado",
+              "min": 2000
+            }
+          },
+          "dialogue": "契約不是一句話；貨物、日期和承諾都要對得上。"
+        },
+        {
+          "title": "平戶舊約回報",
+          "desc": "回平戶向濱田彌兵衛說明查到的紀錄。",
+          "reportAtPort": true,
+          "dialogue": "你肯把兩邊的說法都查清楚，我願意相信你。"
+        }
       ],
-      "codexBody": "濱田彌兵衛與 1628 年大員日荷衝突有關。遊戲以他帶出朱印船商人、荷蘭 VOC 與台灣之間的緊張關係。"
+      "codexBody": "濱田彌兵衛與 1628 年大員日荷衝突有關。遊戲以他帶出朱印船商人、荷蘭 VOC 與台灣之間的緊張關係。",
+      "questIntro": "朱印船留下的舊約有兩種說法，陪我把航路與帳目查清楚。",
+      "dialogues": [
+        "朱印船帶著許可往海外，但有許可不代表能無視地方規矩。",
+        "大員與平戶的爭議，要把雙方紀錄都看過。",
+        "船長強硬之前，先確認自己有沒有聽錯。",
+        "逆風航行要留更多糧水，不能只算最快天數。",
+        "情義很重要，契約寫清楚也同樣重要。"
+      ]
     },
     {
       "id": "anjin",
@@ -114,15 +391,67 @@
       "fee": 1200,
       "star": 4,
       "history": "史實（卒年稍早，架空登場）",
-      "roles": ["navigator", "scholar"],
+      "roles": [
+        "navigator",
+        "scholar"
+      ],
       "desc": "英國人威廉・亞當斯的日本名，遊戲中以航海顧問傳聞登場。",
       "questTitle": "按針的海圖",
-      "requirement": { "minChapter": 4, "discoveredExplorationPoints": ["exp_sakai_route"] },
+      "requirement": {
+        "minChapter": 4,
+        "discoveredExplorationPoints": [
+          "exp_sakai_route"
+        ]
+      },
       "questStages": [
-        { "title": "聽見按針傳聞", "desc": "主線中期後，港口才會流傳英國航海顧問留下海圖的消息。", "requirement": { "minChapter": 4 } },
-        { "title": "堺商人古道", "desc": "探索堺商人古道，尋找海圖轉抄與航海器具線索。", "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] } }
+        {
+          "title": "讀懂西式海圖",
+          "desc": "船長航海能力達到 30，才看得懂按針留下的航線與記號。",
+          "requirement": {
+            "stats": {
+              "nav": 30
+            }
+          },
+          "dialogue": "海圖不是畫得漂亮就好，方位、距離和水深都不能含糊。"
+        },
+        {
+          "title": "追查堺的轉抄本",
+          "desc": "造訪堺並確認「堺商人古道」探索點。",
+          "requirement": {
+            "visitPorts": [
+              "sakai"
+            ],
+            "discoveredExplorationPoints": [
+              "exp_sakai_route"
+            ]
+          },
+          "dialogue": "商人抄走了航路，也把不同國家的知識帶到一起。"
+        },
+        {
+          "title": "補做航海器具",
+          "desc": "帶 5 件銅回平戶，交給工匠修補航海器具。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "copper",
+                "qty": 5
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "器具能幫你確認方向，但最後仍要靠船長判斷風與浪。"
+        }
       ],
-      "codexBody": "三浦按針本名威廉・亞當斯，是到日本服務德川家康的英國航海家。史實中他卒於 1620 年，本遊戲為教學需要作架空演出。"
+      "codexBody": "三浦按針本名威廉・亞當斯，是到日本服務德川家康的英國航海家。史實中他卒於 1620 年，本遊戲為教學需要作架空演出。",
+      "questIntro": "按針留下的海圖與器具散在平戶、堺一帶，你能讀懂它們嗎？",
+      "dialogues": [
+        "我本名威廉・亞當斯，三浦按針是我在日本使用的名字。",
+        "遊戲讓我在史實卒年後登場，這是架空演出。",
+        "測方向的器具要校正，人的判斷也要校正。",
+        "不同國家的造船法各有長處，先理解再比較。",
+        "海圖上的空白不代表那裡沒有人。"
+      ]
     },
     {
       "id": "liu_xiang",
@@ -132,15 +461,46 @@
       "fee": 1500,
       "star": 4,
       "history": "史實",
-      "roles": ["vice", "gunner"],
+      "roles": [
+        "vice",
+        "gunner"
+      ],
       "desc": "華南海域有名的海盜首領，熟悉海上突襲與船隊士氣。",
       "questTitle": "海盜首領的試探",
-      "requirement": { "minChapter": 6, "gold": 4000 },
+      "requirement": {
+        "minChapter": 6,
+        "gold": 4000
+      },
       "questStages": [
-        { "title": "闖出海上威名", "desc": "多打贏幾場海戰，讓華南海域都聽過你的旗號，劉香才肯出面見你。", "requirement": { "reputation": { "valor": 15 } } },
-        { "title": "海上的較量", "desc": "劉香派出旗艦來試探你的實力。出海航行時會遇到他的船隊——正面擊敗他！", "duel": { "name": "劉香的旗艦", "tier": 3 } }
+        {
+          "title": "闖出海上威名",
+          "desc": "多打贏幾場海戰，讓華南海域都聽過你的旗號，劉香才肯出面見你。",
+          "requirement": {
+            "reputation": {
+              "valor": 15
+            }
+          },
+          "dialogue": "有些名號來自保護船隊，不必靠欺負弱小。"
+        },
+        {
+          "title": "海上的較量",
+          "desc": "劉香派出旗艦來試探你的實力。出海航行時會遇到他的船隊——正面擊敗他！",
+          "duel": {
+            "name": "劉香的旗艦",
+            "tier": 3
+          },
+          "dialogue": "你正面贏了。我認你的本事，但別把掠奪當成英雄行為。"
+        }
       ],
-      "codexBody": "劉香是明末華南海域的重要海盜勢力之一。遊戲中呈現海商與海盜界線模糊的時代，但不美化掠奪。"
+      "codexBody": "劉香是明末華南海域的重要海盜勢力之一。遊戲中呈現海商與海盜界線模糊的時代，但不美化掠奪。",
+      "questIntro": "想讓我服氣，先在海上闖出名號，再正面勝過我的旗艦。",
+      "dialogues": [
+        "海上威名可以用來保護人，也可以被拿來欺負人。",
+        "遊戲不會把掠奪說成英雄事蹟。",
+        "砲擊前先看風向，火與煙也會妨礙自己。",
+        "輸一場不丟臉，不肯檢討才會一直輸。",
+        "我熟悉突襲，但你的船隊更該學會提早警戒。"
+      ]
     },
     {
       "id": "jana",
@@ -150,15 +510,61 @@
       "fee": 1200,
       "star": 4,
       "history": "史實（年代稍早，架空登場）",
-      "roles": ["strategist", "interpreter"],
+      "roles": [
+        "strategist",
+        "interpreter"
+      ],
       "desc": "熟悉琉球王國與東亞朝貢秩序，擅長交涉。",
       "questTitle": "琉球的尊嚴",
-      "requirement": { "minChapter": 5, "discoveredExplorationPoints": ["exp_ryukyu_shuri"] },
+      "requirement": {
+        "minChapter": 5,
+        "discoveredExplorationPoints": [
+          "exp_ryukyu_shuri"
+        ]
+      },
       "questStages": [
-        { "title": "理解琉球處境", "desc": "主線推進後，玩家才會接觸琉球在中日之間的壓力。", "requirement": { "minChapter": 5 } },
-        { "title": "首里線索", "desc": "探索琉球首里一帶，確認王國重臣留下的政治線索。", "requirement": { "discoveredExplorationPoints": ["exp_ryukyu_shuri"] } }
+        {
+          "title": "學會聽懂兩邊",
+          "desc": "船長交涉能力達到 30，才有能力處理琉球面對的外交壓力。",
+          "requirement": {
+            "stats": {
+              "neg": 30
+            }
+          },
+          "dialogue": "交涉不是大聲壓過別人，而是先聽懂每一方害怕什麼。"
+        },
+        {
+          "title": "走訪琉球往來港",
+          "desc": "造訪那霸與月港，了解琉球在東亞航路中的位置。",
+          "requirement": {
+            "visitPorts": [
+              "naha",
+              "yuegang"
+            ]
+          },
+          "dialogue": "琉球靠海路連起許多地方，也因此常被強國拉扯。"
+        },
+        {
+          "title": "帶回首里線索",
+          "desc": "確認「首里城周邊」探索點後，回那霸向謝名親方回報。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_ryukyu_shuri"
+            ]
+          },
+          "reportAtPort": true,
+          "dialogue": "守住尊嚴不等於拒絕往來，而是不能忘記自己是誰。"
+        }
       ],
-      "codexBody": "謝名親方是琉球史中的重要人物。本遊戲以架空方式讓他出現，帶出琉球在中日之間的中介地位。"
+      "codexBody": "謝名親方是琉球史中的重要人物。本遊戲以架空方式讓他出現，帶出琉球在中日之間的中介地位。",
+      "questIntro": "琉球夾在強國之間。若你只會選邊站，就解不了這道題。",
+      "dialogues": [
+        "琉球長期連結中國、日本與東南亞航路。",
+        "小國的交涉，常是在幾種壓力間找生路。",
+        "尊嚴不是拒絕所有外人，而是能說出自己的選擇。",
+        "我的年代比遊戲主時代稍早，圖鑑會清楚註明。",
+        "翻譯一句話前，先想它在對方文化裡是什麼意思。"
+      ]
     },
     {
       "id": "linschoten",
@@ -168,11 +574,54 @@
       "fee": 900,
       "star": 3,
       "history": "史實（年代稍早，架空登場）",
-      "roles": ["navigator", "scholar"],
+      "roles": [
+        "navigator",
+        "scholar"
+      ],
       "desc": "留下東印度航路知識的人物，能幫船隊整理海圖。",
       "questTitle": "東印度水路誌",
-      "requirement": { "minChapter": 4 },
-      "codexBody": "林斯豪頓出版過重要的東方航路資料，讓歐洲人更了解前往亞洲的海路。史實年代稍早，本遊戲作架空登場。"
+      "requirement": {
+        "minChapter": 4
+      },
+      "codexBody": "林斯豪頓出版過重要的東方航路資料，讓歐洲人更了解前往亞洲的海路。史實年代稍早，本遊戲作架空登場。",
+      "questStages": [
+        {
+          "title": "航海術的門檻",
+          "desc": "船長航海能力達到 28，才讀得懂《東印度水路誌》的記號。",
+          "requirement": {
+            "stats": {
+              "nav": 28
+            }
+          },
+          "dialogue": "書能記住前人的經驗，但讀圖的人也要懂風和洋流。"
+        },
+        {
+          "title": "核對東印度航路",
+          "desc": "造訪巴達維亞、萬丹與麻六甲，核對三座港的航路。",
+          "requirement": {
+            "visitPorts": [
+              "batavia",
+              "banten",
+              "malacca"
+            ]
+          },
+          "dialogue": "親自走過一遍，才知道紙上的直線其實有多少暗礁。"
+        },
+        {
+          "title": "完成水路誌校記",
+          "desc": "回巴達維亞交回航路筆記。",
+          "reportAtPort": true,
+          "dialogue": "你的校記很清楚。這份知識該交給願意負責任的航海者。"
+        }
+      ],
+      "questIntro": "水路誌不是傳說集。請你親自核對巴達維亞周邊的航路。",
+      "dialogues": [
+        "水路資料被出版後，更多歐洲船隊能前往亞洲。",
+        "知識流通會幫助航海，也可能被拿來競爭。",
+        "我在遊戲中的登場比史實年代晚，是架空安排。",
+        "靠港前先查水深，別只看港口離得近。",
+        "好的水路誌也要一直校正，海上的經驗不會停止。"
+      ]
     },
     {
       "id": "su_minggang",
@@ -182,11 +631,63 @@
       "fee": 800,
       "star": 3,
       "history": "史實",
-      "roles": ["purser", "interpreter"],
+      "roles": [
+        "purser",
+        "interpreter"
+      ],
       "desc": "巴達維亞華人社群領袖，熟悉商帳與多語交涉。",
       "questTitle": "甲必丹的商帳",
-      "requirement": { "minChapter": 3, "gold": 2500 },
-      "codexBody": "蘇鳴崗是巴達維亞早期華人領袖之一。透過他可以理解華人在 VOC 城市中的商業角色與社群治理。"
+      "requirement": {
+        "minChapter": 3,
+        "gold": 2500
+      },
+      "codexBody": "蘇鳴崗是巴達維亞早期華人領袖之一。透過他可以理解華人在 VOC 城市中的商業角色與社群治理。",
+      "questStages": [
+        {
+          "title": "取得華商信任",
+          "desc": "商人聲望達到 10，讓巴達維亞商人願意把帳冊交給你。",
+          "requirement": {
+            "reputation": {
+              "trade": 10
+            }
+          },
+          "dialogue": "做生意先做人；帳目可以算，信用卻要一天一天累積。"
+        },
+        {
+          "title": "巴達維亞貿易考驗",
+          "desc": "在巴達維亞累積賣出 2500 兩貨物。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "batavia",
+              "min": 2500
+            }
+          },
+          "dialogue": "成交額不是唯一標準，我也看你有沒有守約、照顧夥計。"
+        },
+        {
+          "title": "交回甲必丹商帳",
+          "desc": "帶 5 件絲綢回巴達維亞核對跨港帳目。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "silk_cloth",
+                "qty": 5
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "貨、錢與人情都對上了，這本帳才算真正結清。"
+        }
+      ],
+      "questIntro": "我把商帳交給守信用的人。先讓巴達維亞商圈認得你。",
+      "dialogues": [
+        "甲必丹是殖民城市中管理華人社群的職位。",
+        "巴達維亞的繁榮背後，也有不同社群承受的壓力。",
+        "帳目清楚，才能看見誰付出、誰得利。",
+        "會多種語言不只方便做生意，也能減少誤會。",
+        "別把城市只看成 VOC 的城市，本地與移民社群都在其中。"
+      ]
     },
     {
       "id": "chen_di",
@@ -196,11 +697,57 @@
       "fee": 700,
       "star": 3,
       "history": "史實（年代稍早，架空登場）",
-      "roles": ["scholar"],
+      "roles": [
+        "scholar"
+      ],
       "desc": "最早記錄台灣見聞的文人之一，重視觀察與書寫。",
       "questTitle": "東番記之路",
-      "requirement": { "minChapter": 3, "discoveredExplorationPoints": ["exp_siraya"] },
-      "codexBody": "陳第寫過《東番記》，是早期記錄台灣西南部原住民社會的重要文本。本遊戲用他強化觀察、記錄與尊重地方社群的觀念。"
+      "requirement": {
+        "minChapter": 3,
+        "discoveredExplorationPoints": [
+          "exp_siraya"
+        ]
+      },
+      "codexBody": "陳第寫過《東番記》，是早期記錄台灣西南部原住民社會的重要文本。本遊戲用他強化觀察、記錄與尊重地方社群的觀念。",
+      "questStages": [
+        {
+          "title": "踏上東番記之路",
+          "desc": "造訪大員、笨港、淡水與雞籠四座台灣港口。",
+          "requirement": {
+            "visitPorts": [
+              "tayouan",
+              "ponkan",
+              "tamsui",
+              "keelung"
+            ]
+          },
+          "dialogue": "記錄一個地方，不能只在岸邊看一眼就下結論。"
+        },
+        {
+          "title": "觀察西拉雅平原",
+          "desc": "確認「西拉雅平原社」探索點，尊重地方社群自己的生活。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_siraya"
+            ]
+          },
+          "dialogue": "我會把看見的寫下，也要提醒自己：外來者的眼睛不一定懂全部。"
+        },
+        {
+          "title": "交回沿途筆記",
+          "desc": "回月港向陳第說明四港見聞。",
+          "reportAtPort": true,
+          "dialogue": "寫得誠實，比寫得神奇更重要。讓後人知道這裡本來就有人生活。"
+        }
+      ],
+      "questIntro": "陪我重走台灣四港。看見什麼就誠實記什麼，不替地方的人亂下結論。",
+      "dialogues": [
+        "《東番記》是早期漢文台灣記錄之一，不是唯一視角。",
+        "觀察別人的生活時，要承認自己可能看不懂。",
+        "地方名稱最好問當地人怎麼說。",
+        "記錄差異不是為了分高低，而是讓人理解彼此。",
+        "我在遊戲中晚於史實年代登場，屬架空演出。"
+      ]
     },
     {
       "id": "he_bin",
@@ -210,11 +757,56 @@
       "fee": 850,
       "star": 3,
       "history": "史實",
-      "roles": ["interpreter", "scholar"],
+      "roles": [
+        "interpreter",
+        "scholar"
+      ],
       "desc": "熟悉荷蘭人、漢人與台灣地理的通事，後來與鄭成功攻台有關。",
       "questTitle": "大員地圖",
-      "requirement": { "minChapter": 7 },
-      "codexBody": "何斌曾在荷蘭勢力下活動，後來向鄭成功提供台灣地理資訊。遊戲中以他帶出翻譯、地圖與情報的重要性。"
+      "requirement": {
+        "minChapter": 7
+      },
+      "codexBody": "何斌曾在荷蘭勢力下活動，後來向鄭成功提供台灣地理資訊。遊戲中以他帶出翻譯、地圖與情報的重要性。",
+      "questStages": [
+        {
+          "title": "通事的交涉考驗",
+          "desc": "船長交涉能力達到 30，才有能力分辨不同勢力的說法。",
+          "requirement": {
+            "stats": {
+              "neg": 30
+            }
+          },
+          "dialogue": "同一句話換個語言，意思可能就偏了；通事要對雙方負責。"
+        },
+        {
+          "title": "核對大員周邊地理",
+          "desc": "造訪大員與澎湖，並確認「西拉雅平原社」探索點。",
+          "requirement": {
+            "visitPorts": [
+              "tayouan",
+              "penghu"
+            ],
+            "discoveredExplorationPoints": [
+              "exp_siraya"
+            ]
+          },
+          "dialogue": "地圖不是只有線條，還包括水道、聚落與誰在使用土地。"
+        },
+        {
+          "title": "交付大員地圖",
+          "desc": "回大員向何斌逐項核對地圖情報。",
+          "reportAtPort": true,
+          "dialogue": "情報能救人，也能被拿來打仗；交給誰之前一定要想清楚。"
+        }
+      ],
+      "questIntro": "大員的情報牽動許多勢力。先證明你看得懂地圖，也聽得懂不同說法。",
+      "dialogues": [
+        "通事掌握語言，也可能掌握誰聽見什麼消息。",
+        "地圖上的水道有時比陸地道路更重要。",
+        "情報交出去之前，要想它會保護誰、傷害誰。",
+        "大員周邊不是空地，原有社群一直在這裡生活。",
+        "翻譯最怕自作主張加上原話沒有的意思。"
+      ]
     },
     {
       "id": "guo_huaiyi",
@@ -224,11 +816,62 @@
       "fee": 750,
       "star": 3,
       "history": "史實",
-      "roles": ["boatswain", "vice"],
+      "roles": [
+        "boatswain",
+        "vice"
+      ],
       "desc": "熟悉台灣西南開墾與移民社群，能安定船員。",
       "questTitle": "開墾者的請託",
-      "requirement": { "minChapter": 4 },
-      "codexBody": "郭懷一是荷蘭統治時期台灣漢人開墾社群的重要人物。遊戲中用他的支線呈現移民、稅負與殖民統治的衝突。"
+      "requirement": {
+        "minChapter": 4
+      },
+      "codexBody": "郭懷一是荷蘭統治時期台灣漢人開墾社群的重要人物。遊戲中用他的支線呈現移民、稅負與殖民統治的衝突。",
+      "questStages": [
+        {
+          "title": "走訪開墾聚落",
+          "desc": "造訪笨港與大員，了解移民與耕作需要。",
+          "requirement": {
+            "visitPorts": [
+              "ponkan",
+              "tayouan"
+            ]
+          },
+          "dialogue": "開墾不是把無人的地拿來用；這裡原本就有社群與生活。"
+        },
+        {
+          "title": "送達農作物資",
+          "desc": "帶 12 件米與 8 件木材回笨港，支援聚落修繕。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "rice",
+                "qty": 12
+              },
+              {
+                "goodId": "wood",
+                "qty": 8
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "大家要的是能安穩過日子，不是永遠被稅和命令逼著走。"
+        },
+        {
+          "title": "開墾者的回報",
+          "desc": "向郭懷一回報沿途所見，聽取聚落真正的需求。",
+          "reportAtPort": true,
+          "dialogue": "先聽每一群人的難處，才不會把幫忙變成新的麻煩。"
+        }
+      ],
+      "questIntro": "笨港與大員的聚落需要物資，也需要有人真正聽懂他們的難處。",
+      "dialogues": [
+        "開墾需要土地、水與人力，也會碰到原有社群的權利。",
+        "稅負太重時，最先受苦的是普通家庭。",
+        "不要只問能種多少，也要問誰承擔風險。",
+        "船員上岸成為居民後，生活需求就不同了。",
+        "衝突通常有長期原因，不能只怪某一個人。"
+      ]
     },
     {
       "id": "lika",
@@ -238,15 +881,49 @@
       "fee": 700,
       "star": 3,
       "history": "史實",
-      "roles": ["guide", "interpreter"],
+      "roles": [
+        "guide",
+        "interpreter"
+      ],
       "desc": "熟悉台灣西南平原與社群道路，能協助探索與溝通。",
       "questTitle": "頭目的渡海",
       "questStages": [
-        { "title": "走進西拉雅平原", "desc": "先拜訪新港社所在的西拉雅平原，認識這片土地原本的主人。", "requirement": { "discoveredExplorationPoints": ["exp_siraya"] } },
-        { "title": "部落的信任", "desc": "多與台灣的社群往來（探索西拉雅、在大員或笨港完成委託），累積新港社友好度。", "requirement": { "friendship": { "sinckan": 12 } } },
-        { "title": "頭目的渡海", "desc": "回大員找理加，聽他說當年隨商船渡海去日本的見聞。", "reportAtPort": true }
+        {
+          "title": "走進西拉雅平原",
+          "desc": "先拜訪新港社所在的西拉雅平原，認識這片土地原本的主人。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_siraya"
+            ]
+          },
+          "dialogue": "你看見了我們生活的平原，也該知道這裡不是無主之地。"
+        },
+        {
+          "title": "部落的信任",
+          "desc": "多與台灣的社群往來（探索西拉雅、在大員或笨港完成委託），累積新港社友好度。",
+          "requirement": {
+            "friendship": {
+              "sinckan": 12
+            }
+          },
+          "dialogue": "信任是一次次往來累積的，不是送一件禮物就買得到。"
+        },
+        {
+          "title": "頭目的渡海",
+          "desc": "回大員找理加，聽他說當年隨商船渡海去日本的見聞。",
+          "reportAtPort": true,
+          "dialogue": "渡海讓我看見遠方，也讓我更清楚自己從哪裡來。"
+        }
       ],
-      "codexBody": "理加是西拉雅族新港社相關的史實人物，曾與日本商船交流。遊戲中以他提醒玩家：荷蘭與漢人來到台灣前，這裡已有自己的社群與道路。"
+      "codexBody": "理加是西拉雅族新港社相關的史實人物，曾與日本商船交流。遊戲中以他提醒玩家：荷蘭與漢人來到台灣前，這裡已有自己的社群與道路。",
+      "questIntro": "先走進西拉雅平原，取得新港社信任，我再說渡海的故事。",
+      "dialogues": [
+        "西拉雅社群在外來政權之前就有自己的生活與道路。",
+        "友好不是數字而已，是每次往來有沒有尊重。",
+        "我曾隨商船渡海的故事，讓人看見社群並不封閉。",
+        "帶路時我會告訴你哪裡能走，也會提醒哪裡不該打擾。",
+        "稱呼一個地方前，先聽住在那裡的人怎麼說。"
+      ]
     },
     {
       "id": "candidius",
@@ -256,10 +933,48 @@
       "fee": 400,
       "star": 2,
       "history": "史實",
-      "roles": ["surgeon", "scholar"],
+      "roles": [
+        "surgeon",
+        "scholar"
+      ],
       "desc": "大員的牧師，也懂得照料船員病痛與記錄地方見聞。",
       "questTitle": "大員教會的筆記",
-      "codexBody": "干治士是荷蘭在台灣早期傳教人物之一。遊戲中保留多元視角，讓玩家知道宗教、語言與地方社群互動很複雜。"
+      "codexBody": "干治士是荷蘭在台灣早期傳教人物之一。遊戲中保留多元視角，讓玩家知道宗教、語言與地方社群互動很複雜。",
+      "questStages": [
+        {
+          "title": "官府商館的筆記",
+          "desc": "帶 6 件紙用替代物資棉布與 6 件米回大員，供記錄與照護使用。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "cotton",
+                "qty": 6
+              },
+              {
+                "goodId": "rice",
+                "qty": 6
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "謝謝你。記錄地方語言與照顧病人，都需要耐心，不能勉強別人。"
+        },
+        {
+          "title": "聽取地方提醒",
+          "desc": "在大員官府／商館向干治士回報，不另設教堂設施。",
+          "reportAtPort": true,
+          "dialogue": "外來者若只顧自己的想法，就很容易看不見地方社群的聲音。"
+        }
+      ],
+      "questIntro": "不另建教堂。我們就在大員官府與商館之間，把記錄和照護物資準備好。",
+      "dialogues": [
+        "語言學習要雙方願意，不能把傳教當成強迫的理由。",
+        "照顧病人時，乾淨的水和休息同樣重要。",
+        "我的記錄是外來者視角，不能代替地方社群自己的聲音。",
+        "大員的官府與商館也能辦任務，不需要為我另蓋教堂。",
+        "遇到不懂的習俗，先問，不要急著批評。"
+      ]
     },
     {
       "id": "esquivel",
@@ -269,10 +984,54 @@
       "fee": 450,
       "star": 2,
       "history": "史實",
-      "roles": ["surgeon", "interpreter"],
+      "roles": [
+        "surgeon",
+        "interpreter"
+      ],
       "desc": "駐淡水一帶的西班牙神父，懂醫療與語言溝通。",
       "questTitle": "淡水教堂小任務",
-      "codexBody": "艾斯基維代表西班牙人在北台灣的活動。遊戲中用他帶出雞籠、淡水與西班牙勢力的短暫存在。"
+      "codexBody": "艾斯基維代表西班牙人在北台灣的活動。遊戲中用他帶出雞籠、淡水與西班牙勢力的短暫存在。",
+      "questStages": [
+        {
+          "title": "淡水照護物資",
+          "desc": "帶 6 件棉布與 6 件米回淡水，供旅人與病患使用。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "cotton",
+                "qty": 6
+              },
+              {
+                "goodId": "rice",
+                "qty": 6
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "物資送到了。照護人不分來自哪裡，先讓他平安最重要。"
+        },
+        {
+          "title": "北台灣語言筆記",
+          "desc": "造訪淡水與雞籠後，回淡水官府／商館交換見聞。",
+          "requirement": {
+            "visitPorts": [
+              "tamsui",
+              "keelung"
+            ]
+          },
+          "reportAtPort": true,
+          "dialogue": "同一片北海岸也有不同語言與習慣，翻譯不能只靠猜。"
+        }
+      ],
+      "questIntro": "淡水與雞籠往來不易，請幫我送照護物資，也記下兩港的語言差異。",
+      "dialogues": [
+        "西班牙人在北台灣的活動時間並不長。",
+        "淡水與雞籠各有不同港勢與社群。",
+        "翻譯宗教詞語時，更要避免用錯意思。",
+        "照護物資要公平分配，不能只照顧自己人。",
+        "外來勢力的到來，對地方居民不一定只有一種影響。"
+      ]
     },
     {
       "id": "pinto",
@@ -282,10 +1041,41 @@
       "fee": 450,
       "star": 2,
       "history": "史實（年代稍早，架空登場）",
-      "roles": ["navigator", "guide"],
+      "roles": [
+        "navigator",
+        "guide"
+      ],
       "desc": "澳門的冒險家，走遍東方海域，識得各條航路。",
       "questTitle": "三段遠遊故事",
-      "codexBody": "平托是葡萄牙冒險家，《遠遊記》作者。史實年代較早，本遊戲以說書人方式架空登場，帶出歐洲人在亞洲航行的見聞。"
+      "codexBody": "平托是葡萄牙冒險家，《遠遊記》作者。史實年代較早，本遊戲以說書人方式架空登場，帶出歐洲人在亞洲航行的見聞。",
+      "questStages": [
+        {
+          "title": "第一段：海上的選擇",
+          "desc": "在澳門聽平托說第一次遠航的故事。",
+          "reportAtPort": true,
+          "dialogue": "遠行最難的不是浪高，是每次選路都要承擔後果。"
+        },
+        {
+          "title": "第二段：陌生港口",
+          "desc": "再聽一段他在亞洲港口與不同人往來的故事。",
+          "reportAtPort": true,
+          "dialogue": "陌生人不等於敵人；先學會問候，常比拔劍有用。"
+        },
+        {
+          "title": "第三段：故事與真相",
+          "desc": "聽完最後一段，並理解遊記可能混有誇張敘述。",
+          "reportAtPort": true,
+          "dialogue": "遊記很好聽，但別把每句都當史實；多找幾種記錄互相對照。"
+        }
+      ],
+      "questIntro": "三段故事換一個同行機會；但你得分得清故事好聽和史實可靠是兩回事。",
+      "dialogues": [
+        "我的遠遊故事很精彩，也有人懷疑其中有誇張。",
+        "讀遊記要問：作者親眼看見，還是聽別人轉述？",
+        "澳門連著葡萄牙與亞洲商路，也有本地人的生活。",
+        "好故事能引人好奇，查證才能接近史實。",
+        "我在遊戲中的年代是架空安排，別忘了看圖鑑。"
+      ]
     },
     {
       "id": "adika",
@@ -295,10 +1085,48 @@
       "fee": 400,
       "star": 2,
       "history": "虛構（補多元）",
-      "roles": ["purser"],
+      "roles": [
+        "purser"
+      ],
       "desc": "熟悉萬丹胡椒市場的商人，知道誰在買、誰在囤貨。",
       "questTitle": "胡椒市集的人情",
-      "codexBody": "阿迪卡是虛構角色，用來呈現東南亞本地商人不是背景，而是香料貿易中的重要參與者。"
+      "codexBody": "阿迪卡是虛構角色，用來呈現東南亞本地商人不是背景，而是香料貿易中的重要參與者。",
+      "questStages": [
+        {
+          "title": "看懂萬丹胡椒市",
+          "desc": "在萬丹累積賣出 1800 兩貨物，認識本地市場。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "banten",
+              "min": 1800
+            }
+          },
+          "dialogue": "胡椒價格天天變，先看本地人需要什麼，別只盯著遠方買家。"
+        },
+        {
+          "title": "交回市集樣貨",
+          "desc": "帶 8 件胡椒回萬丹，讓阿迪卡核對品質與帳目。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "pepper",
+                "qty": 8
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "會辨品質、守信用，你才不是只來搶便宜的過路商人。"
+        }
+      ],
+      "questIntro": "想懂胡椒，不只要會算價錢，也要懂萬丹市集怎麼運作。",
+      "dialogues": [
+        "萬丹不是歐洲商人的配角，本地商人本來就在經營市場。",
+        "胡椒要乾燥保存，受潮就會失去價值。",
+        "買得便宜不代表公平，還要看生產者得到什麼。",
+        "懂當地語言，常比多帶一袋銀子更有用。",
+        "市場消息要交叉確認，別被一個人喊的價格騙了。"
+      ]
     },
     {
       "id": "salima",
@@ -308,10 +1136,52 @@
       "fee": 400,
       "star": 2,
       "history": "虛構（補多元）",
-      "roles": ["boatswain", "guide"],
+      "roles": [
+        "boatswain",
+        "guide"
+      ],
       "desc": "班達群島的女嚮導，熟悉海象、山路與船員調度。",
       "questTitle": "香料林的路",
-      "codexBody": "莎麗瑪是虛構角色，代表香料群島在地嚮導與勞動者。她提醒玩家：丁香、肉豆蔻不只是商品，也連著土地與社群。"
+      "codexBody": "莎麗瑪是虛構角色，代表香料群島在地嚮導與勞動者。她提醒玩家：丁香、肉豆蔻不只是商品，也連著土地與社群。",
+      "questStages": [
+        {
+          "title": "找到香料林入口",
+          "desc": "確認「香料群島森林」探索點，學會辨認採集環境。",
+          "requirement": {
+            "discoveredExplorationPoints": [
+              "exp_moluccas_forest"
+            ]
+          },
+          "dialogue": "香料長在土地上，不是憑空出現在倉庫；採集也要留給下一季。"
+        },
+        {
+          "title": "帶回採集成果",
+          "desc": "帶 5 件丁香與 5 件肉豆蔻回班達交給莎麗瑪。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "clove",
+                "qty": 5
+              },
+              {
+                "goodId": "nutmeg",
+                "qty": 5
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "數量正好，沒有濫採。懂得節制的人，我才放心帶路。"
+        }
+      ],
+      "questIntro": "跟著我進香料林，但只能取需要的量，不能把土地掏空。",
+      "dialogues": [
+        "丁香和肉豆蔻連著島民的土地與生活。",
+        "採集後要留下種子與幼株，下一季才還有收成。",
+        "嚮導不是搬運工，我也參與決定隊伍怎麼走。",
+        "海象變快時，寧可晚一天也不要冒險。",
+        "香料很值錢，但人的安全與土地更重要。"
+      ]
     },
     {
       "id": "yusuf",
@@ -321,10 +1191,20 @@
       "fee": 350,
       "star": 1,
       "history": "虛構（補多元）",
-      "roles": ["purser", "scholar"],
+      "roles": [
+        "purser",
+        "scholar"
+      ],
       "desc": "麻六甲的商品鑑定師，精打細算，過目就知價。",
       "questTitle": "鑑定師的算盤",
-      "codexBody": "尤蘇夫是虛構角色，用來呈現麻六甲這類國際港口裡不同族群商人的交流。"
+      "codexBody": "尤蘇夫是虛構角色，用來呈現麻六甲這類國際港口裡不同族群商人的交流。",
+      "dialogues": [
+        "麻六甲的市場裡能聽見很多語言。",
+        "鑑定商品先看來源、氣味與保存狀況。",
+        "便宜貨也可能好用，別只看昂貴的名字。",
+        "算盤算得出價格，算不出一個人的誠信。",
+        "我直接受雇，不設額外任務；把費用說清楚就好。"
+      ]
     },
     {
       "id": "yan_siqi",
@@ -334,16 +1214,69 @@
       "fee": 0,
       "star": 4,
       "history": "史實",
-      "roles": ["vice"],
+      "roles": [
+        "vice"
+      ],
       "desc": "笨港海商集團首領。林海生線可在前期短暫邀請，避免違背史實時間。",
       "questTitle": "笨港義旗",
-      "requirement": { "heroIds": ["lin"], "minChapter": 2, "maxChapter": 3 },
+      "requirement": {
+        "heroIds": [
+          "lin"
+        ],
+        "minChapter": 2,
+        "maxChapter": 3
+      },
       "questStages": [
-        { "title": "林海生線限定", "desc": "顏思齊是林海生線前期的海商引路人，其他主角線不招募。", "requirement": { "heroIds": ["lin"] } },
-        { "title": "笨港義旗時機", "desc": "必須在林線第 2 至第 3 章之間邀請，過後會依史實淡出。", "requirement": { "minChapter": 2, "maxChapter": 3 } }
+        {
+          "title": "看過台灣西南港路",
+          "desc": "造訪笨港與大員，了解海商集團落腳的環境。",
+          "requirement": {
+            "visitPorts": [
+              "ponkan",
+              "tayouan"
+            ]
+          },
+          "dialogue": "笨港不是地圖上的空白，早有人在這裡討海、耕作、做生意。"
+        },
+        {
+          "title": "支援新聚落",
+          "desc": "帶 10 件米與 8 件木材回笨港，協助船員與居民安頓。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "rice",
+                "qty": 10
+              },
+              {
+                "goodId": "wood",
+                "qty": 8
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "先把屋頂和飯鍋顧好，大家才有力氣談遠大的事。"
+        },
+        {
+          "title": "在義旗前做決定",
+          "desc": "回笨港向顏思齊回報，確認是否在有限時間內同行。",
+          "reportAtPort": true,
+          "dialogue": "時機不等人。你若願意並肩，就趁現在出海。"
+        }
       ],
       "codexBody": "顏思齊是明末活躍於台灣笨港一帶的海商首領。遊戲中保留他 1625 年病逝的史實，因此只能在林海生線前期短暫同行。",
-      "guest": { "leaveAfterChapter": 3, "leaveText": "因病過世，依依不捨地離開了船隊。（史實：顏思齊於 1625 年病逝於笨港一帶。）" }
+      "guest": {
+        "leaveAfterChapter": 3,
+        "leaveText": "因病過世，依依不捨地離開了船隊。（史實：顏思齊於 1625 年病逝於笨港一帶。）"
+      },
+      "questIntro": "時日有限。先看看笨港與大員，再決定要不要和我們並肩。",
+      "dialogues": [
+        "笨港海商集團是許多人一起行動，不是只靠一位首領。",
+        "遊戲保留我在 1625 年病逝的史實時間。",
+        "聚落要長久，不能只靠船隊帶來物資。",
+        "分配工作時，要讓每個人知道自己為何而做。",
+        "同行時間雖短，學會的海路仍能留下。"
+      ]
     },
     {
       "id": "zheng_zhilong",
@@ -353,16 +1286,61 @@
       "fee": 0,
       "star": 5,
       "history": "史實",
-      "roles": ["vice", "purser"],
+      "roles": [
+        "vice",
+        "purser"
+      ],
       "desc": "台海貿易的支配者。為避免劇情矛盾，只在千代線以客座方式加入。",
       "questTitle": "平戶舊識",
-      "requirement": { "heroIds": ["chiyo"], "minChapter": 6 },
+      "requirement": {
+        "heroIds": [
+          "chiyo"
+        ],
+        "minChapter": 6
+      },
       "questStages": [
-        { "title": "千代線限定", "desc": "鄭芝龍在其他路線是統帥或交涉對象，只能在千代線以平戶舊識客座加入。", "requirement": { "heroIds": ["chiyo"] } },
-        { "title": "平戶舊識重逢", "desc": "千代主線推進到第 6 章後，才有足夠信任談短期同行。", "requirement": { "minChapter": 6 } }
+        {
+          "title": "重走平戶舊路",
+          "desc": "造訪平戶與安海，找回千代與鄭芝龍共同認識的商路。",
+          "requirement": {
+            "visitPorts": [
+              "hirado",
+              "anhai"
+            ]
+          },
+          "dialogue": "平戶教我看世界，安海提醒我不能忘了從哪裡出發。"
+        },
+        {
+          "title": "證明商路本事",
+          "desc": "在平戶累積賣出 3000 兩貨物，證明能照顧跨海商網。",
+          "requirement": {
+            "tradeAtPort": {
+              "portId": "hirado",
+              "min": 3000
+            }
+          },
+          "dialogue": "海上勢力不是只靠砲，能讓貨與消息準時到港才是真本事。"
+        },
+        {
+          "title": "舊識同行之約",
+          "desc": "回安海向鄭芝龍回報，約定只在主線需要時客座同行。",
+          "reportAtPort": true,
+          "dialogue": "我只能同行一段。自己的船隊與責任，我還得回去照看。"
+        }
       ],
       "codexBody": "鄭芝龍是 17 世紀台海最重要的海上勢力之一，曾接受明朝招撫，後來在明清變局中降清。不同主角線對他的立場不同。",
-      "guest": { "leaveAfterChapter": 8, "leaveText": "要回去經營他的台海霸業，與你拱手道別、就此分道。（客座夥伴依劇情離隊。）" }
+      "guest": {
+        "leaveAfterChapter": 8,
+        "leaveText": "要回去經營他的台海霸業，與你拱手道別、就此分道。（客座夥伴依劇情離隊。）"
+      },
+      "questIntro": "舊識歸舊識。你得先證明還記得平戶到安海這條路怎麼走。",
+      "dialogues": [
+        "海上勢力靠武力，也靠情報、商路和人脈。",
+        "我在林線是主角的統帥，不該變成普通部下。",
+        "千代線的同行只是客座，章節到了我會離隊。",
+        "接受招撫會改變立場，也會帶來新的風險。",
+        "看一位歷史人物，要看他在不同時期做了什麼選擇。"
+      ]
     },
     {
       "id": "zheng_chenggong",
@@ -372,15 +1350,53 @@
       "fee": 0,
       "star": 5,
       "history": "史實",
-      "roles": ["vice"],
+      "roles": [
+        "vice"
+      ],
       "desc": "反清復明勢力領袖，林海生線後期可客座同行；千代線則作少年鄭森架空演出。",
       "questTitle": "國姓爺的信任",
-      "requirement": { "heroIds": ["lin", "chiyo"], "minChapter": 9 },
+      "requirement": {
+        "heroIds": [
+          "lin",
+          "chiyo"
+        ],
+        "minChapter": 9
+      },
       "questStages": [
-        { "title": "可同行路線", "desc": "鄭成功可在林線後期或千代線架空演出中短期同行；彼得線維持主線對手定位。", "requirement": { "heroIds": ["lin", "chiyo"] } },
-        { "title": "終局前的信任", "desc": "必須推進到第 9 章以後，才符合國姓爺登場的時機。", "requirement": { "minChapter": 9 } }
+        {
+          "title": "證明帶隊勇氣",
+          "desc": "船長武勇達到 35，讓鄭成功相信你遇事不會退縮。",
+          "requirement": {
+            "stats": {
+              "val": 35
+            }
+          },
+          "dialogue": "勇敢不是逞強，是知道責任很重，仍願意站在前面。"
+        },
+        {
+          "title": "累積海上實績",
+          "desc": "累積贏得 3 場海戰，證明船隊能在危急時保護彼此。",
+          "requirement": {
+            "battleWins": 3
+          },
+          "dialogue": "我看的是你如何帶人平安回來，不只是贏了幾場。"
+        },
+        {
+          "title": "國姓爺的信任",
+          "desc": "回笨港向鄭成功回報，確認終局前的客座同行。",
+          "reportAtPort": true,
+          "dialogue": "我把這一段航程交給你指揮；但彼此都不能忘記原來的使命。"
+        }
       ],
-      "codexBody": "鄭成功是明鄭勢力領袖，1661–1662 年攻下熱蘭遮城。遊戲中依主角線不同，呈現他作為盟友、少年記憶或對手的不同面向。"
+      "codexBody": "鄭成功是明鄭勢力領袖，1661–1662 年攻下熱蘭遮城。遊戲中依主角線不同，呈現他作為盟友、少年記憶或對手的不同面向。",
+      "questIntro": "我需要的是能扛責任的船長，不是只會喊口號的人。",
+      "dialogues": [
+        "不同主角線看見的我，立場不會完全一樣。",
+        "彼得線中我是主線對手，因此不能招募。",
+        "少年鄭森的同行屬遊戲架空演出。",
+        "客座同行不代表放下原本的責任。",
+        "讀圖鑑時要把遊戲演出與史實年代分開。"
+      ]
     },
     {
       "id": "zheng_jing",
@@ -390,11 +1406,53 @@
       "fee": 600,
       "star": 3,
       "history": "史實（架空提前成年）",
-      "roles": ["boatswain"],
+      "roles": [
+        "boatswain"
+      ],
       "desc": "遊戲中以提前見習航海方式登場，圖鑑註明架空安排。",
       "questTitle": "世子的見習航海",
-      "requirement": { "heroIds": ["lin"], "minChapter": 9 },
-      "codexBody": "鄭經是鄭成功長子，史實中後來承接明鄭政權。本遊戲讓他提前以見習航海方式登場，屬架空演出。"
+      "requirement": {
+        "heroIds": [
+          "lin"
+        ],
+        "minChapter": 9
+      },
+      "codexBody": "鄭經是鄭成功長子，史實中後來承接明鄭政權。本遊戲讓他提前以見習航海方式登場，屬架空演出。",
+      "questStages": [
+        {
+          "title": "世子的見習航線",
+          "desc": "造訪笨港與安海，熟悉鄭氏船隊往返的港路。",
+          "requirement": {
+            "visitPorts": [
+              "ponkan",
+              "anhai"
+            ]
+          },
+          "dialogue": "只在岸上聽報告不夠，我得親眼看過港口和船員怎麼做事。"
+        },
+        {
+          "title": "見習海上指揮",
+          "desc": "累積贏得 2 場海戰，讓鄭經觀察船隊如何配合。",
+          "requirement": {
+            "battleWins": 2
+          },
+          "dialogue": "真正的指揮不是搶著下令，而是讓每個人知道何時該做什麼。"
+        },
+        {
+          "title": "完成見習報告",
+          "desc": "回笨港完成見習回報；本段為年代提前的架空演出。",
+          "reportAtPort": true,
+          "dialogue": "我會記住這趟所學。也別忘了，遊戲中的我比史實年代更早長大。"
+        }
+      ],
+      "questIntro": "這是見習航海，不是遊山玩水。我要從港路、船務到指揮都學。",
+      "dialogues": [
+        "遊戲讓我提前成年參與航海，這不是史實時間。",
+        "見習時先看、再問、最後才下判斷。",
+        "水手長要懂船員工作，不只是站在甲板發號施令。",
+        "上一代的名聲不能代替我自己的學習。",
+        "歷史人物也會成長，不該只用結局倒推他年輕時。"
+      ]
     },
     {
       "id": "shi_lang",
@@ -404,15 +1462,58 @@
       "fee": 1200,
       "star": 4,
       "history": "史實",
-      "roles": ["gunner"],
+      "roles": [
+        "gunner"
+      ],
       "desc": "青年水師將領，熟悉砲戰與船隊紀律。圖鑑會說明後來降清與 1683 年攻台。",
       "questTitle": "降將的本事",
-      "requirement": { "heroIds": ["lin", "peter"], "minChapter": 6 },
+      "requirement": {
+        "heroIds": [
+          "lin",
+          "peter"
+        ],
+        "minChapter": 6
+      },
       "questStages": [
-        { "title": "可接觸路線", "desc": "施琅在林線與彼得線可用不同立場接觸；千代線暫不開放。", "requirement": { "heroIds": ["lin", "peter"] } },
-        { "title": "水師本事", "desc": "主線第 6 章後，玩家才有足夠海戰經驗判斷他的能力。", "requirement": { "minChapter": 6 } }
+        {
+          "title": "看見水師本事",
+          "desc": "累積贏得 3 場海戰，讓施琅判斷你的船隊紀律。",
+          "requirement": {
+            "battleWins": 3
+          },
+          "dialogue": "砲打得準只是開始，隊形不亂、命令清楚才叫水師。"
+        },
+        {
+          "title": "補足火藥原料",
+          "desc": "帶 8 件硫磺回安海，供船隊整理砲務。",
+          "requirement": {
+            "cargo": [
+              {
+                "goodId": "sulfur",
+                "qty": 8
+              }
+            ]
+          },
+          "reportAtPort": true,
+          "consumeCargo": true,
+          "dialogue": "硫磺要妥善存放，離火遠些；海戰準備最怕粗心。"
+        },
+        {
+          "title": "降將的本事",
+          "desc": "向施琅回報航行與作戰紀錄，確認他在本路線的同行立場。",
+          "reportAtPort": true,
+          "dialogue": "先看本事，再談出身。只要目標一致，我願意把所學用在船隊。"
+        }
       ],
-      "codexBody": "施琅早年曾在鄭氏勢力中活動，後來降清，並在 1683 年率軍攻台。遊戲中要清楚標明他的後續史實，避免只看到單一立場。"
+      "codexBody": "施琅早年曾在鄭氏勢力中活動，後來降清，並在 1683 年率軍攻台。遊戲中要清楚標明他的後續史實，避免只看到單一立場。",
+      "questIntro": "要我上船，先讓我看看你如何帶隊、備砲與守紀律。",
+      "dialogues": [
+        "我後來降清並在 1683 年攻台，圖鑑會完整註明。",
+        "遊戲此時呈現的是較年輕、尚在鄭家陣營的我。",
+        "砲術訓練先求一致，再求速度。",
+        "短期合作也要把離隊條件說清楚。",
+        "知道後來的選擇，不代表能忽略人物當時的處境。"
+      ]
     }
   ]
 }

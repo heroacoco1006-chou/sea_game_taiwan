@@ -6,7 +6,7 @@ import {
   mateQuestProgress, acceptMateQuest, reportableMateQuestStageIndex, reportMateQuestStage,
   updateMateQuestProgress,
 } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, toast, selectionRing } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 /**
@@ -96,6 +96,8 @@ export default class MatesScene extends Phaser.Scene {
       // 解除職位
       const off = makeButton(this, 110 + def.roles.length * 132, y + 42, 90, 36, '不指派', () => this.assign(m.id, null), 12);
       this.dyn.push(off);
+      const chat = makeButton(this, 555, y + 42, 100, 36, '聊聊天', () => this.chat(m.id), 12);
+      this.dyn.push(chat);
     });
     if (crewPages > 1) {
       this.dyn.push(makeButton(this, 240, 620, 120, 34, '上一頁', () => { this.crewPage = Math.max(0, this.crewPage - 1); this.rebuild(); }, 13));
@@ -349,6 +351,14 @@ export default class MatesScene extends Phaser.Scene {
     if (roleKey) toast(this, `指派為${roleName(roleKey)}！`);
   }
 
+
+  /** 顯示已入隊夥伴的專屬日常對話；每次隨機抽一句，方便玩家反覆認識人物。 */
+  private chat(mateId: string): void {
+    const def = mateDefById(mateId);
+    if (!def?.dialogues?.length) return;
+    const line = Phaser.Utils.Array.GetRandom(def.dialogues);
+    showModal(this, def.name, `「${line}」`, [{ label: '知道了', onPick: () => {} }]);
+  }
   /** 設定職位並維持同職位互斥 */
   private assignRole(mateId: string, roleKey: string | null): void {
     const s = this.state;
