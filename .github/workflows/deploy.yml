@@ -36,15 +36,10 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
-      - name: Prepare Pages smoke test
-        run: |
-          mkdir pages-smoke
-          printf '%s\n' '<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>部署測試成功</title><body><h1>GitHub Pages 部署測試成功</h1></body></html>' > pages-smoke/index.html
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: pages-smoke
+          path: dist
 
   deploy:
     environment:
