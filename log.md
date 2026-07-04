@@ -7,6 +7,13 @@
 
 ---
 
+## [2026-07-04] 修正 | 操作者：Codex | GitHub Pages 網站版正式上線
+
+- 建立 `.github/workflows/deploy.yml`，以 Vite build 產出 `dist`，再透過 GitHub Pages 官方 actions 自動部署 `main`。
+- 初次完整 artifact 建置與上傳成功，但 Pages 在 `syncing_files` 階段連續失敗；確認倉庫 Public、Pages Source、權限、OIDC、artifact tar 結構皆正常，Node 20／punycode 訊息只是警告。
+- 將官方元件更新為 `configure-pages@v6`、`upload-pages-artifact@v5`、`deploy-pages@v5`；以極小診斷頁完成首次站台初始化後，恢復約 165 MB 完整遊戲 artifact，workflow run `28692243600` 成功。
+- 正式網址：<https://heroacoco1006-chou.github.io/sea_game_taiwan/>。驗證首頁、主程式 JS、V3 大地圖 HTTP 200；瀏覽器標題畫面建立 Phaser canvas，console 無 error。
+
 ## [2026-07-03] 開發 | 操作者：小航 | 驗證第三階段後半＋完成第四、五階段（夥伴任務全部收尾）
 
 - **驗證 Codex 第三階段後半**：git 4e710b0 程式改動（questIntro／階段 dialogue／聊聊天按鈕）與框架一致；新寫 `tools/validate-mates-data.mjs` 全面檢查通過（25 位／24 任務／68 階段／125 句／0 錯誤，所有引用 id 有效、階段數符合驗收標準）；抽查主線要角與低星任務設計語意合理。**判定：通過**。

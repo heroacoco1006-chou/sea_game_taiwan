@@ -3,21 +3,21 @@ title: sea_game 專案作戰盤
 type: status
 tags: [sea_game, 作戰盤, 里程碑]
 created: 2026-06-12
-updated: 2026-07-03
+updated: 2026-07-04
 author: Codex
 status: draft
 ---
 
 # 《大航海福爾摩沙》專案作戰盤
 
-> 最後更新：2026-07-03 | 作者：Codex
+> 最後更新：2026-07-04 | 作者：Codex
 > 設計依據：`2026-06-12_大航海福爾摩沙_遊戲建構書.md`
 
 ---
 
 ## 目前階段
 
-**M4 夥伴招募任務五階段全部完成（2026-07-03）：24 位有可接取／回報的專屬任務（68 階段）＋聲望系統＋海上決鬥＋主線自動同行（顏思齊林線、濱田千代線）＋分線客座離隊（鄭成功終章後、施琅彼得線第 8 章後）；資料完整性測試（`tools/validate-mates-data.mjs`）與三主角招募路線矩陣（林 24／彼得 22／千代 22，史實約束零違規）通過，待老闆試玩驗收。M5 美術階段持續進行，V3 世界地圖與地理重定位已正式接入。**
+**M4 夥伴招募任務五階段全部完成（2026-07-03）：24 位有可接取／回報的專屬任務（68 階段）＋聲望系統＋海上決鬥＋主線自動同行（顏思齊林線、濱田千代線）＋分線客座離隊（鄭成功終章後、施琅彼得線第 8 章後）；資料完整性測試（`tools/validate-mates-data.mjs`）與三主角招募路線矩陣（林 24／彼得 22／千代 22，史實約束零違規）通過，待老闆試玩驗收。M5 美術階段持續進行，V3 世界地圖與地理重定位已正式接入。網站版已於 2026-07-04 透過 GitHub Pages 正式上線。**
 
 ---
 
@@ -35,55 +35,15 @@ status: draft
 
 ---
 
-## 🌐 網站版上線流程（GitHub Pages，待 M5/M6 執行）
+## 🌐 網站版已上線（GitHub Pages，2026-07-04）
 
-> 老闆決定：開發階段倉庫維持 **private**；到 M5/M6 改 **public** 後再依本流程上線，讓小朋友開網址即玩、免安裝。
-> 本遊戲為純前端（Phaser + Vite，無後端，存檔走 localStorage），可直接靜態託管。安裝檔與網站共用同一份 build。
-> 討論結論見 `log.md`（2026-06-17）。
-
-**前置（老闆在 GitHub 網頁操作，小航不代為操作帳號/設定）**
-1. 把倉庫 `sea_game_taiwan` 改為 **Public**（Settings → General → Danger Zone → Change visibility）。免費 GitHub Pages 需公開倉庫。
-2. Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
-
-**小航可代做的程式部分**
-3. 確認 `vite.config.ts` 的 `base`：專案頁網址含子路徑，建議部署時用 `base: '/sea_game_taiwan/'`（或維持 `'./'`，若資源 404 再改絕對子路徑）。可用環境變數區分本機開發與 Pages 部署。
-4. 新增 `.github/workflows/deploy.yml`（一推 main 就自動 build＋部署）：
-
-   ```yaml
-   name: Deploy to GitHub Pages
-   on:
-     push:
-       branches: [main]
-   permissions:
-     contents: read
-     pages: write
-     id-token: write
-   jobs:
-     build:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-node@v4
-           with: { node-version: 20 }
-         - run: npm ci
-         - run: npm run build
-         - uses: actions/upload-pages-artifact@v3
-           with: { path: dist }
-     deploy:
-       needs: build
-       runs-on: ubuntu-latest
-       environment: { name: github-pages, url: "${{ steps.deployment.outputs.page_url }}" }
-       steps:
-         - id: deployment
-           uses: actions/deploy-pages@v4
-   ```
-
-5. 推上去後，網址為 `https://heroacoco1006-chou.github.io/sea_game_taiwan/`。
-
-**上線後可選優化（非必要）**
-- 存檔匯出／匯入（解決「換電腦存檔不跟著走」）。
-- PWA 離線（載過一次即可離線玩，適合教室無網路）。
-- 自訂網域（想要更好記的網址時）。
+- 公開網址：<https://heroacoco1006-chou.github.io/sea_game_taiwan/>
+- 倉庫已設為 Public；Pages Source 已設為 GitHub Actions。
+- 自動部署檔：`.github/workflows/deploy.yml`；推送 `main` 會執行 Vite build、上傳 `dist` 並部署。
+- 官方 Pages actions 已更新為 `configure-pages@v6`、`upload-pages-artifact@v5`、`deploy-pages@v5`。
+- 首次完整 artifact（約 165 MB）同步失敗；先以極小頁面完成站台初始化後，完整遊戲部署成功。
+- 驗證：workflow run `28692243600` 成功；公開頁面、主程式 JS、V3 大地圖皆回傳 HTTP 200；瀏覽器實測 Phaser canvas 已建立且 console 無 error。
+- 網站存檔使用瀏覽器 localStorage；換瀏覽器／清除網站資料時不會自動帶走存檔。
 
 ---
 
