@@ -12,7 +12,7 @@ import {
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
   mateQuestStageStatuses, mateNextStepText, updateMateQuestProgress,
 } from '../state';
-import { codexIllustrationKey, shipCardKey, shipEquipmentKey } from '../art';
+import { codexIllustrationKey, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
@@ -297,7 +297,18 @@ export default class InfoScene extends Phaser.Scene {
       `已招募夥伴：${s.mates.length} 位`,
       `圖鑑收集：${codexCollection(s).unlocked}/${codexCollection(s).total}（${codexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
     ];
-    this.addWrapped(300, 124, lines.join('\n'), 840, 16);
+    // WP-5：右側主角精緻立繪卡；有立繪時文字讓出右欄
+    const pKey = this.m5Texture(portraitKey(s.story.heroId), '');
+    if (pKey) {
+      const px = 1010;
+      const py = 260;
+      const frame = this.add.rectangle(px, py, 252, 252, COLORS.parchment, 0.95).setStrokeStyle(3, COLORS.wood);
+      this.dyn.push(frame);
+      this.dyn.push(this.add.image(px, py, pKey).setDisplaySize(240, 240));
+      this.dyn.push(this.add.text(px, py + 140, `${hero.name}`, textStyle(16, '#5a4a30')).setOrigin(0.5));
+      this.dyn.push(this.add.text(px, py + 162, hero.role, textStyle(13, '#7a6540')).setOrigin(0.5));
+    }
+    this.addWrapped(300, 124, lines.join('\n'), pKey ? 560 : 840, 16);
   }
 
   private drawFleet(): void {
