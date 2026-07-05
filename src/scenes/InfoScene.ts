@@ -15,17 +15,18 @@ import {
 import { codexIllustrationKey, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing, showModal } from '../ui';
 
 type ReturnTarget = 'WorldMap' | 'Port';
 type EquipCat = 'weapon' | 'armor' | 'accessory';
-type InfoTab = 'quest' | 'equipment' | 'backpack' | 'character' | 'fleet' | 'codex';
+type InfoTab = 'quest' | 'equipment' | 'backpack' | 'character' | 'mates' | 'fleet' | 'codex';
 
 const TABS: Array<{ key: InfoTab; label: string }> = [
   { key: 'quest', label: '任務' },
   { key: 'equipment', label: '裝備' },
   { key: 'backpack', label: '背包' },
   { key: 'character', label: '人物資訊' },
+  { key: 'mates', label: '夥伴資訊' },
   { key: 'fleet', label: '船隊資訊' },
   { key: 'codex', label: '圖鑑' },
 ];
@@ -40,6 +41,8 @@ export default class InfoScene extends Phaser.Scene {
   private portId?: string;
   private spawn?: { x: number; y: number };
   private tab: InfoTab = 'quest';
+  private matePage = 0;
+  private mateDetailId?: string;
   private codexCategory = '';
   private codexId?: string;
   private codexPage = 0;
@@ -60,6 +63,8 @@ export default class InfoScene extends Phaser.Scene {
     this.portId = data.portId;
     this.spawn = data.spawn;
     this.tab = 'quest';
+    this.matePage = 0;
+    this.mateDetailId = undefined;
     this.codexCategory = '';
     this.codexId = undefined;
     this.codexPage = 0;
@@ -113,6 +118,8 @@ export default class InfoScene extends Phaser.Scene {
       const y = 118 + i * 62;
       const btn = makeButton(this, 145, y, 150, 46, tab.label, () => {
         this.tab = tab.key;
+        this.matePage = 0;
+        this.mateDetailId = undefined;
         this.render();
       }, 17);
       if (tab.key === this.tab) {
@@ -136,6 +143,9 @@ export default class InfoScene extends Phaser.Scene {
         break;
       case 'character':
         this.drawCharacter();
+        break;
+      case 'mates':
+        this.drawMates();
         break;
       case 'fleet':
         this.drawFleet();
@@ -355,16 +365,118 @@ export default class InfoScene extends Phaser.Scene {
       const statStr = STAT_KEYS.map((k) => `${STAT_ICON[k]}${STAT_NAMES[k]}${st[k]}`).join(' ');
       // 能力欄加寬至 420，讓六項能力一行顯示（不再折行重疊）；職位按鈕整排右移避讓
       this.addWrapped(300, y, `${def.name} ★${def.star}：${roleName(mate.role)}\n${statStr}`, 420, 12);
-      def.roles.forEach((roleKey, j) => {
-        const role = ROLES.find((r) => r.key === roleKey);
-        const bx = 785 + j * 105;
-        const btn = makeButton(this, bx, y + 10, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), 12);
-        if (mate.role === roleKey) this.dyn.push(selectionRing(this, bx, y + 10, 94, 32));
-        this.dyn.push(btn);
-      });
-      const off = makeButton(this, 785 + def.roles.length * 105, y + 10, 82, 32, '不指派', () => this.assignRole(mate.id, null), 12);
-      this.dyn.push(off);
+      this.drawRoleButtons(mate, 785, y + 10);
     });
+    if (s.mates.length > 5) {
+      this.addWrapped(300, 432 + 5 * 48, `……其餘 ${s.mates.length - 5} 位請到「夥伴資訊」頁查看與指派職位。`, 840, 13, '#5a4a30');
+    }
+  }
+
+  /** 職位指派按鈕列（船隊頁與夥伴頁共用；同職位互斥由 assignRole 處理）。x 為第一顆按鈕中心。 */
+  private drawRoleButtons(mate: { id: string; role: string | null }, x: number, y: number, size = 12): void {
+    const def = mateDefById(mate.id);
+    if (!def) return;
+    def.roles.forEach((roleKey, j) => {
+      const role = ROLES.find((r) => r.key === roleKey);
+      const bx = x + j * 105;
+      const btn = makeButton(this, bx, y, 94, 32, mate.role === roleKey ? `✓${role?.name ?? roleKey}` : role?.name ?? roleKey, () => this.assignRole(mate.id, roleKey), size);
+      if (mate.role === roleKey) this.dyn.push(selectionRing(this, bx, y, 94, 32));
+      this.dyn.push(btn);
+    });
+    const off = makeButton(this, x + def.roles.length * 105, y, 82, 32, '不指派', () => this.assignRole(mate.id, null), size);
+    this.dyn.push(off);
+  }
+
+  /** WP-6 夥伴資訊頁：清單（頭像＋能力＋職位）＋詳情（大立繪＋簡介＋職位指派＋聊聊天）。 */
+  private drawMates(): void {
+    this.addTitle('夥伴資訊');
+    const s = this.state;
+    if (this.mateDetailId) {
+      this.drawMateDetail(this.mateDetailId);
+      return;
+    }
+    if (s.mates.length === 0) {
+      this.addWrapped(300, 140, '尚未招募夥伴。\n\n可到各港的酒館結識夥伴；結識後這裡會顯示他們的頭像、能力，並可指派船上職位。', 840, 16, '#5a4a30');
+      return;
+    }
+    const perPage = 6;
+    const pages = Math.ceil(s.mates.length / perPage);
+    this.matePage = Math.min(this.matePage, pages - 1);
+    const list = s.mates.slice(this.matePage * perPage, this.matePage * perPage + perPage);
+    list.forEach((mate, i) => {
+      const def = mateDefById(mate.id);
+      if (!def) return;
+      const y = 152 + i * 80;
+      const pKey = this.m5Texture(portraitKey(def.id), '');
+      if (pKey) {
+        this.dyn.push(this.add.rectangle(330, y, 62, 62, COLORS.parchment, 0.9).setStrokeStyle(2, COLORS.wood));
+        this.dyn.push(this.add.image(330, y, pKey).setDisplaySize(56, 56));
+      }
+      const st = mateStats(def);
+      const statStr = STAT_KEYS.map((k) => `${STAT_ICON[k]}${st[k]}`).join(' ');
+      this.addWrapped(378, y - 26, `${def.name} ★${def.star}　${mate.role ? `職位：${roleName(mate.role)}` : '（未指派職位）'}\n${statStr}`, 560, 14);
+      this.dyn.push(makeButton(this, 1080, y, 160, 40, '詳情／職位', () => {
+        this.mateDetailId = mate.id;
+        this.render();
+      }, 14));
+    });
+    if (pages > 1) {
+      this.dyn.push(makeButton(this, 620, 640, 110, 32, '上一頁', () => { this.matePage = Math.max(0, this.matePage - 1); this.render(); }, 13));
+      this.dyn.push(this.add.text(730, 640, `${this.matePage + 1}/${pages}`, textStyle(14)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 840, 640, 110, 32, '下一頁', () => { this.matePage = Math.min(pages - 1, this.matePage + 1); this.render(); }, 13));
+    }
+  }
+
+  private drawMateDetail(id: string): void {
+    const s = this.state;
+    const mate = s.mates.find((m) => m.id === id);
+    const def = mateDefById(id);
+    if (!mate || !def) {
+      this.mateDetailId = undefined;
+      this.render();
+      return;
+    }
+    this.dyn.push(makeButton(this, 360, 96, 170, 36, '← 夥伴清單', () => {
+      this.mateDetailId = undefined;
+      this.render();
+    }, 14));
+
+    // 左欄：大立繪＋名字＋出身＋聊聊天
+    const px = 430;
+    const py = 268;
+    const pKey = this.m5Texture(portraitKey(def.id), '');
+    if (pKey) {
+      this.dyn.push(this.add.rectangle(px, py, 212, 212, COLORS.parchment, 0.95).setStrokeStyle(3, COLORS.wood));
+      this.dyn.push(this.add.image(px, py, pKey).setDisplaySize(200, 200));
+    }
+    this.dyn.push(this.add.text(px, py + 128, `${def.name}　★${def.star}`, textStyle(18)).setOrigin(0.5));
+    this.dyn.push(this.add.text(px, py + 152, def.from, textStyle(13, '#7a6540')).setOrigin(0.5));
+    if (def.dialogues?.length) {
+      this.dyn.push(makeButton(this, px, py + 205, 130, 40, '聊聊天', () => this.mateChat(def.id), 14));
+    }
+
+    // 右欄：簡介＋六圍＋職位資訊
+    const st = mateStats(def);
+    const statStr = STAT_KEYS.map((k) => `${STAT_ICON[k]}${STAT_NAMES[k]} ${st[k]}`).join('　');
+    const info = [
+      def.desc,
+      '',
+      statStr,
+      `可任職位：${def.roles.map((r) => roleName(r)).join('、')}`,
+      `目前職位：${mate.role ? roleName(mate.role) : '（未指派）'}`,
+    ];
+    this.addWrapped(575, 150, info.join('\n'), 590, 15);
+
+    // 職位指派（與船隊頁同一套 assignRole，同職位互斥）
+    this.dyn.push(this.add.text(575, 452, '— 指派職位（同職位一次一人，指派後全艦隊獲得能力加成）—', textStyle(15)));
+    this.drawRoleButtons(mate, 630, 500, 13);
+  }
+
+  private mateChat(mateId: string): void {
+    const def = mateDefById(mateId);
+    if (!def?.dialogues?.length) return;
+    const line = Phaser.Utils.Array.GetRandom(def.dialogues);
+    showModal(this, def.name, `「${line}」`, [{ label: '知道了', onPick: () => {} }]);
   }
 
   private drawShipEquipmentIcons(x: number, y: number): void {
