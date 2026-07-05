@@ -7,7 +7,7 @@
 - **原始素材**：`assets/m5/full_map_v3_001.png`（1448×1086）。
 - **正式輸出**：`assets/m5/v2/m5-2/world/full_map_v3.png`（3840×2880）與 `full_map_v3_preview.png`。
 - **作者／產生方式**：老闆（周勢濠）以 ChatGPT Images 2.0 產出原始海圖；Codex 以 `tools/build-m5-2-6-full-map-v3-collision-preview.py` 等比例放大、淡化固定地名，並從圖面抽取候選海岸。
-- **座標與碰撞**：港口、探索點、風景座標不變；以960×720位元網格記錄和圖面一致的陸海碰撞，資料位於 `src/data/map_collision_v3.json`。
+- **座標與碰撞**：最初候選版保留舊座標；2026-07-01 正式版依 V3 圖面地理重定位 22 港，探索點與風景採圖示座標＋海上接近座標，對照資料位於 `src/data/map_reanchor_v3.json`；陸海碰撞位元網格位於 `src/data/map_collision_v3.json`。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 
 ## 入口（標題）畫面背景圖（2026-06-27）
@@ -29,7 +29,7 @@
 - **作者／操作者**：Codex
 - **產生方式**：OpenAI imagegen／image2.0 內建工具逐章產生原始圖，再以 `tools/build-m5-3-lin-story-backgrounds.py` 統一裁成遊戲尺寸、輕度壓暗對話區並輸出 review／contact sheet／manifest。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：此批素材依 `src/data/story/lin_海商線.md` 製作，僅完成素材，尚未接入 `StoryScene`；後續由小航依 `heroId=lin` 與章節編號接入。第 7 章曾因第一版出現類文字符號而重畫，正式 source 採無字純紅保護旗版本。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+- **備註**：此批素材依 `src/data/story/lin_海商線.md` 製作；2026-06-27 已由 `BootScene` 預載並由 `StoryScene` 依 `heroId=lin` 與章節編號切換。第 7 章曾因第一版出現類文字符號而重畫，正式 source 採無字純紅保護旗版本。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 
 ---
 ## M5-3 彼得・范德堡主線逐章對話背景素材包（2026-06-27）
@@ -43,7 +43,7 @@
 - **作者／操作者**：Codex
 - **產生方式**：OpenAI imagegen／image2.0 內建工具逐章產生原始圖，再以 `tools/build-m5-3-peter-story-backgrounds.py` 統一裁成遊戲尺寸、輕度壓暗對話區並輸出 review／contact sheet／manifest。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：此批素材依 `src/data/story/peter_VOC線.md` 製作，僅完成素材，尚未接入 `StoryScene`；後續由小航依 `heroId=peter` 與章節編號接入。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+- **備註**：此批素材依 `src/data/story/peter_VOC線.md` 製作；2026-06-27 已由 `BootScene` 預載並由 `StoryScene` 依 `heroId=peter` 與章節編號切換。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 
 ---
 ## M5-3 田中千代主線逐章對話背景素材包（2026-06-27）
@@ -57,7 +57,7 @@
 - **作者／操作者**：Codex
 - **產生方式**：OpenAI imagegen／image2.0 內建工具逐章產生原始圖，再以 `tools/build-m5-3-chiyo-story-backgrounds.py` 統一裁成遊戲尺寸、輕度壓暗對話區並輸出 review／contact sheet／manifest。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：此批素材依 `src/data/story/chiyo_朱印船線.md` 製作，僅完成素材，尚未接入 `StoryScene`；後續由小航依 `heroId=chiyo` 與章節編號接入。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+- **備註**：此批素材依 `src/data/story/chiyo_朱印船線.md` 製作；2026-06-27 已由 `BootScene` 預載並由 `StoryScene` 依 `heroId=chiyo` 與章節編號切換。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 
 ---
 
@@ -87,7 +87,7 @@
 - **作者／操作者**：Codex
 - **產生方式**：OpenAI imagegen／image2.0 產生原始圖，再以 `tools/build-m5-2-5-town-background-prototype.py` 裁切成遊戲尺寸並產生安海疊圖預覽。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：此批素材是安海單港試驗，尚未接入 `PortScene`；未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+- **備註**：此批素材是安海單港試驗；2026-06-23～24 已接入 `PortScene`，並完成設施座標、可走區、門口站立區、碰撞框與互動提示範圍校正。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 
 ---
 
@@ -118,7 +118,7 @@
 - **作者／操作者**：Codex
 - **產生方式**：OpenAI imagegen／image2.0 產生原始圖板，並以專案內 Pillow 腳本 `tools/slice-m5-3-ship-directional-art.py` 綠幕去背、切片、縮放、置中與產生 manifest。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：此批素材用於取代世界地圖船隻方形船卡，後續接入時可依船隻航行方向切換 frame。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
+- **備註**：此批素材已接入 `WorldMapScene`，依船隻航行方向切換 frame，用於取代世界地圖船隻方形船卡。未複製、裁切、描圖或改作 KOEI 或其他商業遊戲素材。
 ## M5-4 圖鑑插圖精緻素材 v2（2026-06-19）
 
 - **素材位置**：`assets/m5/v2/m5-4/codex/`
