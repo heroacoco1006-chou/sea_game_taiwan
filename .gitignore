@@ -26,3 +26,6 @@ Thumbs.db
 
 # 美術氛圍參考圖（僅供 Codex 產美術時參考，含商業遊戲截圖，絕不納入倉庫或遊戲）
 art/
+
+# Python 快取
+__pycache__/
