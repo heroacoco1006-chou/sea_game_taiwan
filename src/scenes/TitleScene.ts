@@ -67,9 +67,7 @@ export default class TitleScene extends Phaser.Scene {
       this.scene.pause();
     }, 16);
 
-    this.add
-      .text(width / 2, 655, 'M4 — 三主角主線骨架・事件圖鑑・自由航海', textStyle(16, '#9ab8c8'))
-      .setOrigin(0.5);
+
     // 音樂版權標註（CC BY 4.0）— 詳細兩行於「設定」頁
     this.add
       .text(
