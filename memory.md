@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-07-05] 完善總體規劃定案＋防閉環工作規範建立（開工必讀）
+
+- 老闆提出 6 項優化後，已建立兩份長期文件，**之後每個開發 session 開工必讀**（讀完 memory.md 後接著讀）：
+  - 《`2026-07-05_遊戲完善總體規劃書.md`》：WP-1～WP-6 工作包的診斷、架構決策、段落切分、驗收標準與執行順序。**開工前先看 §〇 決策點是否已獲老闆回覆**；未回覆前只能做 WP-3／WP-5。
+  - 《`2026-07-05_開發工作規範_防閉環迭代機制.md`》：執行層規範——任務卡先行、先重現再修、**同方法迭代上限 2 次**、視覺對位禁止目測迴圈（必須工具化）、資料驅動鐵則（場景禁止 `port.id === 'xxx'` 特判）、存檔升版 checklist、技術紅線速查。
+- 本次定案的架構決策（實作以規劃書為準，不得另起爐灶）：
+  - **主線章節深化＝重用夥伴任務階段引擎**（`MateQuestStage` schema＋巡檢泛化為 `checkStageDone()`），story.json 加選填 `stages[]`，存檔升 v19；不新造任務系統。
+  - **港町精緻背景＝layout 資料先行**：`portTownLayouts.json`＋`portTownThemes.json`；新底圖生成 prompt 必須配合版型（版型先行），對位用 `tools/calibrate-port-town.html` 描點匯出，安海硬編碼要遷移為資料。
+  - **探索點消失是 bug**：`WorldMapScene.refreshExplorationMarkers()` 的 visible 條件漏了 known 狀態，全部發現物解鎖後圖示永久消失；修正＝已知點保留（半透明＋「（已調查）」）。探索「隨機事件」目前只是風味文字，需依手冊 §4-3 做成有效果的資料驅動事件（`exploration_events.json`）。
+  - 已備未接素材：wa／taiwan／sea 三張 2000×1100 港町底圖在 `assets/m5/v2/m5-2/ports/town-backgrounds/`，缺 ryu／euro／han 通用。
+
 ## [2026-07-03] 夥伴任務系統完成——主線要角規則機制（autoJoin／分線 guest）
 
 - M4 夥伴招募任務五階段全部完成（詳見缺失清單文件勾選）。後續新增夥伴內容須遵守以下機制約定：
