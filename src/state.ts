@@ -6,6 +6,7 @@ import equipData from './data/equipment.json';
 import matesData from './data/mates.json';
 import storyData from './data/story.json';
 import explorationData from './data/exploration_points.json';
+import explorationEventsData from './data/exploration_events.json';
 import discoveriesData from './data/discoveries.json';
 import codexData from './data/codex.json';
 import mapReanchorV3Data from './data/map_reanchor_v3.json';
@@ -2271,6 +2272,99 @@ export function explorationCostForState(state: GameState, point: ExplorationPoin
 export function explorationFatigueGain(state: GameState, point: ExplorationPoint): number {
   const surgeonMod = hasRole(state, 'surgeon') ? 0.7 : 1;
   return Math.round(point.difficulty * 8 * surgeonMod);
+}
+
+// ----- 探索隨機事件（WP-3）：資料驅動，表在 src/data/exploration_events.json -----
+
+export interface ExplorationEventEffects {
+  food?: number;
+  water?: number;
+  gold?: number;
+  fatigue?: number;
+  days?: number;
+  /** 額外消耗幾天份的糧食＋清水（依當前水手數計算） */
+  dailySupplies?: number;
+  /** 加成本次探索的發現率（0～1） */
+  findBonus?: number;
+}
+
+export interface ExplorationEventChoice {
+  label: string;
+  resultText: string;
+  abort?: boolean;
+  effects?: ExplorationEventEffects;
+}
+
+export interface ExplorationEventDef {
+  id: string;
+  title: string;
+  text: string;
+  effects?: ExplorationEventEffects;
+  choices?: ExplorationEventChoice[];
+  /** 該職位在隊時，此事件被抽中的權重減半（如探險嚮導之於迷路） */
+  halfWeightRole?: string;
+  /** 該職位在隊時，疲勞效果減半（如醫師） */
+  fatigueHalfRole?: string;
+}
+
+export const EXPLORATION_EVENTS: ExplorationEventDef[] = (explorationEventsData as { events: ExplorationEventDef[] }).events;
+export const EXPLORATION_EVENT_CHANCE: number = (explorationEventsData as { chance: number }).chance;
+
+/** 依探索點的事件清單加權抽一個事件；未觸發回傳 null。 */
+export function rollExplorationEvent(state: GameState, point: ExplorationPoint): ExplorationEventDef | null {
+  if (Math.random() >= EXPLORATION_EVENT_CHANCE) return null;
+  const pool = point.events
+    .map((id) => EXPLORATION_EVENTS.find((ev) => ev.id === id))
+    .filter((ev): ev is ExplorationEventDef => Boolean(ev));
+  if (pool.length === 0) return null;
+  const weights = pool.map((ev) => (ev.halfWeightRole && hasRole(state, ev.halfWeightRole) ? 0.5 : 1));
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
+/** 套用事件效果到遊戲狀態，回傳白話效果行與本次發現率加成。 */
+export function applyExplorationEventEffects(
+  state: GameState,
+  ev: ExplorationEventDef,
+  effects: ExplorationEventEffects | undefined
+): { lines: string[]; findBonus: number } {
+  const lines: string[] = [];
+  if (!effects) return { lines, findBonus: 0 };
+  if (effects.food) {
+    state.food = Math.max(0, Math.min(supplyMax(state), state.food + effects.food));
+    lines.push(`糧食${effects.food > 0 ? '＋' : '−'}${Math.abs(effects.food)}`);
+  }
+  if (effects.water) {
+    state.water = Math.max(0, Math.min(supplyMax(state), state.water + effects.water));
+    lines.push(`清水${effects.water > 0 ? '＋' : '−'}${Math.abs(effects.water)}`);
+  }
+  if (effects.gold) {
+    state.gold = Math.max(0, state.gold + effects.gold);
+    lines.push(effects.gold > 0 ? `獲得 ${effects.gold} 兩` : `損失 ${-effects.gold} 兩`);
+  }
+  if (effects.days) {
+    state.day += effects.days;
+    state.daysAtSea += effects.days;
+    lines.push(`多花了 ${effects.days} 天`);
+  }
+  if (effects.dailySupplies) {
+    const foodCost = foodPerDay(state.crew) * effects.dailySupplies;
+    const waterCost = waterPerDay(state.crew) * effects.dailySupplies;
+    state.food = Math.max(0, state.food - foodCost);
+    state.water = Math.max(0, state.water - waterCost);
+    lines.push(`額外消耗糧食 ${foodCost}、清水 ${waterCost}`);
+  }
+  if (effects.fatigue) {
+    const halved = Boolean(ev.fatigueHalfRole && hasRole(state, ev.fatigueHalfRole));
+    const gain = halved ? Math.ceil(effects.fatigue / 2) : effects.fatigue;
+    state.fatigue = Math.max(0, Math.min(100, state.fatigue + gain));
+    lines.push(`疲勞＋${gain}${halved ? '（醫師照顧，減半）' : ''}`);
+  }
+  return { lines, findBonus: effects.findBonus ?? 0 };
 }
 
 export function explorationPointById(id: string): ExplorationPoint | undefined {

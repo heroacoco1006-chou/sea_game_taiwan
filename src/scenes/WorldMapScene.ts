@@ -10,6 +10,7 @@ import {
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
+  rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
   addReputation, addFriendship, updateMateQuestProgress, pendingMateDuel,
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
@@ -513,11 +514,13 @@ export default class WorldMapScene extends Phaser.Scene {
     for (const marker of this.exploreMarkers) {
       const activeQuest = this.state.quest?.type === 'exploration' && this.state.quest.pointId === marker.point.id && !this.state.quest.completed;
       const hasNewFind = marker.point.discoveries.some((id) => !found.has(id));
-      const visible = activeQuest || hasNewFind;
+      const known = activeQuest || this.isExplorationPointKnown(marker.point);
+      // 已知的點永遠保留在地圖上（全部發現物解鎖後半透明標示「已調查」），不再憑空消失
+      const visible = activeQuest || hasNewFind || known;
       const approach = this.explorationApproach(marker.point);
       const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y);
       if (visible && dist <= EXPLORE_REVEAL_RADIUS) this.revealExplorationPoint(marker.point.id);
-      const known = activeQuest || this.isExplorationPointKnown(marker.point);
+      const exhausted = known && !hasNewFind && !activeQuest;
       marker.icon.setVisible(visible);
       marker.label.setVisible(visible);
       marker.approachMarker.setVisible(visible);
@@ -528,10 +531,11 @@ export default class WorldMapScene extends Phaser.Scene {
       );
       const iconSize = known ? EXPLORE_ICON_KNOWN_SIZE : EXPLORE_ICON_UNKNOWN_SIZE;
       marker.icon.setDisplaySize(iconSize, iconSize);
-      marker.icon.setAlpha(activeQuest ? 1 : known ? 0.88 : 0.68);
+      marker.icon.setAlpha(activeQuest ? 1 : exhausted ? 0.5 : known ? 0.88 : 0.68);
       marker.label.setPosition(marker.point.x, marker.point.y + EXPLORE_LABEL_OFFSET);
-      marker.label.setText(known ? marker.point.name : '？');
+      marker.label.setText(known ? (exhausted ? `${marker.point.name}（已調查）` : marker.point.name) : '？');
       marker.label.setFontSize(known ? 12 : 15);
+      marker.label.setAlpha(exhausted ? 0.7 : 1);
     }
     if (this.pirateMarker) {
       const q = this.state.quest;
@@ -687,8 +691,46 @@ export default class WorldMapScene extends Phaser.Scene {
     s.fatigue = Math.min(100, s.fatigue + explorationFatigueGain(s, point));
     refreshMarketEvents(s);
 
-    const eventText = this.explorationEventText(point);
-    const chance = explorationFindChance(s, point);
+    // 探索隨機事件（WP-3）：有選項的事件先讓玩家做決定，再結算探索
+    const ev = rollExplorationEvent(s, point);
+    if (ev && ev.choices && ev.choices.length > 0) {
+      this.pauseWithModal(`探索事件：${ev.title}`, ev.text, ev.choices.map((choice) => ({
+        label: choice.label,
+        onPick: () => this.finishExploration(point, discoveryId, ev, choice),
+      })));
+      return;
+    }
+    this.finishExploration(point, discoveryId, ev, null);
+  }
+
+  private finishExploration(
+    point: ExplorationPoint,
+    discoveryId: string | undefined,
+    ev: ExplorationEventDef | null,
+    choice: ExplorationEventChoice | null
+  ): void {
+    const s = this.state;
+    const applied = ev
+      ? applyExplorationEventEffects(s, ev, choice ? choice.effects : ev.effects)
+      : { lines: [], findBonus: 0 };
+    if (ev) refreshMarketEvents(s); // 事件可能多花天數，重算行情
+    const eventText = ev
+      ? `【${ev.title}】${choice ? choice.resultText : ev.text}`
+      : '這次調查一路平安，隊伍把看到的事情仔細寫進航海筆記。';
+    const effectLine = applied.lines.length > 0 ? `（${applied.lines.join('，')}）` : '';
+
+    if (choice?.abort) {
+      // 中途折返：不計調查次數、不擲發現、不完成委託
+      saveGame(s);
+      this.refreshExplorationMarkers();
+      this.updateHud();
+      this.pauseWithModal(`探索中止：${point.name}`, [eventText, effectLine].filter(Boolean).join('\n'), [
+        { label: '回到船上', onPick: () => {} },
+      ]);
+      return;
+    }
+
+    const chance = Math.min(0.95, explorationFindChance(s, point) + applied.findBonus);
     const attempt = recordExplorationAttempt(s, point.id);
     const foundThisTime = Boolean(discoveryId) && Math.random() < chance;
     const unlockedIds = discoveryId && foundThisTime ? [discoveryId] : [];
@@ -711,6 +753,7 @@ export default class WorldMapScene extends Phaser.Scene {
     this.updateHud();
     const resultLines = [
       eventText,
+      effectLine,
       found ? `\n發現：${found.title}\n${found.body}` : `\n這次完成了地點調查，但沒有新的重大發現。下次再探索，發現機會會稍微提高。（第 ${attempt} 次調查）`,
       unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
       reward > 0 ? `\n獲得記錄獎金 ${reward} 兩。` : '',
@@ -721,20 +764,6 @@ export default class WorldMapScene extends Phaser.Scene {
     this.pauseWithModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), [
       { label: '記下來', onPick: () => {} },
     ]);
-  }
-
-  private explorationEventText(point: ExplorationPoint): string {
-    const eventId = point.events[Math.floor(Math.random() * point.events.length)] ?? 'landmark';
-    const eventTexts: Record<string, string> = {
-      aid_indigenous: '地方社群提供山路與水源消息，隊伍少走了許多冤枉路。',
-      aid_local: '當地居民指點路線，還提醒哪些地方要避開危險。',
-      lost: '隊伍一度迷路，多花了時間才找到回到海邊的路。',
-      wildlife: '隊伍在林間發現動物足跡，大家放慢腳步仔細觀察。',
-      landmark: '瞭望手和書記合作，把地形與地標畫進航海筆記。',
-      forest: '濃密森林讓行動變慢，但也增加了找到植物與鳥類的機會。',
-      cold_mountain: '山上雲霧很重，隊伍放慢速度前進，避免有人受寒。',
-    };
-    return eventTexts[eventId] ?? '隊伍完成調查，把一路看到的事情寫進航海筆記。';
   }
 
   private tryStartQuestBattle(): void {

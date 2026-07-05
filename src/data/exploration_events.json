@@ -1,0 +1,63 @@
+{
+  "comment": "探索隨機事件表（WP-3，2026-07-05）。依《2026-06-14_探索系統架構手冊》§4-3 設計。id 對應 exploration_points.json 各點的 events 欄位。effects：food/water/gold/fatigue 為加減值、days 為多花天數、dailySupplies 為多消耗幾天份糧水、findBonus 加成本次發現率。halfWeightRole：該職位在隊時此事件出現機率減半；fatigueHalfRole：該職位在隊時疲勞效果減半。文字須白話、不血腥、不刻板印象（原住民與地方居民一律呈現互助交流）。",
+  "chance": 0.55,
+  "events": [
+    {
+      "id": "aid_indigenous",
+      "title": "部落朋友的幫助",
+      "text": "山路上遇到附近部落的獵人。隊伍用小禮物和手勢交上朋友，他們帶大家走了一條安全的近路，還分享了烤芋頭和乾淨的泉水。",
+      "effects": { "food": 4, "water": 4 }
+    },
+    {
+      "id": "aid_local",
+      "title": "居民指路",
+      "text": "當地居民熱心指點路線，告訴隊伍哪裡有好走的小徑、哪裡要小心。大家把力氣省下來，仔細調查了更多地方。",
+      "effects": { "findBonus": 0.12 }
+    },
+    {
+      "id": "lost",
+      "title": "迷路了！",
+      "text": "起了濃霧，樹林裡每個方向看起來都一樣，隊伍一時分不清回海邊的路……",
+      "halfWeightRole": "guide",
+      "choices": [
+        {
+          "label": "繼續找路（多花 1 天）",
+          "resultText": "隊伍多花了一天，靠著太陽的方向終於找回正確的路，也多消耗了一天份的糧水。",
+          "effects": { "days": 1, "dailySupplies": 1, "fatigue": 3 }
+        },
+        {
+          "label": "原路折返（中止這次探索）",
+          "resultText": "為了安全，隊伍沿原路回到船上。這次調查沒有完成，下次再來吧。",
+          "abort": true,
+          "effects": { "fatigue": 2 }
+        }
+      ]
+    },
+    {
+      "id": "wildlife",
+      "title": "動物的足跡",
+      "text": "隊伍在林間發現新鮮的動物足跡，大家放輕腳步、睜大眼睛跟著看——說不定能遇到沒見過的動物！",
+      "effects": { "findBonus": 0.1 }
+    },
+    {
+      "id": "landmark",
+      "title": "畫下地標",
+      "text": "瞭望手和書記合作，把這裡的地形和顯眼的地標仔細畫進航海筆記。這份紀錄回港後很值錢。",
+      "effects": { "gold": 40 }
+    },
+    {
+      "id": "forest",
+      "title": "濃密的森林",
+      "text": "森林又密又深，隊伍走得滿身大汗。不過越深的林子，越有機會找到少見的植物和鳥類。",
+      "fatigueHalfRole": "surgeon",
+      "effects": { "fatigue": 4, "findBonus": 0.08 }
+    },
+    {
+      "id": "cold_mountain",
+      "title": "山上的寒霧",
+      "text": "山上雲霧又濕又冷，隊伍放慢速度、互相提醒保暖，小心翼翼地前進。",
+      "fatigueHalfRole": "surgeon",
+      "effects": { "fatigue": 8 }
+    }
+  ]
+}
