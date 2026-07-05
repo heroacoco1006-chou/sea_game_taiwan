@@ -3,7 +3,7 @@ import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
-  addReputation, updateMateQuestProgress, pendingMateDuel, completeMateDuel,
+  addReputation, updateQuestProgress, pendingMateDuel, pendingStoryDuel, completeMateDuel, completeStoryDuel,
 } from '../state';
 import { shipBattleKey } from '../art';
 import { audio } from '../audio';
@@ -34,6 +34,7 @@ export default class BattleScene extends Phaser.Scene {
   private questCombat = false;
   private tier = 1;
   private duelMateId: string | null = null;
+  private storyDuelChapterId: string | null = null;
 
   constructor() {
     super('Battle');
@@ -43,13 +44,14 @@ export default class BattleScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data?: { questCombat?: boolean; mateDuelId?: string }): void {
+  init(data?: { questCombat?: boolean; mateDuelId?: string; storyDuelChapterId?: string }): void {
     const s = this.state;
     this.questCombat = Boolean(data?.questCombat);
     // 夥伴任務海上決鬥：專屬敵人（較強、有名字），勝利後鎖存任務階段
     this.duelMateId = data?.mateDuelId ?? null;
-    if (this.duelMateId) {
-      const duel = pendingMateDuel(s);
+    this.storyDuelChapterId = data?.storyDuelChapterId ?? null;
+    if (this.duelMateId || this.storyDuelChapterId) {
+      const duel = this.storyDuelChapterId ? pendingStoryDuel(s) : pendingMateDuel(s);
       const tier = duel?.tier ?? 3;
       this.tier = tier;
       this.enemy = {
@@ -228,9 +230,11 @@ export default class BattleScene extends Phaser.Scene {
     // 海上威名（依敵方強度加權）＋海戰勝場統計＋夥伴任務巡檢（決鬥獲勝另外鎖存）
     s.battleWins = (s.battleWins ?? 0) + 1;
     const repMsg = addReputation(s, 'valor', 2 + this.tier);
-    const questMsgs = this.duelMateId
-      ? completeMateDuel(s, this.duelMateId) // 內含後續階段巡檢
-      : updateMateQuestProgress(s);
+    const questMsgs = this.storyDuelChapterId
+      ? completeStoryDuel(s, this.storyDuelChapterId)
+      : this.duelMateId
+        ? completeMateDuel(s, this.duelMateId)
+        : updateQuestProgress(s);
     audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
     if (lv) { audio.playSfx('levelup'); flashFx(this, BASE_W / 2, BASE_H / 2); }

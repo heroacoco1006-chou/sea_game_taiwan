@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
-  addReputation, addFriendship, updateMateQuestProgress, pendingMateDuel,
+  addReputation, addFriendship, updateQuestProgress, pendingQuestDuel,
 } from '../state';
 import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
 import { audio } from '../audio';
@@ -556,7 +556,7 @@ export default class WorldMapScene extends Phaser.Scene {
     // 冒險名聲：確認新探索點；西拉雅平原另加新港社友好度
     const gains = [addReputation(this.state, 'adventure', 6)];
     if (pointId === 'exp_siraya') gains.push(addFriendship(this.state, 'sinckan', 6));
-    gains.push(...updateMateQuestProgress(this.state));
+    gains.push(...updateQuestProgress(this.state));
     const text = gains.filter(Boolean).join('\n');
     if (text) toast(this, text, BASE_W / 2, 160);
     saveGame(this.state);
@@ -629,7 +629,7 @@ export default class WorldMapScene extends Phaser.Scene {
     const unlocked = unlockCodex(this.state, [entry.id]);
     const reward = entry.rewardGold ?? 60;
     this.state.gold += reward;
-    const gains = [addReputation(this.state, 'adventure', 2), ...updateMateQuestProgress(this.state)].filter(Boolean);
+    const gains = [addReputation(this.state, 'adventure', 2), ...updateQuestProgress(this.state)].filter(Boolean);
     saveGame(this.state);
     this.refreshExplorationMarkers();
     this.updateHud();
@@ -747,7 +747,7 @@ export default class WorldMapScene extends Phaser.Scene {
       q.codexIds = [...new Set([...q.codexIds, ...unlockedIds])];
     }
 
-    const mateQuestMsgs = updateMateQuestProgress(s);
+    const mateQuestMsgs = updateQuestProgress(s);
     saveGame(s);
     this.refreshExplorationMarkers();
     this.updateHud();
@@ -909,17 +909,17 @@ export default class WorldMapScene extends Phaser.Scene {
     }
 
     // 夥伴任務海上決鬥：有待決鬥時，海上遭遇優先變成對方船隊（機率也提高，較快遇到）
-    const duel = pendingMateDuel(s);
+    const duel = pendingQuestDuel(s);
     if (duel && roll < stormP + 0.095 + 0.05 + 0.06 + 0.12 && s.day > 10) {
       this.pauseWithModal(
         `${duel.name}出現！`,
-        `一支掛著「${duel.mateName}」旗號的船隊擋在航路上，對方鳴砲挑戰！\n\n（夥伴任務：擊敗他，${duel.mateName}才會認可你的實力。）`,
+        `${duel.kind === 'story' ? '主線任務' : '夥伴任務'}的船隊擋在航路上，對方鳴砲挑戰！\n\n（${duel.kind === 'story' ? `主線「${duel.ownerName}」` : `${duel.ownerName}的夥伴任務`}：擊敗【${duel.name}】才能繼續。）`,
         [
           {
             label: '應戰！（進入海戰）',
             onPick: () => {
               saveGame(s);
-              this.scene.start('Battle', { mateDuelId: duel.mateId });
+              this.scene.start('Battle', duel.kind === 'story' ? { storyDuelChapterId: duel.id } : { mateDuelId: duel.id });
             },
           },
           { label: '暫避鋒頭（之後還會遇到）', onPick: () => {} },

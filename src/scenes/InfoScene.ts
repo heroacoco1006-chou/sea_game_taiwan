@@ -3,14 +3,14 @@ import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
   shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
-  heroDefById, currentStoryChapter, storyTargetPort, storyRequirementText,
+  heroDefById, currentStoryChapter, storyTargetPort, storyRequirementText, storyStageProgressText,
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
   CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
   codexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
-  mateQuestStageStatuses, mateNextStepText, updateMateQuestProgress,
+  mateQuestStageStatuses, mateNextStepText, updateQuestProgress,
 } from '../state';
 import { codexIllustrationKey, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
@@ -169,9 +169,10 @@ export default class InfoScene extends Phaser.Scene {
     const s = this.state;
     const chapter = currentStoryChapter(s);
     const target = storyTargetPort(chapter);
+    const stageProgress = storyStageProgressText(s, chapter);
     const storyText = chapter
-      ? `🎯 主線第 ${chapter.chapter} 章：${chapter.title}\n📍 目標港口：${target?.name ?? chapter.targetPortId}\n📜 任務內容：${chapter.objective}\n${storyRequirementText(chapter)}`
-      : '🎯 目前可玩的主線章節已完成，後續 M4 會繼續擴充。';
+      ? `🎯 主線第 ${chapter.chapter} 章：${chapter.title}\n📍 目標港口：${target?.name ?? chapter.targetPortId}\n📜 任務內容：${chapter.objective}\n${storyRequirementText(chapter)}${stageProgress ? `\n${stageProgress}` : ''}`
+      : '🎯 這條主線已全部完成，仍可繼續自由貿易與探索。';
     this.addWrapped(290, 130, storyText, 840, 17);
 
     if (s.quest) {
@@ -188,7 +189,7 @@ export default class InfoScene extends Phaser.Scene {
     }
 
     // 夥伴任務日誌：進行中的專屬任務，附所在港與下一步提示
-    updateMateQuestProgress(s);
+    updateQuestProgress(s);
     const activeQuests = Object.entries(s.mateQuests ?? {})
       .filter(([, prog]) => prog.status === 'active')
       .map(([mateId]) => mateDefById(mateId))

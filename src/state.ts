@@ -14,6 +14,8 @@ import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
+export const SAVE_VERSION = 19;
+
 export interface Good {
   id: string;
   name: string;
@@ -188,15 +190,17 @@ export interface MateQuestStage {
   title: string;
   desc: string;
   requirement?: MateRequirement;
-  /** 完成這一階段時顯示的夥伴對話。 */
+  /** 完成這一階段時顯示的角色對話。 */
   dialogue?: string;
-  /** 這一段需要回到夥伴所在港「回報」才算完成（對話類），不自動達成 */
+  /** 這一段需要回到指定港回報才算完成（夥伴任務使用） */
   reportAtPort?: boolean;
   /** 回報時交付（扣除）requirement.cargo 指定的貨物 */
   consumeCargo?: boolean;
-  /** 海上決鬥：輪到此階段時，出海航行會遇到對方船隊，海戰擊敗後完成（例：劉香） */
+  /** 海上決鬥：輪到此階段時，出海航行會遇到具名船隊，海戰擊敗後完成 */
   duel?: { name: string; tier: number };
 }
+/** 主線中途任務直接共用夥伴任務階段 schema，不另造任務引擎。 */
+export type StoryStage = MateQuestStage;
 /** 夥伴專屬任務的持久化進度：接下後寫入存檔；已完成的階段永久鎖存，不因資金貨物變動倒退。 */
 export interface MateQuestProgress {
   status: 'active' | 'done';
@@ -305,6 +309,8 @@ export interface StoryChapter {
   npc: string;
   objective: string;
   requirements?: StoryRequirements;
+  /** WP-1 主線中途任務：直接共用 MateQuestStage schema。 */
+  stages?: StoryStage[];
   rewardGold: number;
   // 對白與圖鑑解鎖內容來自 data/story/*.md（見 src/story/parseStory.ts）
 }
@@ -374,6 +380,8 @@ export interface StoryState {
   chapter: number;
   completed: string[];
   codex: string[];
+  /** v19：各章已完成的中途任務索引，key＝chapter id。 */
+  chapterStages: Record<string, number[]>;
 }
 
 export interface GameState {
@@ -603,7 +611,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   const pos = portStartPos(hero.startPortId);
   const ship = newPlayerShip(hero.startShipTypeId, pos);
   const state: GameState = {
-    version: 18,
+    version: SAVE_VERSION,
     gold: hero.startGold,
     day: dayForYear(hero.startYear),
     ship,
@@ -630,6 +638,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
       chapter: 1,
       completed: [],
       codex: [],
+      chapterStages: {},
     },
     exploration: {
       attempts: {},
@@ -1014,6 +1023,11 @@ export function mateConditionChecklist(state: GameState, req: MateRequirement | 
   return items;
 }
 
+/** 共用階段判定核心：主線與夥伴任務都走同一套 requirement 規則。 */
+export function checkStageDone(state: GameState, stage: MateQuestStage): boolean {
+  return mateConditionChecklist(state, stage.requirement).every((item) => item.met);
+}
+
 function mateRequirementLines(state: GameState, req: MateRequirement | undefined): string[] {
   return mateConditionChecklist(state, req).filter((it) => !it.met).map((it) => it.text);
 }
@@ -1107,7 +1121,7 @@ export function updateMateQuestProgress(state: GameState): string[] {
       const stage = stages[i];
       if (stage.reportAtPort || stage.consumeCargo) break; // 需到夥伴所在港回報，不自動完成
       if (stage.duel) break; // 需海上決鬥獲勝，不自動完成
-      if (mateRequirementLines(state, stage.requirement).length > 0) break; // 任務鏈依序進行
+      if (!checkStageDone(state, stage)) break; // 任務鏈依序進行，共用階段判定
       prog.stagesDone[i] = true;
       msgs.push(`📜 ${def.name}的任務進度：完成「${stage.title}」（${i + 1}/${stages.length}）`);
       if (stage.dialogue) msgs.push(`${def.name}：「${stage.dialogue}」`);
@@ -1134,6 +1148,36 @@ export function pendingMateDuel(state: GameState): PendingMateDuel | null {
   return null;
 }
 
+export interface PendingStoryDuel { chapterId: string; chapterTitle: string; stageIndex: number; name: string; tier: number; }
+export interface PendingQuestDuel {
+  kind: 'story' | 'mate';
+  id: string;
+  ownerName: string;
+  name: string;
+  tier: number;
+}
+
+/** 目前主線章節輪到的具名海戰；沒有回傳 null。 */
+export function pendingStoryDuel(state: GameState): PendingStoryDuel | null {
+  const chapter = currentStoryChapter(state);
+  if (!chapter) return null;
+  const statuses = storyStageStatuses(state, chapter);
+  const current = statuses.find((stage) => !stage.ok);
+  if (!current) return null;
+  const duel = chapter.stages?.[current.index]?.duel;
+  return duel
+    ? { chapterId: chapter.id, chapterTitle: chapter.title, stageIndex: current.index, name: duel.name, tier: duel.tier }
+    : null;
+}
+
+/** 主線決鬥優先於夥伴決鬥，兩者共用同一個海上遭遇與 BattleScene。 */
+export function pendingQuestDuel(state: GameState): PendingQuestDuel | null {
+  const story = pendingStoryDuel(state);
+  if (story) return { kind: 'story', id: story.chapterId, ownerName: story.chapterTitle, name: story.name, tier: story.tier };
+  const mate = pendingMateDuel(state);
+  return mate ? { kind: 'mate', id: mate.mateId, ownerName: mate.mateName, name: mate.name, tier: mate.tier } : null;
+}
+
 /** 海上決鬥獲勝：鎖存該決鬥階段並巡檢後續；回傳提示文字。 */
 export function completeMateDuel(state: GameState, mateId: string): string[] {
   const def = mateDefById(mateId);
@@ -1148,10 +1192,31 @@ export function completeMateDuel(state: GameState, mateId: string): string[] {
     return [
       `⚔ 擊敗了${stage.duel.name}！完成「${stage.title}」（${i + 1}/${stages.length}）`,
       stage.dialogue ? `${def.name}：「${stage.dialogue}」` : '',
-      ...updateMateQuestProgress(state),
+      ...updateQuestProgress(state),
     ].filter(Boolean);
   }
   return [];
+}
+
+/** 主線具名海戰勝利：鎖存目前章節的 duel 階段，再巡檢同章後續。 */
+export function completeStoryDuel(state: GameState, chapterId: string): string[] {
+  const chapter = currentStoryChapter(state);
+  if (!chapter || chapter.id !== chapterId) return [];
+  const statuses = storyStageStatuses(state, chapter);
+  const current = statuses.find((stage) => !stage.ok);
+  if (!current) return [];
+  const stage = chapter.stages?.[current.index];
+  if (!stage?.duel) return [];
+  state.story.chapterStages = state.story.chapterStages ?? {};
+  const done = state.story.chapterStages[chapter.id] ?? [];
+  if (!done.includes(current.index)) done.push(current.index);
+  done.sort((a, b) => a - b);
+  state.story.chapterStages[chapter.id] = done;
+  return [
+    `⚔ 擊敗了${stage.duel.name}！完成主線任務「${stage.title}」（${done.length}/${chapter.stages?.length ?? 0}）`,
+    stage.dialogue ?? '',
+    ...updateQuestProgress(state),
+  ].filter(Boolean);
 }
 
 /** 目前可回報的階段 index（進行中、輪到的階段是回報類、條件已達成）；沒有回傳 -1。 */
@@ -1691,6 +1756,21 @@ function migrateSave(raw: string): GameState | null {
       full.mateQuests = full.mateQuests ?? {};
       full.version = 18;
     }
+    // v18 → v19：主線章節加入持久化中途任務進度。
+    // 已通過章節回填為全完成；目前與未來章節從未完成開始，避免舊檔卡死或憑空跳過當前任務。
+    if (s.version < 19) {
+      const full = s as GameState;
+      const chapterStages: Record<string, number[]> = {};
+      for (const chapter of STORY_CHAPTERS) {
+        if (chapter.heroId !== full.story.heroId) continue;
+        if (full.story.completed.includes(chapter.id) || chapter.chapter < full.story.chapter) {
+          chapterStages[chapter.id] = (chapter.stages ?? []).map((_, index) => index);
+        }
+      }
+      full.story.chapterStages = chapterStages;
+      full.version = 19;
+    }
+    (s as GameState).story.chapterStages = (s as GameState).story.chapterStages ?? {};
     return s as GameState;
   } catch {
     return null;
@@ -1754,6 +1834,79 @@ export function currentStoryChapter(state: GameState): StoryChapter | undefined 
   return STORY_CHAPTERS.find(
     (c) => c.heroId === state.story.heroId && c.chapter === state.story.chapter
   );
+}
+
+export interface StoryStageStatus {
+  index: number;
+  title: string;
+  desc: string;
+  ok: boolean;
+  lines: string[];
+}
+
+/** 主線章節階段狀態：完成以 v19 chapterStages 鎖存，不因後續數值變動倒退。 */
+export function storyStageStatuses(state: GameState, chapter: StoryChapter | undefined = currentStoryChapter(state)): StoryStageStatus[] {
+  if (!chapter) return [];
+  const done = new Set(state.story.chapterStages?.[chapter.id] ?? []);
+  return (chapter.stages ?? []).map((stage, index) => ({
+    index,
+    title: stage.title,
+    desc: stage.desc,
+    ok: done.has(index),
+    lines: done.has(index)
+      ? []
+      : stage.duel
+        ? [`出海航行，擊敗【${stage.duel.name}】`]
+        : mateRequirementLines(state, stage.requirement),
+  }));
+}
+
+export function storyStagesComplete(state: GameState, chapter: StoryChapter | undefined = currentStoryChapter(state)): boolean {
+  return storyStageStatuses(state, chapter).every((stage) => stage.ok);
+}
+
+export function storyStageNextStepText(state: GameState, chapter: StoryChapter | undefined = currentStoryChapter(state)): string {
+  const next = storyStageStatuses(state, chapter).find((stage) => !stage.ok);
+  return next?.lines[0] ?? next?.desc ?? '';
+}
+
+export function storyStageProgressText(state: GameState, chapter: StoryChapter | undefined = currentStoryChapter(state)): string {
+  const statuses = storyStageStatuses(state, chapter);
+  if (!statuses.length) return '';
+  const done = statuses.filter((stage) => stage.ok).length;
+  return [
+    `主線進度 ${done}/${statuses.length}`,
+    ...statuses.map((stage) => `${stage.ok ? '✅' : '⬜'} ${stage.title}${stage.ok || !stage.lines[0] ? '' : `：${stage.lines[0]}`}`),
+  ].join('\n');
+}
+
+/** 巡檢目前章節的自動型中途任務；決鬥由海戰勝利另行鎖存。 */
+export function updateStoryStageProgress(state: GameState): string[] {
+  const chapter = currentStoryChapter(state);
+  const stages = chapter?.stages ?? [];
+  if (!chapter || !stages.length) return [];
+  state.story.chapterStages = state.story.chapterStages ?? {};
+  const done = state.story.chapterStages[chapter.id] ?? [];
+  state.story.chapterStages[chapter.id] = done;
+  const doneSet = new Set(done);
+  const msgs: string[] = [];
+  for (let index = 0; index < stages.length; index++) {
+    if (doneSet.has(index)) continue;
+    const stage = stages[index];
+    if (stage.reportAtPort || stage.consumeCargo || stage.duel) break;
+    if (!checkStageDone(state, stage)) break;
+    done.push(index);
+    doneSet.add(index);
+    msgs.push(`📜 主線進度：完成「${stage.title}」（${done.length}/${stages.length}）`);
+    if (stage.dialogue) msgs.push(stage.dialogue);
+  }
+  done.sort((a, b) => a - b);
+  return msgs;
+}
+
+/** 所有會改變任務條件的事件統一呼叫，避免主線與夥伴巡檢漏接。 */
+export function updateQuestProgress(state: GameState): string[] {
+  return [...updateStoryStageProgress(state), ...updateMateQuestProgress(state)];
 }
 
 export function storyTargetPort(chapter: StoryChapter | undefined): Port | undefined {
@@ -1903,6 +2056,16 @@ export function storyAdvanceCheck(state: GameState, port: Port): { ok: boolean; 
     const target = storyTargetPort(chapter);
     return { ok: false, message: `目前目標是前往【${target?.name ?? chapter.targetPortId}】。` };
   }
+  const incomplete = storyStageStatuses(state, chapter).filter((stage) => !stage.ok);
+  if (incomplete.length) {
+    const statuses = storyStageStatuses(state, chapter);
+    const done = statuses.length - incomplete.length;
+    const next = storyStageNextStepText(state, chapter);
+    return {
+      ok: false,
+      message: [`主線進度 ${done}/${statuses.length}，完成中途任務後才能推進。`, next ? `下一步：${next}` : '請先完成目前的中途任務。'].join('\n'),
+    };
+  }
   const requirementError = storyRequirementError(state, chapter);
   if (requirementError) return { ok: false, message: requirementError };
   return { ok: true, message: '' };
@@ -1914,15 +2077,11 @@ export function completeStoryChapter(
 ): { ok: boolean; title: string; message: string } {
   const chapter = currentStoryChapter(state);
   if (!chapter) {
-    return { ok: false, title: '主線暫告一段落', message: '目前可玩的主線章節已完成，後續章節會在 M4 繼續擴充。' };
+    return { ok: false, title: '主線暫告一段落', message: '這條主線已全部完成，仍可繼續自由貿易與探索。' };
   }
-  if (chapter.targetPortId !== port.id) {
-    const target = storyTargetPort(chapter);
-    return { ok: false, title: chapter.title, message: `目前目標是前往【${target?.name ?? chapter.targetPortId}】。` };
-  }
-  const requirementError = storyRequirementError(state, chapter);
-  if (requirementError) {
-    return { ok: false, title: chapter.title, message: requirementError };
+  const advanceCheck = storyAdvanceCheck(state, port);
+  if (!advanceCheck.ok) {
+    return { ok: false, title: chapter.title, message: advanceCheck.message };
   }
 
   consumeStoryRequirements(state, chapter);
@@ -1938,7 +2097,7 @@ export function completeStoryChapter(
   const departures = processGuestDepartures(state);
   const autoJoins = processAutoJoins(state);
   // 章節推進可能使進行中的夥伴任務階段達成
-  const mateQuestMsgs = updateMateQuestProgress(state);
+  const questProgressMsgs = updateQuestProgress(state);
 
   const next = currentStoryChapter(state);
   const nextPort = storyTargetPort(next);
@@ -1952,7 +2111,7 @@ export function completeStoryChapter(
     levelMsg ? `\n${levelMsg}` : '',
     ...departures.map((d) => `\n${d}`),
     ...autoJoins.map((d) => `\n${d}`),
-    ...mateQuestMsgs.map((m) => `\n${m}`),
+    ...questProgressMsgs.map((m) => `\n${m}`),
     next ? `\n下一章：${next.title}\n目標：前往【${nextPort?.name ?? next.targetPortId}】。` : '\n主線全部章節已完成，恭喜走完這條航路！仍可繼續自由貿易與探索。',
   ];
   return { ok: true, title: `完成：${chapter.title}`, message: lines.filter(Boolean).join('\n') };
@@ -2082,7 +2241,7 @@ export function recordSale(state: GameState, port: Port, goodId: string, qty: nu
     state.tradeStats.byPort[port.id] = (state.tradeStats.byPort[port.id] ?? 0) + revenue;
     const rep = addReputation(state, 'trade', Math.floor(revenue / 1000));
     if (rep) msgs.push(rep);
-    msgs.push(...updateMateQuestProgress(state));
+    msgs.push(...updateQuestProgress(state));
   }
   return msgs;
 }

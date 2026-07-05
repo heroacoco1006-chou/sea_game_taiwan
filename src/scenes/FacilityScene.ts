@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Port, saveGame, dateText, rumorTexts,
   hullMax, supplyMax, crewMax, questOffersForPort, sailableDays,
-  currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText,
+  currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText, storyStageProgressText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
-  addXp, levelUpMessage, addReputation, addFriendship, updateMateQuestProgress,
+  addXp, levelUpMessage, addReputation, addFriendship, updateQuestProgress,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -189,10 +189,11 @@ export default class FacilityScene extends Phaser.Scene {
     const targetPort = storyTargetPort(chapter);
     if (chapter && chapter.targetPortId === this.port.id) {
       const teaser = storyChapterTeaser(s.story.heroId, chapter.chapter);
+      const stageProgress = storyStageProgressText(s, chapter);
       this.body.setText(
         `【主線第 ${chapter.chapter} 章：${chapter.title}】\n` +
         `年份：${chapter.year}　人物：${chapter.npc}\n\n` +
-        `${teaser}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}`
+        `${teaser}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}${stageProgress ? `\n${stageProgress}` : ''}`
       );
       makeButton(this, W / 2, 520, 340, 52, '推進主線（看劇情）', () => {
         const check = storyAdvanceCheck(s, this.port);
@@ -215,7 +216,7 @@ export default class FacilityScene extends Phaser.Scene {
       const offers = questOffersForPort(s, this.port);
       const storyHint = chapter && targetPort
         ? `\n\n目前主線：第 ${chapter.chapter} 章「${chapter.title}」；請前往【${targetPort.name}】。`
-        : '\n\n目前可玩的 M4 示範主線已完成，仍可繼續自由貿易與接委託。';
+        : '\n\n這條主線已全部完成，仍可繼續自由貿易、探索與接委託。';
       this.body.setText(
         `${head}放下文書：「${this.port.desc}」\n\n今日有三件委託可選：\n\n` +
         offers.map((offer, i) => `${i + 1}. ${this.offerSummary(offer)}`).join('\n') +
@@ -249,7 +250,7 @@ export default class FacilityScene extends Phaser.Scene {
           const gains = [
             addReputation(s, 'trade', 5),
             ['tayouan', 'ponkan'].includes(this.port.id) ? addFriendship(s, 'sinckan', 3) : '',
-            ...updateMateQuestProgress(s),
+            ...updateQuestProgress(s),
           ].filter(Boolean);
           audio.playSfx('coin');
           if (lv) { audio.playSfx('levelup'); flashFx(this, 640, 130); }
@@ -277,7 +278,7 @@ export default class FacilityScene extends Phaser.Scene {
         const gains = [
           addReputation(s, q.type === 'combat' ? 'valor' : 'adventure', 5),
           ['tayouan', 'ponkan'].includes(this.port.id) ? addFriendship(s, 'sinckan', 3) : '',
-          ...updateMateQuestProgress(s),
+          ...updateQuestProgress(s),
         ].filter(Boolean);
         audio.playSfx('coin');
         if (unlocked.length) { audio.playSfx('unlock'); flashFx(this, 640, 130); }
