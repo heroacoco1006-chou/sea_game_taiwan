@@ -28,13 +28,11 @@ export const BASE_H = 720;
 
 /**
  * 文字繪製解析度（超取樣倍率）。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT
- * 把 1280×720 畫布放大到視窗，文字會糊。這裡以較高倍率繪製文字材質，放大後仍銳利。
- * 基準 3×，高 DPI 螢幕拉到 4×（再高記憶體效益遞減）。整個遊戲走 textStyle() 自動受惠。
+ * 把畫布縮放到視窗，文字會糊。這裡以較高倍率繪製文字材質，縮放後仍銳利。
+ * WP-4（2026-07-05 老闆回饋文字仍不夠利）：統一 4×，不再依 dpr 降到 3×；
+ * 與整體 2× 超取樣疊加後文字材質等效 8× 邏輯尺寸。再高記憶體效益遞減。
  */
-export const TEXT_RES =
-  typeof window !== 'undefined'
-    ? Math.min(4, Math.max(3, Math.ceil((window.devicePixelRatio || 1) * 2)))
-    : 3;
+export const TEXT_RES = 4;
 
 export function textStyle(size: number, color = '#3a2a14'): Phaser.Types.GameObjects.Text.TextStyle {
   return { fontFamily: FONT, fontSize: `${size}px`, color, resolution: TEXT_RES };
