@@ -413,6 +413,13 @@
       "targetPortId": "tayouan",
       "npc": "日荷通譯",
       "objective": "航行到大員，打聽濱田彌兵衛事件的前因。",
+      "stages": [
+        {
+          "title": "經琉球打聽台灣消息",
+          "desc": "造訪那霸，透過琉球商人打聽大員與日本商船的近況。",
+          "requirement": { "visitPorts": ["naha"] }
+        }
+      ],
       "rewardGold": 500
     },
     {
@@ -427,6 +434,13 @@
       "requirements": {
         "cargo": [{ "goodId": "silver", "qty": 3, "consume": true }]
       },
+      "stages": [
+        {
+          "title": "重走白銀換生絲航路",
+          "desc": "在月港累積賣出 800 兩貨物，跟著父親留下的經驗學做跨海生意。",
+          "requirement": { "tradeAtPort": { "portId": "yuegang", "min": 800 } }
+        }
+      ],
       "rewardGold": 700
     },
     {
@@ -441,6 +455,13 @@
       "requirements": {
         "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
       },
+      "stages": [
+        {
+          "title": "認識琉球轉口角色",
+          "desc": "確認首里城周邊探索點，了解琉球王國如何連結不同地區的商路。",
+          "requirement": { "discoveredExplorationPoints": ["exp_ryukyu_shuri"] }
+        }
+      ],
       "rewardGold": 800
     },
     {
@@ -452,6 +473,13 @@
       "targetPortId": "tayouan",
       "npc": "老通譯",
       "objective": "航行到大員，查明父親當年的真相。",
+      "stages": [
+        {
+          "title": "重走父親遇襲的航線",
+          "desc": "擊退航線上的海盜，尋找父親當年航程留下的線索。",
+          "duel": { "name": "航線上的海盜", "tier": 1 }
+        }
+      ],
       "rewardGold": 1000
     },
     {
@@ -463,6 +491,13 @@
       "targetPortId": "hirado",
       "npc": "平戶老商人",
       "objective": "航行到平戶，面對幕府的鎖國令。",
+      "stages": [
+        {
+          "title": "觀察鎖國前的商路變化",
+          "desc": "確認堺的商路探索點，了解日本國內商業在政策改變前的流動。",
+          "requirement": { "discoveredExplorationPoints": ["exp_sakai_route"] }
+        }
+      ],
       "rewardGold": 1200
     },
     {
@@ -474,6 +509,13 @@
       "targetPortId": "nagasaki",
       "npc": "出島荷蘭商館員",
       "objective": "航行到長崎，在出島延續貿易。",
+      "stages": [
+        {
+          "title": "證明長崎貿易的價值",
+          "desc": "在長崎累積賣出 1,000 兩貨物，證明對外窗口仍有實際作用。",
+          "requirement": { "tradeAtPort": { "portId": "nagasaki", "min": 1000 } }
+        }
+      ],
       "rewardGold": 1400
     },
     {
@@ -485,6 +527,13 @@
       "targetPortId": "nagasaki",
       "npc": "異鄉商友",
       "objective": "航行到長崎，與異鄉的朋友相聚。",
+      "stages": [
+        {
+          "title": "與異鄉朋友同遊九州",
+          "desc": "確認雲仙山路探索點，在旅途中增進彼此理解。",
+          "requirement": { "discoveredExplorationPoints": ["exp_unzen"] }
+        }
+      ],
       "rewardGold": 1600
     },
     {
@@ -496,6 +545,13 @@
       "targetPortId": "nagasaki",
       "npc": "漢人海商",
       "objective": "航行到長崎，聽聞故人的消息。",
+      "stages": [
+        {
+          "title": "護送故人的消息",
+          "desc": "擊退攔截信使的敵船，讓帶著故人消息的船安全通過。",
+          "duel": { "name": "攔截信使的敵船", "tier": 2 }
+        }
+      ],
       "rewardGold": 1800
     },
     {

@@ -95,6 +95,13 @@ for (const hero of story.heroes) {
   if (chapters.length !== 10) errors.push('[' + hero.id + '] 主線章節應為 10，實際 ' + chapters.length);
   simulationLines.push(hero.id + ' ' + chapters.length + '/10章・' + completedStages + '任務');
 }
+const expectedStageCounts = { lin: 9, peter: 8, chiyo: 8 };
+for (const [heroId, expected] of Object.entries(expectedStageCounts)) {
+  const actual = story.chapters.filter((chapter) => chapter.heroId === heroId).reduce((sum, chapter) => sum + (chapter.stages?.length ?? 0), 0);
+  if (actual !== expected) errors.push('[' + heroId + '] 中途任務應為 ' + expected + '，實際 ' + actual);
+}
+if (stageCount !== 25) errors.push('中途任務總數應為 25，實際 ' + stageCount);
+
 console.log('主角 ' + story.heroes.length + ' 位｜章節 ' + story.chapters.length + ' 章｜中途任務 ' + stageCount + ' 個');
 console.log('自動通關：' + simulationLines.join('｜'));
 if (errors.length) {
