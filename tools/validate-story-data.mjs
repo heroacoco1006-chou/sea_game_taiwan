@@ -56,7 +56,47 @@ for (const chapter of story.chapters) {
   });
 }
 
+function requirementMet(state, requirement) {
+  if (!requirement) return true;
+  if ((requirement.cargo ?? []).some((item) => (state.cargo[item.goodId] ?? 0) < item.qty)) return false;
+  if ((requirement.discoveredExplorationPoints ?? []).some((id) => !state.points.has(id))) return false;
+  if ((requirement.visitPorts ?? []).some((id) => !state.ports.has(id))) return false;
+  if (requirement.tradeAtPort && (state.trade[requirement.tradeAtPort.portId] ?? 0) < requirement.tradeAtPort.min) return false;
+  return true;
+}
+
+function fulfillRequirement(state, requirement) {
+  if (!requirement) return;
+  for (const item of requirement.cargo ?? []) state.cargo[item.goodId] = Math.max(state.cargo[item.goodId] ?? 0, item.qty);
+  for (const id of requirement.discoveredExplorationPoints ?? []) state.points.add(id);
+  for (const id of requirement.visitPorts ?? []) state.ports.add(id);
+  if (requirement.tradeAtPort) state.trade[requirement.tradeAtPort.portId] = requirement.tradeAtPort.min;
+}
+
+const simulationLines = [];
+for (const hero of story.heroes) {
+  const chapters = story.chapters.filter((chapter) => chapter.heroId === hero.id).sort((a, b) => a.chapter - b.chapter);
+  const state = { cargo: {}, points: new Set(), ports: new Set([hero.startPortId]), trade: {} };
+  let completedStages = 0;
+  for (const chapter of chapters) {
+    for (const stage of chapter.stages ?? []) {
+      if (stage.duel) {
+        completedStages += 1;
+        continue;
+      }
+      fulfillRequirement(state, stage.requirement);
+      if (!requirementMet(state, stage.requirement)) error(chapter, '自動通關無法完成中途任務「' + stage.title + '」');
+      completedStages += 1;
+    }
+    fulfillRequirement(state, chapter.requirements);
+    if (!requirementMet(state, chapter.requirements)) error(chapter, '自動通關無法完成章節既有條件');
+    state.ports.add(chapter.targetPortId);
+  }
+  if (chapters.length !== 10) errors.push('[' + hero.id + '] 主線章節應為 10，實際 ' + chapters.length);
+  simulationLines.push(hero.id + ' ' + chapters.length + '/10章・' + completedStages + '任務');
+}
 console.log('主角 ' + story.heroes.length + ' 位｜章節 ' + story.chapters.length + ' 章｜中途任務 ' + stageCount + ' 個');
+console.log('自動通關：' + simulationLines.join('｜'));
 if (errors.length) {
   console.error('\n✖ 錯誤 ' + errors.length + ' 筆：');
   for (const message of errors) console.error('  ' + message);

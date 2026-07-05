@@ -64,6 +64,18 @@
       "targetPortId": "ponkan",
       "npc": "顏思齊的部下",
       "objective": "航行到笨港，在官府／商館接觸顏思齊勢力。",
+      "stages": [
+        {
+          "title": "走訪西拉雅平原社",
+          "desc": "前往西拉雅平原社，了解當地居民與海商往來的方式。",
+          "requirement": { "discoveredExplorationPoints": ["exp_siraya"] }
+        },
+        {
+          "title": "在笨港試做生意",
+          "desc": "在笨港累積賣出 500 兩貨物，熟悉跑單幫的生意節奏。",
+          "requirement": { "tradeAtPort": { "portId": "ponkan", "min": 500 } }
+        }
+      ],
       "rewardGold": 500
     },
     {
@@ -78,6 +90,13 @@
       "requirements": {
         "cargo": [{ "goodId": "silk_raw", "qty": 5, "consume": true }]
       },
+      "stages": [
+        {
+          "title": "保護安海航線",
+          "desc": "出海擊退騷擾安海航線的海盜，再去拜訪鄭芝龍船隊。",
+          "duel": { "name": "騷擾安海航線的海盜", "tier": 1 }
+        }
+      ],
       "rewardGold": 700
     },
     {
@@ -89,6 +108,13 @@
       "targetPortId": "ponkan",
       "npc": "笨港老船頭",
       "objective": "回到笨港，了解顏思齊病逝後海商集團的變化。",
+      "stages": [
+        {
+          "title": "探聽海商動向",
+          "desc": "造訪月港與安海，向兩地商人打聽顏思齊病逝後的局勢。",
+          "requirement": { "visitPorts": ["yuegang", "anhai"] }
+        }
+      ],
       "rewardGold": 600
     },
     {
@@ -100,6 +126,13 @@
       "targetPortId": "anhai",
       "npc": "鄭芝龍",
       "objective": "航行到安海，面對鄭芝龍接受招撫的抉擇。",
+      "stages": [
+        {
+          "title": "回鄉聽取不同看法",
+          "desc": "確認泉州媽祖廟探索點，聽聽鄉里對招撫的不同想法。",
+          "requirement": { "discoveredExplorationPoints": ["exp_quanzhou_temple"] }
+        }
+      ],
       "rewardGold": 1000
     },
     {
@@ -111,6 +144,13 @@
       "targetPortId": "anhai",
       "npc": "鄭芝龍",
       "objective": "航行到安海，參與料羅灣海戰。",
+      "stages": [
+        {
+          "title": "料羅灣前哨戰",
+          "desc": "擊退海上來犯的武裝船，替船隊守住前往料羅灣的航路。",
+          "duel": { "name": "來犯的武裝船", "tier": 2 }
+        }
+      ],
       "rewardGold": 1200
     },
     {
@@ -122,6 +162,13 @@
       "targetPortId": "tayouan",
       "npc": "大員老船工",
       "objective": "航行到大員，看見鄭氏海上霸權的另一面。",
+      "stages": [
+        {
+          "title": "體會台海貿易秩序",
+          "desc": "在大員累積賣出 1,000 兩貨物，親自觀察鄭氏勢力下的貿易秩序。",
+          "requirement": { "tradeAtPort": { "portId": "tayouan", "min": 1000 } }
+        }
+      ],
       "rewardGold": 1400
     },
     {
@@ -133,6 +180,13 @@
       "targetPortId": "anhai",
       "npc": "鄭芝龍",
       "objective": "航行到安海，面對明清易代的抉擇。",
+      "stages": [
+        {
+          "title": "尋找日本方面的退路",
+          "desc": "造訪平戶，打聽鄭氏在日本的人脈與可能退路。",
+          "requirement": { "visitPorts": ["hirado"] }
+        }
+      ],
       "rewardGold": 1600
     },
     {
@@ -144,6 +198,13 @@
       "targetPortId": "ponkan",
       "npc": "鄭成功",
       "objective": "航行到笨港，追隨焚袍起兵的鄭成功。",
+      "stages": [
+        {
+          "title": "護旗突圍",
+          "desc": "擊退清方攔截船，替追隨鄭成功的船隊打開航路。",
+          "duel": { "name": "清方攔截船", "tier": 3 }
+        }
+      ],
       "rewardGold": 1800
     },
     {
