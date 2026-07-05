@@ -238,6 +238,13 @@
       "targetPortId": "penghu",
       "npc": "明朝通事",
       "objective": "航行到澎湖，了解荷蘭與明朝的談判困局。",
+      "stages": [
+        {
+          "title": "偵察澳門據點",
+          "desc": "造訪澳門，了解葡萄牙商路與荷蘭船隊在南海面對的局勢。",
+          "requirement": { "visitPorts": ["macau"] }
+        }
+      ],
       "rewardGold": 500
     },
     {
@@ -252,6 +259,13 @@
       "requirements": {
         "cargo": [{ "goodId": "wood", "qty": 5, "consume": true }]
       },
+      "stages": [
+        {
+          "title": "護送建城物資",
+          "desc": "擊退覬覦建材的海盜，讓木材安全送到大員。",
+          "duel": { "name": "覬覦建材的海盜", "tier": 1 }
+        }
+      ],
       "rewardGold": 800
     },
     {
@@ -269,6 +283,13 @@
           { "goodId": "sugar", "qty": 5, "consume": true }
         ]
       },
+      "stages": [
+        {
+          "title": "驗證大員轉口貿易",
+          "desc": "在大員累積賣出 1,500 兩貨物，觀察鹿皮、蔗糖與區域商路的關係。",
+          "requirement": { "tradeAtPort": { "portId": "tayouan", "min": 1500 } }
+        }
+      ],
       "rewardGold": 900
     },
     {
@@ -280,6 +301,13 @@
       "targetPortId": "tayouan",
       "npc": "荷蘭商館長",
       "objective": "航行到大員，面對濱田彌兵衛事件。",
+      "stages": [
+        {
+          "title": "聽取日本商人的看法",
+          "desc": "造訪平戶，了解日本商人對荷蘭商館課稅與管理方式的不滿。",
+          "requirement": { "visitPorts": ["hirado"] }
+        }
+      ],
       "rewardGold": 1000
     },
     {
@@ -291,6 +319,13 @@
       "targetPortId": "keelung",
       "npc": "荷蘭軍官",
       "objective": "航行到雞籠，隨艦隊驅逐西班牙人。",
+      "stages": [
+        {
+          "title": "雞籠前哨戰",
+          "desc": "擊退西班牙武裝船，為北上雞籠的艦隊打開航路。",
+          "duel": { "name": "西班牙武裝船", "tier": 2 }
+        }
+      ],
       "rewardGold": 1200
     },
     {
@@ -302,6 +337,13 @@
       "targetPortId": "tayouan",
       "npc": "干治士牧師",
       "objective": "航行到大員，了解贌社與王田制度。",
+      "stages": [
+        {
+          "title": "實地了解村社與土地",
+          "desc": "確認西拉雅平原社探索點，了解贌社、王田制度如何影響地方居民。",
+          "requirement": { "discoveredExplorationPoints": ["exp_siraya"] }
+        }
+      ],
       "rewardGold": 1400
     },
     {
@@ -313,6 +355,13 @@
       "targetPortId": "tayouan",
       "npc": "荷蘭軍官",
       "objective": "航行到大員，面對郭懷一事件。",
+      "stages": [
+        {
+          "title": "協助恢復地方生計",
+          "desc": "在大員累積賣出 800 兩貨物，讓事件後的市場重新流通。",
+          "requirement": { "tradeAtPort": { "portId": "tayouan", "min": 800 } }
+        }
+      ],
       "rewardGold": 1600
     },
     {
@@ -324,6 +373,13 @@
       "targetPortId": "tayouan",
       "npc": "情報官",
       "objective": "航行到大員，察覺鄭成功渡海的威脅。",
+      "stages": [
+        {
+          "title": "海峽偵巡",
+          "desc": "擊退偵巡時遭遇的敵船，確認鄭成功渡海前海域已經升高警戒。",
+          "duel": { "name": "海峽偵巡遭遇的敵船", "tier": 3 }
+        }
+      ],
       "rewardGold": 1800
     },
     {
