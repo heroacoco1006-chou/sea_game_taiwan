@@ -176,7 +176,9 @@ export default class PortScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm(townBgmForRegion(this.port.region));
-    // 進港巡檢夥伴任務：資金／章節／造訪港口等被動條件在此鎖存
+    // 先鎖存首次造訪，再巡檢主線／夥伴任務；否則 visitPorts 會延遲到下一個事件才完成。
+    const firstVisit = !this.state.visitedPorts.includes(this.port.id);
+    if (firstVisit) this.state.visitedPorts.push(this.port.id);
     const mateQuestMsgs = updateQuestProgress(this.state);
     if (mateQuestMsgs.length) {
       saveGame(this.state);
@@ -262,8 +264,7 @@ export default class PortScene extends Phaser.Scene {
     this.createMinimap();
 
     // 首次抵達此港 → 自動跳出港口介紹（教育：認識古今地名與時代背景）
-    if (!this.state.visitedPorts.includes(this.port.id)) {
-      this.state.visitedPorts.push(this.port.id);
+    if (firstVisit) {
       saveGame(this.state);
       this.showPortIntro(true);
     }
