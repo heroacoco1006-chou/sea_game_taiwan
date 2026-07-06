@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "ports": {
+    "anhai": "china",
+    "yuegang": "china",
+    "guangzhou": "china",
+    "macau": "china",
+    "tayouan": "taiwan",
+    "keelung": "taiwan",
+    "tamsui": "taiwan",
+    "ponkan": "taiwan",
+    "penghu": "taiwan",
+    "hirado": "japan",
+    "nagasaki": "japan",
+    "sakai": "japan",
+    "naha": "japan",
+    "manila": "sea",
+    "hoian": "sea",
+    "ayutthaya": "sea",
+    "malacca": "sea",
+    "batavia": "sea",
+    "banten": "sea",
+    "ambon": "sea",
+    "banda": "sea",
+    "ternate": "sea"
+  }
+}

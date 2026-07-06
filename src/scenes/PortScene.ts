@@ -3,6 +3,8 @@ import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, updat
 import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBackgroundKey, portTownBuildingKey, shipWorldKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
+import portTownLayoutsData from '../data/portTownLayouts.json';
+import portTownThemesData from '../data/portTownThemes.json';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -19,6 +21,8 @@ interface Building {
   y: number;
   w: number;
   h: number;
+  doorX?: number;
+  doorY?: number;
 }
 
 interface RectBounds {
@@ -29,6 +33,25 @@ interface RectBounds {
 }
 
 type FacilityKey = 'trade' | 'tavern' | 'inn' | 'office' | 'item' | 'shipyard';
+
+interface PortTownFacility {
+  key: FacilityKey | 'harbor';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  doorX: number;
+  doorY: number;
+}
+
+interface PortTownLayout {
+  themeId: string;
+  bgKey: string;
+  facilities: PortTownFacility[];
+  walkable: TownPoint[][];
+  spawn: TownPoint;
+  labelStyle: { text: string; background: number };
+}
 
 interface LayoutSlot {
   x: number;
@@ -119,32 +142,10 @@ const BUILDING_SIZE: Record<FacilityKey, { w: number; h: number }> = {
   shipyard: { w: 240, h: 130 },
 };
 
-const ANHAI_TOWN_LAYOUT: Array<{ key: FacilityKey | 'harbor'; label: string; x: number; y: number; w: number; h: number }> = [
-  { key: 'tavern', label: '酒館', x: 315, y: 430, w: 200, h: 130 },
-  { key: 'shipyard', label: '造船廠', x: 610, y: 430, w: 240, h: 130 },
-  { key: 'inn', label: '旅館', x: 1240, y: 430, w: 210, h: 135 },
-  { key: 'office', label: '官府', x: 1580, y: 430, w: 210, h: 125 },
-  { key: 'trade', label: '交易所', x: 365, y: 545, w: 230, h: 140 },
-  { key: 'item', label: '道具屋', x: 1575, y: 545, w: 200, h: 125 },
-  { key: 'harbor', label: '港口（補給・出航）', x: TOWN_W / 2, y: 842, w: 280, h: 150 },
-];
-
 type TownPoint = { x: number; y: number };
 
-const ANHAI_WALKABLE_POLYGONS: TownPoint[][] = [
-  [
-    { x: 16, y: 96 }, { x: TOWN_W - 16, y: 96 }, { x: TOWN_W - 16, y: 742 },
-    { x: 1805, y: 742 }, { x: 1710, y: 778 }, { x: 1540, y: 778 }, { x: 1390, y: 742 },
-    { x: 1260, y: 760 }, { x: 1175, y: 790 }, { x: 1050, y: 780 }, { x: 945, y: 760 },
-    { x: 790, y: 790 }, { x: 630, y: 770 }, { x: 470, y: 790 }, { x: 300, y: 770 },
-    { x: 150, y: 790 }, { x: 16, y: 770 },
-  ],
-  [
-    { x: 825, y: 760 }, { x: 1235, y: 748 }, { x: 1310, y: 820 },
-    { x: 1280, y: 1015 }, { x: 930, y: 1015 }, { x: 930, y: 915 },
-    { x: 805, y: 862 }, { x: 805, y: 795 },
-  ],
-];
+const PORT_TOWN_LAYOUTS = portTownLayoutsData.layouts as Record<string, PortTownLayout>;
+const PORT_TOWN_THEMES = portTownThemesData.ports as Record<string, string>;
 export default class PortScene extends Phaser.Scene {
   private port!: Port;
   private player!: Phaser.GameObjects.Sprite;
@@ -158,6 +159,7 @@ export default class PortScene extends Phaser.Scene {
   private autoEnterKey: string | null = null;
   private miniPlayer!: Phaser.GameObjects.Rectangle;
   private dock = { x: TOWN_W / 2, y: TOWN_H - 90 };
+  private townLayout: PortTownLayout | null = null;
 
   constructor() {
     super('Port');
@@ -169,6 +171,10 @@ export default class PortScene extends Phaser.Scene {
 
   init(data: { portId: string; spawn?: { x: number; y: number } }): void {
     this.port = PORTS.find((p) => p.id === data.portId)!;
+    const themeId = PORT_TOWN_THEMES[this.port.id];
+    this.townLayout = themeId ? PORT_TOWN_LAYOUTS[themeId] ?? null : null;
+    const harbor = this.townLayout?.facilities.find((facility) => facility.key === 'harbor');
+    this.dock = { x: harbor?.x ?? TOWN_W / 2, y: TOWN_H - 90 };
     this.spawn = data.spawn;
     this.moveTarget = null;
     this.autoEnterKey = null;
@@ -205,7 +211,7 @@ export default class PortScene extends Phaser.Scene {
     if (!townBackground) this.addDecorations(style);
 
     // 主角與鏡頭
-    const rawStart = this.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
+    const rawStart = this.spawn ?? this.townLayout?.spawn ?? { x: this.dock.x, y: TOWN_H - 130 };
     const start = this.clampTownTarget(rawStart.x, rawStart.y);
     this.playerWalkKey = this.textures.exists(characterWalkKey(this.state.story.heroId)) ? characterWalkKey(this.state.story.heroId) : null;
     this.player = this.add.sprite(start.x, start.y, this.playerWalkKey ?? 'player').setDepth(10);
@@ -289,22 +295,23 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private townBackgroundTextureKey(): string | null {
-    if (this.port.id !== 'anhai') return null;
-    const key = portTownBackgroundKey('anhai-town-bg-v1');
+    if (!this.townLayout) return null;
+    const key = portTownBackgroundKey(this.townLayout.bgKey);
     return this.textures.exists(key) ? key : null;
   }
 
   private townWalkMaxY(): number {
-    return this.port.id === 'anhai' ? TOWN_H - 150 : SHORE_WALK_LIMIT;
+    if (!this.townLayout) return SHORE_WALK_LIMIT;
+    return Math.max(...this.townLayout.walkable.flat().map((point) => point.y));
   }
 
   private clampTownTarget(x: number, y: number): { x: number; y: number } {
     const cx = Phaser.Math.Clamp(x, 16, TOWN_W - 16);
     const cy = Phaser.Math.Clamp(y, 96, this.townWalkMaxY());
     if (this.isTownWalkable(cx, cy)) return { x: cx, y: cy };
-    if (this.port.id !== 'anhai') return { x: cx, y: cy };
+    if (!this.townLayout) return { x: cx, y: cy };
 
-    for (let radius = 0; radius <= 260; radius += 14) {
+    for (let radius = 0; radius <= 320; radius += 14) {
       const candidates: Array<{ x: number; y: number; d: number }> = [];
       for (let dx = -radius; dx <= radius; dx += 14) {
         for (let dy = -radius; dy <= radius; dy += 14) {
@@ -318,12 +325,12 @@ export default class PortScene extends Phaser.Scene {
       candidates.sort((a, b) => a.d - b.d);
       if (candidates[0]) return { x: candidates[0].x, y: candidates[0].y };
     }
-    return { x: this.dock.x, y: 790 };
+    return { ...this.townLayout.spawn };
   }
 
   private isTownWalkable(x: number, y: number): boolean {
-    if (this.port.id !== 'anhai') return y <= SHORE_WALK_LIMIT;
-    return ANHAI_WALKABLE_POLYGONS.some((poly) => this.pointInPolygon(x, y, poly));
+    if (!this.townLayout) return y <= SHORE_WALK_LIMIT;
+    return this.townLayout.walkable.some((polygon) => this.pointInPolygon(x, y, polygon));
   }
 
   private pointInPolygon(x: number, y: number, polygon: TownPoint[]): boolean {
@@ -460,6 +467,8 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private createBuildings(style: TownStyle): void {
+    const labelText = this.townLayout?.labelStyle.text ?? style.labelText;
+    const labelBackground = this.townLayout?.labelStyle.background ?? style.label;
     const shadow = this.add.graphics().setDepth(4);
     const fallback = this.add.graphics().setDepth(5);
     for (const b of this.buildings) {
@@ -486,8 +495,8 @@ export default class PortScene extends Phaser.Scene {
 
       this.add
         .text(b.x, b.y + b.h / 2 - 22, b.label, {
-          ...textStyle(b.key === 'harbor' ? 17 : 16, style.labelText),
-          backgroundColor: `#${style.label.toString(16).padStart(6, '0')}dd`,
+          ...textStyle(b.key === 'harbor' ? 17 : 16, labelText),
+          backgroundColor: `#${labelBackground.toString(16).padStart(6, '0')}dd`,
           padding: { x: 8, y: 3 },
         })
         .setOrigin(0.5)
@@ -547,11 +556,12 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private createTownBuildings(): Building[] {
-    if (this.port.id === 'anhai') {
-      return ANHAI_TOWN_LAYOUT
+    if (this.townLayout) {
+      return this.townLayout.facilities
         .filter((entry) => entry.key !== 'shipyard' || this.port.shipyard)
         .map((entry) => ({
           ...entry,
+          label: this.facilityLabel(entry.key),
           artId: this.buildingArtFor(entry.key),
           townArtId: this.townBuildingArtFor(entry.key),
         }));
@@ -589,6 +599,16 @@ export default class PortScene extends Phaser.Scene {
     return buildings;
   }
 
+
+  private facilityLabel(key: FacilityKey | 'harbor'): string {
+    if (key === 'harbor') return '港口（補給・出航）';
+    if (key === 'trade') return '交易所';
+    if (key === 'tavern') return '酒館';
+    if (key === 'inn') return '旅館';
+    if (key === 'office') return this.port.culture === 'han' ? '官府' : '商館';
+    if (key === 'item') return '道具屋';
+    return '造船廠';
+  }
 
   private harborSceneId(): string {
     if (this.port.id === 'tayouan' || this.port.id === 'penghu') return 'tayouan_lagoon_fort';
@@ -793,12 +813,11 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private buildingDoorPoint(b: Building): { x: number; y: number } {
-    if (this.port.id === 'anhai') return { x: b.x, y: b.y + b.h * 0.2 };
-    return { x: b.x, y: b.y + b.h / 2 + 22 };
+    return { x: b.doorX ?? b.x, y: b.doorY ?? b.y + b.h / 2 + 22 };
   }
 
   private buildingInteractionRect(b: Building): RectBounds {
-    if (this.port.id === 'anhai') {
+    if (this.townLayout) {
       const halfW = Math.max(58, b.w * 0.5);
       return {
         left: b.x - halfW,
@@ -811,17 +830,16 @@ export default class PortScene extends Phaser.Scene {
   }
 
   private buildingCollisionRect(b: Building): RectBounds {
-    if (this.port.id === 'anhai') {
-      if (b.key === 'harbor') {
-        const w = b.w * 0.62;
-        const h = b.h * 0.36;
-        const cy = b.y - b.h * 0.04;
-        return { left: b.x - w / 2, right: b.x + w / 2, top: cy - h / 2, bottom: cy + h / 2 };
-      }
-      const w = b.w * 0.56;
-      const h = b.h * 0.42;
-      const cy = b.y - b.h * 0.08;
-      return { left: b.x - w / 2, right: b.x + w / 2, top: cy - h / 2, bottom: cy + h / 2 };
+    if (this.townLayout) {
+      const width = b.w * (b.key === 'harbor' ? 0.62 : 0.56);
+      const height = b.h * (b.key === 'harbor' ? 0.36 : 0.42);
+      const centerY = b.y - b.h * (b.key === 'harbor' ? 0.04 : 0.08);
+      return {
+        left: b.x - width / 2,
+        right: b.x + width / 2,
+        top: centerY - height / 2,
+        bottom: centerY + height / 2,
+      };
     }
     return { left: b.x - b.w / 2 - 8, right: b.x + b.w / 2 + 8, top: b.y - b.h / 2 - 20, bottom: b.y + b.h / 2 + 6 };
   }

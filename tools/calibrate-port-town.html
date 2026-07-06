@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>港町 Layout 校準工具</title>
+<style>
+:root{color-scheme:dark;font-family:"Microsoft JhengHei",sans-serif}
+body{margin:0;background:#20170f;color:#f8e8c7}
+header,aside{background:#342316;padding:12px}
+header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #8f6b3d}
+main{display:grid;grid-template-columns:minmax(640px,1fr) 380px;gap:12px;padding:12px}
+canvas{display:block;width:100%;height:auto;background:#111;border:2px solid #ad8750;cursor:crosshair}
+label{display:grid;gap:4px;font-size:13px}
+input,select,button,textarea{font:inherit;color:#fff4d6;background:#4a321f;border:1px solid #a47b47;border-radius:4px;padding:7px}
+button{cursor:pointer} button.active{background:#8a552b;border-color:#ffd68a}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea{width:100%;height:360px;box-sizing:border-box;font-family:Consolas,monospace;font-size:12px}
+small{color:#d8c29d;line-height:1.55}.legend{display:flex;gap:12px;margin:8px 0;font-size:13px}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <strong>港町 Layout 校準工具</strong>
+  <label>底圖 PNG<input id="imageFile" type="file" accept="image/png,image/jpeg"></label>
+  <label>themeId<input id="themeId" value="new-theme"></label>
+  <label>bgKey<input id="bgKey" value="new-town-bg-v1"></label>
+  <button id="polygonMode" class="active">描可走區</button>
+  <button id="facilityMode">拖設施／門點</button>
+  <button id="undoPoint">復原上一點</button>
+  <button id="finishPolygon">完成此多邊形</button>
+</header>
+<main>
+<section>
+  <canvas id="canvas" width="2000" height="1100"></canvas>
+  <div class="legend"><span>綠線＝可走區</span><span>黃框＝設施</span><span>藍點＝門點</span><span>紅點＝出生點</span></div>
+  <small>描點：左鍵逐點加入，按「完成此多邊形」封閉。設施模式：拖黃框移動設施，拖藍點調整門點，拖紅點調整出生點。座標直接以 2000×1100 遊戲畫布輸出，不需要人工換算。</small>
+</section>
+<aside>
+  <div class="controls">
+    <label>目前設施<select id="facilityKey"></select></label>
+    <label>標籤文字色<input id="labelText" value="#fff4d6"></label>
+    <button id="exportJson">匯出 JSON 片段</button>
+    <button id="importJson">載入文字區 JSON</button>
+    <button id="downloadJson">下載 JSON</button>
+    <button id="downloadPng">下載疊圖 PNG</button>
+  </div>
+  <p><small>輸出可直接貼入 <code>portTownLayouts.json</code> 的 <code>layouts</code> 項目。</small></p>
+  <textarea id="output" spellcheck="false"></textarea>
+</aside>
+</main>
+<script>
+const canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
+const image=new Image();
+const keys=['trade','tavern','inn','office','item','shipyard','harbor'];
+const labels={trade:'交易所',tavern:'酒館',inn:'旅館',office:'官府／商館',item:'道具屋',shipyard:'造船廠',harbor:'港口'};
+const sizes={trade:[230,140],tavern:[200,130],inn:[210,135],office:[210,125],item:[200,125],shipyard:[240,130],harbor:[280,150]};
+let facilities=keys.map((key,index)=>({key,x:420+(index%4)*380,y:380+Math.floor(index/4)*250,w:sizes[key][0],h:sizes[key][1],doorX:420+(index%4)*380,doorY:380+Math.floor(index/4)*250+sizes[key][1]*.2}));
+let polygons=[],draft=[],spawn={x:1000,y:970},mode='polygon',drag=null;
+const facilityKey=document.querySelector('#facilityKey');
+for(const key of keys){const option=document.createElement('option');option.value=key;option.textContent=labels[key];facilityKey.append(option)}
+const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}};
+const selected=()=>facilities.find(f=>f.key===facilityKey.value);
+const setMode=next=>{mode=next;document.querySelector('#polygonMode').classList.toggle('active',next==='polygon');document.querySelector('#facilityMode').classList.toggle('active',next==='facility');draw()};
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(image.complete&&image.naturalWidth)ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  else{ctx.fillStyle='#6f6049';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#eee';ctx.font='38px sans-serif';ctx.fillText('請載入 2000×1100 港町底圖',650,540)}
+  ctx.lineJoin='round';
+  for(const poly of [...polygons,draft]){
+    if(!poly.length)continue;ctx.beginPath();ctx.moveTo(poly[0].x,poly[0].y);for(const p of poly.slice(1))ctx.lineTo(p.x,p.y);
+    if(polygons.includes(poly))ctx.closePath();ctx.fillStyle='rgba(40,220,80,.16)';ctx.fill();ctx.strokeStyle='#30e276';ctx.lineWidth=7;ctx.stroke();
+    for(const p of poly){ctx.fillStyle='#eaffef';ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fill()}
+  }
+  for(const f of facilities){
+    ctx.strokeStyle=f.key===facilityKey.value?'#fff08a':'#d7a82c';ctx.lineWidth=f.key===facilityKey.value?8:5;
+    ctx.strokeRect(f.x-f.w/2,f.y-f.h/2,f.w,f.h);ctx.fillStyle='rgba(255,196,45,.14)';ctx.fillRect(f.x-f.w/2,f.y-f.h/2,f.w,f.h);
+    ctx.fillStyle='#21170f';ctx.fillRect(f.x-70,f.y-18,140,36);ctx.fillStyle='#fff4d6';ctx.font='25px sans-serif';ctx.textAlign='center';ctx.fillText(labels[f.key],f.x,f.y+9);
+    ctx.fillStyle='#48b8ff';ctx.beginPath();ctx.arc(f.doorX,f.doorY,13,0,Math.PI*2);ctx.fill();
+  }
+  ctx.fillStyle='#ff554c';ctx.beginPath();ctx.arc(spawn.x,spawn.y,15,0,Math.PI*2);ctx.fill();ctx.textAlign='left';
+}
+document.querySelector('#imageFile').onchange=e=>{const file=e.target.files[0];if(!file)return;image.onload=draw;image.src=URL.createObjectURL(file)};
+document.querySelector('#polygonMode').onclick=()=>setMode('polygon');
+document.querySelector('#facilityMode').onclick=()=>setMode('facility');
+document.querySelector('#undoPoint').onclick=()=>{draft.pop();draw()};
+document.querySelector('#finishPolygon').onclick=()=>{if(draft.length>=3){polygons.push(draft);draft=[];draw()}};
+facilityKey.onchange=draw;
+canvas.onpointerdown=e=>{
+  const p=point(e);
+  if(mode==='polygon'){draft.push(p);draw();return}
+  if(Math.hypot(p.x-spawn.x,p.y-spawn.y)<28){drag={type:'spawn',dx:p.x-spawn.x,dy:p.y-spawn.y};return}
+  const door=facilities.find(f=>Math.hypot(p.x-f.doorX,p.y-f.doorY)<26);
+  if(door){facilityKey.value=door.key;drag={type:'door',facility:door,dx:p.x-door.doorX,dy:p.y-door.doorY};draw();return}
+  const f=[...facilities].reverse().find(f=>p.x>f.x-f.w/2&&p.x<f.x+f.w/2&&p.y>f.y-f.h/2&&p.y<f.y+f.h/2);
+  if(f){facilityKey.value=f.key;drag={type:'facility',facility:f,dx:p.x-f.x,dy:p.y-f.y};draw()}
+};
+canvas.onpointermove=e=>{if(!drag)return;const p=point(e);
+  if(drag.type==='spawn'){spawn={x:Math.round(p.x-drag.dx),y:Math.round(p.y-drag.dy)}}
+  else if(drag.type==='door'){drag.facility.doorX=Math.round(p.x-drag.dx);drag.facility.doorY=Math.round(p.y-drag.dy)}
+  else{const f=drag.facility,old={x:f.x,y:f.y};f.x=Math.round(p.x-drag.dx);f.y=Math.round(p.y-drag.dy);f.doorX+=f.x-old.x;f.doorY+=f.y-old.y}
+  draw()
+};
+canvas.onpointerup=canvas.onpointercancel=()=>drag=null;
+const layout=()=>({themeId:document.querySelector('#themeId').value.trim(),bgKey:document.querySelector('#bgKey').value.trim(),facilities,walkable:polygons,spawn,labelStyle:{text:document.querySelector('#labelText').value,background:4927768}});
+document.querySelector('#exportJson').onclick=()=>document.querySelector('#output').value=JSON.stringify(layout(),null,2);
+document.querySelector('#importJson').onclick=()=>{try{const data=JSON.parse(document.querySelector('#output').value);facilities=data.facilities;polygons=data.walkable;spawn=data.spawn;document.querySelector('#themeId').value=data.themeId;document.querySelector('#bgKey').value=data.bgKey;document.querySelector('#labelText').value=data.labelStyle?.text||'#fff4d6';draw()}catch(error){alert('JSON 無法載入：'+error.message)}};
+const download=(name,blob)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+document.querySelector('#downloadJson').onclick=()=>download(document.querySelector('#themeId').value+'-layout.json',new Blob([JSON.stringify(layout(),null,2)],{type:'application/json'}));
+document.querySelector('#downloadPng').onclick=()=>canvas.toBlob(blob=>download(document.querySelector('#themeId').value+'-layout-preview.png',blob),'image/png');
+draw();
+</script>
+</body>
+</html>

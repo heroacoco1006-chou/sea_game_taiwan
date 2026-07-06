@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-07-06] WP-2 港町 layout 資料化完成
+
+- 22 港固定透過 `src/data/portTownThemes.json` 對應中國／台灣／日本／南洋四主題；主題內容集中在 `portTownLayouts.json`，不得在 `PortScene` 加港口 id 特判。
+- 每個 layout 必須包含 `themeId`、`bgKey`、七設施座標與 `doorX/doorY`、`walkable`、`spawn`、`labelStyle`；無造船廠港口由 runtime 依 `port.shipyard` 過濾。
+- 改 layout 後必跑 `node tools/validate-port-layouts.mjs`；新底圖對位用 `tools/calibrate-port-town.html`，禁止回到截圖目測改碼迴圈。
+- 精緻底圖主題沿用共用碰撞比例；中國 layout 保留原安海行為。南洋／台灣岸線較淺，spawn 與可走區下緣不得超過碼頭，避免人物落在海面。
+- 舊程序化港町保留為資料缺漏 fallback；本工作包不改存檔版本。
+
 ## [2026-07-05] WP-1 主線中途任務已實作（存檔 v19）
 
 - `StoryChapter.stages` 共用 `MateQuestStage`；主線與夥伴任務統一走 `checkStageDone()`，不得另建第二套條件引擎。
