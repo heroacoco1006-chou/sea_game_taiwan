@@ -7,6 +7,13 @@
 
 ---
 
+## [2026-07-06] 文件 | 操作者：Codex | M5-8 網頁版架構規劃完成
+
+- 新增 `2026-07-06_M5-8_網頁版架構優化規劃.md`，定義 boot-core、navigation-core、港町、船隻、單章劇情、單筆圖鑑與單曲音訊資產群組，以及 LoadingScene／AssetManager 的統一轉場責任。
+- Production 基線：`dist` 354 檔／160.88 MB、主程式 1.95 MB；30 張章節背景 41.25 MB、120 張圖鑑 11.23 MB、四張港町底圖 17.23 MB、7 首 BGM 41.25 MB。BGM 已按曲目 fetch，Boot 阻塞主因是一次預載全部圖檔。
+- 規劃拆為 M5-8a～e：量測安全網、高收益延遲載入、LoadingScene、行動容器／觸控、自適應 SS 與總驗收；每刀獨立驗證與提交。
+- 裝置矩陣涵蓋桌面、低階 Chromebook、iPad、大小 iPhone 與 Android；iOS Safari 的記憶體、音訊、localStorage 與背景恢復保留真機驗收，不以桌面模擬取代。
+
 ## [2026-07-06] 開發 | 操作者：Codex | M5-6f UI 一致性驗收完成
 
 - 新增 `tools/validate-ui-consistency.mjs`，以 TypeScript AST 檢查 14 個 UI 場景：BASE 邏輯尺寸、共用 `textStyle()`、最低 10px 字級、禁止直接字型樣式與已知模糊渲染設定；結果 14 場景／131 文字節點全數通過。

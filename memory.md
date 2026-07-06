@@ -5,6 +5,12 @@
 
 ---
 
+## [2026-07-06] M5-8 網頁版資產與行動架構定案
+
+- M5-8 依 `2026-07-06_M5-8_網頁版架構優化規劃.md` 執行；URL manifest 可維持 Vite glob，但 BootScene 不得再下載所有資產，場景資產統一經 `AssetManager`／LoadingScene 分組確保。
+- 資產群組為 boot-core、navigation-core、`port:<theme>`、ships、`story:<hero>:<chapter>`、`codex:<id>`、`audio:<key>`；禁止各場景各寫一套載入判斷。
+- 2× 超取樣改為 auto／high 2×／balanced 1.5×／performance 1×，設定存 localStorage 且重載生效，不改 v19 遊戲存檔。
+- 行動版需處理 `100dvh`、safe area、`touch-action: none` 與直向提示；iOS Safari 真機驗收不可用桌面模擬取代。
 ## [2026-07-06] M5-6 UI 一致性基線
 
 - 14 個 UI 場景必須維持 `BASE_W=1280`／`BASE_H=720` 邏輯排版，文字一律走 `textStyle()`；改 UI 後必跑 `node tools/validate-ui-consistency.mjs`。
