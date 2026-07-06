@@ -5,6 +5,12 @@
 
 ---
 
+## [2026-07-06] M5-8b 港町與船隻資產責任
+
+- BootScene 不得預載港町底圖／文化建築／港景／舊建築、主角行走圖或船隻世界／方向／海戰／船卡／裝備圖；改動後以 `tools/validate-lazy-assets.mjs` 防止回歸。
+- `PortScene.preload()` 負責當前主題、文化、港景 fallback、主角與旗艦；`WorldMapScene` 負責當前旗艦；`ShipyardScene` 負責完整船卡／裝備群組；`BattleScene` 負責本次敵我船；`InfoScene` 負責目前艦隊船卡與旗艦裝備。
+- M5-8b 三刀合計約 82.79 MB 從首次 Boot 移至使用場景；artifact 總量不變。下一階段必須用 LoadingScene／AssetManager 統一進度與錯誤恢復，不得讓場景自行擴張成多套載入框架。
+
 ## [2026-07-06] 圖鑑插圖改為 Info 單張載入
 
 - 120 張圖鑑插圖不再由 BootScene 預載；`InfoScene` 透過 `codexIllustrationUrl(id)` 在已解鎖詳情開啟時載入單張，必須保留 texture cache、防重入與失敗顯示。

@@ -1,10 +1,8 @@
 import Phaser from 'phaser';
 import {
-  PORTRAIT_URLS, SHIP_WORLD_URLS, SHIP_WORLD_DIRECTIONAL_URLS, SHIP_BATTLE_URLS,
-  SHIP_CARD_URLS, CHARACTER_WALK_URLS, SHIP_EQUIPMENT_URLS,
-  WORLD_ART_URLS, PORT_BUILDING_URLS, PORT_TOWN_BUILDING_URLS, PORT_TOWN_BACKGROUND_URLS, HARBOR_SCENE_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS, STORY_BACKGROUND_URLS, TITLE_BG_URL,
-  portraitKey, shipWorldKey, shipWorldDirectionalKey, shipBattleKey, shipCardKey, characterWalkKey, shipEquipmentKey,
-  worldArtKey, portBuildingKey, portTownBuildingKey, portTownBackgroundKey, harborSceneKey, explorationIconKey, facilityIconKey, storyBackgroundKey,
+  PORTRAIT_URLS, WORLD_ART_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS,
+  STORY_BACKGROUND_URLS, TITLE_BG_URL,
+  portraitKey, worldArtKey, explorationIconKey, facilityIconKey, storyBackgroundKey,
 } from '../art';
 
 /** 程式產生基礎貼圖；M5 起載入 V2 美術素材，缺圖時仍保留 fallback */
@@ -14,24 +12,12 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // 載入 V2 美術素材（preload 完成後才會進 create）
+    // Boot 只載標題與共用導航素材；港町、船隻、章節與圖鑑由使用場景按需載入。
     for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
-    for (const [id, url] of Object.entries(SHIP_WORLD_URLS)) this.load.image(shipWorldKey(id), url);
-    for (const [id, url] of Object.entries(SHIP_WORLD_DIRECTIONAL_URLS)) this.load.spritesheet(shipWorldDirectionalKey(id), url, { frameWidth: 96, frameHeight: 72 });
-    for (const [id, url] of Object.entries(SHIP_BATTLE_URLS)) this.load.image(shipBattleKey(id), url);
-    for (const [id, url] of Object.entries(SHIP_CARD_URLS)) this.load.image(shipCardKey(id), url);
-    for (const [id, url] of Object.entries(CHARACTER_WALK_URLS)) this.load.spritesheet(characterWalkKey(id), url, { frameWidth: 96, frameHeight: 128 });
-    for (const [id, url] of Object.entries(SHIP_EQUIPMENT_URLS)) this.load.image(shipEquipmentKey(id), url);
     for (const [id, url] of Object.entries(WORLD_ART_URLS)) this.load.image(worldArtKey(id), url);
-    for (const [id, url] of Object.entries(PORT_BUILDING_URLS)) this.load.image(portBuildingKey(id), url);
-    for (const [id, url] of Object.entries(PORT_TOWN_BUILDING_URLS)) this.load.image(portTownBuildingKey(id), url);
-    for (const [id, url] of Object.entries(PORT_TOWN_BACKGROUND_URLS)) this.load.image(portTownBackgroundKey(id), url);
-    for (const [id, url] of Object.entries(HARBOR_SCENE_URLS)) this.load.image(harborSceneKey(id), url);
     for (const [id, url] of Object.entries(EXPLORATION_ICON_URLS)) this.load.image(explorationIconKey(id), url);
     for (const [id, url] of Object.entries(FACILITY_ICON_URLS)) this.load.image(facilityIconKey(id), url);
     for (const [id, url] of Object.entries(STORY_BACKGROUND_URLS)) this.load.image(storyBackgroundKey(id), url);
-    // 各章專屬劇情背景約 41 MB，不在 Boot 一次下載；StoryScene 進場前只載當章一張。
-    // 120 張圖鑑插圖由 InfoScene 開啟單筆詳情時按需載入。
     if (TITLE_BG_URL) this.load.image('title_bg', TITLE_BG_URL);
   }
 

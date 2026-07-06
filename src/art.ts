@@ -128,3 +128,15 @@ export const storyChapterBgUrl = (heroId: string, chapter: number): string | und
 export const codexIllustrationKey = (id: string): string => `codeximg_${id}`;
 /** 只回傳指定圖鑑插圖 URL；由 InfoScene 開啟詳情時按需載入。 */
 export const codexIllustrationUrl = (id: string): string | undefined => CODEX_ILLUSTRATION_URLS[id];
+
+/** M5-8b 場景按需載入用 URL lookup。 */
+export const shipWorldUrl = (id: string): string | undefined => SHIP_WORLD_URLS[id];
+export const shipWorldDirectionalUrl = (id: string): string | undefined => SHIP_WORLD_DIRECTIONAL_URLS[id];
+export const shipBattleUrl = (id: string): string | undefined => SHIP_BATTLE_URLS[id];
+export const shipCardUrl = (id: string): string | undefined => SHIP_CARD_URLS[id];
+export const characterWalkUrl = (id: string): string | undefined => CHARACTER_WALK_URLS[id];
+export const shipEquipmentUrl = (id: string): string | undefined => SHIP_EQUIPMENT_URLS[id];
+export const portTownBackgroundUrl = (id: string): string | undefined => PORT_TOWN_BACKGROUND_URLS[id];
+export const harborSceneUrl = (id: string): string | undefined => HARBOR_SCENE_URLS[id];
+export const portTownBuildingUrlsForCulture = (culture: string): Array<[string, string]> =>
+  Object.entries(PORT_TOWN_BUILDING_URLS).filter(([id]) => id.startsWith(`${culture}_`));

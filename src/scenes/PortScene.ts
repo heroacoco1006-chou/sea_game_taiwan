@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, updateQuestProgress } from '../state';
-import { characterWalkKey, harborSceneKey, portBuildingKey, portTownBackgroundKey, portTownBuildingKey, shipWorldKey } from '../art';
+import {
+  characterWalkKey, characterWalkUrl, harborSceneKey, harborSceneUrl,
+  portBuildingKey, portTownBackgroundKey, portTownBackgroundUrl,
+  portTownBuildingKey, portTownBuildingUrlsForCulture, shipWorldKey, shipWorldUrl,
+} from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
 import portTownLayoutsData from '../data/portTownLayouts.json';
@@ -178,6 +182,36 @@ export default class PortScene extends Phaser.Scene {
     this.spawn = data.spawn;
     this.moveTarget = null;
     this.autoEnterKey = null;
+  }
+
+  preload(): void {
+    const bgId = this.townLayout?.bgKey;
+    const bgUrl = bgId ? portTownBackgroundUrl(bgId) : undefined;
+    const bgKey = bgId ? portTownBackgroundKey(bgId) : '';
+    if (bgUrl && !this.textures.exists(bgKey)) this.load.image(bgKey, bgUrl);
+
+    const culture = ['han', 'wa', 'ryu', 'sea', 'euro'].includes(this.port.culture) ? this.port.culture : 'han';
+    for (const [id, url] of portTownBuildingUrlsForCulture(culture)) {
+      const key = portTownBuildingKey(id);
+      if (!this.textures.exists(key)) this.load.image(key, url);
+    }
+
+    const harborId = this.harborSceneId();
+    const harborUrl = harborSceneUrl(harborId);
+    const harborKey = harborSceneKey(harborId);
+    if (harborUrl && !this.textures.exists(harborKey)) this.load.image(harborKey, harborUrl);
+
+    const shipId = this.state.ship.typeId;
+    const shipUrl = shipWorldUrl(shipId);
+    const shipKey = shipWorldKey(shipId);
+    if (shipUrl && !this.textures.exists(shipKey)) this.load.image(shipKey, shipUrl);
+
+    const heroId = this.state.story.heroId;
+    const walkUrl = characterWalkUrl(heroId);
+    const walkKey = characterWalkKey(heroId);
+    if (walkUrl && !this.textures.exists(walkKey)) {
+      this.load.spritesheet(walkKey, walkUrl, { frameWidth: 96, frameHeight: 128 });
+    }
   }
 
   create(): void {

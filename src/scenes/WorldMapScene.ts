@@ -13,7 +13,10 @@ import {
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
   addReputation, addFriendship, updateQuestProgress, pendingQuestDuel,
 } from '../state';
-import { explorationIconKey, facilityIconKey, shipWorldKey, shipWorldDirectionalKey, worldArtKey } from '../art';
+import {
+  explorationIconKey, facilityIconKey, shipWorldKey, shipWorldUrl,
+  shipWorldDirectionalKey, shipWorldDirectionalUrl, worldArtKey,
+} from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
@@ -86,6 +89,19 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private get state(): GameState {
     return this.registry.get('state') as GameState;
+  }
+
+  preload(): void {
+    const typeId = this.state.ship.typeId;
+    const worldUrl = shipWorldUrl(typeId);
+    const worldKey = shipWorldKey(typeId);
+    if (worldUrl && !this.textures.exists(worldKey)) this.load.image(worldKey, worldUrl);
+
+    const directionalUrl = shipWorldDirectionalUrl(typeId);
+    const directionalKey = shipWorldDirectionalKey(typeId);
+    if (directionalUrl && !this.textures.exists(directionalKey)) {
+      this.load.spritesheet(directionalKey, directionalUrl, { frameWidth: 96, frameHeight: 72 });
+    }
   }
 
   create(): void {

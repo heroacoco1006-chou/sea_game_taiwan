@@ -7,6 +7,14 @@
 
 ---
 
+## [2026-07-06] 開發 | 操作者：Codex | M5-8b-3 港町與船隻群組載入完成
+
+- `BootScene` 再移除 112 個／30.31 MB 素材：四張正式港町底圖、35 張文化建築、舊建築與港景 fallback、船隻世界／方向／海戰／船卡／裝備圖及三主角行走圖。
+- `PortScene.preload()` 載當前港的主題底圖、文化建築、港景 fallback、主角行走圖與旗艦；`WorldMapScene` 載當前旗艦世界／方向圖。
+- `ShipyardScene` 首次進入時載完整船卡／裝備功能群組；`BattleScene` 只載本次敵我船圖；`InfoScene` 載目前艦隊船卡與旗艦裝備。
+- `art.ts` 補齊場景 URL lookup；lazy validator 擴充檢查 Boot 零預載與各使用場景責任。驗證：M5-8b validator、UI 一致性、TypeScript、production build（405 modules）通過。
+- M5-8b 三刀合計約 82.79 MB 不再阻塞首次 Boot；未改 v19 存檔。互動式場景回歸因既有 localhost 使用限制未執行，轉入 M5-8c LoadingScene 完成後補驗。
+
 ## [2026-07-06] 開發 | 操作者：Codex | M5-8b-2 圖鑑插圖單張載入
 
 - `BootScene` 移除 120 張圖鑑插圖預載（合計 11.23 MB）；`InfoScene` 只在玩家開啟已解鎖圖鑑詳情時載入該張插圖。

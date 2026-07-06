@@ -6,7 +6,7 @@ import {
   dateText, newPlayerShip, shipBuildDays,
   HULL_PLATINGS, SAILS, CANNON_TYPES, shipArmor, shipSail, shipCannonType,
 } from '../state';
-import { shipCardKey, shipEquipmentKey } from '../art';
+import { SHIP_CARD_URLS, SHIP_EQUIPMENT_URLS, shipCardKey, shipEquipmentKey } from '../art';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
@@ -45,6 +45,17 @@ export default class ShipyardScene extends Phaser.Scene {
     this.selectedType = null;
     this.listTexts = new Map();
     this.escortObjs = [];
+  }
+
+  preload(): void {
+    for (const [id, url] of Object.entries(SHIP_CARD_URLS)) {
+      const key = shipCardKey(id);
+      if (!this.textures.exists(key)) this.load.image(key, url);
+    }
+    for (const [id, url] of Object.entries(SHIP_EQUIPMENT_URLS)) {
+      const key = shipEquipmentKey(id);
+      if (!this.textures.exists(key)) this.load.image(key, url);
+    }
   }
 
   /** 旗艦折抵價：船價 6 成＋大砲半價 */

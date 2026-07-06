@@ -5,7 +5,7 @@ import {
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
   addReputation, updateQuestProgress, pendingMateDuel, pendingStoryDuel, completeMateDuel, completeStoryDuel,
 } from '../state';
-import { shipBattleKey } from '../art';
+import { shipBattleKey, shipBattleUrl } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, flashFx } from '../ui';
 
@@ -79,6 +79,15 @@ export default class BattleScene extends Phaser.Scene {
     }
     this.logLines = [];
     this.busy = false;
+  }
+
+  preload(): void {
+    const ids = new Set([shipTypeOf(this.state).id, this.enemy.shipType]);
+    for (const id of ids) {
+      const url = shipBattleUrl(id);
+      const key = shipBattleKey(id);
+      if (url && !this.textures.exists(key)) this.load.image(key, url);
+    }
   }
 
   create(): void {

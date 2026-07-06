@@ -12,7 +12,10 @@ import {
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
   mateQuestStageStatuses, mateNextStepText, updateQuestProgress,
 } from '../state';
-import { codexIllustrationKey, codexIllustrationUrl, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
+import {
+  codexIllustrationKey, codexIllustrationUrl, portraitKey,
+  shipCardKey, shipCardUrl, shipEquipmentKey, shipEquipmentUrl,
+} from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing, showModal } from '../ui';
@@ -75,6 +78,27 @@ export default class InfoScene extends Phaser.Scene {
     this.codexImageLoading.clear();
     this.codexImageFailed.clear();
     this.dyn = [];
+  }
+
+  preload(): void {
+    const cardIds = new Set([this.state.ship.typeId, ...this.state.escorts.map((ship) => ship.typeId)]);
+    for (const id of cardIds) {
+      const url = shipCardUrl(id);
+      const key = shipCardKey(id);
+      if (url && !this.textures.exists(key)) this.load.image(key, url);
+    }
+
+    const equipmentIds = [
+      this.state.ship.figurehead,
+      this.state.ship.armor,
+      this.state.ship.sail,
+      this.state.ship.cannonType,
+    ].filter((id): id is string => Boolean(id));
+    for (const id of new Set(equipmentIds)) {
+      const url = shipEquipmentUrl(id);
+      const key = shipEquipmentKey(id);
+      if (url && !this.textures.exists(key)) this.load.image(key, url);
+    }
   }
 
   create(): void {
