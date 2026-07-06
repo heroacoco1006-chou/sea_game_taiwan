@@ -7,6 +7,13 @@
 
 ---
 
+## [2026-07-06] 開發 | 操作者：Codex | M5-8b-2 圖鑑插圖單張載入
+
+- `BootScene` 移除 120 張圖鑑插圖預載（合計 11.23 MB）；`InfoScene` 只在玩家開啟已解鎖圖鑑詳情時載入該張插圖。
+- 圖鑑載入具備 Phaser texture cache 防重抓、同 key 防重入與失敗顯示；切換詳情後只在目前詳情仍開啟時重繪，不改圖鑑解鎖或存檔資料。
+- `tools/validate-lazy-assets.mjs` 擴充為同時檢查 30 張章節背景與 120 張圖鑑插圖的 Boot 零預載、單筆 URL lookup 與材質快取防線。
+- 驗證：lazy asset、UI 一致性、TypeScript、production build（405 modules）通過。本段未改 v19 存檔；本機瀏覽器互動驗收因既有 localhost 使用限制未執行。
+
 ## [2026-07-06] 開發 | 操作者：Codex | M5-8b-1 章節背景延遲載入
 
 - `BootScene` 移除 30 張章節專屬背景預載（合計 41.25 MB）；`StoryScene.preload()` 依主角與章節只載當前一張，材質已存在時不重抓，三主角通用背景 fallback 保留。

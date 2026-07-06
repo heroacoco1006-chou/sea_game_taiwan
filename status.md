@@ -154,7 +154,7 @@ status: draft
 - [ ] **M5-8 網頁版架構優化**（2026-07-06 架構完成，實作中）：依 `2026-07-06_M5-8_網頁版架構優化規劃.md` 分段完成資產 lazy load、LoadingScene、自適應 SS、行動容器／觸控與裝置矩陣總驗收；M5-7 仍暫緩。
   - [x] M5-8a 基線與架構：dist 160.88 MB、資產群組、裝置矩陣、驗收與回退策略完成。
   - [x] M5-8b-1 章節背景延遲載入：Boot 移除 30 張／41.25 MB 預載，Story 每次只載當章一張；`validate-lazy-assets.mjs`、TypeScript、build 與標題回歸通過。
-  - [ ] M5-8b-2 圖鑑插圖單張載入。
+  - [x] M5-8b-2 圖鑑插圖單張載入：Boot 移除 120 張／11.23 MB 預載，Info 開啟已解鎖詳情時只載該張；快取、防重入、失敗狀態、validator、TypeScript 與 build 通過。
   - [ ] M5-8b-3 港町文化圈／船隻功能群組載入。
   - [ ] M5-8c LoadingScene／AssetManager 與錯誤恢復。
   - [ ] M5-8d 行動容器、觸控與方向驗收。

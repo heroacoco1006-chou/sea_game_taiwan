@@ -12,7 +12,7 @@ import {
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
   mateQuestStageStatuses, mateNextStepText, updateQuestProgress,
 } from '../state';
-import { codexIllustrationKey, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
+import { codexIllustrationKey, codexIllustrationUrl, portraitKey, shipCardKey, shipEquipmentKey } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing, showModal } from '../ui';
@@ -48,6 +48,8 @@ export default class InfoScene extends Phaser.Scene {
   private codexPage = 0;
   private codexDetailPage = 0;
   private codexDetailOpen = false;
+  private codexImageLoading = new Set<string>();
+  private codexImageFailed = new Set<string>();
   private dyn: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -70,6 +72,8 @@ export default class InfoScene extends Phaser.Scene {
     this.codexPage = 0;
     this.codexDetailPage = 0;
     this.codexDetailOpen = false;
+    this.codexImageLoading.clear();
+    this.codexImageFailed.clear();
     this.dyn = [];
   }
 
@@ -624,13 +628,37 @@ export default class InfoScene extends Phaser.Scene {
       return;
     }
 
-    const key = this.m5Texture(codexIllustrationKey(selected.id), '');
-    if (key) {
+    const key = codexIllustrationKey(selected.id);
+    if (this.textures.exists(key)) {
       this.dyn.push(this.add.image(frameX + frameW / 2, frameY + frameH / 2, key).setDisplaySize(286, 286));
-    } else {
-      this.dyn.push(this.add.text(frameX + frameW / 2, frameY + frameH / 2, '插圖準備中', textStyle(18, '#8a7650')).setOrigin(0.5));
+      return;
     }
+
+    const failed = this.codexImageFailed.has(key);
+    this.dyn.push(this.add.text(
+      frameX + frameW / 2,
+      frameY + frameH / 2,
+      failed ? '插圖載入失敗' : '插圖載入中…',
+      textStyle(18, failed ? '#a13d2d' : '#8a7650')
+    ).setOrigin(0.5));
+    if (!failed) this.ensureCodexIllustration(selected.id);
   }
+
+  private ensureCodexIllustration(id: string): void {
+    const key = codexIllustrationKey(id);
+    const url = codexIllustrationUrl(id);
+    if (!url || this.textures.exists(key) || this.codexImageLoading.has(key)) return;
+
+    this.codexImageLoading.add(key);
+    this.load.image(key, url);
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      this.codexImageLoading.delete(key);
+      if (!this.textures.exists(key)) this.codexImageFailed.add(key);
+      if (this.scene.isActive() && this.codexDetailOpen && this.codexId === id) this.render();
+    });
+    if (!this.load.isLoading()) this.load.start();
+  }
+
   private splitCodexPages(text: string, maxLines: number): string[] {
     const lines = this.wrapCodexBody(text).split('\n');
     const pages: string[] = [];

@@ -126,3 +126,5 @@ export const STORY_CHAPTER_BG_BY_KEY: Record<string, string> = (() => {
 export const storyChapterBgUrl = (heroId: string, chapter: number): string | undefined =>
   STORY_CHAPTER_BG_BY_KEY[storyChapterBgKey(heroId, chapter)];
 export const codexIllustrationKey = (id: string): string => `codeximg_${id}`;
+/** 只回傳指定圖鑑插圖 URL；由 InfoScene 開啟詳情時按需載入。 */
+export const codexIllustrationUrl = (id: string): string | undefined => CODEX_ILLUSTRATION_URLS[id];

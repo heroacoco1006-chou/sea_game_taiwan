@@ -5,6 +5,11 @@
 
 ---
 
+## [2026-07-06] 圖鑑插圖改為 Info 單張載入
+
+- 120 張圖鑑插圖不再由 BootScene 預載；`InfoScene` 透過 `codexIllustrationUrl(id)` 在已解鎖詳情開啟時載入單張，必須保留 texture cache、防重入與失敗顯示。
+- 改圖鑑插圖 manifest／Info 載入流程後必跑 `node tools/validate-lazy-assets.mjs`；圖鑑解鎖狀態與 v19 存檔資料不得因資產載入失敗而變更。
+
 ## [2026-07-06] 章節背景改為 Story 單章載入
 
 - 30 張章節專屬背景不再由 BootScene 預載；`StoryScene.preload()` 必須透過 `storyChapterBgUrl(heroId, chapter)` 只載當章，並保留 `textures.exists()` 防重載與通用背景 fallback。
@@ -16,6 +21,7 @@
 - 資產群組為 boot-core、navigation-core、`port:<theme>`、ships、`story:<hero>:<chapter>`、`codex:<id>`、`audio:<key>`；禁止各場景各寫一套載入判斷。
 - 2× 超取樣改為 auto／high 2×／balanced 1.5×／performance 1×，設定存 localStorage 且重載生效，不改 v19 遊戲存檔。
 - 行動版需處理 `100dvh`、safe area、`touch-action: none` 與直向提示；iOS Safari 真機驗收不可用桌面模擬取代。
+
 ## [2026-07-06] M5-6 UI 一致性基線
 
 - 14 個 UI 場景必須維持 `BASE_W=1280`／`BASE_H=720` 邏輯排版，文字一律走 `textStyle()`；改 UI 後必跑 `node tools/validate-ui-consistency.mjs`。
