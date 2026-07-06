@@ -5,6 +5,12 @@
 
 ---
 
+## [2026-07-06] M5-6 UI 一致性基線
+
+- 14 個 UI 場景必須維持 `BASE_W=1280`／`BASE_H=720` 邏輯排版，文字一律走 `textStyle()`；改 UI 後必跑 `node tools/validate-ui-consistency.mjs`。
+- 場景文字最低可讀門檻為 10px；禁止重新加入 `mipmapFilter`／`antialiasGL` 或在場景直接指定 `fontFamily`／`fontSize`。
+- M5-6f 的桌面視覺一致性已通過。2× 超取樣行動幀數、窄螢幕安全區、首次可玩時間與 eager 素材量屬 M5-8 架構範圍，不得再以零散 UI 細修處理。
+
 ## [2026-07-06] WP-2 港町 layout 資料化完成
 
 - 22 港固定透過 `src/data/portTownThemes.json` 對應中國／台灣／日本／南洋四主題；主題內容集中在 `portTownLayouts.json`，不得在 `PortScene` 加港口 id 特判。
