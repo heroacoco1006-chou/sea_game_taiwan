@@ -4,7 +4,7 @@ import {
   getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
 } from '../state';
 import type { StoryLine } from '../state';
-import { portraitKey, storyBackgroundKey, storyChapterBgKey } from '../art';
+import { portraitKey, storyBackgroundKey, storyChapterBgKey, storyChapterBgUrl } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, flashFx } from '../ui';
 
@@ -71,6 +71,13 @@ export default class StoryScene extends Phaser.Scene {
         ? `${heroDefById(this.heroId).name}・第 ${this.chapterNo} 章　${script.title}（${script.year}）`
         : `${heroDefById(this.heroId).name}・第 ${this.chapterNo} 章`;
     }
+  }
+
+  preload(): void {
+    if (this.mode !== 'story') return;
+    const key = storyChapterBgKey(this.heroId, this.chapterNo);
+    const url = storyChapterBgUrl(this.heroId, this.chapterNo);
+    if (url && !this.textures.exists(key)) this.load.image(key, url);
   }
 
   create(): void {

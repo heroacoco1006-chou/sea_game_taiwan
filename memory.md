@@ -5,6 +5,11 @@
 
 ---
 
+## [2026-07-06] 章節背景改為 Story 單章載入
+
+- 30 張章節專屬背景不再由 BootScene 預載；`StoryScene.preload()` 必須透過 `storyChapterBgUrl(heroId, chapter)` 只載當章，並保留 `textures.exists()` 防重載與通用背景 fallback。
+- 改章節背景 manifest／Story 載入流程後必跑 `node tools/validate-lazy-assets.mjs`；`dist` 仍包含全部正式素材，lazy load 的驗收指標是首次請求量，不是 artifact 總大小。
+
 ## [2026-07-06] M5-8 網頁版資產與行動架構定案
 
 - M5-8 依 `2026-07-06_M5-8_網頁版架構優化規劃.md` 執行；URL manifest 可維持 Vite glob，但 BootScene 不得再下載所有資產，場景資產統一經 `AssetManager`／LoadingScene 分組確保。

@@ -122,4 +122,7 @@ export const STORY_CHAPTER_BG_BY_KEY: Record<string, string> = (() => {
   }
   return out;
 })();
+/** 只回傳指定章節背景 URL；由 StoryScene 在進場前按需載入。 */
+export const storyChapterBgUrl = (heroId: string, chapter: number): string | undefined =>
+  STORY_CHAPTER_BG_BY_KEY[storyChapterBgKey(heroId, chapter)];
 export const codexIllustrationKey = (id: string): string => `codeximg_${id}`;

@@ -7,6 +7,13 @@
 
 ---
 
+## [2026-07-06] 開發 | 操作者：Codex | M5-8b-1 章節背景延遲載入
+
+- `BootScene` 移除 30 張章節專屬背景預載（合計 41.25 MB）；`StoryScene.preload()` 依主角與章節只載當前一張，材質已存在時不重抓，三主角通用背景 fallback 保留。
+- `art.ts` 新增單章 URL lookup；新增 `tools/validate-lazy-assets.mjs`，確認 Boot 不引用全章 manifest、Story 有單章 lookup／快取防線，且正式章節背景維持 30 張。
+- 驗證：lazy asset、UI 一致性、TypeScript、production build（405 modules）通過；dev 標題重載顯示正常，console 0 error。`dist` 總量不變，改善的是首次 Boot 傳輸，不是刪除正式素材。
+- 本段未改存檔、玩法或劇情資料；下一刀為 120 張圖鑑插圖單張載入。
+
 ## [2026-07-06] 文件 | 操作者：Codex | M5-8 網頁版架構規劃完成
 
 - 新增 `2026-07-06_M5-8_網頁版架構優化規劃.md`，定義 boot-core、navigation-core、港町、船隻、單章劇情、單筆圖鑑與單曲音訊資產群組，以及 LoadingScene／AssetManager 的統一轉場責任。
