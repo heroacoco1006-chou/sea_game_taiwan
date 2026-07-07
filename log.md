@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-07-07] 修正 | 操作者：Codex | M5-8c 行動觸控航行與進港實作
+
+- 新增 `src/touchControls.ts` 共用行動控制層：觸控／coarse pointer 顯示四方向與情境動作鍵，支援持續方向、多 pointer、動態動作標籤及 `?touch=1` 測試開關。
+- `WorldMapScene` 將觸控方向併入既有航行向量；Enter 與觸控動作共用 `performContextAction()`，可進港、討伐、觀察與探索。
+- `PortScene` 保留點地面／建築移動，新增方向與「進入」備援；pointer 命中 UI 時不再設定地面目標。共用按鈕與 modal backdrop 均阻止事件穿透。
+- `index.html` 加入 viewport-fit、100dvh、safe area、touch-action、overscroll 與選取防護；Phaser 啟用 3 pointers。
+- 新增 `tools/validate-touch-controls.mjs`。觸控、lazy asset、UI、港町、主線、夥伴 validators、TypeScript 與 production build（406 modules）全通過。
+- 程式修正完成；M5-8c 維持待驗收，需老闆在 iPad／手機正式站確認「航行 → 進港 → 港町移動／進設施」。
+
 ## [2026-07-07] 文件 | 操作者：Codex | M5-8c 行動觸控阻斷修正升為 P0
 
 - 老闆以 iPad／手機實機確認：世界地圖無法移動或進港；要求先納入網站優化規劃並優先處理。

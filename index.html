@@ -2,12 +2,34 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>大航海福爾摩沙</title>
     <style>
-      html, body { margin: 0; padding: 0; background: #0d1b2a; }
-      #game { display: flex; justify-content: center; align-items: center; height: 100vh; }
-      canvas { image-rendering: pixelated; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        background: #0d1b2a;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      #game {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+        touch-action: none;
+      }
+      canvas { image-rendering: pixelated; touch-action: none; }
     </style>
   </head>
   <body>

@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-07-07] 行動控制實作約定
+
+- `src/touchControls.ts` 是 WorldMap／Port 唯一共用觸控方向與情境動作層；不得各場景另建互不相容的虛擬搖桿。鍵盤與觸控必須共用場景 movement／action handler。
+- 觸控 UI 只在 `navigator.maxTouchPoints`、coarse pointer 或測試參數 `?touch=1` 啟用；Phaser 維持至少 3 active pointers。
+- 共用 `makeButton`、modal backdrop 與 Port 的 scene pointer handler 必須阻止 UI 點擊穿透成移動；網頁容器保持 `touch-action: none`、overscroll 防護、100dvh 與 safe area。
+- 改 WorldMap／Port 輸入、共用按鈕或行動 CSS 後必跑 `node tools/validate-touch-controls.mjs`，並由 iOS／Android 真機補驗航行、進港與進設施。
+
 ## [2026-07-07] 行動觸控列為 M5-8 P0 阻斷項
 
 - 老闆實機確認 iPad／手機無法在世界地圖移動或進港；M5-8c 必須先完成純觸控「航行 → 進港 → 港町移動／進設施」，LoadingScene 與後續效能工作順延。

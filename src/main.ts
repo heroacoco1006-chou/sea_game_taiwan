@@ -29,6 +29,7 @@ const game = new Phaser.Game({
   width: BASE_W * SS,
   height: BASE_H * SS,
   backgroundColor: '#153b54',
+  input: { activePointers: 3 },
   // 只開抗鋸齒讓邊緣平滑；不要 mipmap（會讓文字材質抓到預先模糊的縮圖反而糊）。
   render: {
     antialias: true,

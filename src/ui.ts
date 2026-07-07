@@ -144,7 +144,13 @@ export function makeButton(
   c.setInteractive({ useHandCursor: true });
   c.on('pointerover', () => draw(true));
   c.on('pointerout', () => { draw(false); c.setScale(1); });
-  c.on('pointerdown', () => {
+  c.on('pointerdown', (
+    _pointer: Phaser.Input.Pointer,
+    _localX: number,
+    _localY: number,
+    event: Phaser.Types.Input.EventData,
+  ) => {
+    event.stopPropagation();
     audio.playSfx('click');
     // 按下回饋：快速縮一下再彈回
     scene.tweens.add({ targets: c, scale: 0.95, duration: 70, yoyo: true });
@@ -190,7 +196,13 @@ export function showModal(
   const cx = BASE_W / 2;
   const cy = BASE_H / 2;
 
-  const dim = scene.add.rectangle(cx, cy, BASE_W, BASE_H, 0x000000, 0.45);
+  const dim = scene.add.rectangle(cx, cy, BASE_W, BASE_H, 0x000000, 0.45).setInteractive();
+  dim.on('pointerdown', (
+    _pointer: Phaser.Input.Pointer,
+    _localX: number,
+    _localY: number,
+    event: Phaser.Types.Input.EventData,
+  ) => event.stopPropagation());
   const panel = scene.add.graphics();
   panel.fillStyle(COLORS.wood, 1);
   panel.fillRoundedRect(cx - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 10);

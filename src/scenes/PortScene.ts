@@ -7,6 +7,7 @@ import {
 } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
+import { TouchControls } from '../touchControls';
 import portTownLayoutsData from '../data/portTownLayouts.json';
 import portTownThemesData from '../data/portTownThemes.json';
 
@@ -164,6 +165,7 @@ export default class PortScene extends Phaser.Scene {
   private miniPlayer!: Phaser.GameObjects.Rectangle;
   private dock = { x: TOWN_W / 2, y: TOWN_H - 90 };
   private townLayout: PortTownLayout | null = null;
+  private touchControls?: TouchControls;
 
   constructor() {
     super('Port');
@@ -262,7 +264,11 @@ export default class PortScene extends Phaser.Scene {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,ENTER') as typeof this.keys;
 
     // 滑鼠點擊移動：點建築→走到門口自動進入；點地面→走過去
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    this.input.on('pointerdown', (
+      p: Phaser.Input.Pointer,
+      currentlyOver: Phaser.GameObjects.GameObject[],
+    ) => {
+      if (currentlyOver.length > 0) return;
       const wx = p.worldX;
       const wy = p.worldY;
       const hit = this.buildings.find(
@@ -289,7 +295,15 @@ export default class PortScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     nameT.on('pointerover', () => nameT.setColor('#fff4c0'));
     nameT.on('pointerout', () => nameT.setColor('#ffe27a'));
-    nameT.on('pointerdown', () => this.showPortIntro(false));
+    nameT.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      event.stopPropagation();
+      this.showPortIntro(false);
+    });
     this.add
       .text(14 + nameT.width + 18, 14, `${dateText(this.state.day)}　資金 ${this.state.gold} 兩　貨艙 ${cargoCount(this.state)}/${cargoMax(this.state)}　水手 ${this.state.crew} 人　疲勞 ${this.state.fatigue}`, textStyle(16, '#f2e3bd'))
       .setDepth(101).setScrollFactor(0);
@@ -301,6 +315,7 @@ export default class PortScene extends Phaser.Scene {
       .text(W / 2, H - 8, '', textStyle(16, '#fff4d6'))
       .setOrigin(0.5, 1).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
 
+    this.touchControls = new TouchControls(this, '進入');
     this.createMinimap();
 
     // 首次抵達此港 → 自動跳出港口介紹（教育：認識古今地名與時代背景）
@@ -758,8 +773,13 @@ export default class PortScene extends Phaser.Scene {
     if (this.cursors.right.isDown || this.keys.D.isDown) dx += 1;
     if (this.cursors.up.isDown || this.keys.W.isDown) dy -= 1;
     if (this.cursors.down.isDown || this.keys.S.isDown) dy += 1;
+    const touchDirection = this.touchControls?.direction();
+    if (touchDirection) {
+      dx += touchDirection.x;
+      dy += touchDirection.y;
+    }
 
-    // 鍵盤優先；按了方向鍵就取消滑鼠目標
+    // 鍵盤／觸控方向優先；有直接方向輸入就取消點擊移動目標
     if (dx !== 0 || dy !== 0) {
       this.moveTarget = null;
       this.autoEnterKey = null;
@@ -787,15 +807,19 @@ export default class PortScene extends Phaser.Scene {
 
     const door = this.nearDoor();
 
+    const touchMode = this.touchControls?.enabled === true;
     if (door) {
-      this.hint.setText(`按 Enter 進入【${door.label}】`);
+      this.hint.setText(touchMode ? `按「進入」前往【${door.label}】` : `按 Enter 進入【${door.label}】`);
+      this.touchControls?.setActionLabel(`進入\n${door.label}`, true);
     } else {
-      this.hint.setText('方向鍵走動或滑鼠點擊目的地｜走進碼頭的【港口】即可補給與出航');
+      this.hint.setText(touchMode
+        ? '點地面／建築移動，或使用左下方向鍵｜靠近入口後按「進入」'
+        : '方向鍵走動或滑鼠點擊目的地｜走進碼頭的【港口】即可補給與出航');
+      this.touchControls?.setActionLabel('進入', false);
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.ENTER) && door) {
-      this.enterBuilding(door);
-    }
+    const actionPressed = Phaser.Input.Keyboard.JustDown(this.keys.ENTER) || this.touchControls?.consumeAction() === true;
+    if (actionPressed && door) this.enterBuilding(door);
 
     const mm = this.registry.get('townMini') as { mx: number; my: number; sx: number; sy: number };
     if (mm && this.miniPlayer) {

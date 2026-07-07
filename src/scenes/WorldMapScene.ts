@@ -19,6 +19,7 @@ import {
 } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
+import { TouchControls } from '../touchControls';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
 
 type MapCollisionGrid = {
@@ -73,6 +74,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private wind!: Wind;
   private heading = 0;
   private paused = false; // 事件對話框出現時暫停航行
+  private touchControls?: TouchControls;
   private discoveryMarkers: Array<{ entry: DiscoveryEntry; icon: Phaser.GameObjects.Image; approachMarker: Phaser.GameObjects.Arc }> = [];
   private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; approachMarker: Phaser.GameObjects.Arc }> = [];
   private pirateMarker: Phaser.GameObjects.Image | null = null;
@@ -149,7 +151,8 @@ export default class WorldMapScene extends Phaser.Scene {
       .text(W / 2, H - 24, '', textStyle(16, '#fff4d6'))
       .setOrigin(0.5).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
 
-    this.createCompass(118, H - 130);
+    this.touchControls = new TouchControls(this, '互動');
+    this.createCompass(this.touchControls.enabled ? 380 : 118, H - 130);
     this.createMinimap(W - MINIMAP_W - 16, H - MINIMAP_H - 16);
 
     this.wind = windOf(this.state.day);
@@ -434,7 +437,10 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    if (this.paused) return;
+    if (this.paused) {
+      this.touchControls?.clearAction();
+      return;
+    }
     const dt = delta / 1000;
     let dx = 0;
     let dy = 0;
@@ -442,6 +448,11 @@ export default class WorldMapScene extends Phaser.Scene {
     if (this.cursors.right.isDown || this.keys.D.isDown) dx += 1;
     if (this.cursors.up.isDown || this.keys.W.isDown) dy -= 1;
     if (this.cursors.down.isDown || this.keys.S.isDown) dy += 1;
+    const touchDirection = this.touchControls?.direction();
+    if (touchDirection) {
+      dx += touchDirection.x;
+      dy += touchDirection.y;
+    }
 
     if (dx !== 0 || dy !== 0) {
       this.heading = Math.atan2(dy, dx);
@@ -485,26 +496,49 @@ export default class WorldMapScene extends Phaser.Scene {
     this.nearExplorePoint = this.findNearExplorePoint();
     this.nearPirate = this.isNearPirateMarker();
 
-    let hint = '方向鍵或 WASD 航行｜留意糧水與風向｜靠近港口按 Enter 入港';
-    if (this.nearPort) hint = `按 Enter 進入【${this.nearPort.name}】`;
-    else if (this.nearPirate) hint = '按 Enter 討伐海盜';
-    else if (this.nearDiscovery) hint = `按 Enter 觀察【${this.nearDiscovery.title}】`;
-    else if (this.nearExplorePoint) hint = `按 Enter 探索【${this.explorationPointLabel(this.nearExplorePoint)}】`;
-    else if (this.nearbySceneryHint) hint = '附近海岸似乎有值得觀察的景物，再靠近一點看看。';
+    const touchMode = this.touchControls?.enabled === true;
+    let hint = touchMode
+      ? '使用左下方向鍵航行｜靠近目標後按右下動作鍵'
+      : '方向鍵或 WASD 航行｜留意糧水與風向｜靠近港口按 Enter 入港';
+    let actionLabel = '互動';
+    let actionActive = false;
+    if (this.nearPort) {
+      hint = touchMode ? `按「進港」進入【${this.nearPort.name}】` : `按 Enter 進入【${this.nearPort.name}】`;
+      actionLabel = `進港\n${this.nearPort.name}`;
+      actionActive = true;
+    } else if (this.nearPirate) {
+      hint = touchMode ? '按「討伐」迎戰海盜' : '按 Enter 討伐海盜';
+      actionLabel = '討伐';
+      actionActive = true;
+    } else if (this.nearDiscovery) {
+      hint = touchMode ? `按「觀察」查看【${this.nearDiscovery.title}】` : `按 Enter 觀察【${this.nearDiscovery.title}】`;
+      actionLabel = '觀察';
+      actionActive = true;
+    } else if (this.nearExplorePoint) {
+      hint = touchMode ? `按「探索」調查【${this.explorationPointLabel(this.nearExplorePoint)}】` : `按 Enter 探索【${this.explorationPointLabel(this.nearExplorePoint)}】`;
+      actionLabel = '探索';
+      actionActive = true;
+    } else if (this.nearbySceneryHint) {
+      hint = '附近海岸似乎有值得觀察的景物，再靠近一點看看。';
+    }
     this.hint.setText(hint);
+    this.touchControls?.setActionLabel(actionLabel, actionActive);
 
-    if (this.nearPort && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
-      // 入港：航行天數歸零、疲勞稍降（上岸喘口氣）
+    const actionPressed = Phaser.Input.Keyboard.JustDown(this.keys.ENTER) || this.touchControls?.consumeAction() === true;
+    if (actionPressed) this.performContextAction();
+  }
+
+  private performContextAction(): void {
+    if (this.nearPort) {
       this.state.daysAtSea = 0;
       this.state.fatigue = Math.max(0, this.state.fatigue - 10);
       saveGame(this.state);
       this.scene.start('Port', { portId: this.nearPort.id });
-    } else if (!this.nearPort && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
-      if (this.nearPirate) this.tryStartQuestBattle();
-      else if (this.nearDiscovery) this.tryDiscoverScenery(this.nearDiscovery);
-      else if (this.nearExplorePoint) this.tryExplorePoint(this.nearExplorePoint);
+      return;
     }
-
+    if (this.nearPirate) this.tryStartQuestBattle();
+    else if (this.nearDiscovery) this.tryDiscoverScenery(this.nearDiscovery);
+    else if (this.nearExplorePoint) this.tryExplorePoint(this.nearExplorePoint);
   }
 
   private setShipDirectionFrame(dx: number, dy: number): void {
