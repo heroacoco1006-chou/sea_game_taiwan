@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-07-11] 素材 | 操作者：Codex | 六角格回合制海戰完整素材包
+
+- 依既有 V2 精緻 2D 手繪航海 RPG 風格，使用 OpenAI 內建 image generation 建立 12 張 source：8 船型六方向、3 種海域、6 種島礁、6 種戰鬥特效與 8 個指令圖示圖板。
+- 透明素材以 imagegen 技能的 `remove_chroma_key.py` 去背；新增 `tools/build-battle-hex-art.py`，統一切片、船型比例、透明畫布、spritesheet、可重複海域、精確六角格與功能標記。
+- 正式 runtime 輸出：48 船隻方向單圖、8 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 六角格狀態、7 旗艦／目標／耐久標記；素材包共 120 個檔案、約 50.76 MB。
+- 新增 `battle-hex-assets.json`、`battle-hex-prompts.md`、`battle-hex-material-list.md` 與 3 張 review contact sheet；`assets/CREDITS.md` 已登錄自製生成方式與版權界線。
+- 數量、尺寸、透明通道與殘留綠幕／洋紅幕檢查通過；僅 `junk_large_southwest` 有 1 個可見像素落入寬鬆綠色偵測條件，比例為 1/18462，視為非實質殘色。素材維持 review，待老闆確認後才接入遊戲。
+
+---
+
 ## [2026-07-11] 文件 | 操作者：Codex | 六角格回合制海戰架構草案
 
 - 依老闆提供的三張六角格艦隊戰參考圖，新增 `2026-07-11_六角格回合制海戰架構與低階模型施工規格.md`；明確將口語「六宮格」統一為六角格 hex grid，避免誤作固定六格。

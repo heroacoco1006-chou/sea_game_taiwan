@@ -1,0 +1,541 @@
+{
+  "version": 1,
+  "status": "review",
+  "style": "V2 refined hand-painted 2D historical sailing RPG",
+  "generator": "OpenAI built-in image generation plus local Pillow post-processing",
+  "sources": {
+    "ships": [
+      "source/ships/junk_small_six-directions-source.png",
+      "source/ships/junk_large_six-directions-source.png",
+      "source/ships/fuchuan_six-directions-source.png",
+      "source/ships/shuinsen_six-directions-source.png",
+      "source/ships/caravel_six-directions-source.png",
+      "source/ships/fluyt_six-directions-source.png",
+      "source/ships/carrack_six-directions-source.png",
+      "source/ships/galleon_six-directions-source.png"
+    ],
+    "terrain": "source/environment/ocean-terrain-source.png",
+    "islands": "source/environment/islands-source.png",
+    "effects": "source/effects/battle-effects-source.png",
+    "commands": "source/ui/command-icons-source.png"
+  },
+  "processed": [
+    "processed/battle-effects-alpha.png",
+    "processed/caravel_six-directions-source-alpha.png",
+    "processed/carrack_six-directions-source-alpha.png",
+    "processed/fluyt_six-directions-source-alpha.png",
+    "processed/fuchuan_six-directions-source-alpha.png",
+    "processed/galleon_six-directions-source-alpha.png",
+    "processed/islands-alpha.png",
+    "processed/junk_large_six-directions-source-alpha.png",
+    "processed/junk_small_six-directions-source-alpha.png",
+    "processed/shuinsen_six-directions-source-alpha.png"
+  ],
+  "ships": [
+    {
+      "id": "junk_small",
+      "name": "小戎克船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/junk_small_east.png",
+        "runtime/ships/frames/junk_small_southeast.png",
+        "runtime/ships/frames/junk_small_southwest.png",
+        "runtime/ships/frames/junk_small_west.png",
+        "runtime/ships/frames/junk_small_northwest.png",
+        "runtime/ships/frames/junk_small_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/junk_small.png"
+    },
+    {
+      "id": "junk_large",
+      "name": "大戎克船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/junk_large_east.png",
+        "runtime/ships/frames/junk_large_southeast.png",
+        "runtime/ships/frames/junk_large_southwest.png",
+        "runtime/ships/frames/junk_large_west.png",
+        "runtime/ships/frames/junk_large_northwest.png",
+        "runtime/ships/frames/junk_large_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/junk_large.png"
+    },
+    {
+      "id": "fuchuan",
+      "name": "福船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/fuchuan_east.png",
+        "runtime/ships/frames/fuchuan_southeast.png",
+        "runtime/ships/frames/fuchuan_southwest.png",
+        "runtime/ships/frames/fuchuan_west.png",
+        "runtime/ships/frames/fuchuan_northwest.png",
+        "runtime/ships/frames/fuchuan_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/fuchuan.png"
+    },
+    {
+      "id": "shuinsen",
+      "name": "朱印船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/shuinsen_east.png",
+        "runtime/ships/frames/shuinsen_southeast.png",
+        "runtime/ships/frames/shuinsen_southwest.png",
+        "runtime/ships/frames/shuinsen_west.png",
+        "runtime/ships/frames/shuinsen_northwest.png",
+        "runtime/ships/frames/shuinsen_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/shuinsen.png"
+    },
+    {
+      "id": "caravel",
+      "name": "卡拉維爾帆船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/caravel_east.png",
+        "runtime/ships/frames/caravel_southeast.png",
+        "runtime/ships/frames/caravel_southwest.png",
+        "runtime/ships/frames/caravel_west.png",
+        "runtime/ships/frames/caravel_northwest.png",
+        "runtime/ships/frames/caravel_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/caravel.png"
+    },
+    {
+      "id": "fluyt",
+      "name": "笛型船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/fluyt_east.png",
+        "runtime/ships/frames/fluyt_southeast.png",
+        "runtime/ships/frames/fluyt_southwest.png",
+        "runtime/ships/frames/fluyt_west.png",
+        "runtime/ships/frames/fluyt_northwest.png",
+        "runtime/ships/frames/fluyt_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/fluyt.png"
+    },
+    {
+      "id": "carrack",
+      "name": "克拉克帆船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/carrack_east.png",
+        "runtime/ships/frames/carrack_southeast.png",
+        "runtime/ships/frames/carrack_southwest.png",
+        "runtime/ships/frames/carrack_west.png",
+        "runtime/ships/frames/carrack_northwest.png",
+        "runtime/ships/frames/carrack_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/carrack.png"
+    },
+    {
+      "id": "galleon",
+      "name": "蓋倫帆船",
+      "frameSize": [
+        256,
+        256
+      ],
+      "directions": [
+        "east",
+        "southeast",
+        "southwest",
+        "west",
+        "northwest",
+        "northeast"
+      ],
+      "frames": [
+        "runtime/ships/frames/galleon_east.png",
+        "runtime/ships/frames/galleon_southeast.png",
+        "runtime/ships/frames/galleon_southwest.png",
+        "runtime/ships/frames/galleon_west.png",
+        "runtime/ships/frames/galleon_northwest.png",
+        "runtime/ships/frames/galleon_northeast.png"
+      ],
+      "sheet": "runtime/ships/sheets/galleon.png"
+    }
+  ],
+  "terrain": [
+    {
+      "id": "deep",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/terrain/deep.png"
+    },
+    {
+      "id": "shallow",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/terrain/shallow.png"
+    },
+    {
+      "id": "reef",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/terrain/reef.png"
+    }
+  ],
+  "islands": [
+    {
+      "id": "palm_islet",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/palm_islet.png"
+    },
+    {
+      "id": "rocky_island",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/rocky_island.png"
+    },
+    {
+      "id": "twin_island",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/twin_island.png"
+    },
+    {
+      "id": "crescent_reef",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/crescent_reef.png"
+    },
+    {
+      "id": "bare_rocks",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/bare_rocks.png"
+    },
+    {
+      "id": "mangrove_islet",
+      "size": [
+        512,
+        512
+      ],
+      "path": "runtime/islands/mangrove_islet.png"
+    }
+  ],
+  "effects": [
+    {
+      "id": "cannon_flash",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/cannon_flash.png"
+    },
+    {
+      "id": "cannon_smoke",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/cannon_smoke.png"
+    },
+    {
+      "id": "water_splash",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/water_splash.png"
+    },
+    {
+      "id": "deck_fire",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/deck_fire.png"
+    },
+    {
+      "id": "surrender_flag",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/surrender_flag.png"
+    },
+    {
+      "id": "boarding_hooks",
+      "size": [
+        384,
+        384
+      ],
+      "path": "runtime/effects/boarding_hooks.png"
+    }
+  ],
+  "commands": [
+    {
+      "id": "turn_left",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/turn_left.png"
+    },
+    {
+      "id": "turn_right",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/turn_right.png"
+    },
+    {
+      "id": "cannon",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/cannon.png"
+    },
+    {
+      "id": "board",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/board.png"
+    },
+    {
+      "id": "repair",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/repair.png"
+    },
+    {
+      "id": "wait",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/wait.png"
+    },
+    {
+      "id": "end_turn",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/end_turn.png"
+    },
+    {
+      "id": "retreat",
+      "size": [
+        256,
+        256
+      ],
+      "path": "runtime/ui/commands/retreat.png"
+    }
+  ],
+  "overlays": [
+    {
+      "id": "neutral",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_neutral.png"
+    },
+    {
+      "id": "move",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_move.png"
+    },
+    {
+      "id": "attack",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_attack.png"
+    },
+    {
+      "id": "danger",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_danger.png"
+    },
+    {
+      "id": "selected",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_selected.png"
+    },
+    {
+      "id": "done",
+      "size": [
+        192,
+        168
+      ],
+      "path": "runtime/ui/overlays/hex_done.png"
+    }
+  ],
+  "markers": [
+    {
+      "id": "flagship_player",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/flagship_player.png"
+    },
+    {
+      "id": "flagship_enemy",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/flagship_enemy.png"
+    },
+    {
+      "id": "route_dot",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/route_dot.png"
+    },
+    {
+      "id": "cannon_target",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/cannon_target.png"
+    },
+    {
+      "id": "boarding_target",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/boarding_target.png"
+    },
+    {
+      "id": "retreat_edge",
+      "size": [
+        96,
+        96
+      ],
+      "path": "runtime/ui/markers/retreat_edge.png"
+    },
+    {
+      "id": "hull_bar_frame",
+      "size": [
+        160,
+        24
+      ],
+      "path": "runtime/ui/markers/hull_bar_frame.png"
+    }
+  ],
+  "review": [
+    "review/battle-hex-ships-contact-sheet.png",
+    "review/battle-hex-environment-contact-sheet.png",
+    "review/battle-hex-effects-ui-contact-sheet.png"
+  ]
+}
