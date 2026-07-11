@@ -7,9 +7,9 @@
 - **素材位置**：`assets/m5/v2/battle-hex/`
 - **內容**：8 船型 × 6 方向、3 種海域材質、6 種島礁、6 種戰鬥特效、8 個指令圖示、6 種六角格狀態與 7 個旗艦／目標／耐久標記；另含 source、去背中間檔、manifest、prompt、素材清單與 review contact sheets。
 - **作者／操作者**：Codex
-- **產生方式**：船隻、海域、島礁、特效與指令圖示由 OpenAI 內建 image generation 逐類生成高解析 source；透明素材以 imagegen 技能內建 `remove_chroma_key.py` 去背，再以 `tools/build-battle-hex-art.py` 切片、等比例正規化、縮圖與產生 manifest／review。六角格外框與功能性標記使用 Pillow 原創程式精確繪製。
+- **產生方式**：船隻、海域、島礁、特效與指令圖示由 OpenAI 內建 image generation 逐類生成高解析 source；透明素材以 imagegen 技能內建 `remove_chroma_key.py` 去背，再以 `tools/build-battle-hex-art.py` 切片、等比例正規化、縮圖與產生 manifest／review。六角格外框與功能性標記使用 Pillow 原創程式精確繪製。海域於老闆驗收後另生成復古舊海圖 V2，正式 runtime 採 `ocean-terrain-source-v2-antique-map.png`，初版只保留作版本比較。
 - **授權**：本專案自製生成素材，可隨本專案使用與修改。
-- **備註**：只參考本專案既有 V2 精緻 2D 手繪航海 RPG 色盤與 17 世紀船型特徵；使用者附件只作六角格戰場概念參考，未裁切、描圖或納入正式素材。未複製、改作 KOEI 或其他商業遊戲素材。素材目前為 review 狀態，待老闆確認後才接入遊戲。
+- **備註**：只參考本專案既有 V2 精緻 2D 手繪航海 RPG 色盤與 17 世紀船型特徵；使用者附件只作六角格戰場概念參考，未裁切、描圖或納入正式素材。未複製、改作 KOEI 或其他商業遊戲素材。2026-07-11 老闆已確認船艦視角與旗幟／徽記保留，海域則依指示修為復古舊海圖風格；素材仍維持 review，待其餘項目確認後才接入遊戲。
 
 ## M5-2.6 V3 世界地圖與碰撞海岸（2026-06-30）
 

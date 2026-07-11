@@ -12,7 +12,7 @@ status: review
 ## 生成方式
 
 - 圖像模型路徑：OpenAI 內建 image generation。
-- source 共 12 張；船隻使用綠幕 `#00ff00`，島礁與特效使用洋紅幕 `#ff00ff`。
+- source 共 13 張；船隻使用綠幕 `#00ff00`，島礁與特效使用洋紅幕 `#ff00ff`。海域包含初版與復古舊海圖修正版，runtime 僅採修正版。
 - 去背：`C:/Users/Owner/.codex/skills/.system/imagegen/scripts/remove_chroma_key.py`，使用 `--auto-key border --soft-matte --transparent-threshold 12 --opaque-threshold 220 --despill`。
 - runtime 後製：`tools/build-battle-hex-art.py`（Pillow）。
 - 參考來源：專案既有 V2 精緻 2D 手繪航海 RPG 風格；未使用附件或商業遊戲原圖作素材。
@@ -44,9 +44,20 @@ Avoid: modern ships, steam power, cannons visibly firing, fantasy ornament, copi
 
 ## 海域材質 prompt
 
+### 初版（保留備查，不供 runtime 使用）
+
 ```text
 Create exactly three top-down ocean texture panels: deep blue open sea, turquoise shallow coastal water with sand ripples, and blue-green reef water with submerged coral. Refined hand-painted historical sailing RPG environment art, old-map warmth, regular 3×1 sheet, no ships, land, horizon, text, border or watermark; visually even and suitable for repeatable textures.
 ```
+
+### V2 復古舊海圖版（目前 runtime 使用）
+
+```text
+Create a three-panel horizontal source sheet for a hex-grid naval strategy game. Show exactly three seamless-looking top-down ocean surfaces in equal panels: deep open sea, shallow coastal water, and reef water. Use an original antique hand-painted nautical chart style: aged indigo and muted teal pigments on subtly weathered parchment, fine engraved wave curls, delicate stippling, faded ink contours, restrained old-gold highlights, and gentle uneven pigment wear. Deep sea should be dark indigo with sparse golden wave lines; shallow water should be faded turquoise with pale sand visible beneath; reef water should be subdued blue-green with engraved coral and rock forms below the surface. Keep every panel visually calm enough for ships and hex overlays to remain readable. No ships, islands, coastlines, compass rose, labels, letters, numbers, grid lines, frames, panel dividers, horizon, modern effects, photorealism, copied commercial game imagery, or watermark.
+```
+
+- 正式 source：`source/environment/ocean-terrain-source-v2-antique-map.png`。
+- 初版 `source/environment/ocean-terrain-source.png` 永久保留，僅供版本比較；低階模型不得再以初版覆蓋 runtime。
 
 ## 島礁 prompt
 

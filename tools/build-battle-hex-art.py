@@ -81,7 +81,7 @@ def seamless(img: Image.Image) -> Image.Image:
 
 
 def build_terrain() -> list[dict]:
-    source = Image.open(SRC / "environment/ocean-terrain-source.png")
+    source = Image.open(SRC / "environment/ocean-terrain-source-v2-antique-map.png")
     result = []
     for item_id, item in zip(["deep", "shallow", "reef"], cells(source, 3, 1)):
         path = OUT / "terrain" / f"{item_id}.png"; seamless(item).save(path, optimize=True)
@@ -212,7 +212,7 @@ def main() -> None:
     data={"version":1,"status":"review","style":"V2 refined hand-painted 2D historical sailing RPG",
           "generator":"OpenAI built-in image generation plus local Pillow post-processing",
           "sources":{"ships":[f"source/ships/{ship_id}_six-directions-source.png" for ship_id in SHIPS],
-                     "terrain":"source/environment/ocean-terrain-source.png",
+                     "terrain":"source/environment/ocean-terrain-source-v2-antique-map.png",
                      "islands":"source/environment/islands-source.png",
                      "effects":"source/effects/battle-effects-source.png",
                      "commands":"source/ui/command-icons-source.png"},

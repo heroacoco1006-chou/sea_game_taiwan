@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-07-11] 素材 | 操作者：Codex | 海戰海域改為復古舊海圖風格
+
+- 老闆確認船艦六方向視角可用，並決定保留船帆旗幟／徽記；本次只調整海域，不重畫已確認素材。
+- 使用 OpenAI 內建 image generation 新增 `ocean-terrain-source-v2-antique-map.png`，改採靛藍與褪色青綠顏料、舊金手繪波紋、羊皮紙磨損感及版畫式暗礁細節。
+- `tools/build-battle-hex-art.py` 與 manifest 已固定指向 V2 海域，重新輸出深海、淺灘、暗礁三張 512×512 runtime 材質及 environment review；初版 source 保留比較，但不得再接入 runtime。
+- 素材清單、prompt 與 `assets/CREDITS.md` 已同步標明定案與防誤用規則；其餘船艦、島礁、特效、指令與標記均未變更。
+
+---
+
 ## [2026-07-11] 素材 | 操作者：Codex | 六角格回合制海戰完整素材包
 
 - 依既有 V2 精緻 2D 手繪航海 RPG 風格，使用 OpenAI 內建 image generation 建立 12 張 source：8 船型六方向、3 種海域、6 種島礁、6 種戰鬥特效與 8 個指令圖示圖板。

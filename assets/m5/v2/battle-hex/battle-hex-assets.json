@@ -14,7 +14,7 @@
       "source/ships/carrack_six-directions-source.png",
       "source/ships/galleon_six-directions-source.png"
     ],
-    "terrain": "source/environment/ocean-terrain-source.png",
+    "terrain": "source/environment/ocean-terrain-source-v2-antique-map.png",
     "islands": "source/environment/islands-source.png",
     "effects": "source/effects/battle-effects-source.png",
     "commands": "source/ui/command-icons-source.png"

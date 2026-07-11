@@ -18,7 +18,7 @@ status: review
 assets/m5/v2/battle-hex/
 ├─ source/                 # imagegen 原始圖板，永久保留
 │  ├─ ships/              # 8 張船型六方向 source
-│  ├─ environment/        # 海域、島礁 source
+│  ├─ environment/        # 海域初版／復古版、島礁 source
 │  ├─ effects/            # 戰鬥特效 source
 │  └─ ui/                 # 指令圖示 source
 ├─ processed/             # 綠幕／洋紅幕去背中間圖板
@@ -70,6 +70,9 @@ assets/m5/v2/battle-hex/
 | `reef` | 暗礁／珊瑚格 | 512×512 | `runtime/terrain/reef.png` |
 
 三張均用鏡像重排處理成可重複材質；正式接入時由 Phaser 以 tile／crop 顯示，不需把整張縮進單一六角格。
+
+- 目前正式來源固定為 `source/environment/ocean-terrain-source-v2-antique-map.png`，採復古舊海圖的靛藍、舊金波紋、褪色青綠與版畫式礁岩細節。
+- `source/environment/ocean-terrain-source.png` 是初版比較檔，保留但不得接入 runtime。
 
 ## 四、島嶼與礁石（透明 512×512）
 
@@ -141,7 +144,7 @@ assets/m5/v2/battle-hex/
 
 | 類別 | 數量 |
 |---|---:|
-| imagegen source 圖板 | 12 |
+| imagegen source 圖板 | 13（含保留的海域初版） |
 | 去背中間圖板 | 10 |
 | 船型方向單圖 | 48 |
 | 船型 spritesheet | 8 |
@@ -153,11 +156,10 @@ assets/m5/v2/battle-hex/
 | 旗艦／目標／耐久標記 | 7 |
 | Review contact sheets | 3 |
 
-## 十一、請老闆優先確認
+## 十一、老闆確認結果與待確認項目
 
-1. 八種船型是否一眼可辨，東亞船與西洋船差異是否足夠。
-2. 船帆上的歷史風格旗幟／徽記是否要保留；部分 source 有小型裝飾徽記，可在定案後另做無徽記修正版。
-3. 六方向觀看角度是否符合預期；目前採 3/4 俯視，而非完全垂直俯視。
-4. 海域材質是否太寫實，或需要更接近既有舊海圖羊皮紙感。
-5. 指令圖示是否適合手機縮小顯示。
-6. 島嶼比例與細節量是否符合六角格戰場。
+1. 已確認：六方向 3/4 俯視船艦可保留。
+2. 已確認：船帆上的歷史風格旗幟／徽記保留。
+3. 已修正：海域改為復古舊海圖版，請以 `review/battle-hex-environment-contact-sheet.png` 驗收。
+4. 待確認：指令圖示是否適合手機縮小顯示。
+5. 待確認：島嶼比例與細節量是否符合六角格戰場。
