@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "turnMode": "side",
+  "maxRounds": 12,
+  "defaultMapId": "open_sea",
+  "terrain": {
+    "deep": { "moveCost": 1, "passable": true, "blocksLineOfSight": false },
+    "shallow": { "moveCost": 1, "largeShipMoveCost": 2, "passable": true, "blocksLineOfSight": false },
+    "land": { "passable": false, "blocksLineOfSight": true },
+    "reef": { "passable": false, "blocksLineOfSight": false }
+  }
+}

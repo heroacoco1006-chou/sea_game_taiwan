@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-07-11] 開發 | 操作者：Codex | 六角格海戰 P0 型別與資料骨架
+
+- 依老闆要求，於施工規格新增每段共通可玩性品質閘門：本段專測、既有回歸、production build、固定 5173 瀏覽器與 console、回退路徑、精確提交及 Pages 成功缺一不可。
+- 新增 `src/battle/battleTypes.ts` 與 `battleConfig.ts`；功能旗標維持 `USE_HEX_BATTLE=false`，`BattleHexScene` 尚未註冊，正式遊戲仍走舊 `BattleScene`。
+- 新增 `battleMaps.json`、`battleRules.json`、`battleEncounters.json`：第一批為 `open_sea`、`island_channel`、`reef_passage` 三張 11×7 地圖，共 23 個特殊地形格與 30 個敵我部署格。
+- 新增 `tools/validate-battle-hex.mjs`，檢查 JSON、版本、地圖 id、邊界、地形／部署座標重複、部署可通行性、左右部署區、撤退邊界、未註冊場景與關閉旗標。
+- P0 驗收：專屬 validator＋觸控、lazy load、UI、港町、主線、夥伴、主線引擎、V3 地理全通過；production build 406 modules；瀏覽器標題畫面正常、2560×1440 canvas、console 0 error。
+
+---
+
 ## [2026-07-11] 素材 | 操作者：Codex | 海戰海域改為復古舊海圖風格
 
 - 老闆確認船艦六方向視角可用，並決定保留船帆旗幟／徽記；本次只調整海域，不重畫已確認素材。

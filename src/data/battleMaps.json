@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "id": "open_sea",
+      "name": "開闊海域",
+      "width": 11,
+      "height": 7,
+      "defaultTerrain": "deep",
+      "terrain": [
+        { "q": 4, "r": 1, "terrain": "shallow" },
+        { "q": 5, "r": 1, "terrain": "shallow" },
+        { "q": 5, "r": 5, "terrain": "shallow" },
+        { "q": 6, "r": 5, "terrain": "shallow" }
+      ],
+      "deployments": {
+        "player": [{ "q": 0, "r": 1 }, { "q": 0, "r": 3 }, { "q": 0, "r": 5 }, { "q": 1, "r": 2 }, { "q": 1, "r": 4 }],
+        "enemy": [{ "q": 10, "r": 1 }, { "q": 10, "r": 3 }, { "q": 10, "r": 5 }, { "q": 9, "r": 2 }, { "q": 9, "r": 4 }]
+      },
+      "retreatEdges": { "player": "west", "enemy": "east" }
+    },
+    {
+      "id": "island_channel",
+      "name": "島嶼水道",
+      "width": 11,
+      "height": 7,
+      "defaultTerrain": "deep",
+      "terrain": [
+        { "q": 4, "r": 2, "terrain": "shallow" },
+        { "q": 5, "r": 1, "terrain": "shallow" },
+        { "q": 5, "r": 2, "terrain": "land" },
+        { "q": 5, "r": 3, "terrain": "land" },
+        { "q": 5, "r": 4, "terrain": "land" },
+        { "q": 5, "r": 5, "terrain": "shallow" },
+        { "q": 6, "r": 4, "terrain": "shallow" }
+      ],
+      "deployments": {
+        "player": [{ "q": 0, "r": 1 }, { "q": 0, "r": 3 }, { "q": 0, "r": 5 }, { "q": 1, "r": 2 }, { "q": 1, "r": 4 }],
+        "enemy": [{ "q": 10, "r": 1 }, { "q": 10, "r": 3 }, { "q": 10, "r": 5 }, { "q": 9, "r": 2 }, { "q": 9, "r": 4 }]
+      },
+      "retreatEdges": { "player": "west", "enemy": "east" }
+    },
+    {
+      "id": "reef_passage",
+      "name": "暗礁窄口",
+      "width": 11,
+      "height": 7,
+      "defaultTerrain": "deep",
+      "terrain": [
+        { "q": 3, "r": 1, "terrain": "shallow" },
+        { "q": 3, "r": 5, "terrain": "shallow" },
+        { "q": 4, "r": 1, "terrain": "reef" },
+        { "q": 4, "r": 5, "terrain": "reef" },
+        { "q": 5, "r": 0, "terrain": "reef" },
+        { "q": 5, "r": 1, "terrain": "land" },
+        { "q": 5, "r": 5, "terrain": "land" },
+        { "q": 5, "r": 6, "terrain": "reef" },
+        { "q": 6, "r": 1, "terrain": "reef" },
+        { "q": 6, "r": 5, "terrain": "reef" },
+        { "q": 7, "r": 1, "terrain": "shallow" },
+        { "q": 7, "r": 5, "terrain": "shallow" }
+      ],
+      "deployments": {
+        "player": [{ "q": 0, "r": 1 }, { "q": 0, "r": 3 }, { "q": 0, "r": 5 }, { "q": 1, "r": 2 }, { "q": 1, "r": 4 }],
+        "enemy": [{ "q": 10, "r": 1 }, { "q": 10, "r": 3 }, { "q": 10, "r": 5 }, { "q": 9, "r": 2 }, { "q": 9, "r": 4 }]
+      },
+      "retreatEdges": { "player": "west", "enemy": "east" }
+    }
+  ]
+}
