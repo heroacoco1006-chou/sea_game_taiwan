@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-07-12] 六角格海戰座標語意（欄列 vs axial，必守）
+
+- `battleMaps.json` 的地形格與部署格 (q,r) 是**視覺欄／列**座標（第幾欄、第幾列）；引擎與畫面內部一律用 axial，讀入時必經 `hex.ts` 的 `offsetToAxial(col,row)`（axial r = row − floor(col/2)）。
+- 地圖邊界判定用 `hexInMap`（欄列語意）；舊 `hexInBounds`（axial 矩形）已移除，不得重新引入——平頂六角格的 axial 矩形畫出來是平行四邊形（同列敵我差 5 格高），不是矩形戰場。
+- `BattleUnit.hex`、move 指令的 path、測試中的單位位置全是 axial；測試表達地圖位置一律用 `at(欄,列)` helper 轉換，不手寫混用。
+- 砲線（hexLine）可能短暫經過欄列矩形外（鋸齒邊界），視為開放海面、不阻擋 LOS；不要強制線上每格都在圖內。
+- 預覽入口：P3～P6 用 `?hexmap=1` 或 `?hexmap=<地圖id>`（BootScene，無參數正式流程不變）；P7 整合起改 `?battle=hex`。引擎測試執行：`node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-battle-engine.mjs`。
+- 新海戰素材（約 50.76 MB）之後只能由 `BattleHexScene.preload()` 按需載入，禁止回 BootScene 預載（M5-8b 鐵則延伸）。
+
 ## [2026-07-07] 行動控制實作約定
 
 - `src/touchControls.ts` 是 WorldMap／Port 唯一共用觸控方向與情境動作層；不得各場景另建互不相容的虛擬搖桿。鍵盤與觸控必須共用場景 movement／action handler。
