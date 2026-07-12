@@ -7,6 +7,15 @@
 
 ---
 
+## [2026-07-12] 文件 | 操作者：小航 | 七項設計決策定案寫入施工規格（含自動戰鬥）
+
+- 老闆回覆施工規格 §十：①～⑥採 Codex 建議；⑦自動戰鬥改為第一版納入，但僅我方戰力明顯優於敵方時可啟動（雙方差距太小或敵方遠強於我方時選項不可用）。
+- 規格書增修：§十改定案、§3-10 自動戰鬥設計（門檻 `autoBattle.minAdvantageRatio` 初版 1.5 資料化、`sidePower()` 集中 battleRules、AI 代打共用 engine 與 seed、每回合可接手）、§八插入 P6-2 施工段、§2-3 擴充槽移除自動戰鬥。
+- 老闆同意的三點補充同步寫入：素材由 BattleHexScene.preload 按需載入（禁回 BootScene）、Scene 遵守 BASE／textStyle 鐵則、預覽入口 P3～P6 `?hexmap`／P7 起 `?battle=hex`；§3-1 補欄列座標語意。
+- 規格書 frontmatter 升 `status: final`；建構書 §5-5 依 P9 流程於正式切換時才同步。memory.md、status.md 已同步定案紀錄。
+
+---
+
 ## [2026-07-12] 開發 | 操作者：小航 | 覆核 Codex 進度、修正座標語意並完成 P3 戰場顯示
 
 - 覆核 Codex 進度屬實：重跑 P0 validator、P1（12 組）、P2（16 組）測試全過；P2 測試需以 `node --experimental-loader ./tools/node-ts-json-loader.mjs` 執行（檔內首行已註明）。

@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-07-12] 六角格海戰七項設計決策定案（老闆回覆，實作不得偏離）
+
+- 老闆 2026-07-12 對施工規格 §十 全數回覆：①玩家全隊→敵方全隊、②6 朝向＋側舷射界、③11×7、④俘獲普通敵船只換戰利品、⑤12 回合上限、⑥深海／淺灘／島嶼／暗礁——皆採 Codex 建議。
+- ⑦**自動戰鬥納入第一版**，啟用門檻＝`我方戰力 ≥ 敵方戰力 × autoBattle.minAdvantageRatio`（初版 1.5、資料化、試玩後調）；雙方戰力差距太小或敵方遠強於我方時不可啟動。戰力評估 `sidePower()` 集中在 battleRules；施工排 P6-2（P6 敵方 AI 之後）。詳見規格書 §3-10。
+- 規格書已升 status: final 並補三條款：素材由 BattleHexScene.preload 按需載入（禁回 BootScene）、Scene 遵守 BASE／textStyle 鐵則、預覽入口 P3～P6 用 `?hexmap`、P7 起 `?battle=hex`。
+- 定案內容依 P9 流程於正式切換時才寫回《遊戲建構書》§5-5。
+
 ## [2026-07-12] 六角格海戰座標語意（欄列 vs axial，必守）
 
 - `battleMaps.json` 的地形格與部署格 (q,r) 是**視覺欄／列**座標（第幾欄、第幾列）；引擎與畫面內部一律用 axial，讀入時必經 `hex.ts` 的 `offsetToAxial(col,row)`（axial r = row − floor(col/2)）。
