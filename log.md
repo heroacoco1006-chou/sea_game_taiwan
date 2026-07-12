@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-07-12] 開發 | 操作者：Codex | 六角格海戰 P2 純規則引擎
+
+- 擴充 `BattleUnit` 的船型級距、砲種／火力、裝甲、接舷、減員、移動消耗欄位，新增 `retreat` 指令、事件與 22 個穩定 `BattleErrorCode`；未修改 v19 `GameState`。
+- `battleRules.json` 資料化移動、4 砲種射程／威力、距離／首尾受擊修正、接舷比率、修整 5%／3～12 等參數；validator 同步檢查完整 schema。
+- 新增 `battleRules.ts`：Dijkstra 可達格、路徑成本、淺灘大型船成本、側舷、島嶼 LOS、砲擊預估／固定亂數、接舷三結果、修整與回合比分。
+- 新增 `battleEngine.ts` immutable 指令引擎：合法指令回新 state＋事件，非法指令回原 state 同一參照；支援移動、轉向、砲擊、接舷、修整、撤退、等待、全隊回合與旗艦／全隊／12 回合結算。
+- `test-battle-engine.mjs` 16 組案例全通過：22 error codes 全覆蓋、輸入狀態不變、固定 seed 重播一致、側舷／島嶼／暗礁 LOS、接舷勝平敗、修整上下限、撤退與 12 回合兩種結算。
+- 完整 P1／P2 專測、既有觸控、lazy load、UI、港町、主線、夥伴、主線引擎、V3 地理、production build（406 modules）與 5173 瀏覽器均通過；canvas 正常、console 0 error。新模組未依賴 Phaser、未使用 `Math.random()`，正式入口仍是舊 `BattleScene`。
+
+---
+
 ## [2026-07-12] 開發 | 操作者：Codex | 六角格海戰 P1 純座標數學
 
 - 新增 `src/battle/hex.ts` 純函式：固定 6 朝向、鄰居、axial distance、平頂六角格 axial↔pixel、最近格、矩形地圖邊界與 deterministic line drawing；只 import type，不依賴 Phaser。

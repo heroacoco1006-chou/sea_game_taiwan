@@ -1,0 +1,246 @@
+import rulesData from '../data/battleRules.json';
+import type {
+  BattleErrorCode,
+  BattleMapDefinition,
+  BattleUnit,
+  CannonTypeId,
+  Facing,
+  Hex,
+  Side,
+  Terrain,
+} from './battleTypes';
+import { HEX_DIRECTIONS, hexDistance, hexEqual, hexInBounds, hexKey, hexLine } from './hex';
+
+export type RandomSource = () => number;
+
+export type RuleResult<T> = { ok: true; value: T } | { ok: false; error: BattleErrorCode };
+
+export interface PathResult {
+  cost: number;
+  destination: Hex;
+  facing: Facing;
+}
+
+export interface ReachableHex {
+  hex: Hex;
+  cost: number;
+}
+
+export interface BoardingResult {
+  outcome: 'won' | 'balanced' | 'lost';
+  attackerCrewLoss: number;
+  targetCrewLoss: number;
+}
+
+export const BATTLE_RULES = rulesData;
+
+export function createSeededRng(seed: number): RandomSource {
+  let state = (seed >>> 0) || 0x9e3779b9;
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 0x100000000;
+  };
+}
+
+export function terrainAt(map: BattleMapDefinition, hex: Hex): Terrain {
+  return map.terrain.find((cell) => cell.q === hex.q && cell.r === hex.r)?.terrain ?? map.defaultTerrain;
+}
+
+export function isPassable(map: BattleMapDefinition, hex: Hex): boolean {
+  return hexInBounds(hex, map.width, map.height) && BATTLE_RULES.terrain[terrainAt(map, hex)].passable;
+}
+
+export function movementCost(map: BattleMapDefinition, unit: BattleUnit, hex: Hex): number {
+  const terrain = terrainAt(map, hex);
+  if (terrain === 'shallow' && unit.shipSize === 'large') return BATTLE_RULES.movement.shallowLargeCost;
+  if (terrain === 'shallow') return BATTLE_RULES.movement.shallowCost;
+  return BATTLE_RULES.movement.deepCost;
+}
+
+function activeOccupiedKeys(units: BattleUnit[], exceptId?: string): Set<string> {
+  return new Set(units
+    .filter((unit) => unit.status === 'active' && unit.id !== exceptId)
+    .map((unit) => hexKey(unit.hex)));
+}
+
+export function directionBetweenAdjacent(from: Hex, to: Hex): Facing | null {
+  const index = HEX_DIRECTIONS.findIndex((direction) => from.q + direction.q === to.q && from.r + direction.r === to.r);
+  return index < 0 ? null : index as Facing;
+}
+
+export function bearingFacing(from: Hex, to: Hex): Facing | null {
+  if (hexEqual(from, to)) return null;
+  const line = hexLine(from, to);
+  return directionBetweenAdjacent(from, line[1]);
+}
+
+export function validatePath(
+  map: BattleMapDefinition,
+  units: BattleUnit[],
+  unit: BattleUnit,
+  path: Hex[],
+): RuleResult<PathResult> {
+  if (!Array.isArray(path) || path.length < 1 || !hexEqual(path[0], unit.hex)) return { ok: false, error: 'INVALID_PATH' };
+  const occupied = activeOccupiedKeys(units, unit.id);
+  let cost = 0;
+  let facing = unit.facing;
+
+  for (let index = 1; index < path.length; index += 1) {
+    const previous = path[index - 1];
+    const current = path[index];
+    const direction = directionBetweenAdjacent(previous, current);
+    if (direction === null) return { ok: false, error: 'INVALID_PATH' };
+    if (!hexInBounds(current, map.width, map.height)) return { ok: false, error: 'OUT_OF_BOUNDS' };
+    if (!isPassable(map, current)) return { ok: false, error: 'IMPASSABLE' };
+    if (occupied.has(hexKey(current))) return { ok: false, error: 'OCCUPIED' };
+    cost += movementCost(map, unit, current);
+    facing = direction;
+  }
+
+  if (cost > unit.movePoints - unit.moveSpent) return { ok: false, error: 'INSUFFICIENT_MOVE' };
+  return { ok: true, value: { cost, destination: { ...path[path.length - 1] }, facing } };
+}
+
+export function reachableHexes(map: BattleMapDefinition, units: BattleUnit[], unit: BattleUnit): ReachableHex[] {
+  if (unit.status !== 'active' || unit.acted || unit.moved) return [];
+  const budget = unit.movePoints - unit.moveSpent;
+  if (budget < 0) return [];
+  const occupied = activeOccupiedKeys(units, unit.id);
+  const costs = new Map<string, number>([[hexKey(unit.hex), 0]]);
+  const frontier: ReachableHex[] = [{ hex: { ...unit.hex }, cost: 0 }];
+
+  while (frontier.length > 0) {
+    frontier.sort((a, b) => a.cost - b.cost || a.hex.q - b.hex.q || a.hex.r - b.hex.r);
+    const current = frontier.shift()!;
+    if (current.cost !== costs.get(hexKey(current.hex))) continue;
+    for (const direction of HEX_DIRECTIONS) {
+      const next = { q: current.hex.q + direction.q, r: current.hex.r + direction.r };
+      const key = hexKey(next);
+      if (!hexInBounds(next, map.width, map.height) || !isPassable(map, next) || occupied.has(key)) continue;
+      const nextCost = current.cost + movementCost(map, unit, next);
+      if (nextCost > budget || nextCost >= (costs.get(key) ?? Number.POSITIVE_INFINITY)) continue;
+      costs.set(key, nextCost);
+      frontier.push({ hex: next, cost: nextCost });
+    }
+  }
+
+  return [...costs.entries()]
+    .filter(([key]) => key !== hexKey(unit.hex))
+    .map(([key, cost]) => {
+      const [q, r] = key.split(',').map(Number);
+      return { hex: { q, r }, cost };
+    })
+    .sort((a, b) => a.cost - b.cost || a.hex.q - b.hex.q || a.hex.r - b.hex.r);
+}
+
+export function isBroadside(attacker: BattleUnit, target: BattleUnit): boolean {
+  const bearing = bearingFacing(attacker.hex, target.hex);
+  if (bearing === null) return false;
+  const difference = (bearing - attacker.facing + 6) % 6;
+  return difference !== 0 && difference !== 3;
+}
+
+export function hasLineOfSight(map: BattleMapDefinition, from: Hex, to: Hex): boolean {
+  const line = hexLine(from, to);
+  return line.slice(1, -1).every((hex) => !BATTLE_RULES.terrain[terrainAt(map, hex)].blocksLineOfSight);
+}
+
+export function validateCannonAttack(
+  map: BattleMapDefinition,
+  attacker: BattleUnit,
+  target: BattleUnit,
+): RuleResult<{ range: number }> {
+  if (attacker.cannons <= 0) return { ok: false, error: 'NO_CANNONS' };
+  const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
+  const range = hexDistance(attacker.hex, target.hex);
+  if (range < cannon.minRange || range > cannon.maxRange) return { ok: false, error: 'OUT_OF_RANGE' };
+  if (!isBroadside(attacker, target)) return { ok: false, error: 'NOT_BROADSIDE' };
+  if (!hasLineOfSight(map, attacker.hex, target.hex)) return { ok: false, error: 'BLOCKED_LOS' };
+  return { ok: true, value: { range } };
+}
+
+function targetBowSternModifier(attacker: BattleUnit, target: BattleUnit): number {
+  const incoming = bearingFacing(target.hex, attacker.hex);
+  if (incoming === null) return 1;
+  const difference = (incoming - target.facing + 6) % 6;
+  return difference === 0 || difference === 3 ? BATTLE_RULES.damage.bowSternModifier : 1;
+}
+
+export function cannonDamageBounds(attacker: BattleUnit, target: BattleUnit, range: number): { minimum: number; maximum: number } {
+  const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
+  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'];
+  const base = attacker.cannons
+    * BATTLE_RULES.damage.basePerCannon
+    * cannon.power
+    * attacker.cannonPower
+    * attacker.gunnerMod
+    * rangeMod
+    * target.armorMultiplier
+    * targetBowSternModifier(attacker, target);
+  return {
+    minimum: Math.max(BATTLE_RULES.damage.minimum, Math.round(base * BATTLE_RULES.damage.randomMin)),
+    maximum: Math.max(BATTLE_RULES.damage.minimum, Math.round(base * BATTLE_RULES.damage.randomMax)),
+  };
+}
+
+export function rollCannonDamage(attacker: BattleUnit, target: BattleUnit, range: number, rng: RandomSource): number {
+  const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
+  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'];
+  const random = BATTLE_RULES.damage.randomMin + (BATTLE_RULES.damage.randomMax - BATTLE_RULES.damage.randomMin) * rng();
+  const raw = attacker.cannons
+    * BATTLE_RULES.damage.basePerCannon
+    * cannon.power
+    * attacker.cannonPower
+    * attacker.gunnerMod
+    * rangeMod
+    * target.armorMultiplier
+    * targetBowSternModifier(attacker, target)
+    * random;
+  return Math.max(BATTLE_RULES.damage.minimum, Math.round(raw));
+}
+
+function adjustedCrewLoss(crew: number, rate: number, multiplier: number): number {
+  return Math.min(crew, Math.max(1, Math.round(crew * rate * multiplier)));
+}
+
+export function resolveBoarding(attacker: BattleUnit, target: BattleUnit, rng: RandomSource): BoardingResult {
+  const random = (minimum: number, maximum: number) => minimum + (maximum - minimum) * rng();
+  const attackStrength = (attacker.crew + attacker.boardingBonus) * random(BATTLE_RULES.boarding.randomMin, BATTLE_RULES.boarding.randomMax);
+  const targetStrength = (target.crew + target.boardingBonus) * random(BATTLE_RULES.boarding.randomMin, BATTLE_RULES.boarding.randomMax);
+  const ratio = targetStrength <= 0 ? Number.POSITIVE_INFINITY : attackStrength / targetStrength;
+
+  if (ratio >= BATTLE_RULES.boarding.decisiveRatio) {
+    return {
+      outcome: 'won',
+      attackerCrewLoss: adjustedCrewLoss(attacker.crew, BATTLE_RULES.boarding.winnerCrewLossRate, attacker.crewLossMultiplier),
+      targetCrewLoss: adjustedCrewLoss(target.crew, BATTLE_RULES.boarding.balancedCrewLossRate, target.crewLossMultiplier),
+    };
+  }
+  if (ratio >= 1 / BATTLE_RULES.boarding.decisiveRatio) {
+    return {
+      outcome: 'balanced',
+      attackerCrewLoss: adjustedCrewLoss(attacker.crew, BATTLE_RULES.boarding.balancedCrewLossRate, attacker.crewLossMultiplier),
+      targetCrewLoss: adjustedCrewLoss(target.crew, BATTLE_RULES.boarding.balancedCrewLossRate, target.crewLossMultiplier),
+    };
+  }
+  return {
+    outcome: 'lost',
+    attackerCrewLoss: adjustedCrewLoss(attacker.crew, BATTLE_RULES.boarding.failedCrewLossRate, attacker.crewLossMultiplier),
+    targetCrewLoss: 0,
+  };
+}
+
+export function repairAmount(unit: BattleUnit): number {
+  const amount = Math.round(unit.hullMax * BATTLE_RULES.repair.hullPercent);
+  return Math.min(BATTLE_RULES.repair.maximum, Math.max(BATTLE_RULES.repair.minimum, amount));
+}
+
+export function sideTurnLimitScore(units: BattleUnit[], side: Side): number {
+  const sideUnits = units.filter((unit) => unit.side === side);
+  const flagship = sideUnits.find((unit) => unit.flagship);
+  const flagshipPercent = flagship && flagship.status === 'active' ? flagship.hull / flagship.hullMax * 100 : 0;
+  const surviving = sideUnits.filter((unit) => unit.status === 'active').length;
+  return flagshipPercent + surviving * 20;
+}

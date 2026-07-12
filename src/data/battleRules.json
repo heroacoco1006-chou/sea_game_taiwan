@@ -3,10 +3,43 @@
   "turnMode": "side",
   "maxRounds": 12,
   "defaultMapId": "open_sea",
+  "movement": {
+    "deepCost": 1,
+    "shallowCost": 1,
+    "shallowLargeCost": 2,
+    "turnCost": 1
+  },
   "terrain": {
-    "deep": { "moveCost": 1, "passable": true, "blocksLineOfSight": false },
-    "shallow": { "moveCost": 1, "largeShipMoveCost": 2, "passable": true, "blocksLineOfSight": false },
+    "deep": { "passable": true, "blocksLineOfSight": false },
+    "shallow": { "passable": true, "blocksLineOfSight": false },
     "land": { "passable": false, "blocksLineOfSight": true },
     "reef": { "passable": false, "blocksLineOfSight": false }
+  },
+  "cannons": {
+    "standard": { "minRange": 1, "maxRange": 2, "power": 1.0 },
+    "ct_folang": { "minRange": 1, "maxRange": 2, "power": 1.05 },
+    "ct_scatter": { "minRange": 1, "maxRange": 1, "power": 1.1 },
+    "ct_hongyi": { "minRange": 2, "maxRange": 3, "power": 1.3 }
+  },
+  "damage": {
+    "basePerCannon": 6,
+    "rangeModifiers": { "1": 1.0, "2": 0.9, "3": 0.8 },
+    "bowSternModifier": 1.1,
+    "randomMin": 0.9,
+    "randomMax": 1.1,
+    "minimum": 1
+  },
+  "boarding": {
+    "decisiveRatio": 1.25,
+    "randomMin": 0.9,
+    "randomMax": 1.1,
+    "winnerCrewLossRate": 0.05,
+    "balancedCrewLossRate": 0.15,
+    "failedCrewLossRate": 0.2
+  },
+  "repair": {
+    "hullPercent": 0.05,
+    "minimum": 3,
+    "maximum": 12
   }
 }

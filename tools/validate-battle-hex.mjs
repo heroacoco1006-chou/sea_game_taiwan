@@ -34,6 +34,21 @@ if (mapsData.version !== 1 || rulesData.version !== 1 || encountersData.version 
 if (!Array.isArray(mapsData.maps) || mapsData.maps.length !== 3) fail('battleMaps.json 必須剛好有 3 張地圖');
 if (!Array.isArray(encountersData.encounters)) fail('battleEncounters.json encounters 必須是陣列');
 if (rulesData.maxRounds !== 12 || rulesData.defaultMapId !== 'open_sea') fail('battleRules.json 的回合上限或預設地圖不符規格');
+if (rulesData.turnMode !== 'side') fail('battleRules.json turnMode 必須是 side');
+for (const id of ['deep', 'shallow', 'land', 'reef']) {
+  if (!rulesData.terrain?.[id] || typeof rulesData.terrain[id].passable !== 'boolean' || typeof rulesData.terrain[id].blocksLineOfSight !== 'boolean') fail(`battleRules.json terrain.${id} 缺少布林規則`);
+}
+for (const id of ['standard', 'ct_folang', 'ct_scatter', 'ct_hongyi']) {
+  const cannon = rulesData.cannons?.[id];
+  if (!cannon || !Number.isFinite(cannon.minRange) || !Number.isFinite(cannon.maxRange) || !Number.isFinite(cannon.power) || cannon.minRange > cannon.maxRange) fail(`battleRules.json cannons.${id} 無效`);
+}
+for (const path of [
+  ['movement', 'deepCost'], ['movement', 'shallowCost'], ['movement', 'shallowLargeCost'], ['movement', 'turnCost'],
+  ['damage', 'basePerCannon'], ['damage', 'randomMin'], ['damage', 'randomMax'], ['boarding', 'decisiveRatio'],
+  ['repair', 'hullPercent'], ['repair', 'minimum'], ['repair', 'maximum'],
+]) {
+  if (!Number.isFinite(rulesData[path[0]]?.[path[1]])) fail(`battleRules.json ${path.join('.')} 必須是數字`);
+}
 
 const ids = mapsData.maps.map((map) => map.id);
 if (new Set(ids).size !== ids.length) fail('地圖 id 不得重複');
@@ -78,12 +93,19 @@ for (const map of mapsData.maps) {
 
 const mainSource = await readFile(new URL('src/main.ts', ROOT), 'utf8');
 const configSource = await readFile(new URL('src/battle/battleConfig.ts', ROOT), 'utf8');
-const hexSource = await readFile(new URL('src/battle/hex.ts', ROOT), 'utf8');
+const pureSources = await Promise.all([
+  'src/battle/hex.ts',
+  'src/battle/battleRules.ts',
+  'src/battle/battleEngine.ts',
+].map(async (path) => [path, await readFile(new URL(path, ROOT), 'utf8')]));
 if (mainSource.includes('BattleHexScene') || mainSource.includes("'BattleHex'")) fail('P0 不得註冊 BattleHexScene');
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(configSource)) fail('P0 功能旗標必須維持 false');
-if (/from\s+['"]phaser['"]|import\s+Phaser/i.test(hexSource)) fail('P1 hex.ts 不得 import Phaser');
+for (const [path, source] of pureSources) {
+  if (/from\s+['"]phaser['"]|import\s+Phaser/i.test(source)) fail(`${path} 不得 import Phaser`);
+  if (/Math\.random\s*\(/.test(source)) fail(`${path} 不得直接使用 Math.random()`);
+}
 
 console.log(`地圖 ${mapsData.maps.length} 張｜id 唯一｜地形格 ${mapsData.maps.reduce((sum, map) => sum + map.terrain.length, 0)} 格｜部署格 ${mapsData.maps.reduce((sum, map) => sum + map.deployments.player.length + map.deployments.enemy.length, 0)} 格`);
 console.log('正式流程：BattleHexScene 未註冊｜USE_HEX_BATTLE=false');
-console.log('純規則：hex.ts 未依賴 Phaser');
+console.log('純規則：hex／rules／engine 未依賴 Phaser，未直接使用 Math.random()');
 console.log('\n✅ P0 六角格海戰資料與型別骨架檢查通過');
