@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-07-12] 開發 | 操作者：Codex | 六角格海戰 P1 純座標數學
+
+- 新增 `src/battle/hex.ts` 純函式：固定 6 朝向、鄰居、axial distance、平頂六角格 axial↔pixel、最近格、矩形地圖邊界與 deterministic line drawing；只 import type，不依賴 Phaser。
+- 新增 `tools/test-battle-hex.mjs` 共 10 組案例；除固定案例外，窮舉 11×7 全地圖 77×77＝5,929 組起終點，逐條檢查起終點、長度、無重複、相鄰性與不越界。
+- `validate-battle-hex.mjs` 加入 `hex.ts` 禁止依賴 Phaser 的靜態防線；P0 的資料、關閉旗標與未註冊場景檢查仍保留。
+- P1 驗收：六角格專測、資料 validator、觸控、lazy load、UI、港町、主線、夥伴、主線引擎與 V3 地理全部通過；production build 406 modules；5173 標題畫面與 2560×1440 canvas 正常，console 0 error。
+- 本段未修改 Phaser Scene、`BattleScene`、入口或 v19 存檔；正式遊戲行為不變。下一段為 P2 純規則引擎。
+
+---
+
 ## [2026-07-11] 開發 | 操作者：Codex | 六角格海戰 P0 型別與資料骨架
 
 - 依老闆要求，於施工規格新增每段共通可玩性品質閘門：本段專測、既有回歸、production build、固定 5173 瀏覽器與 console、回退路徑、精確提交及 Pages 成功缺一不可。

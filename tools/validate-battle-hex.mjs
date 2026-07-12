@@ -78,9 +78,12 @@ for (const map of mapsData.maps) {
 
 const mainSource = await readFile(new URL('src/main.ts', ROOT), 'utf8');
 const configSource = await readFile(new URL('src/battle/battleConfig.ts', ROOT), 'utf8');
+const hexSource = await readFile(new URL('src/battle/hex.ts', ROOT), 'utf8');
 if (mainSource.includes('BattleHexScene') || mainSource.includes("'BattleHex'")) fail('P0 不得註冊 BattleHexScene');
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(configSource)) fail('P0 功能旗標必須維持 false');
+if (/from\s+['"]phaser['"]|import\s+Phaser/i.test(hexSource)) fail('P1 hex.ts 不得 import Phaser');
 
 console.log(`地圖 ${mapsData.maps.length} 張｜id 唯一｜地形格 ${mapsData.maps.reduce((sum, map) => sum + map.terrain.length, 0)} 格｜部署格 ${mapsData.maps.reduce((sum, map) => sum + map.deployments.player.length + map.deployments.enemy.length, 0)} 格`);
 console.log('正式流程：BattleHexScene 未註冊｜USE_HEX_BATTLE=false');
+console.log('純規則：hex.ts 未依賴 Phaser');
 console.log('\n✅ P0 六角格海戰資料與型別骨架檢查通過');
