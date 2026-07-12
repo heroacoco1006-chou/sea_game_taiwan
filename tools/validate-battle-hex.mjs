@@ -93,19 +93,25 @@ for (const map of mapsData.maps) {
 
 const mainSource = await readFile(new URL('src/main.ts', ROOT), 'utf8');
 const configSource = await readFile(new URL('src/battle/battleConfig.ts', ROOT), 'utf8');
+const worldMapSource = await readFile(new URL('src/scenes/WorldMapScene.ts', ROOT), 'utf8');
+const hexSceneSource = await readFile(new URL('src/scenes/BattleHexScene.ts', ROOT), 'utf8');
 const pureSources = await Promise.all([
   'src/battle/hex.ts',
   'src/battle/battleRules.ts',
   'src/battle/battleEngine.ts',
 ].map(async (path) => [path, await readFile(new URL(path, ROOT), 'utf8')]));
-if (mainSource.includes('BattleHexScene') || mainSource.includes("'BattleHex'")) fail('P0 不得註冊 BattleHexScene');
-if (!/USE_HEX_BATTLE\s*=\s*false/.test(configSource)) fail('P0 功能旗標必須維持 false');
+// P3 起：BattleHexScene 必須註冊，但功能旗標仍關、正式海戰入口（WorldMapScene）不得指向它
+if (!mainSource.includes('BattleHexScene')) fail('P3 起 main.ts 必須註冊 BattleHexScene');
+if (!/USE_HEX_BATTLE\s*=\s*false/.test(configSource)) fail('P7 全回歸通過前功能旗標必須維持 false');
+if (worldMapSource.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHex（正式入口不變）');
+// 地圖資料的欄列座標必須經 offsetToAxial 轉換後才畫圖／查地形，不得直接當 axial 用
+if (!hexSceneSource.includes('offsetToAxial')) fail('BattleHexScene 必須使用 offsetToAxial 轉換欄列座標');
 for (const [path, source] of pureSources) {
   if (/from\s+['"]phaser['"]|import\s+Phaser/i.test(source)) fail(`${path} 不得 import Phaser`);
   if (/Math\.random\s*\(/.test(source)) fail(`${path} 不得直接使用 Math.random()`);
 }
 
 console.log(`地圖 ${mapsData.maps.length} 張｜id 唯一｜地形格 ${mapsData.maps.reduce((sum, map) => sum + map.terrain.length, 0)} 格｜部署格 ${mapsData.maps.reduce((sum, map) => sum + map.deployments.player.length + map.deployments.enemy.length, 0)} 格`);
-console.log('正式流程：BattleHexScene 未註冊｜USE_HEX_BATTLE=false');
+console.log('正式流程：BattleHexScene 已註冊（僅 ?hexmap 預覽）｜USE_HEX_BATTLE=false｜WorldMapScene 未引用');
 console.log('純規則：hex／rules／engine 未依賴 Phaser，未直接使用 Math.random()');
-console.log('\n✅ P0 六角格海戰資料與型別骨架檢查通過');
+console.log('\n✅ P3 六角格海戰資料、骨架與戰場顯示檢查通過');

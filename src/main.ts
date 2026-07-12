@@ -10,6 +10,7 @@ import ItemShopScene from './scenes/ItemShopScene';
 import InfoScene from './scenes/InfoScene';
 import MatesScene from './scenes/MatesScene';
 import BattleScene from './scenes/BattleScene';
+import BattleHexScene from './scenes/BattleHexScene';
 import GameOverScene from './scenes/GameOverScene';
 import SaveSlotScene from './scenes/SaveSlotScene';
 import StoryScene from './scenes/StoryScene';
@@ -38,7 +39,8 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, GameOverScene, SaveSlotScene, StoryScene, SettingsScene],
+  // BattleHexScene（P3 起）僅註冊不作正式入口；USE_HEX_BATTLE=false 前正式海戰仍走 BattleScene
+  scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, BattleHexScene, GameOverScene, SaveSlotScene, StoryScene, SettingsScene],
 });
 
 /**

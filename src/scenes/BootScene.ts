@@ -27,6 +27,13 @@ export default class BootScene extends Phaser.Scene {
     this.makePlayerTexture();
     this.makeMapMarkerTextures();
     this.makeGoodsIcons();
+    // 開發預覽：?hexmap=1（或 ?hexmap=地圖id）直接開六角格海戰 P3 戰場預覽；
+    // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
+    const hexMapParam = new URLSearchParams(window.location.search).get('hexmap');
+    if (hexMapParam !== null) {
+      this.scene.start('BattleHex', { mapId: hexMapParam });
+      return;
+    }
     this.scene.start('Title');
   }
 

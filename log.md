@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-07-12] 開發 | 操作者：小航 | 覆核 Codex 進度、修正座標語意並完成 P3 戰場顯示
+
+- 覆核 Codex 進度屬實：重跑 P0 validator、P1（12 組）、P2（16 組）測試全過；P2 測試需以 `node --experimental-loader ./tools/node-ts-json-loader.mjs` 執行（檔內首行已註明）。
+- **發現並修正座標語意缺陷**：battleMaps.json 的 (q,r) 是按「視覺欄／列」編寫（地形左右對稱可證），但引擎原把它當 axial 矩形——平頂六角格的 axial 矩形畫出來是平行四邊形（同列敵我高低差 346px，戰場總高才 485px）。修法＝JSON 不動、定義為欄列座標，`hex.ts` 新增 `offsetToAxial`／`axialToOffset`，邊界判定改為欄列語意的 `hexInMap`（原 `hexInBounds` 移除防誤用），`battleRules.ts` 讀地形／部署格時轉換並新增 `deploymentHexes()`；P1／P2 受影響案例改以「欄列表達＋轉換」重寫後全過。
+- P3 完成：新增 `BattleHexScene`（BASE 排版、textStyle、makeButton／drawPanel 共用元件），main.ts 註冊；`USE_HEX_BATTLE=false` 不變，WorldMapScene 未引用；BootScene 加 `?hexmap=1`（或 `?hexmap=地圖id`）開發預覽參數，無參數時正式流程不變。顯示：11×7 矩形戰場、深海／淺灘／島嶼／暗礁上色＋右側圖例、部署格 5 對 5 placeholder 船（青綠／朱紅＋船首朝向）、旗艦★、耐久條、點格顯示 (q,r)＋欄列＋地形＋船隻資訊、三地圖切換金框、返回標題。
+- validator 更新至 P3 語意：場景必須已註冊、旗標必須仍 false、WorldMapScene 不得引用 BattleHex、場景必須使用 offsetToAxial。
+- 品質閘門：battle-hex／touch／lazy／UI／port-layouts／story／mates validators 全過；`npm run build` 通過；5173 實測標題正常、`?hexmap=1` 三地圖點格／點旗艦／切圖滑鼠案例全過、console 0 error。桌面觸控事件屬 Phaser 環境限制無法模擬（與 PortScene 同輸入通道），實機觸控隨 P4 一併驗。發現 7/11 遺留的 vite dev server 佔用 5173，確認為殘留程序後已停止重啟。
+- **施工規格書審閱結論**：設計方向正確不需改動；另有 3 點補充提案待老闆同意後補入規格書——①P8 素材（約 50.76 MB）必須由 BattleHexScene.preload 按需載入、禁止回 BootScene 預載（M5-8b 鐵則）；②新場景必須遵守 BASE_W/BASE_H＋textStyle 排版鐵則（memory 2026-06-25）；③P3～P6 預覽入口統一 `?hexmap`、P7 起改 `?battle=hex`。
+- 另提交 `2026-07-05_遊戲完善總體規劃書.md` 工作區遺留一行修正（首次可玩時間目標 1→2 分鐘，與已定案的 M5-8 規劃一致）。
+- 待追蹤：規格書 §十 的 7 項設計決策老闆尚未正式回覆（P0～P3 均按建議值實作，尚未寫回建構書）；下一段 P4 玩家移動與選取。
+
+---
+
 ## [2026-07-12] 開發 | 操作者：Codex | 六角格海戰 P2 純規則引擎
 
 - 擴充 `BattleUnit` 的船型級距、砲種／火力、裝甲、接舷、減員、移動消耗欄位，新增 `retreat` 指令、事件與 22 個穩定 `BattleErrorCode`；未修改 v19 `GameState`。
