@@ -79,17 +79,29 @@ export function pixelToAxial(point: PixelPoint, size: number, origin: PixelPoint
   return roundAxial(q, r);
 }
 
-export function hexInBounds(hex: Hex, width: number, height: number): boolean {
-  return Number.isInteger(hex.q)
-    && Number.isInteger(hex.r)
-    && Number.isInteger(width)
-    && Number.isInteger(height)
-    && width > 0
-    && height > 0
-    && hex.q >= 0
-    && hex.q < width
-    && hex.r >= 0
-    && hex.r < height;
+/**
+ * 地圖資料檔（battleMaps.json）的 (q,r) 是「視覺欄／列」（offset 座標；平頂六角格、
+ * 奇數欄往下半格）。規則運算一律用 axial 座標：axial r = row − floor(col/2)。
+ * 若把欄列直接當 axial 畫圖，11×7 戰場會歪成平行四邊形（右側整排低 5 格），
+ * 所以讀入地形格／部署格時必須先經 offsetToAxial 轉換。
+ */
+export function offsetToAxial(col: number, row: number): Hex {
+  return { q: col, r: row - Math.floor(col / 2) };
+}
+
+export function axialToOffset(hex: Hex): { col: number; row: number } {
+  return { col: hex.q, row: hex.r + Math.floor(hex.q / 2) };
+}
+
+/**
+ * axial 座標是否落在「width 欄 × height 列」的矩形戰場內。
+ * 注意：矩形以欄列判定，不是 axial 座標的矩形（axial 矩形在畫面上不是矩形）。
+ */
+export function hexInMap(hex: Hex, width: number, height: number): boolean {
+  if (!Number.isInteger(hex.q) || !Number.isInteger(hex.r)) return false;
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return false;
+  const { col, row } = axialToOffset(hex);
+  return col >= 0 && col < width && row >= 0 && row < height;
 }
 
 export function hexLine(start: Hex, end: Hex): Hex[] {

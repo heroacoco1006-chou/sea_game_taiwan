@@ -9,7 +9,7 @@ import type {
   Side,
   Terrain,
 } from './battleTypes';
-import { HEX_DIRECTIONS, hexDistance, hexEqual, hexInBounds, hexKey, hexLine } from './hex';
+import { HEX_DIRECTIONS, hexDistance, hexEqual, hexInMap, hexKey, hexLine, offsetToAxial } from './hex';
 
 export type RandomSource = () => number;
 
@@ -44,12 +44,19 @@ export function createSeededRng(seed: number): RandomSource {
   };
 }
 
+/** 地圖資料檔的地形格是欄列座標；查詢時轉成 axial 比對（見 hex.ts offsetToAxial 說明）。 */
 export function terrainAt(map: BattleMapDefinition, hex: Hex): Terrain {
-  return map.terrain.find((cell) => cell.q === hex.q && cell.r === hex.r)?.terrain ?? map.defaultTerrain;
+  const found = map.terrain.find((cell) => hexEqual(offsetToAxial(cell.q, cell.r), hex));
+  return found?.terrain ?? map.defaultTerrain;
+}
+
+/** 部署格資料同為欄列座標；回傳 axial 座標供顯示層與 adapter 共用。 */
+export function deploymentHexes(map: BattleMapDefinition, side: Side): Hex[] {
+  return map.deployments[side].map((cell) => offsetToAxial(cell.q, cell.r));
 }
 
 export function isPassable(map: BattleMapDefinition, hex: Hex): boolean {
-  return hexInBounds(hex, map.width, map.height) && BATTLE_RULES.terrain[terrainAt(map, hex)].passable;
+  return hexInMap(hex, map.width, map.height) && BATTLE_RULES.terrain[terrainAt(map, hex)].passable;
 }
 
 export function movementCost(map: BattleMapDefinition, unit: BattleUnit, hex: Hex): number {
@@ -92,7 +99,7 @@ export function validatePath(
     const current = path[index];
     const direction = directionBetweenAdjacent(previous, current);
     if (direction === null) return { ok: false, error: 'INVALID_PATH' };
-    if (!hexInBounds(current, map.width, map.height)) return { ok: false, error: 'OUT_OF_BOUNDS' };
+    if (!hexInMap(current, map.width, map.height)) return { ok: false, error: 'OUT_OF_BOUNDS' };
     if (!isPassable(map, current)) return { ok: false, error: 'IMPASSABLE' };
     if (occupied.has(hexKey(current))) return { ok: false, error: 'OCCUPIED' };
     cost += movementCost(map, unit, current);
@@ -118,7 +125,7 @@ export function reachableHexes(map: BattleMapDefinition, units: BattleUnit[], un
     for (const direction of HEX_DIRECTIONS) {
       const next = { q: current.hex.q + direction.q, r: current.hex.r + direction.r };
       const key = hexKey(next);
-      if (!hexInBounds(next, map.width, map.height) || !isPassable(map, next) || occupied.has(key)) continue;
+      if (!hexInMap(next, map.width, map.height) || !isPassable(map, next) || occupied.has(key)) continue;
       const nextCost = current.cost + movementCost(map, unit, next);
       if (nextCost > budget || nextCost >= (costs.get(key) ?? Number.POSITIVE_INFINITY)) continue;
       costs.set(key, nextCost);

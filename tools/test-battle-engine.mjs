@@ -4,6 +4,10 @@ import mapsData from '../src/data/battleMaps.json' with { type: 'json' };
 
 const rules = await import('../src/battle/battleRules.ts');
 const engine = await import('../src/battle/battleEngine.ts');
+const hexMath = await import('../src/battle/hex.ts');
+// 地圖資料的地形／部署以「欄列」撰寫；引擎內部是 axial。測試用 at(欄,列) 表達位置。
+const at = (col, row) => hexMath.offsetToAxial(col, row);
+const atKey = (col, row) => hexMath.hexKey(at(col, row));
 const mapById = (id) => mapsData.maps.find((map) => map.id === id);
 const openSea = mapById('open_sea');
 const islandChannel = mapById('island_channel');
@@ -53,18 +57,19 @@ const expectError = (name, state, command, expected, map = openSea) => {
 };
 
 test('移動範圍依成本、地形與占用格計算', () => {
-  const player = makeUnit({ id: 'p1', shipSize: 'large', hex: { q: 3, r: 1 }, movePoints: 2 });
-  const blocker = makeUnit({ id: 'p2', flagship: false, hex: { q: 3, r: 2 } });
-  const units = [player, blocker, makeEnemy({ hex: { q: 10, r: 3 } })];
+  // open_sea 淺灘在欄4列1、欄5列1；大型船站欄3列1（相鄰淺灘）
+  const player = makeUnit({ id: 'p1', shipSize: 'large', hex: at(3, 1), movePoints: 2 });
+  const blocker = makeUnit({ id: 'p2', flagship: false, hex: at(3, 2) });
+  const units = [player, blocker, makeEnemy({ hex: at(10, 3) })];
   const reachable = rules.reachableHexes(openSea, units, player);
   const byKey = new Map(reachable.map((item) => [`${item.hex.q},${item.hex.r}`, item.cost]));
-  assert.equal(byKey.get('4,1'), 2, '大型船進淺灘成本應為 2');
-  assert.equal(byKey.has('3,2'), false, '占用格不可到達');
-  assert.equal(byKey.has('5,1'), false, '移動力不足不可穿過淺灘');
+  assert.equal(byKey.get(atKey(4, 1)), 2, '大型船進淺灘成本應為 2');
+  assert.equal(byKey.has(atKey(3, 2)), false, '占用格不可到達');
+  assert.equal(byKey.has(atKey(5, 1)), false, '移動力不足不可穿過淺灘');
 });
 
 test('合法路徑更新格位、朝向、成本且不修改輸入 state', () => {
-  const state = makeState([makeUnit({ hex: { q: 2, r: 2 } }), makeEnemy({ hex: { q: 10, r: 4 } })]);
+  const state = makeState([makeUnit({ hex: { q: 2, r: 2 } }), makeEnemy({ hex: at(10, 4) })]);
   const before = JSON.parse(JSON.stringify(state));
   const result = apply(state, { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }, { q: 3, r: 2 }, { q: 3, r: 3 }] });
   assert.equal(result.ok, true);
@@ -77,7 +82,7 @@ test('合法路徑更新格位、朝向、成本且不修改輸入 state', () =>
 });
 
 test('左右轉消耗 1 移動力，仍可使用剩餘移動力', () => {
-  let state = makeState([makeUnit({ hex: { q: 2, r: 2 }, movePoints: 3 }), makeEnemy({ hex: { q: 10, r: 4 } })]);
+  let state = makeState([makeUnit({ hex: { q: 2, r: 2 }, movePoints: 3 }), makeEnemy({ hex: at(10, 4) })]);
   const turned = apply(state, { type: 'turn', unitId: 'p1', facing: 1 });
   assert.equal(turned.ok, true);
   assert.equal(turned.state.units[0].moveSpent, 1);
@@ -131,7 +136,7 @@ test('修整依 5%／3～12 規則且每場只能一次', () => {
 });
 
 test('全體由己方邊界撤退視為成功脫離', () => {
-  const state = makeState([makeUnit({ hex: { q: 0, r: 3 } }), makeEnemy({ hex: { q: 10, r: 3 } })]);
+  const state = makeState([makeUnit({ hex: { q: 0, r: 3 } }), makeEnemy({ hex: at(10, 3) })]);
   const result = apply(state, { type: 'retreat', unitId: 'p1' });
   assert.equal(result.ok, true);
   assert.equal(result.state.winner, 'draw');
@@ -197,19 +202,19 @@ test('所有穩定非法指令 error code 都保持原 state 不變', () => {
   expectError('TARGET_NOT_FOUND', makeState(), { type: 'cannon', attackerId: 'p1', targetId: 'missing' }, 'TARGET_NOT_FOUND');
   expectError('WRONG_SIDE', makeState(), { type: 'wait', unitId: 'e1' }, 'WRONG_SIDE');
   expectError('UNIT_INACTIVE', makeState([makeUnit({ status: 'sunk' }), makeEnemy()]), { type: 'select', unitId: 'p1' }, 'UNIT_INACTIVE');
-  expectError('FRIENDLY_TARGET', makeState([makeUnit(), makeUnit({ id: 'p2', flagship: false, hex: { q: 2, r: 4 } }), makeEnemy({ hex: { q: 10, r: 4 } })]), { type: 'cannon', attackerId: 'p1', targetId: 'p2' }, 'FRIENDLY_TARGET');
+  expectError('FRIENDLY_TARGET', makeState([makeUnit(), makeUnit({ id: 'p2', flagship: false, hex: { q: 2, r: 4 } }), makeEnemy({ hex: at(10, 4) })]), { type: 'cannon', attackerId: 'p1', targetId: 'p2' }, 'FRIENDLY_TARGET');
   expectError('ALREADY_MOVED', makeState([makeUnit({ moved: true }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }] }, 'ALREADY_MOVED');
   expectError('ALREADY_ACTED', makeState([makeUnit({ acted: true }), makeEnemy()]), { type: 'wait', unitId: 'p1' }, 'ALREADY_ACTED');
   expectError('INVALID_PATH', makeState(), { type: 'move', unitId: 'p1', path: [{ q: 3, r: 2 }] }, 'INVALID_PATH');
   expectError('OUT_OF_BOUNDS', makeState([makeUnit({ hex: { q: 0, r: 0 } }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [{ q: 0, r: 0 }, { q: -1, r: 0 }] }, 'OUT_OF_BOUNDS');
-  expectError('IMPASSABLE', makeState([makeUnit({ hex: { q: 3, r: 1 } }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [{ q: 3, r: 1 }, { q: 4, r: 1 }] }, 'IMPASSABLE', reefPassage);
+  expectError('IMPASSABLE', makeState([makeUnit({ hex: at(3, 1) }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [at(3, 1), at(4, 1)] }, 'IMPASSABLE', reefPassage);
   expectError('OCCUPIED', makeState([makeUnit(), makeUnit({ id: 'p2', flagship: false, hex: { q: 3, r: 2 } }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }, { q: 3, r: 2 }] }, 'OCCUPIED');
   expectError('INSUFFICIENT_MOVE', makeState([makeUnit({ movePoints: 0 }), makeEnemy()]), { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }, { q: 3, r: 2 }] }, 'INSUFFICIENT_MOVE');
   expectError('INVALID_FACING', makeState(), { type: 'turn', unitId: 'p1', facing: 2 }, 'INVALID_FACING');
   expectError('NO_CANNONS', makeState([makeUnit({ cannons: 0 }), makeEnemy()]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'NO_CANNONS');
-  expectError('OUT_OF_RANGE', makeState([makeUnit(), makeEnemy({ hex: { q: 8, r: 6 } })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'OUT_OF_RANGE');
+  expectError('OUT_OF_RANGE', makeState([makeUnit(), makeEnemy({ hex: at(8, 6) })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'OUT_OF_RANGE');
   expectError('NOT_BROADSIDE', makeState([makeUnit({ facing: 0 }), makeEnemy({ hex: { q: 3, r: 2 } })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'NOT_BROADSIDE');
-  expectError('BLOCKED_LOS', makeState([makeUnit({ hex: { q: 3, r: 3 }, facing: 1, cannonTypeId: 'ct_hongyi' }), makeEnemy({ hex: { q: 6, r: 3 } })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'BLOCKED_LOS', islandChannel);
+  expectError('BLOCKED_LOS', makeState([makeUnit({ hex: at(3, 3), facing: 1, cannonTypeId: 'ct_hongyi' }), makeEnemy({ hex: at(6, 3) })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'BLOCKED_LOS', islandChannel);
   expectError('NOT_ADJACENT', makeState(), { type: 'board', attackerId: 'p1', targetId: 'e1' }, 'NOT_ADJACENT');
   expectError('REPAIR_ALREADY_USED', makeState([makeUnit({ hull: 80, repaired: true }), makeEnemy()]), { type: 'repair', unitId: 'p1' }, 'REPAIR_ALREADY_USED');
   expectError('FULL_HULL', makeState(), { type: 'repair', unitId: 'p1' }, 'FULL_HULL');
@@ -218,12 +223,15 @@ test('所有穩定非法指令 error code 都保持原 state 不變', () => {
 });
 
 test('側舷、島嶼阻擋與暗礁不阻擋 LOS 規則固定', () => {
-  const attacker = makeUnit({ hex: { q: 3, r: 3 }, facing: 1, cannonTypeId: 'ct_hongyi' });
-  const broadsideTarget = makeEnemy({ hex: { q: 6, r: 3 } });
+  // island_channel 島嶼在欄5列2～4；欄3列3 → 欄6列3 的砲線會穿過島嶼
+  const attacker = makeUnit({ hex: at(3, 3), facing: 1, cannonTypeId: 'ct_hongyi' });
+  const broadsideTarget = makeEnemy({ hex: at(6, 3) });
   assert.equal(rules.isBroadside(attacker, broadsideTarget), true);
   assert.equal(rules.hasLineOfSight(islandChannel, attacker.hex, broadsideTarget.hex), false);
-  const reefAttacker = makeUnit({ hex: { q: 3, r: 1 }, facing: 1, cannonTypeId: 'ct_hongyi' });
-  const reefTarget = makeEnemy({ hex: { q: 5, r: 1 } });
+  // reef_passage 暗礁在欄4列1（axial (4,-1)）；欄3列0 → 欄5列1 的直線砲線經過暗礁但不被阻擋
+  const reefAttacker = makeUnit({ hex: at(3, 0), facing: 1, cannonTypeId: 'ct_hongyi' });
+  const reefTarget = makeEnemy({ hex: at(5, 1) });
+  assert.deepEqual(hexMath.hexLine(reefAttacker.hex, reefTarget.hex)[1], at(4, 1), '砲線需確實經過暗礁格');
   assert.equal(rules.hasLineOfSight(reefPassage, reefAttacker.hex, reefTarget.hex), true);
   assert.equal(rules.isBroadside(makeUnit({ facing: 0 }), makeEnemy({ hex: { q: 3, r: 2 } })), false);
 });

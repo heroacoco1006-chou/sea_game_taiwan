@@ -56,13 +56,41 @@ test('無效 hex size 回傳穩定錯誤', () => {
   assert.throws(() => hex.pixelToAxial({ x: 0, y: 0 }, -1), /HEX_SIZE_MUST_BE_POSITIVE/);
 });
 
-test('11×7 地圖邊界只接受整數且不越界', () => {
-  assert.equal(hex.hexInBounds({ q: 0, r: 0 }, 11, 7), true);
-  assert.equal(hex.hexInBounds({ q: 10, r: 6 }, 11, 7), true);
-  assert.equal(hex.hexInBounds({ q: 11, r: 6 }, 11, 7), false);
-  assert.equal(hex.hexInBounds({ q: 10, r: 7 }, 11, 7), false);
-  assert.equal(hex.hexInBounds({ q: -1, r: 0 }, 11, 7), false);
-  assert.equal(hex.hexInBounds({ q: 1.5, r: 2 }, 11, 7), false);
+test('欄列 ↔ axial 轉換固定案例與 11×7 全區往返', () => {
+  assert.deepEqual(hex.offsetToAxial(0, 0), { q: 0, r: 0 });
+  assert.deepEqual(hex.offsetToAxial(1, 0), { q: 1, r: 0 });
+  assert.deepEqual(hex.offsetToAxial(2, 0), { q: 2, r: -1 });
+  assert.deepEqual(hex.offsetToAxial(10, 6), { q: 10, r: 1 });
+  assert.deepEqual(hex.offsetToAxial(10, 3), { q: 10, r: -2 });
+  for (let col = 0; col < 11; col += 1) {
+    for (let row = 0; row < 7; row += 1) {
+      assert.deepEqual(hex.axialToOffset(hex.offsetToAxial(col, row)), { col, row });
+    }
+  }
+});
+
+test('11×7 地圖邊界以欄列判定、只接受整數且不越界', () => {
+  assert.equal(hex.hexInMap({ q: 0, r: 0 }, 11, 7), true);
+  assert.equal(hex.hexInMap(hex.offsetToAxial(10, 6), 11, 7), true);
+  assert.equal(hex.hexInMap(hex.offsetToAxial(10, 0), 11, 7), true);
+  // axial (10,6) 是欄 10 列 11，超出 7 列 → 不在地圖內
+  assert.equal(hex.hexInMap({ q: 10, r: 6 }, 11, 7), false);
+  assert.equal(hex.hexInMap({ q: 11, r: 0 }, 11, 7), false);
+  assert.equal(hex.hexInMap({ q: -1, r: 0 }, 11, 7), false);
+  assert.equal(hex.hexInMap(hex.offsetToAxial(0, 7), 11, 7), false);
+  assert.equal(hex.hexInMap({ q: 1.5, r: 2 }, 11, 7), false);
+});
+
+test('欄列轉 axial 後畫面呈矩形：同列等高、同欄等寬', () => {
+  const size = 40;
+  const y = (col, row) => hex.axialToPixel(hex.offsetToAxial(col, row), size).y;
+  const x = (col, row) => hex.axialToPixel(hex.offsetToAxial(col, row), size).x;
+  // 偶數欄同列的中心 y 完全相同；奇數欄僅下移半格
+  assert.equal(y(0, 3), y(10, 3));
+  assert.equal(y(2, 3), y(4, 3));
+  assert.ok(Math.abs(y(1, 3) - y(0, 3) - Math.sqrt(3) * size / 2) < 1e-9);
+  // 同欄不同列 x 相同
+  assert.equal(x(5, 0), x(5, 6));
 });
 
 test('hex line 含起終點、長度正確且每一步相鄰', () => {
@@ -81,17 +109,19 @@ test('hex line 固定直線案例不漂移', () => {
   ]);
   assert.deepEqual(hex.hexLine({ q: 2, r: 2 }, { q: 2, r: 2 }), [{ q: 2, r: 2 }]);
 });
-test('11×7 全地圖任意兩格畫線皆連續且不越界', () => {
+test('11×7 全地圖（欄列區域）任意兩格畫線皆連續、不重複', () => {
+  // 列舉實際戰場區域（欄列轉 axial）。注意：欄列矩形在 axial 空間是鋸齒邊界，
+  // 砲線可能短暫經過地圖外（視為開放海面、不阻擋），故不強制線上每格都在圖內。
   const cells = [];
-  for (let q = 0; q < 11; q += 1) for (let r = 0; r < 7; r += 1) cells.push({ q, r });
+  for (let col = 0; col < 11; col += 1) for (let row = 0; row < 7; row += 1) cells.push(hex.offsetToAxial(col, row));
   for (const start of cells) {
+    assert.equal(hex.hexInMap(start, 11, 7), true);
     for (const end of cells) {
       const line = hex.hexLine(start, end);
       assert.deepEqual(line[0], start);
       assert.deepEqual(line[line.length - 1], end);
       assert.equal(line.length, hex.hexDistance(start, end) + 1);
       assert.equal(new Set(line.map(hex.hexKey)).size, line.length);
-      for (const cell of line) assert.equal(hex.hexInBounds(cell, 11, 7), true);
       for (let i = 1; i < line.length; i += 1) assert.equal(hex.hexDistance(line[i - 1], line[i]), 1);
     }
   }

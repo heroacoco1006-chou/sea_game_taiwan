@@ -125,6 +125,11 @@ export type BattleErrorCode =
   | 'FULL_HULL'
   | 'NOT_ON_RETREAT_EDGE';
 
+/**
+ * 地圖資料檔（battleMaps.json）內的 q/r 是「視覺欄／列」座標（q=第幾欄、r=第幾列），
+ * 不是規則運算用的 axial 座標；讀入時必須經 hex.ts 的 offsetToAxial 轉換。
+ * BattleUnit.hex 與引擎內部一律是 axial。
+ */
 export interface BattleMapCell extends Hex {
   terrain: Terrain;
 }
