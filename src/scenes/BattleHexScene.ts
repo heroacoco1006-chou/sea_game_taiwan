@@ -30,12 +30,13 @@ import {
   validatePath,
 } from '../battle/battleRules';
 import { applyCommand, createBattleState } from '../battle/battleEngine';
+import { chooseBattleAiDecision } from '../battle/battleAi';
 import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle, toast } from '../ui';
 import { audio } from '../audio';
 
 /**
- * P5 玩家行動與事件（預覽戰鬥）：BattleHexScene 只送 BattleCommand 給純引擎、
- * 依回傳 state／events 重繪；移動、傷害、接舷與勝敗一律由純規則層計算。
+ * P6 玩家行動、事件與敵方 AI（預覽戰鬥）：BattleHexScene 只送 BattleCommand 給純引擎、
+ * 依回傳 state／events 重繪；AI 也只產生命令，移動、傷害、接舷與勝敗一律由純規則層計算。
  * 尚未接正式流程；USE_HEX_BATTLE=false，只能經 `?hexmap=1` 開發參數進入。
  * 正式素材待老闆核可後於 P8 由本場景 preload() 按需載入（不得回 BootScene 預載）。
  */
@@ -104,6 +105,7 @@ export default class BattleHexScene extends Phaser.Scene {
   private targetUnitId: string | null = null;
   private battleMessage = '';
   private animating = false;
+  private enemyStepCount = 0;
 
   private boardLayer!: Phaser.GameObjects.Container;
   private highlightG!: Phaser.GameObjects.Graphics;
@@ -150,7 +152,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const top = this.add.graphics();
     top.fillStyle(0x2c1b0d, 0.85);
     top.fillRoundedRect(8, 8, BASE_W - 16, 46, 8);
-    this.add.text(24, 31, '六角格海戰（P5 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
+    this.add.text(24, 31, '六角格海戰（P6 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
     this.mapNameText = this.add.text(BASE_W / 2 - 100, 31, '', textStyle(20, '#f2c14e')).setOrigin(0.5);
     this.roundText = this.add.text(BASE_W - 24, 31, '', textStyle(18, '#e8d9b0')).setOrigin(1, 0.5);
 
@@ -263,27 +265,37 @@ export default class BattleHexScene extends Phaser.Scene {
         });
       });
     }
-    // P5 固定瀏覽器案例：只在開發預覽參數啟用，方便低階模型依固定座標驗收。
-    const demo = new URLSearchParams(window.location.search).get('p5demo');
-    if (map.id === 'open_sea' && demo) {
+    // P5／P6 固定瀏覽器案例：只在開發預覽參數啟用，正常資料與正式流程不受影響。
+    const query = new URLSearchParams(window.location.search);
+    const p5demo = query.get('p5demo');
+    const p6demo = query.get('p6demo');
+    if (map.id === 'open_sea' && (p5demo || p6demo)) {
       const player = units.find((unit) => unit.id === 'p0');
       const enemy = units.find((unit) => unit.id === 'e0');
       if (player && enemy) {
-        player.hex = offsetToAxial(3, 3);
+        player.hex = offsetToAxial(p6demo === 'cannon' ? 5 : 3, 3);
         player.facing = 1;
-        enemy.hex = offsetToAxial(demo === 'board' ? 4 : 5, 3);
-        if (demo === 'board') {
+        enemy.hex = offsetToAxial(p5demo === 'board' ? 4 : p6demo === 'cannon' ? 7 : 5, 3);
+        if (p5demo === 'board') {
           player.crew = 100;
           player.boardingBonus = 50;
           enemy.crew = 5;
         }
-        if (demo === 'repair') player.hull = Math.max(1, player.hull - 20);
-        if (demo === 'result') {
+        if (p5demo === 'repair') player.hull = Math.max(1, player.hull - 20);
+        if (p5demo === 'result') {
           const originalFlagship = units.find((unit) => unit.id === 'e1');
           if (originalFlagship) originalFlagship.flagship = false;
           enemy.flagship = true;
           enemy.hull = 1;
           this.unitNames.set(enemy.id, '敵方旗艦');
+        }
+        if (p6demo === 'cannon') {
+          const originalPlayerFlagship = units.find((unit) => unit.id === 'p1');
+          if (originalPlayerFlagship) originalPlayerFlagship.flagship = false;
+          player.flagship = true;
+          player.hull = 1;
+          enemy.facing = 1;
+          this.unitNames.set(player.id, '我方旗艦');
         }
       }
     }
@@ -291,6 +303,7 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private switchMap(mapId: string): void {
+    if (this.battle && (this.animating || this.battle.activeSide === 'enemy')) return;
     this.mapId = mapId;
     const map = this.currentMap();
     this.mapNameText.setText(`${map.name}（11×7）`);
@@ -302,6 +315,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.targetUnitId = null;
     this.battleMessage = '';
     this.animating = false;
+    this.enemyStepCount = 0;
     this.infoTitle.setText('選中資訊');
     this.infoBody.setText('點戰場上的格子\n查看座標與船隻');
     this.legendLayer.setVisible(true);
@@ -536,25 +550,55 @@ export default class BattleHexScene extends Phaser.Scene {
   private endTurn(): void {
     if (this.battle.winner !== null || this.animating) return;
     const events: BattleEvent[] = [];
-    let result = this.applyCmd({ type: 'end_turn' });
+    const result = this.applyCmd({ type: 'end_turn' });
     if (result.ok) events.push(...result.events);
-    if (result.ok && this.battle.winner === null && this.battle.activeSide === 'enemy') {
-      // 敵方 AI 是 P6；P5 預覽版敵方直接結束回合。
-      result = this.applyCmd({ type: 'end_turn' });
-      if (result.ok) events.push(...result.events);
-    }
     this.previewPath = null;
     this.actionMode = null;
     this.targetUnitId = null;
     this.reachable = [];
     this.renderBoard();
-    this.playEvents(events);
     this.redrawOverlays();
     this.refreshHud();
+    if (result.ok && this.battle.winner === null && this.battle.activeSide === 'enemy') {
+      this.enemyStepCount = 0;
+      this.playEvents(events, () => this.runEnemyTurnStep());
+    } else {
+      this.playEvents(events);
+    }
   }
 
-  private playEvents(events: BattleEvent[]): void {
-    if (events.length === 0) return;
+  private runEnemyTurnStep(): void {
+    if (this.battle.winner !== null || this.battle.activeSide !== 'enemy') return;
+    this.enemyStepCount += 1;
+    const decision = this.enemyStepCount <= 64
+      ? chooseBattleAiDecision(this.battle, this.currentMap(), 'enemy')
+      : { command: { type: 'end_turn' } as BattleCommand, reason: 'end_turn' as const };
+    if (!decision) return;
+    const result = this.applyCmd(decision.command);
+    if (!result.ok) {
+      // 純 AI 測試會攔截非法命令；畫面端仍保留安全停止，避免意外版本卡死。
+      toast(this, `敵方指令無效：${result.error}`);
+      const fallback = this.applyCmd({ type: 'end_turn' });
+      if (!fallback.ok) return;
+      this.renderBoard();
+      this.redrawOverlays();
+      this.refreshHud();
+      this.playEvents(fallback.events);
+      return;
+    }
+    this.renderBoard();
+    this.redrawOverlays();
+    this.refreshHud();
+    this.playEvents(result.events, () => {
+      if (this.battle.winner === null && this.battle.activeSide === 'enemy') this.runEnemyTurnStep();
+    });
+  }
+
+  private playEvents(events: BattleEvent[], onComplete?: () => void): void {
+    if (events.length === 0) {
+      onComplete?.();
+      return;
+    }
     this.animating = true;
     this.legendLayer.setVisible(false);
     const messages: string[] = [];
@@ -609,6 +653,10 @@ export default class BattleHexScene extends Phaser.Scene {
         messages.push(`一艘船${label}。`);
       } else if (event.type === 'unit_waited') {
         messages.push('這艘船留在原位等待。');
+      } else if (event.type === 'unit_moved') {
+        messages.push('敵船正在調整位置。');
+      } else if (event.type === 'unit_turned') {
+        messages.push('敵船正在調整方向。');
       } else if (event.type === 'turn_ended' && event.side === 'enemy' && !hasBattleEnded) {
         messages.push(`第 ${event.round + 1} 回合開始。`);
       } else if (event.type === 'battle_ended') {
@@ -619,6 +667,18 @@ export default class BattleHexScene extends Phaser.Scene {
     this.battleMessage = messages.join('\n');
     const ended = events.find((event) => event.type === 'battle_ended');
     const roundStarted = events.some((event) => event.type === 'turn_ended' && event.side === 'enemy');
+    const enemyAction = this.battle.activeSide === 'enemy' && events.some((event) => (
+      event.type === 'unit_moved'
+      || event.type === 'unit_turned'
+      || event.type === 'cannon_fired'
+      || event.type === 'boarding'
+      || event.type === 'unit_waited'
+      || event.type === 'unit_retreated'
+    ));
+    if (enemyAction && !ended) {
+      this.infoTitle.setText('敵方行動');
+      this.infoBody.setText(this.battleMessage);
+    }
     if (roundStarted && !ended) {
       this.infoTitle.setText('新回合開始');
       this.infoBody.setText(this.battleMessage);
@@ -638,6 +698,7 @@ export default class BattleHexScene extends Phaser.Scene {
         const selected = this.selectedUnit();
         if (selected) this.updateInfo(selected.hex, selected);
       }
+      onComplete?.();
     });
   }
 
@@ -806,14 +867,17 @@ export default class BattleHexScene extends Phaser.Scene {
 
   private refreshHud(): void {
     const over = this.battle.winner !== null;
+    const playerTurn = this.battle.activeSide === 'player';
     if (over) {
       const result = this.battle.winner === 'player' ? '我方勝利' : this.battle.winner === 'enemy' ? '我方失利' : '雙方脫離';
       this.roundText.setText(`戰鬥結束　${result}`);
     } else {
       const ready = this.battle.units
-        .filter((unit) => unit.side === 'player' && unit.status === 'active' && !unit.acted)
+        .filter((unit) => unit.side === this.battle.activeSide && unit.status === 'active' && !unit.acted)
         .length;
-      this.roundText.setText(`回合 ${this.battle.round}／${this.battle.maxRounds}　玩家回合　尚可行動 ${ready} 艘`);
+      this.roundText.setText(playerTurn
+        ? `回合 ${this.battle.round}／${this.battle.maxRounds}　玩家回合　尚可行動 ${ready} 艘`
+        : `回合 ${this.battle.round}／${this.battle.maxRounds}　敵方回合　AI 行動中 ${ready} 艘`);
     }
 
     const unit = this.selectedUnit();
@@ -821,6 +885,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const targeting = !over && this.actionMode !== null;
     const actionReady = !over
       && !this.animating
+      && playerTurn
       && !!unit
       && unit.status === 'active'
       && !unit.acted
@@ -842,7 +907,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const confirmLabel = this.btnConfirm.getAt(1) as Phaser.GameObjects.Text;
     confirmLabel.setText(previewing ? '確認移動' : this.actionMode === 'cannon' ? '確認砲擊' : '確認接舷');
     this.btnCancel.setVisible(previewing || targeting);
-    this.btnEndTurn.setVisible(!over && !this.animating);
+    this.btnEndTurn.setVisible(!over && !this.animating && playerTurn);
   }
 
   private updateInfo(hex: Hex, unitAt: BattleUnit | null): void {
