@@ -8,7 +8,6 @@ import type {
   BattleUnit,
   Side,
 } from './battleTypes';
-import { hexDistance } from './hex';
 import {
   BATTLE_RULES,
   type RandomSource,
@@ -17,6 +16,7 @@ import {
   resolveBoarding,
   rollCannonDamage,
   sideTurnLimitScore,
+  validateBoardingAttack,
   validateCannonAttack,
   validatePath,
 } from './battleRules';
@@ -263,7 +263,8 @@ export function applyCommand(
     const target = findUnit(state, command.targetId);
     const invalidTarget = targetError(actor, target);
     if (invalidTarget) return failure(state, invalidTarget);
-    if (hexDistance(actor.hex, target!.hex) !== 1) return failure(state, 'NOT_ADJACENT');
+    const boarding = validateBoardingAttack(actor, target!);
+    if (!boarding.ok) return failure(state, boarding.error);
     const next = cloneState(state);
     const attacker = findUnit(next, actor.id)!;
     const defender = findUnit(next, target!.id)!;

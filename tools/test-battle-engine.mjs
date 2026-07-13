@@ -286,4 +286,53 @@ test('12 回合比分較高時判定玩家普通勝利', () => {
   assert.equal(state.winner, 'player');
   assert.equal(state.resultReason, 'TURN_LIMIT_PLAYER_WIN');
 });
-console.log(`\n✅ P2 純規則引擎固定案例 ${cases} 組全部通過`);
+test('P5 砲擊預估範圍涵蓋固定 seed 實際事件值', () => {
+  const attacker = makeUnit({ cannons: 5, facing: 1, hex: at(3, 3) });
+  const target = makeEnemy({ hull: 1000, hullMax: 1000, hex: at(5, 3) });
+  const validation = rules.validateCannonAttack(openSea, attacker, target);
+  assert.equal(validation.ok, true);
+  const bounds = rules.cannonDamageBounds(attacker, target, validation.value.range);
+  for (let seed = 1; seed <= 64; seed += 1) {
+    const state = makeState([attacker, target]);
+    const result = apply(state, { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, openSea, seed);
+    assert.equal(result.ok, true);
+    const event = result.events.find((item) => item.type === 'cannon_fired');
+    assert.ok(event.damage >= bounds.minimum && event.damage <= bounds.maximum);
+    assert.equal(state.units[1].hull - result.state.units[1].hull, event.damage);
+  }
+});
+
+test('P5 接舷預覽與引擎共用同一合法性規則', () => {
+  const attacker = makeUnit({ hex: at(3, 3) });
+  const adjacent = makeEnemy({ hex: at(4, 3) });
+  const distant = makeEnemy({ hex: at(6, 3) });
+  assert.equal(rules.validateBoardingAttack(attacker, adjacent).ok, true);
+  assert.deepEqual(rules.validateBoardingAttack(attacker, distant), { ok: false, error: 'NOT_ADJACENT' });
+  const state = makeState([attacker, distant]);
+  const result = apply(state, { type: 'board', attackerId: 'p1', targetId: 'e1' });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'NOT_ADJACENT');
+});
+
+test('P5 修整與接舷事件數值等於引擎狀態差', () => {
+  const repairState = makeState([makeUnit({ hull: 80, hullMax: 100 }), makeEnemy()]);
+  const repaired = apply(repairState, { type: 'repair', unitId: 'p1' });
+  assert.equal(repaired.ok, true);
+  const repairEvent = repaired.events.find((item) => item.type === 'unit_repaired');
+  assert.equal(repaired.state.units[0].hull - repairState.units[0].hull, repairEvent.amount);
+
+  const boardState = makeState([
+    makeUnit({ crew: 40, hex: at(3, 3) }),
+    makeEnemy({ crew: 40, hex: at(4, 3) }),
+  ]);
+  const boarded = apply(boardState, { type: 'board', attackerId: 'p1', targetId: 'e1' }, openSea, 42);
+  assert.equal(boarded.ok, true);
+  const crewEvents = boarded.events.filter((item) => item.type === 'crew_changed');
+  for (const event of crewEvents) {
+    const before = boardState.units.find((unit) => unit.id === event.unitId).crew;
+    const after = boarded.state.units.find((unit) => unit.id === event.unitId).crew;
+    assert.equal(after - before, event.amount);
+  }
+});
+
+console.log(`\n✅ P2～P5 純規則引擎固定案例 ${cases} 組全部通過`);

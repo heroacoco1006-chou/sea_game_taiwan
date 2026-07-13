@@ -258,6 +258,11 @@ function adjustedCrewLoss(crew: number, rate: number, multiplier: number): numbe
   return Math.min(crew, Math.max(1, Math.round(crew * rate * multiplier)));
 }
 
+export function validateBoardingAttack(attacker: BattleUnit, target: BattleUnit): RuleResult<null> {
+  if (hexDistance(attacker.hex, target.hex) !== 1) return { ok: false, error: 'NOT_ADJACENT' };
+  return { ok: true, value: null };
+}
+
 export function resolveBoarding(attacker: BattleUnit, target: BattleUnit, rng: RandomSource): BoardingResult {
   const random = (minimum: number, maximum: number) => minimum + (maximum - minimum) * rng();
   const attackStrength = (attacker.crew + attacker.boardingBonus) * random(BATTLE_RULES.boarding.randomMin, BATTLE_RULES.boarding.randomMax);

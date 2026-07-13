@@ -3,6 +3,7 @@ import mapsData from '../data/battleMaps.json';
 import type {
   BattleCommand,
   BattleErrorCode,
+  BattleEvent,
   BattleMapDefinition,
   BattleMapsData,
   BattleState,
@@ -18,11 +19,14 @@ import {
   BATTLE_RULES,
   type RandomSource,
   type ReachableHex,
+  cannonDamageBounds,
   createSeededRng,
   deploymentHexes,
   findPath,
   reachableHexes,
   terrainAt,
+  validateBoardingAttack,
+  validateCannonAttack,
   validatePath,
 } from '../battle/battleRules';
 import { applyCommand, createBattleState } from '../battle/battleEngine';
@@ -30,8 +34,8 @@ import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle
 import { audio } from '../audio';
 
 /**
- * P4 玩家移動與選取（預覽戰鬥）：BattleHexScene 只送 BattleCommand 給純引擎、
- * 依回傳 state 重繪；移動範圍與路徑一律用 battleRules 純函式，場景不得自算。
+ * P5 玩家行動與事件（預覽戰鬥）：BattleHexScene 只送 BattleCommand 給純引擎、
+ * 依回傳 state／events 重繪；移動、傷害、接舷與勝敗一律由純規則層計算。
  * 尚未接正式流程；USE_HEX_BATTLE=false，只能經 `?hexmap=1` 開發參數進入。
  * 正式素材待老闆核可後於 P8 由本場景 preload() 按需載入（不得回 BootScene 預載）。
  */
@@ -42,6 +46,8 @@ const MAPS = (mapsData as BattleMapsData).maps;
 const HEX_SIZE = 42;
 const BOARD_AREA = { x: 12, y: 64, w: 960, h: 578 };
 const BATTLE_SEED = 20260712;
+
+type ActionMode = 'cannon' | 'board' | null;
 
 const TERRAIN_NAME: Record<Terrain, string> = {
   deep: '深海',
@@ -77,6 +83,13 @@ const ERROR_TEXT: Partial<Record<BattleErrorCode, string>> = {
   IMPASSABLE: '該格不可通行',
   OCCUPIED: '該格已有船隻',
   OUT_OF_BOUNDS: '超出戰場範圍',
+  NO_CANNONS: '這艘船沒有可用大砲',
+  OUT_OF_RANGE: '目標不在大砲射程內',
+  NOT_BROADSIDE: '目標位於船首或船尾死角',
+  BLOCKED_LOS: '砲線被島嶼阻擋',
+  NOT_ADJACENT: '接舷必須靠在敵船旁邊',
+  REPAIR_ALREADY_USED: '這艘船本場已修整過',
+  FULL_HULL: '耐久已滿，不需要修整',
 };
 
 export default class BattleHexScene extends Phaser.Scene {
@@ -87,6 +100,10 @@ export default class BattleHexScene extends Phaser.Scene {
   private unitNames = new Map<string, string>();
   private reachable: ReachableHex[] = [];
   private previewPath: Hex[] | null = null;
+  private actionMode: ActionMode = null;
+  private targetUnitId: string | null = null;
+  private battleMessage = '';
+  private animating = false;
 
   private boardLayer!: Phaser.GameObjects.Container;
   private highlightG!: Phaser.GameObjects.Graphics;
@@ -94,6 +111,7 @@ export default class BattleHexScene extends Phaser.Scene {
   private mapRingG!: Phaser.GameObjects.Graphics;
   private infoTitle!: Phaser.GameObjects.Text;
   private infoBody!: Phaser.GameObjects.Text;
+  private legendLayer!: Phaser.GameObjects.Container;
   private mapNameText!: Phaser.GameObjects.Text;
   private roundText!: Phaser.GameObjects.Text;
   private mapButtonPos = new Map<string, { x: number; y: number; w: number; h: number }>();
@@ -101,6 +119,10 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnTurnR!: Phaser.GameObjects.Container;
   private btnConfirm!: Phaser.GameObjects.Container;
   private btnCancel!: Phaser.GameObjects.Container;
+  private btnCannon!: Phaser.GameObjects.Container;
+  private btnBoard!: Phaser.GameObjects.Container;
+  private btnRepair!: Phaser.GameObjects.Container;
+  private btnWait!: Phaser.GameObjects.Container;
   private btnEndTurn!: Phaser.GameObjects.Container;
 
   constructor() {
@@ -128,7 +150,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const top = this.add.graphics();
     top.fillStyle(0x2c1b0d, 0.85);
     top.fillRoundedRect(8, 8, BASE_W - 16, 46, 8);
-    this.add.text(24, 31, '六角格海戰（P4 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
+    this.add.text(24, 31, '六角格海戰（P5 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
     this.mapNameText = this.add.text(BASE_W / 2 - 100, 31, '', textStyle(20, '#f2c14e')).setOrigin(0.5);
     this.roundText = this.add.text(BASE_W - 24, 31, '', textStyle(18, '#e8d9b0')).setOrigin(1, 0.5);
 
@@ -140,9 +162,10 @@ export default class BattleHexScene extends Phaser.Scene {
       lineSpacing: 7,
       wordWrap: { width: 232 },
     });
-    // 地形圖例
+    // 地形圖例：和船況／事件資訊互斥顯示，避免行動版文字換行時互相覆蓋。
     const legendY = 430;
-    this.add.text(1012, legendY - 28, '地形圖例', textStyle(16)).setOrigin(0, 0);
+    this.legendLayer = this.add.container(0, 0);
+    this.legendLayer.add(this.add.text(1012, legendY - 28, '地形圖例', textStyle(16)).setOrigin(0, 0));
     (Object.keys(TERRAIN_NAME) as Terrain[]).forEach((terrain, index) => {
       const lx = 1012 + (index % 2) * 118;
       const ly = legendY + Math.floor(index / 2) * 30;
@@ -151,12 +174,13 @@ export default class BattleHexScene extends Phaser.Scene {
       chip.fillRoundedRect(lx, ly, 22, 20, 4);
       chip.lineStyle(1, 0x3a2a14, 0.6);
       chip.strokeRoundedRect(lx, ly, 22, 20, 4);
-      this.add.text(lx + 30, ly + 10, TERRAIN_NAME[terrain], textStyle(15)).setOrigin(0, 0.5);
+      const label = this.add.text(lx + 30, ly + 10, TERRAIN_NAME[terrain], textStyle(15)).setOrigin(0, 0.5);
+      this.legendLayer.add([chip, label]);
     });
-    this.add.text(1012, legendY + 66, '操作：點我方船→點青綠格\n→確認移動；可先左右轉向', {
+    this.legendLayer.add(this.add.text(1012, legendY + 66, '操作：選船後移動，再選\n砲擊／接舷／修整／等待', {
       ...textStyle(14, '#6b5638'),
       lineSpacing: 5,
-    });
+    }));
 
     // 底部：地圖切換、行動按鈕
     this.mapRingG = this.add.graphics().setDepth(5);
@@ -166,11 +190,15 @@ export default class BattleHexScene extends Phaser.Scene {
       this.mapButtonPos.set(map.id, { x: bx, y: by, w: 130, h: 44 });
       makeButton(this, bx, by, 130, 44, map.name, () => this.switchMap(map.id), 16);
     });
-    this.btnTurnL = makeButton(this, 505, 682, 80, 44, '左轉', () => this.turnSelected(-1), 16);
-    this.btnTurnR = makeButton(this, 595, 682, 80, 44, '右轉', () => this.turnSelected(1), 16);
-    this.btnCancel = makeButton(this, 695, 682, 80, 44, '取消', () => this.cancelPreview(), 16);
-    this.btnConfirm = makeButton(this, 805, 682, 120, 44, '確認移動', () => this.confirmMove(), 16);
-    this.btnEndTurn = makeButton(this, 1005, 682, 110, 44, '結束回合', () => this.endTurn(), 16);
+    this.btnTurnL = makeButton(this, 475, 682, 70, 44, '左轉', () => this.turnSelected(-1), 15);
+    this.btnTurnR = makeButton(this, 555, 682, 70, 44, '右轉', () => this.turnSelected(1), 15);
+    this.btnCancel = makeButton(this, 695, 682, 80, 44, '取消', () => this.cancelCurrent(), 16);
+    this.btnConfirm = makeButton(this, 805, 682, 120, 44, '確認移動', () => this.confirmCurrent(), 16);
+    this.btnCannon = makeButton(this, 650, 682, 90, 44, '砲擊', () => this.startTargeting('cannon'), 16);
+    this.btnBoard = makeButton(this, 750, 682, 90, 44, '接舷', () => this.startTargeting('board'), 16);
+    this.btnRepair = makeButton(this, 850, 682, 90, 44, '修整', () => this.repairSelected(), 16);
+    this.btnWait = makeButton(this, 945, 682, 80, 44, '等待', () => this.waitSelected(), 16);
+    this.btnEndTurn = makeButton(this, 1045, 682, 100, 44, '結束回合', () => this.endTurn(), 15);
     makeButton(this, 1185, 682, 110, 44, '返回標題', () => this.scene.start('Title'), 16);
 
     // 戰場層與覆蓋層
@@ -235,6 +263,30 @@ export default class BattleHexScene extends Phaser.Scene {
         });
       });
     }
+    // P5 固定瀏覽器案例：只在開發預覽參數啟用，方便低階模型依固定座標驗收。
+    const demo = new URLSearchParams(window.location.search).get('p5demo');
+    if (map.id === 'open_sea' && demo) {
+      const player = units.find((unit) => unit.id === 'p0');
+      const enemy = units.find((unit) => unit.id === 'e0');
+      if (player && enemy) {
+        player.hex = offsetToAxial(3, 3);
+        player.facing = 1;
+        enemy.hex = offsetToAxial(demo === 'board' ? 4 : 5, 3);
+        if (demo === 'board') {
+          player.crew = 100;
+          player.boardingBonus = 50;
+          enemy.crew = 5;
+        }
+        if (demo === 'repair') player.hull = Math.max(1, player.hull - 20);
+        if (demo === 'result') {
+          const originalFlagship = units.find((unit) => unit.id === 'e1');
+          if (originalFlagship) originalFlagship.flagship = false;
+          enemy.flagship = true;
+          enemy.hull = 1;
+          this.unitNames.set(enemy.id, '敵方旗艦');
+        }
+      }
+    }
     return units;
   }
 
@@ -246,8 +298,13 @@ export default class BattleHexScene extends Phaser.Scene {
     this.battle = createBattleState({ seed: BATTLE_SEED, mapId, units: this.buildUnits(map) });
     this.reachable = [];
     this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.battleMessage = '';
+    this.animating = false;
     this.infoTitle.setText('選中資訊');
     this.infoBody.setText('點戰場上的格子\n查看座標與船隻');
+    this.legendLayer.setVisible(true);
 
     // 地圖切換鈕的選中金框（selectionRing 每次產生新 Graphics，換圖時汰舊換新）
     this.mapRingG.destroy();
@@ -278,8 +335,17 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private onBoardClick(hex: Hex): void {
+    if (this.animating) return;
     const map = this.currentMap();
     const unitAt = this.battle.units.find((unit) => unit.status === 'active' && hexEqual(unit.hex, hex));
+
+    if (this.actionMode && unitAt?.side === 'enemy') {
+      this.targetUnitId = unitAt.id;
+      this.updateInfo(hex, unitAt);
+      this.redrawOverlays();
+      this.refreshHud();
+      return;
+    }
 
     if (
       this.battle.winner === null
@@ -287,10 +353,12 @@ export default class BattleHexScene extends Phaser.Scene {
       && unitAt.side === 'player'
       && this.battle.activeSide === 'player'
     ) {
-      // 選我方船：顯示可移動格
       const result = this.applyCmd({ type: 'select', unitId: unitAt.id });
       if (result.ok) {
         this.previewPath = null;
+        this.actionMode = null;
+        this.targetUnitId = null;
+        this.battleMessage = '';
         const selected = this.selectedUnit()!;
         this.reachable = selected.moved || selected.acted
           ? []
@@ -299,10 +367,10 @@ export default class BattleHexScene extends Phaser.Scene {
     } else if (
       this.battle.winner === null
       && !unitAt
+      && !this.actionMode
       && this.selectedUnit()
       && this.reachable.some((item) => hexEqual(item.hex, hex))
     ) {
-      // 點可移動格：只做路徑預覽，不立即移動
       this.previewPath = findPath(map, this.battle.units, this.selectedUnit()!, hex);
     }
 
@@ -320,6 +388,9 @@ export default class BattleHexScene extends Phaser.Scene {
       return;
     }
     this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.battleMessage = '';
     this.reachable = [];
     this.renderBoard();
     this.redrawOverlays();
@@ -328,12 +399,117 @@ export default class BattleHexScene extends Phaser.Scene {
     if (moved) this.updateInfo(moved.hex, moved);
   }
 
-  private cancelPreview(): void {
+  private confirmCurrent(): void {
+    if (this.previewPath) {
+      this.confirmMove();
+      return;
+    }
+    if (this.actionMode && this.targetUnitId) this.performTargetAction();
+  }
+
+  private cancelCurrent(): void {
     this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.battleMessage = '';
     const unit = this.selectedUnit();
+    this.reachable = unit && !unit.moved && !unit.acted
+      ? reachableHexes(this.currentMap(), this.battle.units, unit)
+      : [];
     if (unit) this.updateInfo(unit.hex, unit);
     this.redrawOverlays();
     this.refreshHud();
+  }
+
+  private targetError(target: BattleUnit): BattleErrorCode | null {
+    const attacker = this.selectedUnit();
+    if (!attacker || target.side === attacker.side || target.status !== 'active') return 'TARGET_NOT_FOUND';
+    if (this.actionMode === 'cannon') {
+      const result = validateCannonAttack(this.currentMap(), attacker, target);
+      return result.ok ? null : result.error;
+    }
+    if (this.actionMode === 'board') {
+      const result = validateBoardingAttack(attacker, target);
+      return result.ok ? null : result.error;
+    }
+    return 'TARGET_NOT_FOUND';
+  }
+
+  private startTargeting(mode: Exclude<ActionMode, null>): void {
+    const unit = this.selectedUnit();
+    if (!unit || unit.acted || unit.status !== 'active' || this.animating) return;
+    this.actionMode = mode;
+    this.targetUnitId = null;
+    this.previewPath = null;
+    this.reachable = [];
+    this.battleMessage = mode === 'cannon'
+      ? '紅色格是合法砲擊目標。點敵船查看預估傷害。'
+      : '橘色格是可接舷目標。點敵船查看接舷提示。';
+    this.updateInfo(unit.hex, unit);
+    this.redrawOverlays();
+    this.refreshHud();
+  }
+
+  private performTargetAction(): void {
+    const attacker = this.selectedUnit();
+    const target = this.battle.units.find((unit) => unit.id === this.targetUnitId);
+    if (!attacker || !target || !this.actionMode) return;
+    const error = this.targetError(target);
+    if (error) {
+      toast(this, ERROR_TEXT[error] ?? '目前不能攻擊這個目標');
+      return;
+    }
+    const command: BattleCommand = this.actionMode === 'cannon'
+      ? { type: 'cannon', attackerId: attacker.id, targetId: target.id }
+      : { type: 'board', attackerId: attacker.id, targetId: target.id };
+    const result = this.applyCmd(command);
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '行動失敗');
+      return;
+    }
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.reachable = [];
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+    const current = this.battle.units.find((unit) => unit.id === target.id) ?? null;
+    if (current && this.battle.winner === null) this.updateInfo(current.hex, current);
+  }
+
+  private repairSelected(): void {
+    const unit = this.selectedUnit();
+    if (!unit || this.animating) return;
+    const result = this.applyCmd({ type: 'repair', unitId: unit.id });
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '目前無法修整');
+      return;
+    }
+    this.reachable = [];
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+    const repaired = this.selectedUnit();
+    if (repaired) this.updateInfo(repaired.hex, repaired);
+  }
+
+  private waitSelected(): void {
+    const unit = this.selectedUnit();
+    if (!unit || this.animating) return;
+    const result = this.applyCmd({ type: 'wait', unitId: unit.id });
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '目前無法等待');
+      return;
+    }
+    this.reachable = [];
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+    const waiting = this.selectedUnit();
+    if (waiting) this.updateInfo(waiting.hex, waiting);
   }
 
   private turnSelected(direction: -1 | 1): void {
@@ -358,21 +534,111 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private endTurn(): void {
-    if (this.battle.winner !== null) return;
+    if (this.battle.winner !== null || this.animating) return;
+    const events: BattleEvent[] = [];
     let result = this.applyCmd({ type: 'end_turn' });
+    if (result.ok) events.push(...result.events);
     if (result.ok && this.battle.winner === null && this.battle.activeSide === 'enemy') {
-      // 敵方 AI 是 P6；預覽版敵方直接結束回合
+      // 敵方 AI 是 P6；P5 預覽版敵方直接結束回合。
       result = this.applyCmd({ type: 'end_turn' });
+      if (result.ok) events.push(...result.events);
     }
     this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
     this.reachable = [];
     this.renderBoard();
+    this.playEvents(events);
     this.redrawOverlays();
     this.refreshHud();
-    if (this.battle.winner !== null) {
-      this.infoTitle.setText('戰鬥結束');
-      this.infoBody.setText('已達 12 回合上限，\n依比分結算。\n\n（勝敗獎勵與正式流程\n於 P7 接入）');
+  }
+
+  private playEvents(events: BattleEvent[]): void {
+    if (events.length === 0) return;
+    this.animating = true;
+    this.legendLayer.setVisible(false);
+    const messages: string[] = [];
+    const effectObjects: Phaser.GameObjects.GameObject[] = [];
+    const effectText = (unitId: string, label: string, color: string): void => {
+      const unit = this.battle.units.find((item) => item.id === unitId);
+      if (!unit) return;
+      const center = axialToPixel(unit.hex, HEX_SIZE, this.origin);
+      const text = this.add.text(center.x, center.y - 36, label, textStyle(18, color))
+        .setOrigin(0.5)
+        .setDepth(20);
+      effectObjects.push(text);
+      this.tweens.add({ targets: text, y: center.y - 58, alpha: 0.1, duration: 420 });
+    };
+    const effectLine = (fromId: string, toId: string, color: number): void => {
+      const from = this.battle.units.find((item) => item.id === fromId);
+      const to = this.battle.units.find((item) => item.id === toId);
+      if (!from || !to) return;
+      const a = axialToPixel(from.hex, HEX_SIZE, this.origin);
+      const b = axialToPixel(to.hex, HEX_SIZE, this.origin);
+      const line = this.add.graphics().setDepth(19);
+      line.lineStyle(5, color, 0.9);
+      line.beginPath();
+      line.moveTo(a.x, a.y);
+      line.lineTo(b.x, b.y);
+      line.strokePath();
+      line.fillStyle(color, 0.45);
+      line.fillCircle(b.x, b.y, 22);
+      effectObjects.push(line);
+      this.tweens.add({ targets: line, alpha: 0, duration: 380 });
+    };
+
+    const hasBattleEnded = events.some((event) => event.type === 'battle_ended');
+    for (const event of events) {
+      if (event.type === 'cannon_fired') {
+        audio.playSfx('cannon');
+        effectLine(event.attackerId, event.targetId, 0xf2c14e);
+        effectText(event.targetId, `-${event.damage} 耐久`, '#fff1a8');
+        messages.push(`砲擊命中，造成 ${event.damage} 點耐久傷害。`);
+      } else if (event.type === 'boarding') {
+        audio.playSfx('board');
+        effectLine(event.attackerId, event.targetId, 0xe67e22);
+        const outcome = event.outcome === 'won' ? '敵船投降' : event.outcome === 'balanced' ? '雙方退開' : '接舷失利';
+        effectText(event.targetId, outcome, '#ffd2a1');
+        messages.push(`接舷結果：${outcome}。`);
+      } else if (event.type === 'unit_repaired') {
+        effectText(event.unitId, `+${event.amount} 耐久`, '#a8f0b8');
+        messages.push(`修整完成，回復 ${event.amount} 點耐久。`);
+      } else if (event.type === 'unit_status_changed') {
+        const label = event.status === 'sunk' ? '失去戰力' : event.status === 'surrendered' ? '投降' : '退出戰場';
+        effectText(event.unitId, label, '#ffffff');
+        messages.push(`一艘船${label}。`);
+      } else if (event.type === 'unit_waited') {
+        messages.push('這艘船留在原位等待。');
+      } else if (event.type === 'turn_ended' && event.side === 'enemy' && !hasBattleEnded) {
+        messages.push(`第 ${event.round + 1} 回合開始。`);
+      } else if (event.type === 'battle_ended') {
+        const result = event.winner === 'player' ? '我方勝利' : event.winner === 'enemy' ? '我方失利' : '雙方脫離';
+        messages.push(`戰鬥結束：${result}。`);
+      }
     }
+    this.battleMessage = messages.join('\n');
+    const ended = events.find((event) => event.type === 'battle_ended');
+    const roundStarted = events.some((event) => event.type === 'turn_ended' && event.side === 'enemy');
+    if (roundStarted && !ended) {
+      this.infoTitle.setText('新回合開始');
+      this.infoBody.setText(this.battleMessage);
+    }
+    if (ended?.type === 'battle_ended') {
+      this.infoTitle.setText('戰鬥結束');
+      const result = ended.winner === 'player' ? '我方勝利' : ended.winner === 'enemy' ? '我方失利' : '雙方脫離';
+      this.infoBody.setText(`${result}\n\n${this.battleMessage}\n\n（獎勵與世界地圖回寫於 P7 接入）`);
+    }
+    this.time.delayedCall(440, () => {
+      for (const object of effectObjects) object.destroy();
+      this.animating = false;
+      this.renderBoard();
+      this.redrawOverlays();
+      this.refreshHud();
+      if (this.battle.winner === null) {
+        const selected = this.selectedUnit();
+        if (selected) this.updateInfo(selected.hex, selected);
+      }
+    });
   }
 
   // ---------- 畫面 ----------
@@ -498,6 +764,23 @@ export default class BattleHexScene extends Phaser.Scene {
       this.highlightG.lineStyle(1.5, 0x37d0a5, 0.7);
       this.highlightG.strokePoints(this.hexCorners(center), true);
     }
+    if (this.actionMode && this.selectedUnit()) {
+      for (const target of this.battle.units.filter((unit) => unit.side === 'enemy' && unit.status === 'active')) {
+        if (this.targetError(target) !== null) continue;
+        const center = axialToPixel(target.hex, HEX_SIZE, this.origin);
+        const color = this.actionMode === 'cannon' ? 0xe74c3c : 0xe67e22;
+        this.highlightG.fillStyle(color, 0.24);
+        this.highlightG.fillPoints(this.hexCorners(center), true);
+        this.highlightG.lineStyle(2, color, 0.9);
+        this.highlightG.strokePoints(this.hexCorners(center), true);
+      }
+      const target = this.battle.units.find((unit) => unit.id === this.targetUnitId);
+      if (target) {
+        const center = axialToPixel(target.hex, HEX_SIZE, this.origin);
+        this.highlightG.lineStyle(3, 0xffffff, 0.95);
+        this.highlightG.strokePoints(this.hexCorners(center), true);
+      }
+    }
     if (this.previewPath) {
       for (let index = 1; index < this.previewPath.length; index += 1) {
         const center = axialToPixel(this.previewPath[index], HEX_SIZE, this.origin);
@@ -524,51 +807,102 @@ export default class BattleHexScene extends Phaser.Scene {
   private refreshHud(): void {
     const over = this.battle.winner !== null;
     if (over) {
-      this.roundText.setText('戰鬥結束（12 回合上限）');
+      const result = this.battle.winner === 'player' ? '我方勝利' : this.battle.winner === 'enemy' ? '我方失利' : '雙方脫離';
+      this.roundText.setText(`戰鬥結束　${result}`);
     } else {
       const ready = this.battle.units
-        .filter((unit) => unit.side === 'player' && unit.status === 'active' && !unit.moved && !unit.acted)
+        .filter((unit) => unit.side === 'player' && unit.status === 'active' && !unit.acted)
         .length;
       this.roundText.setText(`回合 ${this.battle.round}／${this.battle.maxRounds}　玩家回合　尚可行動 ${ready} 艘`);
     }
 
     const unit = this.selectedUnit();
-    const canTurn = !over
+    const previewing = !over && !!this.previewPath;
+    const targeting = !over && this.actionMode !== null;
+    const actionReady = !over
+      && !this.animating
       && !!unit
       && unit.status === 'active'
-      && !unit.moved
       && !unit.acted
+      && !previewing
+      && !targeting;
+    const canTurn = actionReady
+      && !unit.moved
       && unit.moveSpent + BATTLE_RULES.movement.turnCost <= unit.movePoints;
     this.btnTurnL.setVisible(canTurn);
     this.btnTurnR.setVisible(canTurn);
-    const previewing = !over && !!this.previewPath;
-    this.btnConfirm.setVisible(previewing);
-    this.btnCancel.setVisible(previewing);
-    this.btnEndTurn.setVisible(!over);
+    this.btnCannon.setVisible(actionReady);
+    this.btnBoard.setVisible(actionReady);
+    this.btnRepair.setVisible(actionReady);
+    this.btnWait.setVisible(actionReady);
+
+    const target = this.battle.units.find((item) => item.id === this.targetUnitId);
+    const validTarget = !!target && this.targetError(target) === null;
+    this.btnConfirm.setVisible(previewing || (targeting && validTarget));
+    const confirmLabel = this.btnConfirm.getAt(1) as Phaser.GameObjects.Text;
+    confirmLabel.setText(previewing ? '確認移動' : this.actionMode === 'cannon' ? '確認砲擊' : '確認接舷');
+    this.btnCancel.setVisible(previewing || targeting);
+    this.btnEndTurn.setVisible(!over && !this.animating);
   }
 
   private updateInfo(hex: Hex, unitAt: BattleUnit | null): void {
     const map = this.currentMap();
+    const selected = this.selectedUnit();
+    this.legendLayer.setVisible(!unitAt && !this.battleMessage && !this.actionMode);
+
+    // 選目標時改用精簡面板，避免一般座標／船況資訊把下方圖例擠掉。
+    if (this.actionMode && selected && unitAt?.side === 'enemy') {
+      const name = this.unitNames.get(unitAt.id) ?? unitAt.id;
+      const lines = [
+        `${name}${unitAt.flagship ? ' ★' : ''}（${SHIP_SIZE_NAME[unitAt.shipSize]}）`,
+        `耐久：${unitAt.hull}／${unitAt.hullMax}`,
+        `水手：${unitAt.crew} 人`,
+      ];
+      const error = this.targetError(unitAt);
+      if (error) {
+        lines.push('', `不能${this.actionMode === 'cannon' ? '砲擊' : '接舷'}`);
+        lines.push(ERROR_TEXT[error] ?? error);
+      } else if (this.actionMode === 'cannon') {
+        const attack = validateCannonAttack(map, selected, unitAt);
+        if (attack.ok) {
+          const bounds = cannonDamageBounds(selected, unitAt, attack.value.range);
+          lines.push('', '側舷射界：有效');
+          lines.push(`射程：${attack.value.range} 格`);
+          lines.push(`預估傷害：${bounds.minimum}～${bounds.maximum}`);
+          lines.push('按「確認砲擊」才會開火');
+        }
+      } else {
+        lines.push('', '接舷距離：有效（相鄰格）');
+        lines.push(`我方水手：${selected.crew} 人`);
+        lines.push('結果由雙方接舷能力判定');
+        lines.push('按「確認接舷」才會行動');
+      }
+      this.infoTitle.setText(this.actionMode === 'cannon' ? '砲擊預估' : '接舷預估');
+      this.infoBody.setText(lines.join('\n'));
+      return;
+    }
+
     const { col, row } = axialToOffset(hex);
     const terrain = terrainAt(map, hex);
-    const lines = [
-      `座標 (q,r)：(${hex.q}, ${hex.r})`,
-      `欄／列：第 ${col + 1} 欄・第 ${row + 1} 列`,
-      `地形：${TERRAIN_NAME[terrain]}`,
-    ];
+    const lines = unitAt
+      ? [`座標 (q,r)：(${hex.q}, ${hex.r})`, `地形：${TERRAIN_NAME[terrain]}`]
+      : [
+          `座標 (q,r)：(${hex.q}, ${hex.r})`,
+          `欄／列：第 ${col + 1} 欄・第 ${row + 1} 列`,
+          `地形：${TERRAIN_NAME[terrain]}`,
+        ];
     if (unitAt) {
       const name = this.unitNames.get(unitAt.id) ?? unitAt.id;
       lines.push('', `${name}${unitAt.flagship ? ' ★' : ''}（${SHIP_SIZE_NAME[unitAt.shipSize]}）`);
       lines.push(`耐久：${unitAt.hull}／${unitAt.hullMax}`);
       lines.push(`水手：${unitAt.crew} 人｜砲：${unitAt.cannons} 門`);
-      lines.push(`移動力：${unitAt.movePoints - unitAt.moveSpent}／${unitAt.movePoints}`);
-      lines.push(`朝向：${FACING_NAME[unitAt.facing]}`);
-      if (unitAt.moved || unitAt.acted) lines.push('（本回合已完成移動）');
+      lines.push(`移動：${unitAt.movePoints - unitAt.moveSpent}／${unitAt.movePoints}｜朝向：${FACING_NAME[unitAt.facing]}`);
+      if (unitAt.acted) lines.push('（本回合主要行動已完成）');
+      else if (unitAt.moved) lines.push('（已移動，仍可執行主要行動）');
       this.infoTitle.setText(name);
     } else {
       this.infoTitle.setText('格子資訊');
     }
-    const selected = this.selectedUnit();
     if (this.previewPath && selected) {
       const validated = validatePath(map, this.battle.units, selected, this.previewPath);
       if (validated.ok) {
@@ -576,6 +910,7 @@ export default class BattleHexScene extends Phaser.Scene {
         lines.push(`剩餘移動力：${selected.movePoints - selected.moveSpent - validated.value.cost}`);
       }
     }
+    if (this.battleMessage) lines.push('', this.battleMessage);
     this.infoBody.setText(lines.join('\n'));
   }
 }
