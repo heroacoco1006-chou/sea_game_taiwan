@@ -1,4 +1,18 @@
 {
   "version": 1,
-  "encounters": []
+  "encounters": [
+    { "id": "pirate_t1", "kind": "pirate", "tier": 1, "mapId": "open_sea", "loot": 180, "countWeights": [[1, 0.8], [2, 0.2]], "ships": [["junk_small", 2, 12], ["junk_small", 2, 12]] },
+    { "id": "pirate_t2", "kind": "pirate", "tier": 2, "mapId": "island_channel", "loot": 420, "countWeights": [[2, 0.6], [3, 0.4]], "ships": [["junk_large", 4, 22], ["shuinsen", 3, 20], ["junk_small", 2, 12]] },
+    { "id": "pirate_t3", "kind": "pirate", "tier": 3, "mapId": "reef_passage", "loot": 760, "countWeights": [[3, 0.4], [4, 0.6]], "ships": [["fuchuan", 6, 35, "ct_hongyi", "????"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
+    { "id": "quest_t1", "kind": "quest", "tier": 1, "mapId": "open_sea", "loot": 180, "countWeights": [[1, 0.8], [2, 0.2]], "ships": [["junk_small", 2, 12], ["junk_small", 2, 12]] },
+    { "id": "quest_t2", "kind": "quest", "tier": 2, "mapId": "island_channel", "loot": 420, "countWeights": [[2, 0.6], [3, 0.4]], "ships": [["junk_large", 4, 22], ["shuinsen", 3, 20], ["junk_small", 2, 12]] },
+    { "id": "quest_t3", "kind": "quest", "tier": 3, "mapId": "reef_passage", "loot": 760, "countWeights": [[3, 0.4], [4, 0.6]], "ships": [["fuchuan", 6, 35, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
+    { "id": "story_t1", "kind": "story", "tier": 1, "mapId": "open_sea", "loot": 360, "fixedShips": [["junk_large", 4, 22]] },
+    { "id": "story_t2", "kind": "story", "tier": 2, "mapId": "island_channel", "loot": 600, "fixedShips": [["fuchuan", 5, 30], ["junk_large", 4, 22]] },
+    { "id": "story_t3", "kind": "story", "tier": 3, "mapId": "reef_passage", "loot": 980, "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
+    { "id": "story_huflag", "kind": "story", "tier": 3, "mapId": "reef_passage", "loot": 980, "matchNames": ["\u6e05\u65b9\u6504\u622a\u8239"], "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]], "storyAllies": [["fuchuan", 5, 28, "standard", "\u912d\u5bb6\u53cb\u8ecd"]] },
+    { "id": "mate_t1", "kind": "mate", "tier": 1, "mapId": "open_sea", "loot": 300, "fixedShips": [["junk_large", 4, 22]] },
+    { "id": "mate_t2", "kind": "mate", "tier": 2, "mapId": "island_channel", "loot": 520, "fixedShips": [["shuinsen", 4, 24], ["junk_large", 4, 22]] },
+    { "id": "mate_t3", "kind": "mate", "tier": 3, "mapId": "reef_passage", "loot": 900, "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] }
+  ]
 }
