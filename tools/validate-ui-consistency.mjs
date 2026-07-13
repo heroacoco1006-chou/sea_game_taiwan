@@ -6,6 +6,7 @@ import ts from 'typescript';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCENE_DIR = path.join(ROOT, 'src/scenes');
 const EXPECTED_UI_SCENES = [
+  'BattleHexScene.ts',
   'BattleScene.ts', 'FacilityScene.ts', 'GameOverScene.ts', 'InfoScene.ts',
   'ItemShopScene.ts', 'MatesScene.ts', 'PortScene.ts', 'SaveSlotScene.ts',
   'SettingsScene.ts', 'ShipyardScene.ts', 'StoryScene.ts', 'TitleScene.ts',

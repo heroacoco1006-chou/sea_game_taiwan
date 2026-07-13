@@ -68,6 +68,29 @@ test('移動範圍依成本、地形與占用格計算', () => {
   assert.equal(byKey.has(atKey(5, 1)), false, '移動力不足不可穿過淺灘');
 });
 
+test('findPath 直線、淺灘成本、繞島與不可達皆正確', () => {
+  // 直線：深海 (2,2) → (5,2)，移動力 3 剛好
+  const straight = rules.findPath(openSea, [makeUnit(), makeEnemy({ hex: at(10, 3) })], makeUnit(), { q: 5, r: 2 });
+  assert.deepEqual(straight, [{ q: 2, r: 2 }, { q: 3, r: 2 }, { q: 4, r: 2 }, { q: 5, r: 2 }]);
+  // 淺灘：大型船預算 2 可進欄4列1（成本2），到不了欄5列1
+  const large = makeUnit({ shipSize: 'large', hex: at(3, 1), movePoints: 2 });
+  const largeUnits = [large, makeEnemy({ hex: at(10, 3) })];
+  assert.notEqual(rules.findPath(openSea, largeUnits, large, at(4, 1)), null);
+  assert.equal(rules.findPath(openSea, largeUnits, large, at(5, 1)), null);
+  // 繞島：island_channel 島在欄5列2～4；欄4列3 → 欄6列3 必須繞行且路徑合法
+  const sailor = makeUnit({ hex: at(4, 3), movePoints: 5 });
+  const sailorUnits = [sailor, makeEnemy({ hex: at(10, 3) })];
+  const around = rules.findPath(islandChannel, sailorUnits, sailor, at(6, 3));
+  assert.notEqual(around, null);
+  for (const cell of around) assert.notEqual(rules.terrainAt(islandChannel, cell), 'land');
+  const validated = rules.validatePath(islandChannel, sailorUnits, sailor, around);
+  assert.equal(validated.ok, true);
+  assert.deepEqual(validated.value.destination, at(6, 3));
+  // 目的格被占用 → null
+  const blockedUnits = [makeUnit(), makeUnit({ id: 'p2', flagship: false, hex: { q: 3, r: 2 } }), makeEnemy({ hex: at(10, 3) })];
+  assert.equal(rules.findPath(openSea, blockedUnits, makeUnit(), { q: 3, r: 2 }), null);
+});
+
 test('合法路徑更新格位、朝向、成本且不修改輸入 state', () => {
   const state = makeState([makeUnit({ hex: { q: 2, r: 2 } }), makeEnemy({ hex: at(10, 4) })]);
   const before = JSON.parse(JSON.stringify(state));

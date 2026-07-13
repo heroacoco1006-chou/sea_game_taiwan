@@ -142,6 +142,52 @@ export function reachableHexes(map: BattleMapDefinition, units: BattleUnit[], un
     .sort((a, b) => a.cost - b.cost || a.hex.q - b.hex.q || a.hex.r - b.hex.r);
 }
 
+/**
+ * 以與 reachableHexes 相同的成本規則找出到 destination 的最低成本路徑
+ * （含起點、terminus 為 destination 的 axial 格串）；超出剩餘移動力或
+ * 不可達回傳 null。給畫面畫「路徑預覽」用，Scene 不得自己重算。
+ */
+export function findPath(
+  map: BattleMapDefinition,
+  units: BattleUnit[],
+  unit: BattleUnit,
+  destination: Hex,
+): Hex[] | null {
+  if (hexEqual(destination, unit.hex)) return [{ ...unit.hex }];
+  if (unit.status !== 'active' || unit.acted || unit.moved) return null;
+  const budget = unit.movePoints - unit.moveSpent;
+  if (budget <= 0) return null;
+  const occupied = activeOccupiedKeys(units, unit.id);
+  const costs = new Map<string, number>([[hexKey(unit.hex), 0]]);
+  const previous = new Map<string, Hex>();
+  const frontier: ReachableHex[] = [{ hex: { ...unit.hex }, cost: 0 }];
+
+  while (frontier.length > 0) {
+    frontier.sort((a, b) => a.cost - b.cost || a.hex.q - b.hex.q || a.hex.r - b.hex.r);
+    const current = frontier.shift()!;
+    if (current.cost !== costs.get(hexKey(current.hex))) continue;
+    for (const direction of HEX_DIRECTIONS) {
+      const next = { q: current.hex.q + direction.q, r: current.hex.r + direction.r };
+      const key = hexKey(next);
+      if (!hexInMap(next, map.width, map.height) || !isPassable(map, next) || occupied.has(key)) continue;
+      const nextCost = current.cost + movementCost(map, unit, next);
+      if (nextCost > budget || nextCost >= (costs.get(key) ?? Number.POSITIVE_INFINITY)) continue;
+      costs.set(key, nextCost);
+      previous.set(key, { ...current.hex });
+      frontier.push({ hex: next, cost: nextCost });
+    }
+  }
+
+  if (!costs.has(hexKey(destination))) return null;
+  const path: Hex[] = [{ ...destination }];
+  let cursor = destination;
+  while (!hexEqual(cursor, unit.hex)) {
+    cursor = previous.get(hexKey(cursor))!;
+    path.push({ ...cursor });
+  }
+  return path.reverse();
+}
+
 export function isBroadside(attacker: BattleUnit, target: BattleUnit): boolean {
   const bearing = bearingFacing(attacker.hex, target.hex);
   if (bearing === null) return false;
