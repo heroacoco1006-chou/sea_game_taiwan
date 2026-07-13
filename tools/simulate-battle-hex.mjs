@@ -15,11 +15,11 @@ const SIZE_STATS = {
 };
 const CANNON_TYPES = ['standard', 'ct_folang', 'ct_scatter', 'ct_hongyi'];
 
-export function buildSimulationUnits(map, seed = 1) {
+export function buildSimulationUnits(map, seed = 1, counts = { player: 5, enemy: 5 }) {
   const units = [];
   for (const side of ['player', 'enemy']) {
     const cells = rules.deploymentHexes(map, side);
-    cells.forEach((cell, index) => {
+    cells.slice(0, counts[side]).forEach((cell, index) => {
       const size = SIZE_ORDER[index % SIZE_ORDER.length];
       const stats = SIZE_STATS[size];
       const variant = seed + index * 7 + (side === 'enemy' ? 17 : 0);
@@ -29,7 +29,7 @@ export function buildSimulationUnits(map, seed = 1) {
         side,
         shipTypeId: `simulation_${size}`,
         shipSize: size,
-        flagship: index === 1,
+        flagship: index === Math.min(1, counts[side] - 1),
         hex: { ...cell },
         facing: side === 'player' ? 0 : 3,
         hull: lowHull ? Math.max(1, Math.floor(stats.hullMax * 0.2)) : stats.hullMax,
@@ -70,11 +70,21 @@ export function assertBattleStateValid(state, map) {
   }
 }
 
-export function simulateBattle({ seed, mapId = 'open_sea', maxCommands = 800 }) {
+export function simulateBattle({
+  seed,
+  mapId = 'open_sea',
+  maxCommands = 800,
+  playerCount = 5,
+  enemyCount = 5,
+}) {
   const map = mapsData.maps.find((item) => item.id === mapId);
   if (!map) throw new Error(`UNKNOWN_MAP:${mapId}`);
   const rng = rules.createSeededRng(seed);
-  let state = engine.createBattleState({ seed, mapId, units: buildSimulationUnits(map, seed) });
+  let state = engine.createBattleState({
+    seed,
+    mapId,
+    units: buildSimulationUnits(map, seed, { player: playerCount, enemy: enemyCount }),
+  });
   const trace = [];
   assertBattleStateValid(state, map);
 
@@ -107,9 +117,11 @@ export function simulateBattle({ seed, mapId = 'open_sea', maxCommands = 800 }) 
 
 export function simulateBatch(count = 120) {
   const mapIds = mapsData.maps.map((map) => map.id);
+  const fleetSizes = [[1, 1], [2, 3], [5, 5]];
   const results = [];
   for (let index = 0; index < count; index += 1) {
-    results.push(simulateBattle({ seed: 1000 + index, mapId: mapIds[index % mapIds.length] }));
+    const [playerCount, enemyCount] = fleetSizes[index % fleetSizes.length];
+    results.push(simulateBattle({ seed: 1000 + index, mapId: mapIds[index % mapIds.length], playerCount, enemyCount }));
   }
   return results;
 }

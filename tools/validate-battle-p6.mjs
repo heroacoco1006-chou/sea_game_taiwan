@@ -43,7 +43,7 @@ for (const [token, label] of [
   ['this.enemyStepCount <= 64', '畫面敵方回合防死循環上限'],
   ['this.battle.activeSide === \'enemy\'', '敵方回合狀態鎖'],
   ["query.get('p6demo')", '固定瀏覽器 AI 驗收案例'],
-  ['六角格海戰（P6 預覽）', 'P6 預覽標示'],
+  ['六角格海戰（P6-2 預覽）', 'P6-2 向後相容預覽標示'],
 ]) requireText(scene, token, label);
 if (scene.includes('P5 預覽版敵方直接結束回合')) fail('不得保留 P5 直接跳過敵方回合');
 
@@ -57,9 +57,9 @@ for (const [token, label] of [
 
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(config)) fail('P7 前正式六角格入口旗標必須維持 false');
 if (worldMap.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHexScene');
-if (rulesJson.includes('autoBattle')) fail('P6 不得提前實作 P6-2 自動戰鬥規則');
+if (!rulesJson.includes('autoBattle')) fail('P6-2 後必須保留資料化自動戰鬥規則');
 
 const reasonCount = (ai.match(/reason:\s*'/g) ?? []).length;
 console.log(`AI 決策理由 ${reasonCount} 個｜Scene 64 步安全上限｜固定模擬 120 場 × 雙次重播`);
-console.log('正式流程：USE_HEX_BATTLE=false｜P6-2 自動戰鬥尚未提前接入');
+console.log('正式流程：USE_HEX_BATTLE=false｜P6 AI 基線與 P6-2 規則並存');
 console.log('✅ P6 敵方 AI 優先級、engine 驗證、死循環防線與回退入口檢查通過');

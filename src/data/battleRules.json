@@ -41,5 +41,8 @@
     "hullPercent": 0.05,
     "minimum": 3,
     "maximum": 12
+  },
+  "autoBattle": {
+    "minAdvantageRatio": 1.5
   }
 }

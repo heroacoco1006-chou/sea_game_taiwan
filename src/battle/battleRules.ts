@@ -32,6 +32,15 @@ export interface BoardingResult {
   targetCrewLoss: number;
 }
 
+export interface AutoBattleAssessment {
+  enabled: boolean;
+  playerPower: number;
+  enemyPower: number;
+  advantageRatio: number;
+  requiredRatio: number;
+  reason: 'available' | 'no_active_enemy' | 'insufficient_advantage';
+}
+
 export const BATTLE_RULES = rulesData;
 
 export function createSeededRng(seed: number): RandomSource {
@@ -301,4 +310,46 @@ export function sideTurnLimitScore(units: BattleUnit[], side: Side): number {
   const flagshipPercent = flagship && flagship.status === 'active' ? flagship.hull / flagship.hullMax * 100 : 0;
   const surviving = sideUnits.filter((unit) => unit.status === 'active').length;
   return flagshipPercent + surviving * 20;
+}
+/**
+ * 自動戰鬥與 P7 戰前提示共用的艦隊戰力。只計算仍在場的船，公式固定在規則層，
+ * Scene 與 adapter 不得各自重算：耐久＋砲數×砲種威力×基準傷害＋水手×0.5，
+ * 旗艦整艘權重 1.2。
+ */
+export function sidePower(units: BattleUnit[], side: Side): number {
+  return units
+    .filter((unit) => unit.side === side && unit.status === 'active')
+    .reduce((total, unit) => {
+      const cannon = BATTLE_RULES.cannons[unit.cannonTypeId as CannonTypeId];
+      const shipPower = unit.hull
+        + unit.cannons * cannon.power * BATTLE_RULES.damage.basePerCannon
+        + unit.crew * 0.5;
+      return total + shipPower * (unit.flagship ? 1.2 : 1);
+    }, 0);
+}
+
+/** 只在我方達到資料化優勢門檻時允許啟動；啟動後不因單次受傷而強制中止。 */
+export function assessAutoBattle(units: BattleUnit[]): AutoBattleAssessment {
+  const playerPower = sidePower(units, 'player');
+  const enemyPower = sidePower(units, 'enemy');
+  const requiredRatio = BATTLE_RULES.autoBattle.minAdvantageRatio;
+  if (enemyPower <= 0) {
+    return {
+      enabled: false,
+      playerPower,
+      enemyPower,
+      advantageRatio: Number.POSITIVE_INFINITY,
+      requiredRatio,
+      reason: 'no_active_enemy',
+    };
+  }
+  const advantageRatio = playerPower / enemyPower;
+  return {
+    enabled: advantageRatio >= requiredRatio,
+    playerPower,
+    enemyPower,
+    advantageRatio,
+    requiredRatio,
+    reason: advantageRatio >= requiredRatio ? 'available' : 'insufficient_advantage',
+  };
 }

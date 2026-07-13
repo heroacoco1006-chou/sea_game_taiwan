@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-07-13] 開發 | 操作者：Codex | P6-2 自動戰鬥
+
+- `battleRules.json` 新增 `autoBattle.minAdvantageRatio=1.5`；純 `sidePower()` 依「耐久＋砲數×砲種威力×基準傷害＋水手×0.5，旗艦整艘×1.2」計算仍在場船隻，`assessAutoBattle()` 統一回傳可用性與敵我戰力，Scene 不重算。
+- `BattleHexScene` 新增自動戰鬥／接手指揮：門檻不足時灰階並顯示原因；啟用後我方與敵方共用 P6 AI、engine 與 seed，以 150ms 事件加速逐步播放；每個我方新回合保留 1.2 秒接手窗口，接手後恢復選船、移動與手動行動。
+- 模擬器改支援可變艦隊規模；P6-2 專測 4 組涵蓋公式、1.5 倍門檻兩側、離場船排除、接手後手動指令，以及 1v1／2v3／5v5 固定 seed 雙次重播。P6 AI 9 組／120 場雙次重播、P2～P5 20 組、P1 12 組與全部既有 validator 均通過。
+- `npm run build` 通過（413 modules；僅既有大型 chunk 提醒）。桌面 1280×720 與 iPad 1180×820 實際操作通過：雙方自動行動、立即接手後選船、戰力不足灰階提示皆正常，console 0 error。
+- 老闆核准的玩家實際船數一對一、tier 1／2／3 船數機率、具名大型戰役與臨時故事友軍已寫入施工規格及 memory；P7 開工前四項必須先接齊並驗證。`USE_HEX_BATTLE=false` 不變，正式流程仍走舊 `BattleScene`。
+
+---
+
 ## [2026-07-13] 開發 | 操作者：Codex | P6 敵方 AI
 
 - 新增純 `battleAi.ts`：AI 只讀 state 並產生一個 `BattleCommand`，不匯入 Phaser 或 engine、不直接修改格位／耐久／勝敗；Scene 與模擬器都必須把命令交給 `applyCommand()` 驗證。

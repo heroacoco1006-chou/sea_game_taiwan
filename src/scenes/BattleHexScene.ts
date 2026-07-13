@@ -17,6 +17,7 @@ import type {
 import { axialToPixel, hexEqual, hexInMap, hexNeighbor, offsetToAxial, pixelToAxial, axialToOffset } from '../battle/hex';
 import {
   BATTLE_RULES,
+  assessAutoBattle,
   type RandomSource,
   type ReachableHex,
   cannonDamageBounds,
@@ -35,7 +36,7 @@ import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle
 import { audio } from '../audio';
 
 /**
- * P6 玩家行動、事件與敵方 AI（預覽戰鬥）：BattleHexScene 只送 BattleCommand 給純引擎、
+ * P6-2 玩家行動、敵方 AI 與自動戰鬥（預覽）：BattleHexScene 只送 BattleCommand 給純引擎、
  * 依回傳 state／events 重繪；AI 也只產生命令，移動、傷害、接舷與勝敗一律由純規則層計算。
  * 尚未接正式流程；USE_HEX_BATTLE=false，只能經 `?hexmap=1` 開發參數進入。
  * 正式素材待老闆核可後於 P8 由本場景 preload() 按需載入（不得回 BootScene 預載）。
@@ -106,6 +107,9 @@ export default class BattleHexScene extends Phaser.Scene {
   private battleMessage = '';
   private animating = false;
   private enemyStepCount = 0;
+  private autoBattle = false;
+  private autoStepCount = 0;
+  private autoStepSide: Side | null = null;
 
   private boardLayer!: Phaser.GameObjects.Container;
   private highlightG!: Phaser.GameObjects.Graphics;
@@ -126,6 +130,8 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnRepair!: Phaser.GameObjects.Container;
   private btnWait!: Phaser.GameObjects.Container;
   private btnEndTurn!: Phaser.GameObjects.Container;
+  private btnAutoBattle!: Phaser.GameObjects.Container;
+  private btnTakeControl!: Phaser.GameObjects.Container;
 
   constructor() {
     super('BattleHex');
@@ -152,7 +158,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const top = this.add.graphics();
     top.fillStyle(0x2c1b0d, 0.85);
     top.fillRoundedRect(8, 8, BASE_W - 16, 46, 8);
-    this.add.text(24, 31, '六角格海戰（P6 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
+    this.add.text(24, 31, '六角格海戰（P6-2 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
     this.mapNameText = this.add.text(BASE_W / 2 - 100, 31, '', textStyle(20, '#f2c14e')).setOrigin(0.5);
     this.roundText = this.add.text(BASE_W - 24, 31, '', textStyle(18, '#e8d9b0')).setOrigin(1, 0.5);
 
@@ -201,6 +207,8 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnRepair = makeButton(this, 850, 682, 90, 44, '修整', () => this.repairSelected(), 16);
     this.btnWait = makeButton(this, 945, 682, 80, 44, '等待', () => this.waitSelected(), 16);
     this.btnEndTurn = makeButton(this, 1045, 682, 100, 44, '結束回合', () => this.endTurn(), 15);
+    this.btnAutoBattle = makeButton(this, 1128, 602, 220, 42, '自動戰鬥', () => this.startAutoBattle(), 17);
+    this.btnTakeControl = makeButton(this, 1128, 602, 220, 42, '接手指揮', () => this.takeControl(), 17);
     makeButton(this, 1185, 682, 110, 44, '返回標題', () => this.scene.start('Title'), 16);
 
     // 戰場層與覆蓋層
@@ -265,11 +273,18 @@ export default class BattleHexScene extends Phaser.Scene {
         });
       });
     }
-    // P5／P6 固定瀏覽器案例：只在開發預覽參數啟用，正常資料與正式流程不受影響。
+    // P5～P6-2 固定瀏覽器案例：只在開發預覽參數啟用，正常資料與正式流程不受影響。
     const query = new URLSearchParams(window.location.search);
     const p5demo = query.get('p5demo');
     const p6demo = query.get('p6demo');
     if (map.id === 'open_sea' && (p5demo || p6demo)) {
+      if (p6demo === 'auto') {
+        for (const unit of units.filter((item) => item.side === 'enemy')) {
+          unit.hull = Math.max(1, Math.round(unit.hullMax * 0.35));
+          unit.cannons = 1;
+          unit.crew = 10;
+        }
+      }
       const player = units.find((unit) => unit.id === 'p0');
       const enemy = units.find((unit) => unit.id === 'e0');
       if (player && enemy) {
@@ -303,7 +318,7 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private switchMap(mapId: string): void {
-    if (this.battle && (this.animating || this.battle.activeSide === 'enemy')) return;
+    if (this.battle && (this.animating || this.autoBattle || this.battle.activeSide === 'enemy')) return;
     this.mapId = mapId;
     const map = this.currentMap();
     this.mapNameText.setText(`${map.name}（11×7）`);
@@ -316,6 +331,9 @@ export default class BattleHexScene extends Phaser.Scene {
     this.battleMessage = '';
     this.animating = false;
     this.enemyStepCount = 0;
+    this.autoBattle = false;
+    this.autoStepCount = 0;
+    this.autoStepSide = null;
     this.infoTitle.setText('選中資訊');
     this.infoBody.setText('點戰場上的格子\n查看座標與船隻');
     this.legendLayer.setVisible(true);
@@ -349,7 +367,7 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private onBoardClick(hex: Hex): void {
-    if (this.animating) return;
+    if (this.animating || this.autoBattle) return;
     const map = this.currentMap();
     const unitAt = this.battle.units.find((unit) => unit.status === 'active' && hexEqual(unit.hex, hex));
 
@@ -547,6 +565,103 @@ export default class BattleHexScene extends Phaser.Scene {
     this.updateInfo(selected.hex, selected);
   }
 
+  private startAutoBattle(): void {
+    if (
+      this.autoBattle
+      || this.animating
+      || this.battle.winner !== null
+      || this.battle.activeSide !== 'player'
+    ) return;
+
+    const assessment = assessAutoBattle(this.battle.units);
+    const powerText = `我方戰力 ${Math.round(assessment.playerPower)}｜敵方戰力 ${Math.round(assessment.enemyPower)}`;
+    if (!assessment.enabled) {
+      this.battleMessage = `${powerText}
+需達敵方的 ${assessment.requiredRatio.toFixed(1)} 倍才能使用自動戰鬥。`;
+      this.infoTitle.setText('自動戰鬥不可用');
+      this.infoBody.setText(`${this.battleMessage}
+
+敵我戰力接近，需親自指揮。`);
+      toast(this, '敵我戰力接近，需親自指揮');
+      this.refreshHud();
+      return;
+    }
+
+    this.autoBattle = true;
+    this.autoStepCount = 0;
+    this.autoStepSide = null;
+    this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.reachable = [];
+    this.battleMessage = `${powerText}
+自動戰鬥已開始；我方回合可接手指揮。`;
+    this.infoTitle.setText('自動戰鬥');
+    this.infoBody.setText(this.battleMessage);
+    this.redrawOverlays();
+    this.refreshHud();
+    this.time.delayedCall(260, () => this.runAutoBattleStep());
+  }
+
+  private takeControl(): void {
+    if (!this.autoBattle || this.animating || this.battle.activeSide !== 'player') return;
+    this.autoBattle = false;
+    this.autoStepCount = 0;
+    this.autoStepSide = null;
+    this.battleMessage = '已接手指揮，請選擇我方船隻。';
+    this.infoTitle.setText('接手指揮');
+    this.infoBody.setText(this.battleMessage);
+    this.redrawOverlays();
+    this.refreshHud();
+  }
+
+  private runAutoBattleStep(): void {
+    if (!this.autoBattle || this.animating) return;
+    if (this.battle.winner !== null) {
+      this.autoBattle = false;
+      this.refreshHud();
+      return;
+    }
+
+    if (this.autoStepSide !== this.battle.activeSide) {
+      this.autoStepSide = this.battle.activeSide;
+      this.autoStepCount = 0;
+    }
+    this.autoStepCount += 1;
+    const decision = this.autoStepCount <= 64
+      ? chooseBattleAiDecision(this.battle, this.currentMap(), this.battle.activeSide)
+      : { command: { type: 'end_turn' } as BattleCommand, reason: 'end_turn' as const };
+    if (!decision) {
+      this.autoBattle = false;
+      toast(this, '自動戰鬥已停止，請接手指揮');
+      this.refreshHud();
+      return;
+    }
+
+    const sideBeforeCommand = this.battle.activeSide;
+    const result = this.applyCmd(decision.command);
+    if (!result.ok) {
+      this.autoBattle = false;
+      toast(this, `自動戰鬥指令無效：${result.error}`);
+      this.refreshHud();
+      return;
+    }
+    this.renderBoard();
+    this.redrawOverlays();
+    this.refreshHud();
+    this.playEvents(result.events, () => {
+      if (this.battle.winner !== null) {
+        this.autoBattle = false;
+        this.refreshHud();
+        return;
+      }
+      if (this.autoBattle) {
+        const nextDelay = sideBeforeCommand === 'enemy' && this.battle.activeSide === 'player' ? 1200 : 180;
+        this.time.delayedCall(nextDelay, () => this.runAutoBattleStep());
+      }
+    }, 150);
+  }
+
   private endTurn(): void {
     if (this.battle.winner !== null || this.animating) return;
     const events: BattleEvent[] = [];
@@ -594,12 +709,13 @@ export default class BattleHexScene extends Phaser.Scene {
     });
   }
 
-  private playEvents(events: BattleEvent[], onComplete?: () => void): void {
+  private playEvents(events: BattleEvent[], onComplete?: () => void, delayMs = 440): void {
     if (events.length === 0) {
       onComplete?.();
       return;
     }
     this.animating = true;
+    this.refreshHud();
     this.legendLayer.setVisible(false);
     const messages: string[] = [];
     const effectObjects: Phaser.GameObjects.GameObject[] = [];
@@ -611,7 +727,7 @@ export default class BattleHexScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(20);
       effectObjects.push(text);
-      this.tweens.add({ targets: text, y: center.y - 58, alpha: 0.1, duration: 420 });
+      this.tweens.add({ targets: text, y: center.y - 58, alpha: 0.1, duration: Math.min(420, delayMs) });
     };
     const effectLine = (fromId: string, toId: string, color: number): void => {
       const from = this.battle.units.find((item) => item.id === fromId);
@@ -628,7 +744,7 @@ export default class BattleHexScene extends Phaser.Scene {
       line.fillStyle(color, 0.45);
       line.fillCircle(b.x, b.y, 22);
       effectObjects.push(line);
-      this.tweens.add({ targets: line, alpha: 0, duration: 380 });
+      this.tweens.add({ targets: line, alpha: 0, duration: Math.min(380, delayMs) });
     };
 
     const hasBattleEnded = events.some((event) => event.type === 'battle_ended');
@@ -675,7 +791,18 @@ export default class BattleHexScene extends Phaser.Scene {
       || event.type === 'unit_waited'
       || event.type === 'unit_retreated'
     ));
-    if (enemyAction && !ended) {
+    const automaticAction = this.autoBattle && events.some((event) => (
+      event.type === 'unit_moved'
+      || event.type === 'unit_turned'
+      || event.type === 'cannon_fired'
+      || event.type === 'boarding'
+      || event.type === 'unit_waited'
+      || event.type === 'unit_retreated'
+    ));
+    if (automaticAction && !ended) {
+      this.infoTitle.setText('自動戰鬥');
+      this.infoBody.setText(this.battleMessage);
+    } else if (enemyAction && !ended) {
       this.infoTitle.setText('敵方行動');
       this.infoBody.setText(this.battleMessage);
     }
@@ -688,7 +815,7 @@ export default class BattleHexScene extends Phaser.Scene {
       const result = ended.winner === 'player' ? '我方勝利' : ended.winner === 'enemy' ? '我方失利' : '雙方脫離';
       this.infoBody.setText(`${result}\n\n${this.battleMessage}\n\n（獎勵與世界地圖回寫於 P7 接入）`);
     }
-    this.time.delayedCall(440, () => {
+    this.time.delayedCall(delayMs, () => {
       for (const object of effectObjects) object.destroy();
       this.animating = false;
       this.renderBoard();
@@ -875,9 +1002,11 @@ export default class BattleHexScene extends Phaser.Scene {
       const ready = this.battle.units
         .filter((unit) => unit.side === this.battle.activeSide && unit.status === 'active' && !unit.acted)
         .length;
-      this.roundText.setText(playerTurn
-        ? `回合 ${this.battle.round}／${this.battle.maxRounds}　玩家回合　尚可行動 ${ready} 艘`
-        : `回合 ${this.battle.round}／${this.battle.maxRounds}　敵方回合　AI 行動中 ${ready} 艘`);
+      this.roundText.setText(this.autoBattle
+        ? `回合 ${this.battle.round}／${this.battle.maxRounds}　自動戰鬥　${playerTurn ? '我方' : '敵方'} AI 行動中 ${ready} 艘`
+        : playerTurn
+          ? `回合 ${this.battle.round}／${this.battle.maxRounds}　玩家回合　尚可行動 ${ready} 艘`
+          : `回合 ${this.battle.round}／${this.battle.maxRounds}　敵方回合　AI 行動中 ${ready} 艘`);
     }
 
     const unit = this.selectedUnit();
@@ -885,6 +1014,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const targeting = !over && this.actionMode !== null;
     const actionReady = !over
       && !this.animating
+      && !this.autoBattle
       && playerTurn
       && !!unit
       && unit.status === 'active'
@@ -907,7 +1037,12 @@ export default class BattleHexScene extends Phaser.Scene {
     const confirmLabel = this.btnConfirm.getAt(1) as Phaser.GameObjects.Text;
     confirmLabel.setText(previewing ? '確認移動' : this.actionMode === 'cannon' ? '確認砲擊' : '確認接舷');
     this.btnCancel.setVisible(previewing || targeting);
-    this.btnEndTurn.setVisible(!over && !this.animating && playerTurn);
+    this.btnEndTurn.setVisible(!over && !this.animating && !this.autoBattle && playerTurn);
+
+    const assessment = assessAutoBattle(this.battle.units);
+    const showAutoButton = !over && !this.animating && !this.autoBattle && playerTurn;
+    this.btnAutoBattle.setVisible(showAutoButton).setAlpha(assessment.enabled ? 1 : 0.45);
+    this.btnTakeControl.setVisible(!over && !this.animating && this.autoBattle && playerTurn);
   }
 
   private updateInfo(hex: Hex, unitAt: BattleUnit | null): void {
