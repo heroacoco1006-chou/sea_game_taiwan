@@ -2,14 +2,14 @@
 title: 六角格回合制海戰素材清單
 type: asset-list
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-14
 author: Codex
-status: review
+status: final
 ---
 
 # 六角格回合制海戰素材清單
 
-> 素材包目前只供老闆驗收，尚未接入 `BattleHexScene`。
+> 素材包已於 P8 正式接入 `BattleHexScene`，並保留程序繪圖 fallback；P9 完整矩陣前仍由 `?battle=hex` 驗證。
 > 正式索引：`battle-hex-assets.json`；生成與後製紀錄：`battle-hex-prompts.md`。
 
 ## 一、素材資料夾
@@ -156,10 +156,11 @@ assets/m5/v2/battle-hex/
 | 旗艦／目標／耐久標記 | 7 |
 | Review contact sheets | 3 |
 
-## 十一、老闆確認結果與待確認項目
+## 十一、P8 接入與驗收結果
 
-1. 已確認：六方向 3/4 俯視船艦可保留。
-2. 已確認：船帆上的歷史風格旗幟／徽記保留。
-3. 已修正：海域改為復古舊海圖版，請以 `review/battle-hex-environment-contact-sheet.png` 驗收。
-4. 待確認：指令圖示是否適合手機縮小顯示。
-5. 待確認：島嶼比例與細節量是否符合六角格戰場。
+1. 六方向 3/4 俯視船艦、歷史風格旗幟／徽記與復古舊海圖海域均已正式接入。
+2. 8 船型以六格 spritesheet 依朝向顯示；地形、島礁、耐久框、旗艦標記、指令圖示、戰術覆蓋圖與事件特效均已接線。
+3. 指令圖示已在桌面 1280×720 與 iPad 1180×820 實測，縮小後仍可辨識；島嶼比例不遮船、不影響格位判讀。
+4. 戰術覆蓋圖使用 SCREEN 混合保留海面紋理；缺少任何美術材質時仍回退原程序船體／色塊／線框，不阻斷操作。
+5. runtime 約 7.55 MB，只由 `BattleHexScene.preload()` 單場按需載入，`BootScene` 預載為 0。
+6. `tools/validate-battle-art-p8.mjs` 固定檢查數量、PNG 尺寸、接線、fallback、延遲載入與 `USE_HEX_BATTLE=false` 安全旗標。

@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-07-14] P8 六角格海戰美術載入約定
+
+- `battleArt.ts` 是 P8 runtime 素材 URL 與材質 key 的唯一索引；素材只准由 `BattleHexScene.preload()` 載入，禁止移回 `BootScene`。8 船型以 256×256、六格橫向 spritesheet 載入；其他地形、島礁、特效、指令、覆蓋圖與標記按 manifest id 取用。
+- 三張戰場的海面／島礁畫布可依地圖 id 建立 Phaser Canvas Texture 快取；缺少海域、船隻、覆蓋圖、標記或特效時，必須保留既有程序色塊、船體、線框與文字 fallback，不得讓缺圖阻斷戰鬥。
+- 戰術覆蓋圖 PNG 具有黑色繪製底，顯示時必須使用 `Phaser.BlendModes.SCREEN` 才能保留海面紋理；不得改回一般 alpha 疊圖。
+- `tools/validate-battle-art-p8.mjs` 是 P8 固定閘門，須檢查 manifest final、數量／尺寸／接線／fallback／Boot 預載 0 與 `USE_HEX_BATTLE=false`。P9 完整人工矩陣完成前不得切正式預設。
+
 ## [2026-07-14] P7 六角格海戰整合邊界
 
 - `battleAdapter.ts` 是 v19 世界狀態與純海戰引擎間唯一轉換／結算邊界；WorldMap 的一般海盜、商館任務、主線／夥伴決鬥一律呼叫共用 `startBattle()`，不得各自重建編成或獎勵公式。

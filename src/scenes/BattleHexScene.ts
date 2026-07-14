@@ -109,6 +109,7 @@ const ERROR_TEXT: Partial<Record<BattleErrorCode, string>> = {
   NOT_BROADSIDE: '目標位於船首或船尾死角',
   BLOCKED_LOS: '砲線被島嶼阻擋',
   NOT_ADJACENT: '接舷必須靠在敵船旁邊',
+  NOT_ON_RETREAT_EDGE: '撤退必須先移動到我方左側邊界',
   REPAIR_ALREADY_USED: '這艘船本場已修整過',
   FULL_HULL: '耐久已滿，不需要修整',
 };
@@ -135,6 +136,7 @@ export default class BattleHexScene extends Phaser.Scene {
 
   private boardLayer!: Phaser.GameObjects.Container;
   private highlightG!: Phaser.GameObjects.Graphics;
+  private overlayArtLayer!: Phaser.GameObjects.Container;
   private selectionG!: Phaser.GameObjects.Graphics;
   private mapRingG!: Phaser.GameObjects.Graphics;
   private infoTitle!: Phaser.GameObjects.Text;
@@ -155,6 +157,7 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnAutoBattle!: Phaser.GameObjects.Container;
   private btnTakeControl!: Phaser.GameObjects.Container;
   private btnReturn!: Phaser.GameObjects.Container;
+  private btnRetreat!: Phaser.GameObjects.Container;
 
   constructor() {
     super('BattleHex');
@@ -281,6 +284,15 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnAutoBattle = makeButton(this, 1128, 602, 220, 42, '自動戰鬥', () => this.startAutoBattle(), 17);
     this.btnTakeControl = makeButton(this, 1128, 602, 220, 42, '接手指揮', () => this.takeControl(), 17);
     this.btnReturn = makeButton(this, 1185, 682, 110, 44, this.launch ? '\u8fd4\u56de\u5927\u6d77' : '\u8fd4\u56de\u6a19\u984c', () => this.leaveBattle(), 16);
+    this.btnRetreat = makeButton(this, 1128, 548, 220, 38, '撤退（需在我方邊界）', () => this.retreatSelected(), 14);
+    this.decorateCommandButton(this.btnTurnL, 'turn_left', -18, 10, 22);
+    this.decorateCommandButton(this.btnTurnR, 'turn_right', -18, 10, 22);
+    this.decorateCommandButton(this.btnCannon, 'cannon', -25, 13, 25);
+    this.decorateCommandButton(this.btnBoard, 'board', -25, 13, 25);
+    this.decorateCommandButton(this.btnRepair, 'repair', -25, 13, 25);
+    this.decorateCommandButton(this.btnWait, 'wait', -22, 12, 23);
+    this.decorateCommandButton(this.btnEndTurn, 'end_turn', -30, 14, 24);
+    this.decorateCommandButton(this.btnRetreat, 'retreat', -78, 12, 26);
     if (this.launch) this.btnReturn.setVisible(false);
 
     // 戰場層與覆蓋層
@@ -288,6 +300,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.highlightG = this.add.graphics().setDepth(3);
     this.selectionG = this.add.graphics().setDepth(4);
 
+    this.overlayArtLayer = this.add.container(0, 0).setDepth(2);
     // 點格：pointer 世界座標 → 最近六角格（makeButton 已 stopPropagation，UI 不會穿透）
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       const hex = pixelToAxial({ x: p.worldX, y: p.worldY }, HEX_SIZE, this.origin);
@@ -302,6 +315,20 @@ export default class BattleHexScene extends Phaser.Scene {
   // ---------- 戰鬥建立 ----------
 
   /** 無 launch 時保留 P4～P6 的 5 對 5 開發預覽；正式編成一律由 P7 adapter 傳入。 */
+
+  private decorateCommandButton(
+    button: Phaser.GameObjects.Container,
+    commandId: string,
+    iconX: number,
+    labelX: number,
+    size: number,
+  ): void {
+    const key = battleHexCommandKey(commandId);
+    if (!this.textures.exists(key)) return;
+    const label = button.list.find((child) => child instanceof Phaser.GameObjects.Text) as Phaser.GameObjects.Text | undefined;
+    if (label) label.setX(labelX);
+    button.add(this.add.image(iconX, 0, key).setDisplaySize(size, size));
+  }
   private buildUnits(map: BattleMapDefinition): BattleUnit[] {
     if (this.launch) {
       this.unitNames.clear();
@@ -623,6 +650,22 @@ export default class BattleHexScene extends Phaser.Scene {
     if (waiting) this.updateInfo(waiting.hex, waiting);
   }
 
+  private retreatSelected(): void {
+    const unit = this.selectedUnit();
+    if (!unit || this.animating) return;
+    const result = this.applyCmd({ type: 'retreat', unitId: unit.id });
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '目前無法撤退');
+      return;
+    }
+    this.reachable = [];
+    this.previewPath = null;
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+  }
+
   private turnSelected(direction: -1 | 1): void {
     const unit = this.selectedUnit();
     if (!unit) return;
@@ -808,6 +851,18 @@ export default class BattleHexScene extends Phaser.Scene {
       effectObjects.push(text);
       this.tweens.add({ targets: text, y: center.y - 58, alpha: 0.1, duration: Math.min(420, delayMs) });
     };
+    const effectArt = (unitId: string, id: string, size: number): void => {
+      const unit = this.battle.units.find((item) => item.id === unitId);
+      const key = battleHexEffectKey(id);
+      if (!unit || !this.textures.exists(key)) return;
+      const center = axialToPixel(unit.hex, HEX_SIZE, this.origin);
+      const art = this.add.image(center.x, center.y, key)
+        .setDisplaySize(size, size)
+        .setDepth(20)
+        .setScale(0.72);
+      effectObjects.push(art);
+      this.tweens.add({ targets: art, scale: 1.12, alpha: 0.08, duration: Math.min(420, delayMs) });
+    };
     const effectLine = (fromId: string, toId: string, color: number): void => {
       const from = this.battle.units.find((item) => item.id === fromId);
       const to = this.battle.units.find((item) => item.id === toId);
@@ -831,11 +886,14 @@ export default class BattleHexScene extends Phaser.Scene {
       if (event.type === 'cannon_fired') {
         audio.playSfx('cannon');
         effectLine(event.attackerId, event.targetId, 0xf2c14e);
+        effectArt(event.attackerId, 'cannon_flash', 52);
+        effectArt(event.targetId, 'cannon_smoke', 62);
         effectText(event.targetId, `-${event.damage} 耐久`, '#fff1a8');
         messages.push(`砲擊命中，造成 ${event.damage} 點耐久傷害。`);
       } else if (event.type === 'boarding') {
         audio.playSfx('board');
         effectLine(event.attackerId, event.targetId, 0xe67e22);
+        effectArt(event.targetId, 'boarding_hooks', 68);
         const outcome = event.outcome === 'won' ? '敵船投降' : event.outcome === 'balanced' ? '雙方退開' : '接舷失利';
         effectText(event.targetId, outcome, '#ffd2a1');
         messages.push(`接舷結果：${outcome}。`);
@@ -844,6 +902,9 @@ export default class BattleHexScene extends Phaser.Scene {
         messages.push(`修整完成，回復 ${event.amount} 點耐久。`);
       } else if (event.type === 'unit_status_changed') {
         const label = event.status === 'sunk' ? '失去戰力' : event.status === 'surrendered' ? '投降' : '退出戰場';
+        if (event.status === 'sunk') effectArt(event.unitId, 'water_splash', 72);
+        if (event.status === 'sunk') effectArt(event.unitId, 'deck_fire', 58);
+        if (event.status === 'surrendered') effectArt(event.unitId, 'surrender_flag', 54);
         effectText(event.unitId, label, '#ffffff');
         messages.push(`一艘船${label}。`);
       } else if (event.type === 'unit_waited') {
@@ -1092,65 +1153,109 @@ export default class BattleHexScene extends Phaser.Scene {
     bar.fillRect(center.x - barW / 2 + 1, barY + 1, (barW - 2) * pct, 4);
     if (done) bar.setAlpha(0.6);
     this.boardLayer.add(bar);
+    const hullFrameKey = battleHexMarkerKey('hull_bar_frame');
+    if (this.textures.exists(hullFrameKey)) {
+      const frame = this.add.image(center.x, barY + 3, hullFrameKey).setDisplaySize(48, 8);
+      if (done) frame.setAlpha(0.6);
+      this.boardLayer.add(frame);
+    }
+
 
     // 旗艦標記（不能只靠顏色與大小）
     if (unit.flagship) {
-      const star = this.add.text(center.x, barY - 12, '★', textStyle(16, '#f2c14e')).setOrigin(0.5);
-      if (done) star.setAlpha(0.7);
-      this.boardLayer.add(star);
+      const markerKey = battleHexMarkerKey(unit.side === 'player' ? 'flagship_player' : 'flagship_enemy');
+      if (this.textures.exists(markerKey)) {
+        const marker = this.add.image(center.x, barY - 15, markerKey).setDisplaySize(28, 28);
+        if (done) marker.setAlpha(0.7);
+        this.boardLayer.add(marker);
+      } else {
+        const star = this.add.text(center.x, barY - 12, '★', textStyle(16, '#f2c14e')).setOrigin(0.5);
+        if (done) star.setAlpha(0.7);
+        this.boardLayer.add(star);
+      }
     }
   }
 
+  private addOverlayArt(id: string, hex: Hex, alpha = 0.8): boolean {
+    const key = battleHexOverlayKey(id);
+    if (!this.textures.exists(key)) return false;
+    const center = axialToPixel(hex, HEX_SIZE, this.origin);
+    const art = this.add.image(center.x, center.y, key)
+      .setDisplaySize(HEX_SIZE * 2, Math.sqrt(3) * HEX_SIZE)
+      .setBlendMode(Phaser.BlendModes.SCREEN)
+      .setAlpha(alpha);
+    this.overlayArtLayer.add(art);
+    return true;
+  }
+  private addMarkerArt(id: string, hex: Hex, size: number): boolean {
+    const key = battleHexMarkerKey(id);
+    if (!this.textures.exists(key)) return false;
+    const center = axialToPixel(hex, HEX_SIZE, this.origin);
+    this.overlayArtLayer.add(this.add.image(center.x, center.y, key).setDisplaySize(size, size));
+    return true;
+  }
+
   private redrawOverlays(): void {
-    // 可移動格（青綠）與路徑預覽（白色點線）
+    this.overlayArtLayer.removeAll(true);
     this.highlightG.clear();
+    this.selectionG.clear();
+
+    for (const doneUnit of this.battle.units.filter((item) => item.status === 'active' && (item.moved || item.acted))) {
+      this.addOverlayArt('done', doneUnit.hex, 0.45);
+    }
+
     for (const item of this.reachable) {
+      if (this.addOverlayArt('move', item.hex, 0.72)) continue;
       const center = axialToPixel(item.hex, HEX_SIZE, this.origin);
       this.highlightG.fillStyle(0x37d0a5, 0.26);
       this.highlightG.fillPoints(this.hexCorners(center), true);
       this.highlightG.lineStyle(1.5, 0x37d0a5, 0.7);
       this.highlightG.strokePoints(this.hexCorners(center), true);
     }
+
     if (this.actionMode && this.selectedUnit()) {
       for (const target of this.battle.units.filter((unit) => unit.side === 'enemy' && unit.status === 'active')) {
         if (this.targetError(target) !== null) continue;
-        const center = axialToPixel(target.hex, HEX_SIZE, this.origin);
-        const color = this.actionMode === 'cannon' ? 0xe74c3c : 0xe67e22;
-        this.highlightG.fillStyle(color, 0.24);
-        this.highlightG.fillPoints(this.hexCorners(center), true);
-        this.highlightG.lineStyle(2, color, 0.9);
-        this.highlightG.strokePoints(this.hexCorners(center), true);
+        const overlayId = this.actionMode === 'cannon' ? 'attack' : 'danger';
+        const markerId = this.actionMode === 'cannon' ? 'cannon_target' : 'boarding_target';
+        if (!this.addOverlayArt(overlayId, target.hex, 0.78)) {
+          const center = axialToPixel(target.hex, HEX_SIZE, this.origin);
+          const color = this.actionMode === 'cannon' ? 0xe74c3c : 0xe67e22;
+          this.highlightG.fillStyle(color, 0.24);
+          this.highlightG.fillPoints(this.hexCorners(center), true);
+          this.highlightG.lineStyle(2, color, 0.9);
+          this.highlightG.strokePoints(this.hexCorners(center), true);
+        }
+        this.addMarkerArt(markerId, target.hex, 26);
       }
       const target = this.battle.units.find((unit) => unit.id === this.targetUnitId);
-      if (target) {
+      if (target && !this.addOverlayArt('selected', target.hex, 0.9)) {
         const center = axialToPixel(target.hex, HEX_SIZE, this.origin);
         this.highlightG.lineStyle(3, 0xffffff, 0.95);
         this.highlightG.strokePoints(this.hexCorners(center), true);
       }
     }
+
     if (this.previewPath) {
       for (let index = 1; index < this.previewPath.length; index += 1) {
-        const center = axialToPixel(this.previewPath[index], HEX_SIZE, this.origin);
+        const hex = this.previewPath[index];
         const isEnd = index === this.previewPath.length - 1;
-        this.highlightG.fillStyle(0xffffff, isEnd ? 0.95 : 0.7);
-        this.highlightG.fillCircle(center.x, center.y, isEnd ? 9 : 5);
-        if (isEnd) {
-          this.highlightG.lineStyle(2, 0xffffff, 0.9);
-          this.highlightG.strokePoints(this.hexCorners(center), true);
+        if (!this.addMarkerArt('route_dot', hex, isEnd ? 20 : 14)) {
+          const center = axialToPixel(hex, HEX_SIZE, this.origin);
+          this.highlightG.fillStyle(0xffffff, isEnd ? 0.95 : 0.7);
+          this.highlightG.fillCircle(center.x, center.y, isEnd ? 9 : 5);
         }
+        if (isEnd) this.addOverlayArt('selected', hex, 0.8);
       }
     }
 
-    // 選中船的金框
-    this.selectionG.clear();
     const unit = this.selectedUnit();
-    if (unit && unit.status === 'active') {
+    if (unit && unit.status === 'active' && !this.addOverlayArt('selected', unit.hex, 0.9)) {
       const center = axialToPixel(unit.hex, HEX_SIZE, this.origin);
       this.selectionG.lineStyle(3, COLORS.gold, 0.95);
       this.selectionG.strokePoints(this.hexCorners(center), true);
     }
   }
-
   private completeLaunchBattle(): string[] {
     if (!this.launch || this.settlementApplied || this.battle.winner === null) return this.settlementLines;
     const settlement = settleHexBattle(this.state, this.launch, this.battle);
@@ -1209,6 +1314,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnBoard.setVisible(actionReady);
     this.btnRepair.setVisible(actionReady);
     this.btnWait.setVisible(actionReady);
+    this.btnRetreat.setVisible(actionReady);
 
     const target = this.battle.units.find((item) => item.id === this.targetUnitId);
     const validTarget = !!target && this.targetError(target) === null;

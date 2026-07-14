@@ -43,7 +43,7 @@ for (const [token, label] of [
   ['this.enemyStepCount <= 64', '畫面敵方回合防死循環上限'],
   ['this.battle.activeSide === \'enemy\'', '敵方回合狀態鎖'],
   ["query.get('p6demo')", '固定瀏覽器 AI 驗收案例'],
-  ['六角格海戰（P6-2 預覽）', 'P6-2 向後相容預覽標示'],
+  ['六角格海戰（P8 美術整合）', 'P8 向後相容預覽標示'],
 ]) requireText(scene, token, label);
 if (scene.includes('P5 預覽版敵方直接結束回合')) fail('不得保留 P5 直接跳過敵方回合');
 

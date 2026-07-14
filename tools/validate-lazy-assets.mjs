@@ -11,6 +11,8 @@ const port = read('src/scenes/PortScene.ts');
 const worldMap = read('src/scenes/WorldMapScene.ts');
 const shipyard = read('src/scenes/ShipyardScene.ts');
 const battle = read('src/scenes/BattleScene.ts');
+const battleHex = read('src/scenes/BattleHexScene.ts');
+const battleHexArt = read('src/battle/battleArt.ts');
 const art = read('src/art.ts');
 const errors = [];
 
@@ -30,10 +32,17 @@ const bootForbidden = [
   'SHIP_WORLD_URLS', 'SHIP_WORLD_DIRECTIONAL_URLS', 'SHIP_BATTLE_URLS', 'SHIP_CARD_URLS',
   'CHARACTER_WALK_URLS', 'SHIP_EQUIPMENT_URLS', 'PORT_BUILDING_URLS',
   'PORT_TOWN_BUILDING_URLS', 'PORT_TOWN_BACKGROUND_URLS', 'HARBOR_SCENE_URLS',
+  'BATTLE_HEX_SHIP_SHEET_URLS', 'BATTLE_HEX_TERRAIN_URLS', 'BATTLE_HEX_EFFECT_URLS',
 ];
 for (const name of bootForbidden) {
   if (boot.includes(name)) errors.push(`BootScene 仍引用延遲群組 ${name}`);
 }
+if (!/preload\(\): void/.test(battleHex)) errors.push('BattleHexScene 缺少 preload()');
+if (!/Object\.entries\(BATTLE_HEX_SHIP_SHEET_URLS\)/.test(battleHex)) errors.push('BattleHexScene 未按需載入船隻方向圖');
+if (!/this\.load\.spritesheet\(key, url/.test(battleHex)) errors.push('BattleHexScene 未以 spritesheet 載入六方向船圖');
+if (!/this\.textures\.exists\(key\)/.test(battleHex)) errors.push('BattleHexScene 海戰素材缺少材質快取防重載');
+if (!/import\.meta\.glob/.test(battleHexArt)) errors.push('battleArt.ts 缺少 build-time 素材 URL manifest');
+
 if (!/portTownBackgroundUrl\(bgId\)/.test(port)) errors.push('PortScene 未載入當前主題背景');
 if (!/portTownBuildingUrlsForCulture\(culture\)/.test(port)) errors.push('PortScene 未載入當前文化建築');
 if (!/harborSceneUrl\(harborId\)/.test(port)) errors.push('PortScene 未載入當前港景 fallback');
@@ -63,6 +72,7 @@ console.log(`章節背景 manifest：${chapterFiles.length} 張｜Boot 預載：
 console.log(`圖鑑插圖 manifest：${codexFiles.length} 張｜Boot 預載：0 張｜Info 單次目標：1 張`);
 console.log(`港町：${townBackgroundFiles.length} 主題背景／${townBuildingFiles.length} 文化建築／${harborFiles.length} 港景｜Boot 預載：0 張`);
 console.log('船隻：世界圖、方向圖、海戰圖、船卡、裝備圖｜Boot 預載：0 張｜使用場景按需載入');
+console.log('六角格海戰：船隻、地形、島嶼、特效、指令圖示｜Boot 預載：0 張｜BattleHex 單場按需載入');
 if (chapterFiles.length !== 30) errors.push(`預期 30 張正式章節背景，實際 ${chapterFiles.length} 張`);
 if (codexFiles.length !== 120) errors.push(`預期 120 張正式圖鑑插圖，實際 ${codexFiles.length} 張`);
 if (townBackgroundFiles.length !== 4) errors.push(`預期 4 張正式港町主題背景，實際 ${townBackgroundFiles.length} 張`);

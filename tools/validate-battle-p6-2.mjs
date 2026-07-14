@@ -43,7 +43,7 @@ for (const [token, label] of [
   ["? 1200 : 180", '新回合 1.2 秒接手窗口'],
   ['this.time.delayedCall(nextDelay, () => this.runAutoBattleStep())', '加速逐步播放'],
   ["p6demo === 'auto'", '瀏覽器固定可用案例'],
-  ['六角格海戰（P6-2 預覽）', 'P6-2 預覽標示'],
+  ['六角格海戰（P8 美術整合）', 'P8 預覽標示'],
 ]) requireText(scene, token, label);
 if (scene.includes('sidePower(')) fail('Scene 不得自行重算艦隊戰力');
 

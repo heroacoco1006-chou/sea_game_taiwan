@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "review",
+  "status": "final",
   "style": "V2 refined hand-painted 2D historical sailing RPG",
   "generator": "OpenAI built-in image generation plus local Pillow post-processing",
   "sources": {

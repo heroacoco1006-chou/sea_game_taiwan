@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-07-14] 開發 | 操作者：Codex | P8 正式美術接入完成
+
+- 新增 `battleArt.ts`，由 `BattleHexScene.preload()` 按需載入 8 船型六方向 spritesheet、3 復古海域、6 島礁、6 特效、8 指令圖示、6 戰術覆蓋圖與 7 標記；BootScene 預載維持 0。
+- 三張戰場依地圖生成並快取復古海圖畫布，船隻按實際船型／朝向顯示；耐久框、旗艦標記、移動／攻擊／路徑提示與砲擊／接舷／投降／擊沉特效完成。覆蓋圖改用 SCREEN 混合，避免黑底遮住海面。
+- 補上既有 engine 已支援但場景尚未露出的撤退按鈕；所有 P8 素材仍保留程序船體、地形色塊、線框與文字 fallback，缺圖不阻斷戰鬥。
+- 新增 `validate-battle-art-p8.mjs`，固定檢查 8×6 船圖、全部素材數量／PNG 尺寸、Scene 接線、fallback、runtime 7.55 MB、Boot 預載 0 與 `USE_HEX_BATTLE=false`；lazy validator 同步納入海戰素材。
+- P1～P7 共 50 組規則案例、120 場 AI 雙次重播、P8 素材、觸控、lazy load、15 場景 UI、港町、主線、夥伴、v19 遷移與 V3 地理回歸均通過。production build 成功（461 modules；僅既有大型 chunk 提醒）。
+- 桌面 1280×720 五船案例與 iPad 1180×820 劇情案例實測：復古海圖、船型、旗艦／耐久標記、選船覆蓋圖與指令圖示正常，無頁面溢位，當次 console 0 error。P9 完整矩陣前 `USE_HEX_BATTLE=false` 不變。
+
+---
+
 ## [2026-07-14] 開發 | 操作者：Codex | P7 既有專案整合完成
 
 - 新增 `battleEncounters.json` 共 13 組遭遇與 `battleAdapter.ts`：玩家實際 1～5 艘船一對一建立單位，tier 1／2／3 採核准機率，具名大型戰役固定編成，故事友軍只在不足 5 艘時暫時加入且不寫入存檔。
