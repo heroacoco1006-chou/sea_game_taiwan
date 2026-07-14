@@ -17,6 +17,9 @@ import {
   explorationIconKey, facilityIconKey, shipWorldKey, shipWorldUrl,
   shipWorldDirectionalKey, shipWorldDirectionalUrl, worldArtKey,
 } from '../art';
+import { battleSceneKey } from '../battle/battleConfig';
+import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAdapter';
+
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
 import { TouchControls } from '../touchControls';
@@ -822,7 +825,18 @@ export default class WorldMapScene extends Phaser.Scene {
       return;
     }
     saveGame(this.state);
-    this.scene.start('Battle', { questCombat: true });
+    this.startBattle({ kind: 'quest', tier: this.state.quest?.type === 'combat' ? this.state.quest.enemyTier : 1, questCombat: true }, { questCombat: true });
+  }
+
+  /** P7: all three world-map battle entries share one scene key and one launch adapter. */
+  private startBattle(request: HexBattleRequest, legacyData: Record<string, unknown> = {}): void {
+    const sceneKey = battleSceneKey();
+    if (sceneKey === 'BattleHex') {
+      const launch = createHexBattleLaunch(this.state, request);
+      this.scene.start(sceneKey, { mapId: launch.mapId, launch });
+      return;
+    }
+    this.scene.start(sceneKey, legacyData);
   }
 
   // ----- 一天結束：消耗補給、疲勞累積、換風、擲事件 -----
@@ -969,7 +983,13 @@ export default class WorldMapScene extends Phaser.Scene {
             label: '應戰！（進入海戰）',
             onPick: () => {
               saveGame(s);
-              this.scene.start('Battle', duel.kind === 'story' ? { storyDuelChapterId: duel.id } : { mateDuelId: duel.id });
+              const request: HexBattleRequest = duel.kind === 'story'
+                ? { kind: 'story', tier: duel.tier, duelName: duel.name, storyDuelChapterId: duel.id }
+                : { kind: 'mate', tier: duel.tier, duelName: duel.name, mateDuelId: duel.id };
+              this.startBattle(
+                request,
+                duel.kind === 'story' ? { storyDuelChapterId: duel.id } : { mateDuelId: duel.id },
+              );
             },
           },
           { label: '暫避鋒頭（之後還會遇到）', onPick: () => {} },
@@ -988,7 +1008,7 @@ export default class WorldMapScene extends Phaser.Scene {
             label: '應戰！（進入海戰）',
             onPick: () => {
               saveGame(s);
-              this.scene.start('Battle');
+              this.startBattle({ kind: 'pirate', tier: s.day < 60 ? 1 : s.day < 180 ? 2 : 3 });
             },
           },
           {

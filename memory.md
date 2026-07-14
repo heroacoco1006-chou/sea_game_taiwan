@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-07-14] P7 六角格海戰整合邊界
+
+- `battleAdapter.ts` 是 v19 世界狀態與純海戰引擎間唯一轉換／結算邊界；WorldMap 的一般海盜、商館任務、主線／夥伴決鬥一律呼叫共用 `startBattle()`，不得各自重建編成或獎勵公式。
+- 玩家單位只對應 `state.ship`＋`state.escorts`；臨時故事友軍可補至我方 5 艘但不回寫。一般與具名敵軍編成一律讀 `battleEncounters.json`，禁止回退到 P3～P6 固定 5 對 5 展示資料。
+- `BattleHexScene` 只在 engine 已產生 winner 後呼叫一次 `settleHexBattle()` 並存檔；戰鬥中不得顯示可免費返回世界地圖的按鈕。結算只回寫玩家自有船，友軍與敵船不能進入 v19 存檔。
+- P7 完成後 `USE_HEX_BATTLE=false` 仍是正式安全預設；`?battle=hex` 只供整合驗證，須到 P9 全矩陣通過才可提案切換。
+
 ## [2026-07-13] P6-2 自動戰鬥實作約定
 
 - 啟用門檻固定走 `battleRules.json autoBattle.minAdvantageRatio`（初版 1.5）；唯一戰力公式為 `battleRules.sidePower()`：只計 active 船隻的「耐久＋砲數×砲種威力×基準傷害＋水手×0.5」，旗艦整艘乘 1.2。Scene／P7 adapter 不得複製公式。

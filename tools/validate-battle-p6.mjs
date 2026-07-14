@@ -56,7 +56,7 @@ for (const [token, label] of [
 ]) requireText(`${simulator}\n${aiTests}`, token, label);
 
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(config)) fail('P7 前正式六角格入口旗標必須維持 false');
-if (worldMap.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHexScene');
+if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 if (!rulesJson.includes('autoBattle')) fail('P6-2 後必須保留資料化自動戰鬥規則');
 
 const reasonCount = (ai.match(/reason:\s*'/g) ?? []).length;

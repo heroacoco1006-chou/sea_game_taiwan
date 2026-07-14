@@ -100,10 +100,10 @@ const pureSources = await Promise.all([
   'src/battle/battleRules.ts',
   'src/battle/battleEngine.ts',
 ].map(async (path) => [path, await readFile(new URL(path, ROOT), 'utf8')]));
-// P3 起：BattleHexScene 必須註冊，但功能旗標仍關、正式海戰入口（WorldMapScene）不得指向它
+// P7：BattleHexScene 已接上共用 adapter，但正式預設仍由功能旗標維持舊海戰。
 if (!mainSource.includes('BattleHexScene')) fail('P3 起 main.ts 必須註冊 BattleHexScene');
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(configSource)) fail('P7 全回歸通過前功能旗標必須維持 false');
-if (worldMapSource.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHex（正式入口不變）');
+if (!worldMapSource.includes('battleSceneKey') || !worldMapSource.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 // 地圖資料的欄列座標必須經 offsetToAxial 轉換後才畫圖／查地形，不得直接當 axial 用
 if (!hexSceneSource.includes('offsetToAxial')) fail('BattleHexScene 必須使用 offsetToAxial 轉換欄列座標');
 for (const [path, source] of pureSources) {
@@ -112,6 +112,6 @@ for (const [path, source] of pureSources) {
 }
 
 console.log(`地圖 ${mapsData.maps.length} 張｜id 唯一｜地形格 ${mapsData.maps.reduce((sum, map) => sum + map.terrain.length, 0)} 格｜部署格 ${mapsData.maps.reduce((sum, map) => sum + map.deployments.player.length + map.deployments.enemy.length, 0)} 格`);
-console.log('正式流程：BattleHexScene 已註冊（僅 ?hexmap 預覽）｜USE_HEX_BATTLE=false｜WorldMapScene 未引用');
+console.log('正式流程：BattleHexScene 已接三入口（?battle=hex 測試）｜USE_HEX_BATTLE=false｜預設仍使用舊海戰');
 console.log('純規則：hex／rules／engine 未依賴 Phaser，未直接使用 Math.random()');
 console.log('\n✅ P3 六角格海戰資料、骨架與戰場顯示檢查通過');

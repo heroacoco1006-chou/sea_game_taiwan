@@ -34,11 +34,13 @@ import { applyCommand, createBattleState } from '../battle/battleEngine';
 import { chooseBattleAiDecision } from '../battle/battleAi';
 import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle, toast } from '../ui';
 import { audio } from '../audio';
+import { saveGame, type GameState } from '../state';
+import { settleHexBattle, type HexBattleLaunchData } from '../battle/battleAdapter';
 
 /**
- * P6-2 玩家行動、敵方 AI 與自動戰鬥（預覽）：BattleHexScene 只送 BattleCommand 給純引擎、
+ * P7 正式流程整合：BattleHexScene 只送 BattleCommand 給純引擎、
  * 依回傳 state／events 重繪；AI 也只產生命令，移動、傷害、接舷與勝敗一律由純規則層計算。
- * 尚未接正式流程；USE_HEX_BATTLE=false，只能經 `?hexmap=1` 開發參數進入。
+ * USE_HEX_BATTLE=false 時，僅能經 `?battle=hex` 或開發示範參數進入新流程。
  * 正式素材待老闆核可後於 P8 由本場景 preload() 按需載入（不得回 BootScene 預載）。
  */
 
@@ -110,6 +112,9 @@ export default class BattleHexScene extends Phaser.Scene {
   private autoBattle = false;
   private autoStepCount = 0;
   private autoStepSide: Side | null = null;
+  private launch: HexBattleLaunchData | null = null;
+  private settlementApplied = false;
+  private settlementLines: string[] = [];
 
   private boardLayer!: Phaser.GameObjects.Container;
   private highlightG!: Phaser.GameObjects.Graphics;
@@ -132,13 +137,22 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnEndTurn!: Phaser.GameObjects.Container;
   private btnAutoBattle!: Phaser.GameObjects.Container;
   private btnTakeControl!: Phaser.GameObjects.Container;
+  private btnReturn!: Phaser.GameObjects.Container;
 
   constructor() {
     super('BattleHex');
   }
 
-  init(data: { mapId?: string } = {}): void {
-    if (data.mapId && MAPS.some((m) => m.id === data.mapId)) this.mapId = data.mapId;
+  init(data: { mapId?: string; launch?: HexBattleLaunchData } = {}): void {
+    this.launch = data.launch ?? null;
+    this.settlementApplied = false;
+    this.settlementLines = [];
+    const requestedMap = this.launch?.mapId ?? data.mapId;
+    if (requestedMap && MAPS.some((map) => map.id === requestedMap)) this.mapId = requestedMap;
+  }
+
+  private get state(): GameState {
+    return this.registry.get('state') as GameState;
   }
 
   private currentMap(): BattleMapDefinition {
@@ -158,7 +172,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const top = this.add.graphics();
     top.fillStyle(0x2c1b0d, 0.85);
     top.fillRoundedRect(8, 8, BASE_W - 16, 46, 8);
-    this.add.text(24, 31, '六角格海戰（P6-2 預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
+    this.add.text(24, 31, '六角格海戰（P7 整合預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
     this.mapNameText = this.add.text(BASE_W / 2 - 100, 31, '', textStyle(20, '#f2c14e')).setOrigin(0.5);
     this.roundText = this.add.text(BASE_W - 24, 31, '', textStyle(18, '#e8d9b0')).setOrigin(1, 0.5);
 
@@ -209,7 +223,8 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnEndTurn = makeButton(this, 1045, 682, 100, 44, '結束回合', () => this.endTurn(), 15);
     this.btnAutoBattle = makeButton(this, 1128, 602, 220, 42, '自動戰鬥', () => this.startAutoBattle(), 17);
     this.btnTakeControl = makeButton(this, 1128, 602, 220, 42, '接手指揮', () => this.takeControl(), 17);
-    makeButton(this, 1185, 682, 110, 44, '返回標題', () => this.scene.start('Title'), 16);
+    this.btnReturn = makeButton(this, 1185, 682, 110, 44, this.launch ? '\u8fd4\u56de\u5927\u6d77' : '\u8fd4\u56de\u6a19\u984c', () => this.leaveBattle(), 16);
+    if (this.launch) this.btnReturn.setVisible(false);
 
     // 戰場層與覆蓋層
     this.boardLayer = this.add.container(0, 0);
@@ -229,8 +244,13 @@ export default class BattleHexScene extends Phaser.Scene {
 
   // ---------- 戰鬥建立 ----------
 
-  /** P4 示範編成：5 對 5，index 1 為大型旗艦；正式艦隊接入是 P7 adapter 的事 */
+  /** 無 launch 時保留 P4～P6 的 5 對 5 開發預覽；正式編成一律由 P7 adapter 傳入。 */
   private buildUnits(map: BattleMapDefinition): BattleUnit[] {
+    if (this.launch) {
+      this.unitNames.clear();
+      for (const [id, name] of Object.entries(this.launch.unitNames)) this.unitNames.set(id, name);
+      return this.launch.units.map((unit) => ({ ...unit, hex: { ...unit.hex } }));
+    }
     const sizes: ShipSize[] = ['medium', 'large', 'medium', 'small', 'small'];
     const stats: Record<ShipSize, { movePoints: number; hullMax: number; cannons: number }> = {
       small: { movePoints: 4, hullMax: 80, cannons: 3 },
@@ -318,12 +338,14 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   private switchMap(mapId: string): void {
+    if (this.launch && mapId !== this.launch.mapId) return;
     if (this.battle && (this.animating || this.autoBattle || this.battle.activeSide === 'enemy')) return;
     this.mapId = mapId;
     const map = this.currentMap();
     this.mapNameText.setText(`${map.name}（11×7）`);
-    this.rng = createSeededRng(BATTLE_SEED);
-    this.battle = createBattleState({ seed: BATTLE_SEED, mapId, units: this.buildUnits(map) });
+    const battleSeed = this.launch?.seed ?? BATTLE_SEED;
+    this.rng = createSeededRng(battleSeed);
+    this.battle = createBattleState({ seed: battleSeed, mapId, units: this.buildUnits(map) });
     this.reachable = [];
     this.previewPath = null;
     this.actionMode = null;
@@ -813,7 +835,9 @@ export default class BattleHexScene extends Phaser.Scene {
     if (ended?.type === 'battle_ended') {
       this.infoTitle.setText('戰鬥結束');
       const result = ended.winner === 'player' ? '我方勝利' : ended.winner === 'enemy' ? '我方失利' : '雙方脫離';
-      this.infoBody.setText(`${result}\n\n${this.battleMessage}\n\n（獎勵與世界地圖回寫於 P7 接入）`);
+      const lines = this.completeLaunchBattle();
+      if (lines.length > 0) this.infoBody.setText(`${this.battleMessage}\n\n${lines.join('\n')}`);
+      else this.infoBody.setText(`${result}\n\n${this.battleMessage}\n\n（開發預覽不回寫世界地圖）`);
     }
     this.time.delayedCall(delayMs, () => {
       for (const object of effectObjects) object.destroy();
@@ -992,6 +1016,26 @@ export default class BattleHexScene extends Phaser.Scene {
     }
   }
 
+  private completeLaunchBattle(): string[] {
+    if (!this.launch || this.settlementApplied || this.battle.winner === null) return this.settlementLines;
+    const settlement = settleHexBattle(this.state, this.launch, this.battle);
+    this.settlementApplied = true;
+    this.settlementLines = settlement.lines;
+    this.btnReturn.setVisible(true);
+    saveGame(this.state);
+    return this.settlementLines;
+  }
+
+  private leaveBattle(): void {
+    if (this.launch) {
+      if (this.battle?.winner === null) return;
+      this.completeLaunchBattle();
+      saveGame(this.state);
+      this.scene.start('WorldMap');
+      return;
+    }
+    this.scene.start('Title');
+  }
   private refreshHud(): void {
     const over = this.battle.winner !== null;
     const playerTurn = this.battle.activeSide === 'player';

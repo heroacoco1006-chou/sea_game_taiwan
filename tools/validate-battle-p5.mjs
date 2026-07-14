@@ -44,7 +44,7 @@ for (const [pattern, label] of [
 requireText(rules, 'export function validateBoardingAttack', '純規則接舷合法性函式');
 requireText(engine, 'validateBoardingAttack(actor, target!)', '引擎共用接舷合法性函式');
 requireText(config, 'USE_HEX_BATTLE = false', '關閉正式六角格入口旗標');
-if (worldMap.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHexScene');
+if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 
 const eventBranches = (scene.match(/event\.type ===/g) ?? []).length;
 const actionButtons = (scene.match(/this\.btn(?:Cannon|Board|Repair|Wait)/g) ?? []).length;

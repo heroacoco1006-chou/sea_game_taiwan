@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-07-14] 開發 | 操作者：Codex | P7 既有專案整合完成
+
+- 新增 `battleEncounters.json` 共 13 組遭遇與 `battleAdapter.ts`：玩家實際 1～5 艘船一對一建立單位，tier 1／2／3 採核准機率，具名大型戰役固定編成，故事友軍只在不足 5 艘時暫時加入且不寫入存檔。
+- WorldMap 的一般海盜、商館海戰任務、主線／夥伴決鬥三處入口統一經 `startBattle()`、`battleSceneKey()` 與 adapter；`?battle=hex` 進新流程，`USE_HEX_BATTLE=false` 時正式預設仍走舊 `BattleScene`。
+- `BattleHexScene` 接上 launch 與一次性 settlement：回寫玩家船況／水手、任務、聲望、經驗、戰利品與戰敗最近港口，維持 v19 存檔；未結束前隱藏返回按鈕，避免免費脫離戰鬥。
+- 新增 5 組 P7 adapter 專測與靜態 validator，並更新 P3～P6 validators 的整合邊界；P1～P7、120 場模擬、觸控、lazy load、15 場景 UI、港町、主線、夥伴、存檔遷移與 V3 地理完整回歸均通過。
+- production build 通過（416 modules；僅既有大型 chunk 提醒）。桌面 1280×720 的海盜／任務／劇情／夥伴／五船案例、iPad 1180×820 劇情友軍大戰及無參數標題流程均實測正常，console 0 error。
+- P7 完成；下一段為 P8 已驗收素材逐批接入，P9 全矩陣通過前不切正式預設。
+
+---
+
 ## [2026-07-13] 開發 | 操作者：Codex | P6-2 自動戰鬥
 
 - `battleRules.json` 新增 `autoBattle.minAdvantageRatio=1.5`；純 `sidePower()` 依「耐久＋砲數×砲種威力×基準傷害＋水手×0.5，旗艦整艘×1.2」計算仍在場船隻，`assessAutoBattle()` 統一回傳可用性與敵我戰力，Scene 不重算。

@@ -4,6 +4,8 @@ import {
   STORY_BACKGROUND_URLS, TITLE_BG_URL,
   portraitKey, worldArtKey, explorationIconKey, facilityIconKey, storyBackgroundKey,
 } from '../art';
+import { newGame, newPlayerShip } from '../state';
+import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAdapter';
 
 /** 程式產生基礎貼圖；M5 起載入 V2 美術素材，缺圖時仍保留 fallback */
 export default class BootScene extends Phaser.Scene {
@@ -29,7 +31,29 @@ export default class BootScene extends Phaser.Scene {
     this.makeGoodsIcons();
     // 開發預覽：?hexmap=1（或 ?hexmap=地圖id）直接開六角格海戰 P3 戰場預覽；
     // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
-    const hexMapParam = new URLSearchParams(window.location.search).get('hexmap');
+    const query = new URLSearchParams(window.location.search);
+    const p7demo = query.get('p7demo');
+    if (query.get('battle') === 'hex' && p7demo) {
+      const state = newGame('lin');
+      if (p7demo === 'fleet5') {
+        state.escorts = ['junk_large', 'shuinsen', 'caravel', 'fuchuan']
+          .map((typeId, index) => newPlayerShip(typeId, { x: state.ship.x + index + 1, y: state.ship.y }));
+        state.crew = 140;
+      }
+      this.registry.set('state', state);
+      const request: HexBattleRequest = p7demo === 'story'
+        ? { kind: 'story', tier: 3, duelName: '\u6e05\u65b9\u6504\u622a\u8239', storyDuelChapterId: 'p7_demo' }
+        : p7demo === 'mate'
+          ? { kind: 'mate', tier: 3, duelName: 'P7 demo', mateDuelId: 'p7_demo' }
+          : p7demo === 'quest'
+            ? { kind: 'quest', tier: 2, questCombat: true }
+            : { kind: 'pirate', tier: p7demo === 'fleet5' ? 3 : 1 };
+      const launch = createHexBattleLaunch(state, request, 20260714);
+      this.scene.start('BattleHex', { mapId: launch.mapId, launch });
+      return;
+    }
+
+    const hexMapParam = query.get('hexmap');
     if (hexMapParam !== null) {
       this.scene.start('BattleHex', { mapId: hexMapParam });
       return;

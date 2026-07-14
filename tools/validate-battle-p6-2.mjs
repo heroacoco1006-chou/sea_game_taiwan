@@ -65,8 +65,8 @@ for (const token of [
 ]) requireText(spec, token, 'P7 核准規則');
 
 if (!/USE_HEX_BATTLE\s*=\s*false/.test(config)) fail('P7 前正式六角格入口旗標必須維持 false');
-if (worldMap.includes('BattleHex')) fail('P7 前 WorldMapScene 不得引用 BattleHexScene');
-if (JSON.parse(encountersJson).encounters.length !== 0) fail('P6-2 不得提前填入 P7 正式遭遇資料');
+if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
+if (JSON.parse(encountersJson).encounters.length === 0) fail('P7 encounter data missing');
 
 console.log('門檻 1.5｜雙方共用 AI｜自動加速｜我方回合可接手｜1v1／2v3／5v5');
 console.log('P7 閘門：玩家實際艦隊、tier 機率、具名大戰、故事友軍均已寫入規格');

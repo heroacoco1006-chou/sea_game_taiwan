@@ -3,7 +3,7 @@
   "encounters": [
     { "id": "pirate_t1", "kind": "pirate", "tier": 1, "mapId": "open_sea", "loot": 180, "countWeights": [[1, 0.8], [2, 0.2]], "ships": [["junk_small", 2, 12], ["junk_small", 2, 12]] },
     { "id": "pirate_t2", "kind": "pirate", "tier": 2, "mapId": "island_channel", "loot": 420, "countWeights": [[2, 0.6], [3, 0.4]], "ships": [["junk_large", 4, 22], ["shuinsen", 3, 20], ["junk_small", 2, 12]] },
-    { "id": "pirate_t3", "kind": "pirate", "tier": 3, "mapId": "reef_passage", "loot": 760, "countWeights": [[3, 0.4], [4, 0.6]], "ships": [["fuchuan", 6, 35, "ct_hongyi", "????"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
+    { "id": "pirate_t3", "kind": "pirate", "tier": 3, "mapId": "reef_passage", "loot": 760, "countWeights": [[3, 0.4], [4, 0.6]], "ships": [["fuchuan", 6, 35, "ct_hongyi", "\u6d77\u76dc\u65d7\u8266"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
     { "id": "quest_t1", "kind": "quest", "tier": 1, "mapId": "open_sea", "loot": 180, "countWeights": [[1, 0.8], [2, 0.2]], "ships": [["junk_small", 2, 12], ["junk_small", 2, 12]] },
     { "id": "quest_t2", "kind": "quest", "tier": 2, "mapId": "island_channel", "loot": 420, "countWeights": [[2, 0.6], [3, 0.4]], "ships": [["junk_large", 4, 22], ["shuinsen", 3, 20], ["junk_small", 2, 12]] },
     { "id": "quest_t3", "kind": "quest", "tier": 3, "mapId": "reef_passage", "loot": 760, "countWeights": [[3, 0.4], [4, 0.6]], "ships": [["fuchuan", 6, 35, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
