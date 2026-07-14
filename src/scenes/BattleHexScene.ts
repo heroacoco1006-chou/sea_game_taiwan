@@ -1095,6 +1095,41 @@ export default class BattleHexScene extends Phaser.Scene {
     }
   }
 
+  private renderHeadingIndicator(unit: BattleUnit, center: { x: number; y: number }, done: boolean): void {
+    const bowTarget = axialToPixel(hexNeighbor(unit.hex, unit.facing), HEX_SIZE, this.origin);
+    const angle = Math.atan2(bowTarget.y - center.y, bowTarget.x - center.x);
+    const ux = Math.cos(angle);
+    const uy = Math.sin(angle);
+    const px = -uy;
+    const py = ux;
+    const point = (radius: number, wing = 0): Phaser.Math.Vector2 => new Phaser.Math.Vector2(
+      center.x + ux * radius + px * wing,
+      center.y + uy * radius + py * wing,
+    );
+    const heading = this.add.graphics();
+    const shaftStart = point(12);
+    const shaftEnd = point(23);
+    heading.lineStyle(5, 0x24170c, 0.95);
+    heading.lineBetween(shaftStart.x, shaftStart.y, shaftEnd.x, shaftEnd.y);
+    heading.lineStyle(2.5, 0xfff36b, 1);
+    heading.lineBetween(shaftStart.x, shaftStart.y, shaftEnd.x, shaftEnd.y);
+
+    const outerTip = point(33);
+    const outerLeft = point(21, 8);
+    const outerRight = point(21, -8);
+    heading.fillStyle(0x24170c, 0.98);
+    heading.fillTriangle(outerTip.x, outerTip.y, outerLeft.x, outerLeft.y, outerRight.x, outerRight.y);
+
+    const tip = point(30);
+    const left = point(22, 5);
+    const right = point(22, -5);
+    heading.fillStyle(0xfff36b, 1);
+    heading.fillTriangle(tip.x, tip.y, left.x, left.y, right.x, right.y);
+    if (done) heading.setAlpha(0.82);
+    this.boardLayer.add(heading);
+  }
+
+
   private renderShip(unit: BattleUnit): void {
     const center = axialToPixel(unit.hex, HEX_SIZE, this.origin);
     const s = HEX_SIZE;
@@ -1142,24 +1177,27 @@ export default class BattleHexScene extends Phaser.Scene {
       this.boardLayer.add(fallback);
     }
 
-    // 耐久條
+    this.renderHeadingIndicator(unit, center, done);
+
+    // 耐久條：先畫外框素材，再把高對比色條蓋在上方，避免半透明框讓顏色變灰。
     const barW = 44;
     const barY = center.y - s * 0.78;
-    const bar = this.add.graphics();
-    bar.fillStyle(0x2c1b0d, 0.85);
-    bar.fillRect(center.x - barW / 2, barY, barW, 6);
-    const pct = unit.hull / unit.hullMax;
-    bar.fillStyle(pct > 0.5 ? 0x59b06b : pct > 0.25 ? 0xd0a04a : 0xc0503a, 1);
-    bar.fillRect(center.x - barW / 2 + 1, barY + 1, (barW - 2) * pct, 4);
-    if (done) bar.setAlpha(0.6);
-    this.boardLayer.add(bar);
     const hullFrameKey = battleHexMarkerKey('hull_bar_frame');
     if (this.textures.exists(hullFrameKey)) {
-      const frame = this.add.image(center.x, barY + 3, hullFrameKey).setDisplaySize(48, 8);
-      if (done) frame.setAlpha(0.6);
+      const frame = this.add.image(center.x, barY + 4, hullFrameKey).setDisplaySize(48, 10);
+      if (done) frame.setAlpha(0.82);
       this.boardLayer.add(frame);
     }
 
+    const bar = this.add.graphics();
+    bar.fillStyle(0x2c1b0d, 0.95);
+    bar.fillRect(center.x - barW / 2, barY, barW, 8);
+    const pct = unit.hull / unit.hullMax;
+    // 高對比耐久色：健康亮綠、受損亮黃、危急亮紅，行動後仍保持清晰。
+    bar.fillStyle(pct > 0.5 ? 0x00ff2a : pct > 0.25 ? 0xffd43b : 0xff4d3d, 1);
+    bar.fillRect(center.x - barW / 2 + 1, barY + 1, (barW - 2) * pct, 6);
+    if (done) bar.setAlpha(0.86);
+    this.boardLayer.add(bar);
 
     // 旗艦標記（不能只靠顏色與大小）
     if (unit.flagship) {
@@ -1381,7 +1419,7 @@ export default class BattleHexScene extends Phaser.Scene {
       lines.push('', `${name}${unitAt.flagship ? ' ★' : ''}（${SHIP_SIZE_NAME[unitAt.shipSize]}）`);
       lines.push(`耐久：${unitAt.hull}／${unitAt.hullMax}`);
       lines.push(`水手：${unitAt.crew} 人｜砲：${unitAt.cannons} 門`);
-      lines.push(`移動：${unitAt.movePoints - unitAt.moveSpent}／${unitAt.movePoints}｜朝向：${FACING_NAME[unitAt.facing]}`);
+      lines.push(`移動：${unitAt.movePoints - unitAt.moveSpent}／${unitAt.movePoints}｜船首朝向：${FACING_NAME[unitAt.facing]}`);
       if (unitAt.acted) lines.push('（本回合主要行動已完成）');
       else if (unitAt.moved) lines.push('（已移動，仍可執行主要行動）');
       this.infoTitle.setText(name);

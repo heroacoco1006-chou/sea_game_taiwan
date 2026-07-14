@@ -71,6 +71,7 @@ for (const token of [
   'battleHexShipKey', 'battleHexOverlayKey', 'battleHexMarkerKey', 'battleHexEffectKey',
   "effectArt(event.attackerId, 'cannon_flash'", "effectArt(event.targetId, 'boarding_hooks'",
   "this.addOverlayArt('move'", "this.addMarkerArt('route_dot'", 'this.btnRetreat.setVisible(actionReady)',
+  'renderHeadingIndicator', '0x00ff2a', '船首朝向',
 ]) assert(scene.includes(token), `BattleHexScene 缺少 P8 接線：${token}`);
 assert(scene.includes('任一船圖缺失時維持可辨識的程序船體'), 'BattleHexScene 缺少船隻 fallback');
 assert(scene.includes('if (!this.textures.exists(key))'), 'BattleHexScene 缺少材質快取防重載');

@@ -36,7 +36,7 @@ status: draft
 - [x] P6 敵方 AI（2026-07-13，Codex）：新增純 `battleAi.ts`，依「可擊沉旗艦→65% 接舷→最高預估砲傷→低耐久撤退→接近攻擊位置→轉向／等待」產生單一步驟命令，所有命令仍由 engine 驗證；同分固定依旗艦、低耐久、id。Scene 逐步播放敵方行動，敵方回合鎖住玩家輸入並設 64 步安全上限。9 組 AI 固定案例、120 場固定 seed 雙次完整重播、完整回歸、production build（413 modules）、桌面與 iPad 橫向實際操作均通過，console 0 error；正式流程仍使用舊 BattleScene。
 - [x] P6-2 自動戰鬥（2026-07-13，Codex）：`battleRules` 新增資料化 1.5 倍門檻與共用 `sidePower()`，Scene 只使用規則層結果；戰力不足按鈕灰階並說明原因，啟動後雙方共用 P6 AI／engine／seed 加速播放，每個我方新回合保留 1.2 秒接手窗口。4 組專測涵蓋門檻兩側、離場船排除、接手後手動指令與 1v1／2v3／5v5 雙次重播；完整回歸、production build（413 modules）、桌面與 iPad 橫向的自動／接手／不足提示均通過，console 0 error。P7 艦隊數量與難度定案已寫入規格及 memory 作為開工阻斷閘門。
 - [x] P7 既有專案整合（2026-07-14，Codex）：新增資料驅動遭遇編成與共用 adapter，玩家 `state.ship`＋`state.escorts` 以 1～5 艘一對一進場；tier 1／2／3 船數機率、13 組一般／任務／主線／夥伴遭遇、具名大型戰役與臨時故事友軍均已接入。WorldMap 一般海盜、商館任務、主線及夥伴決鬥三處入口共用 `battleSceneKey()`；勝敗、船況、水手、任務、聲望、經驗、戰利品與回港以 v19 結構回寫，友軍不寫入存檔。5 組 P7 專測、完整 validator、production build（416 modules）、桌面五案例與 iPad 1180×820 實測均通過，console 0 error；未結束前禁止免費離場。`USE_HEX_BATTLE=false` 不變，正式預設仍可回退舊 Battle。
-- [x] P8 正式美術接入（2026-07-14，Codex）：`BattleHexScene.preload()` 按需載入 8 船型 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 覆蓋圖與 7 標記；地形／島礁依三地圖生成快取，船隻按朝向顯示，覆蓋圖用 SCREEN 混合保留海面。所有素材保留程序 fallback，Boot 預載 0；桌面 1280×720、iPad 1180×820 選船與圖示實測正常、當次 console 0 error。
+- [x] P8 正式美術接入（2026-07-14，Codex）：`BattleHexScene.preload()` 按需載入 8 船型 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 覆蓋圖與 7 標記；地形／島礁依三地圖生成快取，覆蓋圖用 SCREEN 混合保留海面。依老闆實測回饋，耐久條已改為粗版高對比亮綠色，六方向船首新增黑邊金色箭頭並於資訊面板明示船首朝向。所有素材保留程序 fallback，Boot 預載 0；桌面 1280×720、iPad 1180×820 實測正常、當次 console 0 error。
 - [ ] P9 完整驗收與正式切換：跑完整人工矩陣、回歸／build／Pages 驗證後，再提案把 `USE_HEX_BATTLE` 切為 true；目前仍維持 false。
 
 ## 里程碑總覽
