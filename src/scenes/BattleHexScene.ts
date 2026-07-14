@@ -36,12 +36,29 @@ import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle
 import { audio } from '../audio';
 import { saveGame, type GameState } from '../state';
 import { settleHexBattle, type HexBattleLaunchData } from '../battle/battleAdapter';
+import {
+  BATTLE_HEX_COMMAND_URLS,
+  BATTLE_HEX_EFFECT_URLS,
+  BATTLE_HEX_ISLAND_IDS,
+  BATTLE_HEX_ISLAND_URLS,
+  BATTLE_HEX_MARKER_URLS,
+  BATTLE_HEX_OVERLAY_URLS,
+  BATTLE_HEX_SHIP_SHEET_URLS,
+  BATTLE_HEX_TERRAIN_URLS,
+  battleHexCommandKey,
+  battleHexEffectKey,
+  battleHexIslandKey,
+  battleHexMarkerKey,
+  battleHexOverlayKey,
+  battleHexShipKey,
+  battleHexTerrainKey,
+} from '../battle/battleArt';
 
 /**
- * P7 正式流程整合：BattleHexScene 只送 BattleCommand 給純引擎、
+ * P8 正式美術整合：BattleHexScene 只送 BattleCommand 給純引擎、
  * 依回傳 state／events 重繪；AI 也只產生命令，移動、傷害、接舷與勝敗一律由純規則層計算。
  * USE_HEX_BATTLE=false 時，僅能經 `?battle=hex` 或開發示範參數進入新流程。
- * 正式素材待老闆核可後於 P8 由本場景 preload() 按需載入（不得回 BootScene 預載）。
+ * 海戰 runtime 素材只由本場景 preload() 按需載入；任一材質缺失都回退程序繪圖。
  */
 
 const MAPS = (mapsData as BattleMapsData).maps;
@@ -143,6 +160,46 @@ export default class BattleHexScene extends Phaser.Scene {
     super('BattleHex');
   }
 
+
+  preload(): void {
+    const loadingBg = this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, COLORS.seaDeep).setDepth(1000);
+    const loadingLabel = this.add.text(BASE_W / 2, BASE_H / 2 - 32, '正在展開海戰圖……', textStyle(22, '#f2e6c8'))
+      .setOrigin(0.5).setDepth(1001);
+    const loadingBar = this.add.graphics().setDepth(1001);
+    const drawProgress = (value: number): void => {
+      loadingBar.clear();
+      loadingBar.fillStyle(0x2c1b0d, 0.9);
+      loadingBar.fillRoundedRect(BASE_W / 2 - 180, BASE_H / 2 + 10, 360, 24, 8);
+      loadingBar.fillStyle(COLORS.gold, 1);
+      loadingBar.fillRoundedRect(BASE_W / 2 - 176, BASE_H / 2 + 14, 352 * value, 16, 6);
+    };
+    drawProgress(0);
+    this.load.on(Phaser.Loader.Events.PROGRESS, drawProgress);
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      this.load.off(Phaser.Loader.Events.PROGRESS, drawProgress);
+      loadingBg.destroy();
+      loadingLabel.destroy();
+      loadingBar.destroy();
+    });
+    for (const [id, url] of Object.entries(BATTLE_HEX_SHIP_SHEET_URLS)) {
+      const key = battleHexShipKey(id);
+      if (!this.textures.exists(key)) this.load.spritesheet(key, url, { frameWidth: 256, frameHeight: 256 });
+    }
+    const imageGroups: Array<[Record<string, string>, (id: string) => string]> = [
+      [BATTLE_HEX_TERRAIN_URLS, battleHexTerrainKey],
+      [BATTLE_HEX_ISLAND_URLS, battleHexIslandKey],
+      [BATTLE_HEX_EFFECT_URLS, battleHexEffectKey],
+      [BATTLE_HEX_COMMAND_URLS, battleHexCommandKey],
+      [BATTLE_HEX_OVERLAY_URLS, battleHexOverlayKey],
+      [BATTLE_HEX_MARKER_URLS, battleHexMarkerKey],
+    ];
+    for (const [urls, keyOf] of imageGroups) {
+      for (const [id, url] of Object.entries(urls)) {
+        const key = keyOf(id);
+        if (!this.textures.exists(key)) this.load.image(key, url);
+      }
+    }
+  }
   init(data: { mapId?: string; launch?: HexBattleLaunchData } = {}): void {
     this.launch = data.launch ?? null;
     this.settlementApplied = false;
@@ -172,7 +229,7 @@ export default class BattleHexScene extends Phaser.Scene {
     const top = this.add.graphics();
     top.fillStyle(0x2c1b0d, 0.85);
     top.fillRoundedRect(8, 8, BASE_W - 16, 46, 8);
-    this.add.text(24, 31, '六角格海戰（P7 整合預覽）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
+    this.add.text(24, 31, '六角格海戰（P8 美術整合）', textStyle(20, '#f2e6c8')).setOrigin(0, 0.5);
     this.mapNameText = this.add.text(BASE_W / 2 - 100, 31, '', textStyle(20, '#f2c14e')).setOrigin(0.5);
     this.roundText = this.add.text(BASE_W - 24, 31, '', textStyle(18, '#e8d9b0')).setOrigin(1, 0.5);
 
@@ -867,10 +924,75 @@ export default class BattleHexScene extends Phaser.Scene {
     return corners;
   }
 
+
+  private buildTerrainArt(map: BattleMapDefinition): string | null {
+    const deepKey = battleHexTerrainKey('deep');
+    if (!this.textures.exists(deepKey)) return null;
+    const outputKey = `battlehex_board_${map.id}`;
+    if (this.textures.exists(outputKey)) return outputKey;
+
+    const scale = 2;
+    const canvas = this.textures.createCanvas(outputKey, BOARD_AREA.w * scale, BOARD_AREA.h * scale);
+    if (!canvas) return null;
+    const context = canvas.context;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.save();
+    context.scale(scale, scale);
+
+    for (let col = 0; col < map.width; col += 1) {
+      for (let row = 0; row < map.height; row += 1) {
+        const hex = offsetToAxial(col, row);
+        const absolute = axialToPixel(hex, HEX_SIZE, this.origin);
+        const center = { x: absolute.x - BOARD_AREA.x, y: absolute.y - BOARD_AREA.y };
+        const corners = this.hexCorners(center);
+        const terrain = terrainAt(map, hex);
+        const terrainId = terrain === 'land' ? 'deep' : terrain;
+        const terrainKey = battleHexTerrainKey(terrainId);
+        const sourceKey = this.textures.exists(terrainKey) ? terrainKey : deepKey;
+        const source = this.textures.get(sourceKey).getSourceImage() as unknown as CanvasImageSource;
+
+        context.save();
+        context.beginPath();
+        corners.forEach((corner, index) => {
+          if (index === 0) context.moveTo(corner.x, corner.y);
+          else context.lineTo(corner.x, corner.y);
+        });
+        context.closePath();
+        context.clip();
+        context.drawImage(
+          source,
+          center.x - HEX_SIZE,
+          center.y - Math.sqrt(3) * HEX_SIZE / 2,
+          HEX_SIZE * 2,
+          Math.sqrt(3) * HEX_SIZE,
+        );
+
+        if (terrain === 'land') {
+          const islandId = BATTLE_HEX_ISLAND_IDS[(col * 7 + row * 3) % BATTLE_HEX_ISLAND_IDS.length];
+          const islandKey = battleHexIslandKey(islandId);
+          if (this.textures.exists(islandKey)) {
+            const island = this.textures.get(islandKey).getSourceImage() as unknown as CanvasImageSource;
+            context.drawImage(island, center.x - 45, center.y - 45, 90, 90);
+          }
+        }
+        context.restore();
+      }
+    }
+    context.restore();
+    canvas.refresh();
+    return outputKey;
+  }
   private renderBoard(): void {
     const map = this.currentMap();
     this.boardLayer.removeAll(true);
 
+    const terrainArtKey = this.buildTerrainArt(map);
+    const hasTerrainArt = terrainArtKey !== null;
+    if (terrainArtKey) {
+      const terrainArt = this.add.image(BOARD_AREA.x, BOARD_AREA.y, terrainArtKey)
+        .setOrigin(0).setDisplaySize(BOARD_AREA.w, BOARD_AREA.h);
+      this.boardLayer.add(terrainArt);
+    }
     const g = this.add.graphics();
     this.boardLayer.add(g);
 
@@ -880,24 +1002,24 @@ export default class BattleHexScene extends Phaser.Scene {
         const center = axialToPixel(hex, HEX_SIZE, this.origin);
         const corners = this.hexCorners(center);
         const terrain = terrainAt(map, hex);
-        g.fillStyle(TERRAIN_FILL[terrain], terrain === 'deep' ? 0.9 : 1);
+        g.fillStyle(TERRAIN_FILL[terrain], hasTerrainArt ? (terrain === 'land' ? 0.06 : 0.12) : (terrain === 'deep' ? 0.9 : 1));
         g.fillPoints(corners, true);
         g.lineStyle(1.5, 0xd8c9a0, 0.35);
         g.strokePoints(corners, true);
 
-        if (terrain === 'shallow') {
+        if (terrain === 'shallow' && !hasTerrainArt) {
           g.lineStyle(1.5, 0xbfe3e8, 0.6);
           for (const dy of [-6, 6]) {
             g.beginPath();
             g.arc(center.x - 8, center.y + dy, 8, Math.PI * 0.15, Math.PI * 0.85);
             g.strokePath();
           }
-        } else if (terrain === 'land') {
+        } else if (terrain === 'land' && !hasTerrainArt) {
           g.fillStyle(0x8a7448, 1);
           g.fillEllipse(center.x, center.y + 4, HEX_SIZE * 1.1, HEX_SIZE * 0.6);
           g.fillStyle(0xa8905c, 1);
           g.fillEllipse(center.x - 4, center.y - 4, HEX_SIZE * 0.8, HEX_SIZE * 0.5);
-        } else if (terrain === 'reef') {
+        } else if (terrain === 'reef' && !hasTerrainArt) {
           g.fillStyle(0xdce8ea, 0.85);
           for (const [dx, dy] of [[-10, 4], [2, -6], [10, 6]]) {
             g.fillTriangle(center.x + dx - 5, center.y + dy + 4, center.x + dx + 5, center.y + dy + 4, center.x + dx, center.y + dy - 6);
@@ -914,37 +1036,50 @@ export default class BattleHexScene extends Phaser.Scene {
 
   private renderShip(unit: BattleUnit): void {
     const center = axialToPixel(unit.hex, HEX_SIZE, this.origin);
-    const bowTarget = axialToPixel(hexNeighbor(unit.hex, unit.facing), HEX_SIZE, this.origin);
-    const angle = Math.atan2(bowTarget.y - center.y, bowTarget.x - center.x);
     const s = HEX_SIZE;
     const done = unit.moved || unit.acted;
+    const artKey = battleHexShipKey(unit.shipTypeId);
 
-    // 船體多邊形（船首朝 facing 方向）
-    const local: [number, number][] = [
-      [-0.5 * s, -0.24 * s], [0.24 * s, -0.24 * s], [0.58 * s, 0],
-      [0.24 * s, 0.24 * s], [-0.5 * s, 0.24 * s], [-0.6 * s, 0],
-    ];
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const points = local.map(([lx, ly]) => new Phaser.Math.Vector2(
-      center.x + lx * cos - ly * sin,
-      center.y + lx * sin + ly * cos,
-    ));
+    const sideBase = this.add.graphics();
+    sideBase.fillStyle(0x140c06, 0.28);
+    sideBase.fillEllipse(center.x + 2, center.y + 10, 50, 22);
+    sideBase.lineStyle(3, SIDE_COLOR[unit.side], 0.85);
+    sideBase.strokeEllipse(center.x, center.y + 7, 52, 24);
+    if (done) sideBase.setAlpha(0.5);
+    this.boardLayer.add(sideBase);
 
-    const g = this.add.graphics();
-    g.fillStyle(0x140c06, 0.3);
-    g.fillPoints(points.map((pt) => new Phaser.Math.Vector2(pt.x + 2, pt.y + 3)), true);
-    g.fillStyle(SIDE_COLOR[unit.side], 1);
-    g.fillPoints(points, true);
-    g.lineStyle(2, 0x2c1b0d, 0.8);
-    g.strokePoints(points, true);
-    // 帆（簡化圓帆）
-    g.fillStyle(0xf2e6c8, 0.95);
-    g.fillCircle(center.x, center.y, s * 0.18);
-    g.lineStyle(1, 0x5b3a1e, 0.9);
-    g.strokeCircle(center.x, center.y, s * 0.18);
-    if (done) g.setAlpha(0.5); // 已移動／已行動：降飽和
-    this.boardLayer.add(g);
+    if (this.textures.exists(artKey)) {
+      const artSize = unit.shipSize === 'large' ? 94 : unit.shipSize === 'medium' ? 86 : 78;
+      const ship = this.add.sprite(center.x, center.y + 1, artKey, unit.facing)
+        .setDisplaySize(artSize, artSize)
+        // 素材方向為東／東南…；flat-top axial 方向相差 30°，統一旋轉對齊船首。
+        .setRotation(Math.PI / 6);
+      if (done) ship.setAlpha(0.52);
+      this.boardLayer.add(ship);
+    } else {
+      // 任一船圖缺失時維持可辨識的程序船體，不讓戰場黑屏或無法操作。
+      const bowTarget = axialToPixel(hexNeighbor(unit.hex, unit.facing), HEX_SIZE, this.origin);
+      const angle = Math.atan2(bowTarget.y - center.y, bowTarget.x - center.x);
+      const local: [number, number][] = [
+        [-0.5 * s, -0.24 * s], [0.24 * s, -0.24 * s], [0.58 * s, 0],
+        [0.24 * s, 0.24 * s], [-0.5 * s, 0.24 * s], [-0.6 * s, 0],
+      ];
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const points = local.map(([lx, ly]) => new Phaser.Math.Vector2(
+        center.x + lx * cos - ly * sin,
+        center.y + lx * sin + ly * cos,
+      ));
+      const fallback = this.add.graphics();
+      fallback.fillStyle(SIDE_COLOR[unit.side], 1);
+      fallback.fillPoints(points, true);
+      fallback.lineStyle(2, 0x2c1b0d, 0.8);
+      fallback.strokePoints(points, true);
+      fallback.fillStyle(0xf2e6c8, 0.95);
+      fallback.fillCircle(center.x, center.y, s * 0.18);
+      if (done) fallback.setAlpha(0.5);
+      this.boardLayer.add(fallback);
+    }
 
     // 耐久條
     const barW = 44;
