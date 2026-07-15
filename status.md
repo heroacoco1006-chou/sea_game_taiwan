@@ -3,21 +3,21 @@ title: sea_game 專案作戰盤
 type: status
 tags: [sea_game, 作戰盤, 里程碑]
 created: 2026-06-12
-updated: 2026-07-14
+updated: 2026-07-15
 author: Codex
 status: draft
 ---
 
 # 《大航海福爾摩沙》專案作戰盤
 
-> 最後更新：2026-07-14 | 作者：Codex
+> 最後更新：2026-07-15 | 作者：Codex
 > 設計依據：`2026-06-12_大航海福爾摩沙_遊戲建構書.md`
 
 ---
 
 ## 目前階段
 
-**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。下一版六角格回合制海戰已完成素材包與 P0～P8：玩家實際 1～5 艘艦隊、敵軍 tier／具名大型戰役、故事友軍、三種入口、v19 戰後結算，以及復古海圖、8 船型六方向、島礁、特效、指令與戰術 UI 均已接入。桌面與 iPad P8 實測、素材尺寸／fallback／延遲載入驗證通過；正式預設仍使用舊 `BattleScene`，下一段為 P9 完整人工矩陣與正式切換評估。**
+**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。六角格海戰已完成 P0～P8，P9 第一輪程式驗收亦已通過：六角規則、120 場模擬、P7 結算、P8 素材、全回歸及 production build 均正常。22 項清單目前 19 項通過、2 項待人工矩陣、1 項未通過；BattleHex 按鈕經 FIT 縮放後尚未保證 44 CSS px。正式預設仍使用舊 `BattleScene`，修正觸控目標並完成 Chrome／Edge／手機／iPad 三類遭遇矩陣前不得切換。**
 
 ---
 
@@ -37,7 +37,7 @@ status: draft
 - [x] P6-2 自動戰鬥（2026-07-13，Codex）：`battleRules` 新增資料化 1.5 倍門檻與共用 `sidePower()`，Scene 只使用規則層結果；戰力不足按鈕灰階並說明原因，啟動後雙方共用 P6 AI／engine／seed 加速播放，每個我方新回合保留 1.2 秒接手窗口。4 組專測涵蓋門檻兩側、離場船排除、接手後手動指令與 1v1／2v3／5v5 雙次重播；完整回歸、production build（413 modules）、桌面與 iPad 橫向的自動／接手／不足提示均通過，console 0 error。P7 艦隊數量與難度定案已寫入規格及 memory 作為開工阻斷閘門。
 - [x] P7 既有專案整合（2026-07-14，Codex）：新增資料驅動遭遇編成與共用 adapter，玩家 `state.ship`＋`state.escorts` 以 1～5 艘一對一進場；tier 1／2／3 船數機率、13 組一般／任務／主線／夥伴遭遇、具名大型戰役與臨時故事友軍均已接入。WorldMap 一般海盜、商館任務、主線及夥伴決鬥三處入口共用 `battleSceneKey()`；勝敗、船況、水手、任務、聲望、經驗、戰利品與回港以 v19 結構回寫，友軍不寫入存檔。5 組 P7 專測、完整 validator、production build（416 modules）、桌面五案例與 iPad 1180×820 實測均通過，console 0 error；未結束前禁止免費離場。`USE_HEX_BATTLE=false` 不變，正式預設仍可回退舊 Battle。
 - [x] P8 正式美術接入（2026-07-14，Codex）：`BattleHexScene.preload()` 按需載入 8 船型 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 覆蓋圖與 7 標記；地形／島礁依三地圖生成快取，覆蓋圖用 SCREEN 混合保留海面。依老闆實測回饋，耐久條已改為粗版高對比亮綠色，六方向船首新增黑邊金色箭頭並於資訊面板明示船首朝向。所有素材保留程序 fallback，Boot 預載 0；桌面 1280×720、iPad 1180×820 實測正常、當次 console 0 error。
-- [ ] P9 完整驗收與正式切換：跑完整人工矩陣、回歸／build／Pages 驗證後，再提案把 `USE_HEX_BATTLE` 切為 true；目前仍維持 false。
+- [ ] P9 完整驗收與正式切換（第一輪 2026-07-15）：必跑 validators、P1～P8 專測、120 場固定模擬、v19 遷移與 production build 全過；本機四入口 HTTP 200，Pages run `29331321047`／`7a8b843` success，首頁、主程式及代表海戰素材均 200。22 項清單為 19 通過／2 待人工／1 未通過；未通過項為 BattleHex 38／42／44 邏輯 px 按鈕在 FIT 縮放後不保證 44 CSS px。完整結果見 `2026-07-15_P9_六角格海戰總驗收清單.md`；修正與四裝置三遭遇矩陣完成前 `USE_HEX_BATTLE=false` 不變。
 
 ## 里程碑總覽
 
