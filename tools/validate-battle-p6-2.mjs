@@ -64,7 +64,7 @@ for (const token of [
   '臨時故事友軍',
 ]) requireText(spec, token, 'P7 核准規則');
 
-if (!/USE_HEX_BATTLE\s*=\s*false/.test(config)) fail('P7 前正式六角格入口旗標必須維持 false');
+if (!/USE_HEX_BATTLE\s*=\s*true/.test(config)) fail('P9 後正式六角格入口旗標必須維持 true');
 if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 if (JSON.parse(encountersJson).encounters.length === 0) fail('P7 encounter data missing');
 

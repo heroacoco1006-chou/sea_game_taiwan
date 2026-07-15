@@ -55,11 +55,11 @@ for (const [token, label] of [
   ['assert.deepEqual(second, first', '固定 seed 完整重播驗證'],
 ]) requireText(`${simulator}\n${aiTests}`, token, label);
 
-if (!/USE_HEX_BATTLE\s*=\s*false/.test(config)) fail('P7 前正式六角格入口旗標必須維持 false');
+if (!/USE_HEX_BATTLE\s*=\s*true/.test(config)) fail('P9 後正式六角格入口旗標必須維持 true');
 if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 if (!rulesJson.includes('autoBattle')) fail('P6-2 後必須保留資料化自動戰鬥規則');
 
 const reasonCount = (ai.match(/reason:\s*'/g) ?? []).length;
 console.log(`AI 決策理由 ${reasonCount} 個｜Scene 64 步安全上限｜固定模擬 120 場 × 雙次重播`);
-console.log('正式流程：USE_HEX_BATTLE=false｜P6 AI 基線與 P6-2 規則並存');
+console.log('正式流程：USE_HEX_BATTLE=true｜P6 AI 基線與 P6-2 規則並存');
 console.log('✅ P6 敵方 AI 優先級、engine 驗證、死循環防線與回退入口檢查通過');

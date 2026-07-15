@@ -79,7 +79,7 @@ for (const token of ['import.meta.glob', 'BATTLE_HEX_COMMAND_URLS', 'BATTLE_HEX_
   assert(battleArt.includes(token), `battleArt.ts 缺少 ${token}`);
 }
 assert(!boot.includes('BATTLE_HEX_'), 'BootScene 不應預載 P8 海戰素材');
-assert(/USE_HEX_BATTLE\s*=\s*false/.test(config), 'P9 完整驗收前 USE_HEX_BATTLE 必須維持 false');
+assert(/USE_HEX_BATTLE\s*=\s*true/.test(config), 'P9 驗收後 USE_HEX_BATTLE 必須維持 true');
 
 const loadedFiles = [...runtimeFiles].filter((file) => !file.includes(`${path.sep}frames${path.sep}`));
 const totalBytes = loadedFiles.reduce((sum, file) => sum + fs.statSync(file).size, 0);

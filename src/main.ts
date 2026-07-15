@@ -39,7 +39,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  // BattleHexScene（P3 起）僅註冊不作正式入口；USE_HEX_BATTLE=false 前正式海戰仍走 BattleScene
+  // P9 驗收後 BattleHexScene 為正式入口；BattleScene 保留並可用 ?battle=legacy 驗證回退。
   scene: [BootScene, TitleScene, WorldMapScene, PortScene, FacilityScene, TradeScene, ShipyardScene, ItemShopScene, InfoScene, MatesScene, BattleScene, BattleHexScene, GameOverScene, SaveSlotScene, StoryScene, SettingsScene],
 });
 

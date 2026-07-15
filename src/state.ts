@@ -1170,7 +1170,7 @@ export function pendingStoryDuel(state: GameState): PendingStoryDuel | null {
     : null;
 }
 
-/** 主線決鬥優先於夥伴決鬥，兩者共用同一個海上遭遇與 BattleScene。 */
+/** 主線決鬥優先於夥伴決鬥，兩者共用同一個海上遭遇與 battleSceneKey()。 */
 export function pendingQuestDuel(state: GameState): PendingQuestDuel | null {
   const story = pendingStoryDuel(state);
   if (story) return { kind: 'story', id: story.chapterId, ownerName: story.chapterTitle, name: story.name, tier: story.tier };

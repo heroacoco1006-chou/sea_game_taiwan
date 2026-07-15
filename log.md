@@ -7,6 +7,16 @@
 
 ---
 
+## [2026-07-15] 功能 | 操作者：Codex | 六角格海戰正式入口切換
+
+- 老闆於 P9 22／22 通過後明確核准正式切換；`USE_HEX_BATTLE` 改為 `true`，世界地圖一般海盜、商館任務、主線／夥伴決鬥預設進入 `BattleHexScene`。
+- 舊 `BattleScene` 保留在 main 場景清單，`battleSceneKey()` 新增 `?battle=legacy` 回退驗證；必要時仍可將單一旗標改回 `false`。
+- 《遊戲建構書》§5-5 已補 11×7、6 朝向、1～5 艘實際艦隊、tier 難度、12 回合、自動戰鬥 1.5 倍、44 CSS px 與正式 adapter／回退規則。
+- 歷史階段 validators 已改認正式狀態，另新增 `validate-battle-formal-switch.mjs` 固定檢查正式預設、三入口共用、舊場景保留、回退參數、建構書與 P9 閘門。
+- P1～P9 專測、120 場模擬、lazy load、UI、主線、夥伴、觸控、港町資料與 production build 全過；待 commit／push、Pages 與正式站入口驗證。
+
+---
+
 ## [2026-07-15] 文件 | 操作者：Codex | P9 人工驗收完成
 
 - 老闆確認目前桌面、手機與 iPad 測試均正常，並補充一般戰鬥實際落在 3～5 分鐘目標區間。

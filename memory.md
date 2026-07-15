@@ -4,6 +4,12 @@
 > 流水帳寫 `log.md`，不寫這裡。
 
 ---
+## [2026-07-15] 六角格海戰正式入口與回退約定
+
+- P9 22／22 與老闆人工裝置／3～5 分鐘驗收完成後，老闆明確核准正式切換；正式預設為 `USE_HEX_BATTLE=true`，一般海盜、商館任務與主線／夥伴決鬥一律透過 `battleSceneKey()` 進入 `BattleHexScene`。
+- 舊 `BattleScene` 不刪除並持續註冊；緊急回退只改 `USE_HEX_BATTLE=false`，開發／線上查核可用 `?battle=legacy` 強制舊海戰。不得把三個海戰入口改回各自硬編碼場景。
+- 正式旗標變更後，P3／P5～P9 validators 及 `validate-battle-formal-switch.mjs` 必須維持通過；後者固定檢查 BattleHex 預設、legacy 回退、舊場景保留、建構書 §5-5 與 P9 22 項閘門。
+
 
 ## [2026-07-14] P8 六角格海戰美術載入約定
 

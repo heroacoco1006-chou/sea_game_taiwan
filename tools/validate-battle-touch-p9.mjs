@@ -16,7 +16,8 @@ assert.match(scene, /this\.scale\.on\('resize', this\.layoutBattleTouchControls,
 assert.match(scene, /this\.scale\.off\('resize', this\.layoutBattleTouchControls, this\)/);
 assert.match(scene, /__battleHexTouchAudit/);
 assert.match(scene, /compact && Boolean\(this\.launch\)/);
-assert.match(flags, /USE_HEX_BATTLE\s*=\s*false/);
+assert.match(flags, /USE_HEX_BATTLE\s*=\s*true/);
+assert.match(flags, /requestedBattle === 'legacy'/);
 
 for (const id of [
   'turn-left', 'turn-right', 'cancel', 'confirm', 'cannon', 'board', 'repair',

@@ -43,7 +43,7 @@ for (const [pattern, label] of [
 
 requireText(rules, 'export function validateBoardingAttack', '純規則接舷合法性函式');
 requireText(engine, 'validateBoardingAttack(actor, target!)', '引擎共用接舷合法性函式');
-requireText(config, 'USE_HEX_BATTLE = false', '關閉正式六角格入口旗標');
+requireText(config, 'USE_HEX_BATTLE = true', 'P9 後正式六角格入口旗標');
 if (!worldMap.includes('battleSceneKey') || !worldMap.includes('createHexBattleLaunch')) fail('P7 WorldMap integration missing');
 
 const eventBranches = (scene.match(/event\.type ===/g) ?? []).length;

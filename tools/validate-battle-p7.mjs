@@ -16,8 +16,9 @@ for(const [token,label] of [
  ['completeStoryDuel','story completion missing'],['completeMateDuel','mate completion missing'],
  ["state.quest?.type === 'combat'",'combat quest completion missing'],
 ])need(adapter,token,label);
-need(config,'USE_HEX_BATTLE = false','formal fallback flag changed early');
-need(config,"get('battle') === 'hex'",'development override missing');
+need(config,'USE_HEX_BATTLE = true','formal BattleHex flag missing');
+need(config,"requestedBattle === 'hex'",'hex override missing');
+need(config,"requestedBattle === 'legacy'",'legacy rollback override missing');
 need(world,'battleSceneKey()','shared scene key missing');
 need(world,'createHexBattleLaunch(this.state, request)','shared launch adapter missing');
 if((world.match(/this\.startBattle\(/g)??[]).length!==3)fail('world map must have exactly three battle entry calls');

@@ -63,7 +63,7 @@ import {
 /**
  * P8 正式美術整合：BattleHexScene 只送 BattleCommand 給純引擎、
  * 依回傳 state／events 重繪；AI 也只產生命令，移動、傷害、接舷與勝敗一律由純規則層計算。
- * USE_HEX_BATTLE=false 時，僅能經 `?battle=hex` 或開發示範參數進入新流程。
+ * P9 驗收後為正式海戰場景；`?battle=legacy` 可驗證舊 BattleScene 回退。
  * 海戰 runtime 素材只由本場景 preload() 按需載入；任一材質缺失都回退程序繪圖。
  */
 
