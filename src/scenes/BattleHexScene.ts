@@ -32,7 +32,13 @@ import {
 } from '../battle/battleRules';
 import { applyCommand, createBattleState } from '../battle/battleEngine';
 import { chooseBattleAiDecision } from '../battle/battleAi';
-import { BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing, textStyle, toast } from '../ui';
+import {
+  BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing,
+  setMinimumCssTouchTarget, textStyle, toast,
+} from '../ui';
+import {
+  MIN_TOUCH_TARGET_CSS_PX, isCompactBattleCanvas, minimumLogicalTouchTarget,
+} from '../touchTargets';
 import { audio } from '../audio';
 import { saveGame, type GameState } from '../state';
 import { settleHexBattle, type HexBattleLaunchData } from '../battle/battleAdapter';
@@ -69,6 +75,14 @@ const BOARD_AREA = { x: 12, y: 64, w: 960, h: 578 };
 const BATTLE_SEED = 20260712;
 
 type ActionMode = 'cannon' | 'board' | null;
+type BattleTouchControl = {
+  id: string;
+  button: Phaser.GameObjects.Container;
+  defaultX: number;
+  defaultY: number;
+  visualWidth: number;
+  visualHeight: number;
+};
 
 const TERRAIN_NAME: Record<Terrain, string> = {
   deep: '深海',
@@ -145,6 +159,8 @@ export default class BattleHexScene extends Phaser.Scene {
   private mapNameText!: Phaser.GameObjects.Text;
   private roundText!: Phaser.GameObjects.Text;
   private mapButtonPos = new Map<string, { x: number; y: number; w: number; h: number }>();
+  private battleTouchControls: BattleTouchControl[] = [];
+  private mapButtons: Phaser.GameObjects.Container[] = [];
   private btnTurnL!: Phaser.GameObjects.Container;
   private btnTurnR!: Phaser.GameObjects.Container;
   private btnConfirm!: Phaser.GameObjects.Container;
@@ -226,6 +242,8 @@ export default class BattleHexScene extends Phaser.Scene {
 
   create(): void {
     audio.playBgm('battle');
+    this.battleTouchControls = [];
+    this.mapButtons = [];
     this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, COLORS.seaDeep).setDepth(-10);
 
     // 頂部列
@@ -270,7 +288,9 @@ export default class BattleHexScene extends Phaser.Scene {
       const bx = 90 + index * 140;
       const by = 682;
       this.mapButtonPos.set(map.id, { x: bx, y: by, w: 130, h: 44 });
-      makeButton(this, bx, by, 130, 44, map.name, () => this.switchMap(map.id), 16);
+      const button = makeButton(this, bx, by, 130, 44, map.name, () => this.switchMap(map.id), 16);
+      this.mapButtons.push(button);
+      this.battleTouchControls.push({ id: `map:${map.id}`, button, defaultX: bx, defaultY: by, visualWidth: 130, visualHeight: 44 });
     });
     this.btnTurnL = makeButton(this, 475, 682, 70, 44, '左轉', () => this.turnSelected(-1), 15);
     this.btnTurnR = makeButton(this, 555, 682, 70, 44, '右轉', () => this.turnSelected(1), 15);
@@ -285,6 +305,21 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnTakeControl = makeButton(this, 1128, 602, 220, 42, '接手指揮', () => this.takeControl(), 17);
     this.btnReturn = makeButton(this, 1185, 682, 110, 44, this.launch ? '\u8fd4\u56de\u5927\u6d77' : '\u8fd4\u56de\u6a19\u984c', () => this.leaveBattle(), 16);
     this.btnRetreat = makeButton(this, 1128, 548, 220, 38, '撤退（需在我方邊界）', () => this.retreatSelected(), 14);
+    this.battleTouchControls.push(
+      { id: 'turn-left', button: this.btnTurnL, defaultX: 475, defaultY: 682, visualWidth: 70, visualHeight: 44 },
+      { id: 'turn-right', button: this.btnTurnR, defaultX: 555, defaultY: 682, visualWidth: 70, visualHeight: 44 },
+      { id: 'cancel', button: this.btnCancel, defaultX: 695, defaultY: 682, visualWidth: 80, visualHeight: 44 },
+      { id: 'confirm', button: this.btnConfirm, defaultX: 805, defaultY: 682, visualWidth: 120, visualHeight: 44 },
+      { id: 'cannon', button: this.btnCannon, defaultX: 650, defaultY: 682, visualWidth: 90, visualHeight: 44 },
+      { id: 'board', button: this.btnBoard, defaultX: 750, defaultY: 682, visualWidth: 90, visualHeight: 44 },
+      { id: 'repair', button: this.btnRepair, defaultX: 850, defaultY: 682, visualWidth: 90, visualHeight: 44 },
+      { id: 'wait', button: this.btnWait, defaultX: 945, defaultY: 682, visualWidth: 80, visualHeight: 44 },
+      { id: 'end-turn', button: this.btnEndTurn, defaultX: 1045, defaultY: 682, visualWidth: 100, visualHeight: 44 },
+      { id: 'auto-battle', button: this.btnAutoBattle, defaultX: 1128, defaultY: 602, visualWidth: 220, visualHeight: 42 },
+      { id: 'take-control', button: this.btnTakeControl, defaultX: 1128, defaultY: 602, visualWidth: 220, visualHeight: 42 },
+      { id: 'return', button: this.btnReturn, defaultX: 1185, defaultY: 682, visualWidth: 110, visualHeight: 44 },
+      { id: 'retreat', button: this.btnRetreat, defaultX: 1128, defaultY: 548, visualWidth: 220, visualHeight: 38 },
+    );
     this.decorateCommandButton(this.btnTurnL, 'turn_left', -18, 10, 22);
     this.decorateCommandButton(this.btnTurnR, 'turn_right', -18, 10, 22);
     this.decorateCommandButton(this.btnCannon, 'cannon', -25, 13, 25);
@@ -294,6 +329,11 @@ export default class BattleHexScene extends Phaser.Scene {
     this.decorateCommandButton(this.btnEndTurn, 'end_turn', -30, 14, 24);
     this.decorateCommandButton(this.btnRetreat, 'retreat', -78, 12, 26);
     if (this.launch) this.btnReturn.setVisible(false);
+    this.scale.on('resize', this.layoutBattleTouchControls, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', this.layoutBattleTouchControls, this);
+    });
+
 
     // 戰場層與覆蓋層
     this.boardLayer = this.add.container(0, 0);
@@ -310,11 +350,86 @@ export default class BattleHexScene extends Phaser.Scene {
     });
 
     this.switchMap(this.mapId);
+    this.time.delayedCall(0, () => this.layoutBattleTouchControls());
   }
 
   // ---------- 戰鬥建立 ----------
 
   /** 無 launch 時保留 P4～P6 的 5 對 5 開發預覽；正式編成一律由 P7 adapter 傳入。 */
+
+  private layoutBattleTouchControls(): void {
+    const rect = this.game.canvas.getBoundingClientRect();
+    const logicalTarget = minimumLogicalTouchTarget(
+      rect.width,
+      rect.height,
+      MIN_TOUCH_TARGET_CSS_PX,
+      BASE_W,
+      BASE_H,
+    );
+    const compact = isCompactBattleCanvas(rect.width, rect.height, BASE_W, BASE_H);
+
+    for (const control of this.battleTouchControls) {
+      control.button.setPosition(control.defaultX, control.defaultY);
+    }
+    this.mapButtons.forEach((button) => button.setVisible(!(compact && Boolean(this.launch))));
+    this.mapRingG.setVisible(!compact);
+
+    if (compact) {
+      const targetHeight = Math.max(44, logicalTarget.height);
+      const bottomY = BASE_H - targetHeight / 2 - 6;
+      const auxiliaryY = bottomY - targetHeight - 12;
+      const retreatY = auxiliaryY - targetHeight - 12;
+      const positions: Record<string, { x: number; y: number }> = {
+        'turn-left': { x: 90, y: bottomY },
+        'turn-right': { x: 245, y: bottomY },
+        cannon: { x: 400, y: bottomY },
+        board: { x: 555, y: bottomY },
+        repair: { x: 710, y: bottomY },
+        wait: { x: 865, y: bottomY },
+        'end-turn': { x: 1020, y: bottomY },
+        cancel: { x: 430, y: bottomY },
+        confirm: { x: 590, y: bottomY },
+        return: { x: 1185, y: bottomY },
+        'auto-battle': { x: 1135, y: auxiliaryY },
+        'take-control': { x: 1135, y: auxiliaryY },
+        retreat: { x: 1135, y: retreatY },
+      };
+
+      this.battleTouchControls.forEach((control) => {
+        const position = positions[control.id];
+        if (position) control.button.setPosition(position.x, position.y);
+      });
+      if (!this.launch) {
+        this.mapButtons.forEach((button, index) => button.setPosition(90 + index * 140, auxiliaryY));
+      }
+    }
+
+    const controls = this.battleTouchControls.map((control) => {
+      const applied = setMinimumCssTouchTarget(
+        this,
+        control.button,
+        control.visualWidth,
+        control.visualHeight,
+        MIN_TOUCH_TARGET_CSS_PX,
+      );
+      return {
+        id: control.id,
+        visible: control.button.visible,
+        x: control.button.x,
+        y: control.button.y,
+        cssWidth: applied.cssWidth,
+        cssHeight: applied.cssHeight,
+      };
+    });
+
+    (window as unknown as { __battleHexTouchAudit?: unknown }).__battleHexTouchAudit = {
+      compact,
+      canvasCssWidth: rect.width,
+      canvasCssHeight: rect.height,
+      minCssPx: MIN_TOUCH_TARGET_CSS_PX,
+      controls,
+    };
+  }
 
   private decorateCommandButton(
     button: Phaser.GameObjects.Container,
@@ -462,6 +577,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.renderBoard();
     this.redrawOverlays();
     this.refreshHud();
+    this.layoutBattleTouchControls();
   }
 
   // ---------- 指令與互動 ----------

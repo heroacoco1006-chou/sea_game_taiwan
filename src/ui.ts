@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
 import { audio } from './audio';
+import {
+  MIN_TOUCH_TARGET_CSS_PX,
+  minimumLogicalTouchTarget,
+} from './touchTargets';
 
 /** 仿大航海2 的羊皮紙＋木框配色 */
 export const COLORS = {
@@ -25,6 +29,45 @@ export const FONT = '"Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-s
  */
 export const BASE_W = 1280;
 export const BASE_H = 720;
+
+export interface AppliedTouchTarget {
+  width: number;
+  height: number;
+  cssWidth: number;
+  cssHeight: number;
+}
+
+/** Expand only the hit area so it remains at least minCssPx after Scale.FIT. */
+export function setMinimumCssTouchTarget(
+  scene: Phaser.Scene,
+  target: Phaser.GameObjects.Container,
+  visualWidth: number,
+  visualHeight: number,
+  minCssPx = MIN_TOUCH_TARGET_CSS_PX,
+): AppliedTouchTarget {
+  const rect = scene.game.canvas.getBoundingClientRect();
+  const logical = minimumLogicalTouchTarget(rect.width, rect.height, minCssPx, BASE_W, BASE_H);
+  const width = Math.max(visualWidth, logical.width);
+  const height = Math.max(visualHeight, logical.height);
+  target.setSize(width, height);
+
+  const hitArea = target.input?.hitArea;
+  if (hitArea instanceof Phaser.Geom.Rectangle) {
+    hitArea.setTo(-width / 2, -height / 2, width, height);
+  } else {
+    target.setInteractive(
+      new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      Phaser.Geom.Rectangle.Contains,
+    );
+  }
+
+  return {
+    width,
+    height,
+    cssWidth: width * logical.scaleX,
+    cssHeight: height * logical.scaleY,
+  };
+}
 
 /**
  * 文字繪製解析度（超取樣倍率）。Phaser 預設以 1× 繪製文字材質，遊戲又用 Scale.FIT
