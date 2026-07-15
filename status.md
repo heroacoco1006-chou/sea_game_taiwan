@@ -17,7 +17,7 @@ status: draft
 
 ## 目前階段
 
-**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。六角格海戰已完成 P0～P8，P9 觸控修正與第二輪程式驗收通過：BattleHex 會依 canvas 實際 CSS 尺寸擴充 hit area，桌面／iPad／手機數值測試皆達 44 CSS px，窄螢幕採緊湊排列；120 場模擬、全回歸與 production build 均正常。22 項清單目前 20 項通過、2 項待人工矩陣、0 項未通過。正式預設仍使用舊 `BattleScene`，完成 Edge／手機／iPad 三類遭遇與 3～5 分鐘計時前不得切換。**
+**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。六角格海戰 P0～P9 已完成：44 CSS px 觸控、窄螢幕排列、120 場模擬、全回歸、production build、Edge／手機／iPad 三類遭遇及真人 3～5 分鐘節奏全部通過，P9 清單為 22／22。正式預設仍使用舊 `BattleScene`；`USE_HEX_BATTLE=true` 與《遊戲建構書》§5-5 更新須待老闆明確核准後另段執行。**
 
 ---
 
@@ -37,7 +37,7 @@ status: draft
 - [x] P6-2 自動戰鬥（2026-07-13，Codex）：`battleRules` 新增資料化 1.5 倍門檻與共用 `sidePower()`，Scene 只使用規則層結果；戰力不足按鈕灰階並說明原因，啟動後雙方共用 P6 AI／engine／seed 加速播放，每個我方新回合保留 1.2 秒接手窗口。4 組專測涵蓋門檻兩側、離場船排除、接手後手動指令與 1v1／2v3／5v5 雙次重播；完整回歸、production build（413 modules）、桌面與 iPad 橫向的自動／接手／不足提示均通過，console 0 error。P7 艦隊數量與難度定案已寫入規格及 memory 作為開工阻斷閘門。
 - [x] P7 既有專案整合（2026-07-14，Codex）：新增資料驅動遭遇編成與共用 adapter，玩家 `state.ship`＋`state.escorts` 以 1～5 艘一對一進場；tier 1／2／3 船數機率、13 組一般／任務／主線／夥伴遭遇、具名大型戰役與臨時故事友軍均已接入。WorldMap 一般海盜、商館任務、主線及夥伴決鬥三處入口共用 `battleSceneKey()`；勝敗、船況、水手、任務、聲望、經驗、戰利品與回港以 v19 結構回寫，友軍不寫入存檔。5 組 P7 專測、完整 validator、production build（416 modules）、桌面五案例與 iPad 1180×820 實測均通過，console 0 error；未結束前禁止免費離場。`USE_HEX_BATTLE=false` 不變，正式預設仍可回退舊 Battle。
 - [x] P8 正式美術接入（2026-07-14，Codex）：`BattleHexScene.preload()` 按需載入 8 船型 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 覆蓋圖與 7 標記；地形／島礁依三地圖生成快取，覆蓋圖用 SCREEN 混合保留海面。依老闆實測回饋，耐久條已改為粗版高對比亮綠色，六方向船首新增黑邊金色箭頭並於資訊面板明示船首朝向。所有素材保留程序 fallback，Boot 預載 0；桌面 1280×720、iPad 1180×820 實測正常、當次 console 0 error。
-- [ ] P9 完整驗收與正式切換（第二輪 2026-07-15）：44 CSS px 觸控目標已完成動態換算、窄螢幕緊湊排列、resize 重算與全按鈕登錄；桌面 44.00、iPad 44.25、手機 44.42、小手機 44.38 CSS px，老闆回覆目前畫面測試正常。validators、P1～P8 專測、120 場固定模擬、v19 遷移與 production build 全過；22 項為 20 通過／2 待人工／0 未通過。完整結果見 `2026-07-15_P9_六角格海戰總驗收清單.md`；Edge／手機／iPad 三類遭遇與真人計時完成前 `USE_HEX_BATTLE=false` 不變。
+- [x] P9 完整驗收（2026-07-15）：44 CSS px 觸控、窄螢幕排列、resize 重算、validators、P1～P8 專測、120 場固定模擬、v19 遷移與 production build 全過；老闆確認 Edge／手機／iPad 三類遭遇正常，一般戰鬥落在 3～5 分鐘。22 項清單全數通過，完整結果見 `2026-07-15_P9_六角格海戰總驗收清單.md`。正式切換列為下一個獨立段落，獲老闆明確核准前 `USE_HEX_BATTLE=false` 不變。
 
 ## 里程碑總覽
 
