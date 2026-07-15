@@ -7,6 +7,14 @@
 
 ---
 
+## [2026-07-15] update | 操作者：Codex | 六角格海戰正式站部署完成
+
+- 正式切換 commit `676b35d` 已推送；GitHub Pages run `29398956575` completed / success。
+- 正式站首頁與 `assets/index-CaNklem5.js` 均 HTTP 200，asset hash 與本機 production build 一致；線上 JS 含 `BattleHex`、P9 `__battleHexTouchAudit` 與 `legacy` 回退標記。
+- 六角格海戰正式入口切換段落關閉。建議老闆硬更新正式站後再完整打一場作上線後保險觀察；舊場景與單一旗標回退持續保留。
+
+---
+
 ## [2026-07-15] 功能 | 操作者：Codex | 六角格海戰正式入口切換
 
 - 老闆於 P9 22／22 通過後明確核准正式切換；`USE_HEX_BATTLE` 改為 `true`，世界地圖一般海盜、商館任務、主線／夥伴決鬥預設進入 `BattleHexScene`。

@@ -17,7 +17,7 @@ status: draft
 
 ## 目前階段
 
-**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。六角格海戰 P0～P9 的 22 項驗收全過，老闆已核准正式切換；`USE_HEX_BATTLE=true`、《遊戲建構書》§5-5、`?battle=legacy` 回退與正式切換 validator 已完成，P1～P9、120 場模擬、全專案 validators 及 production build 均通過。現階段只待 commit／push、Pages workflow 與正式站入口驗證。**
+**M0～M4 功能開發完成；M5 網頁版手機與 iPad 穩定基線已完成。六角格海戰 P0～P9 的 22 項驗收全過並已正式上線：`USE_HEX_BATTLE=true`、《遊戲建構書》§5-5、`?battle=legacy` 回退、P1～P9、120 場模擬、全專案 validators 與 production build 全部通過；commit `676b35d` 的 Pages run `29398956575` success，正式站載入 `index-CaNklem5.js` 並含 BattleHex、P9 觸控與 legacy 標記。建議老闆硬更新後再打一場作上線後保險觀察。**
 
 ---
 
@@ -38,7 +38,7 @@ status: draft
 - [x] P7 既有專案整合（2026-07-14，Codex）：新增資料驅動遭遇編成與共用 adapter，玩家 `state.ship`＋`state.escorts` 以 1～5 艘一對一進場；tier 1／2／3 船數機率、13 組一般／任務／主線／夥伴遭遇、具名大型戰役與臨時故事友軍均已接入。WorldMap 一般海盜、商館任務、主線及夥伴決鬥三處入口共用 `battleSceneKey()`；勝敗、船況、水手、任務、聲望、經驗、戰利品與回港以 v19 結構回寫，友軍不寫入存檔。5 組 P7 專測、完整 validator、production build（416 modules）、桌面五案例與 iPad 1180×820 實測均通過，console 0 error；未結束前禁止免費離場。`USE_HEX_BATTLE=false` 不變，正式預設仍可回退舊 Battle。
 - [x] P8 正式美術接入（2026-07-14，Codex）：`BattleHexScene.preload()` 按需載入 8 船型 spritesheet、3 海域、6 島礁、6 特效、8 指令、6 覆蓋圖與 7 標記；地形／島礁依三地圖生成快取，覆蓋圖用 SCREEN 混合保留海面。依老闆實測回饋，耐久條已改為粗版高對比亮綠色，六方向船首新增黑邊金色箭頭並於資訊面板明示船首朝向。所有素材保留程序 fallback，Boot 預載 0；桌面 1280×720、iPad 1180×820 實測正常、當次 console 0 error。
 - [x] P9 完整驗收（2026-07-15）：44 CSS px 觸控、窄螢幕排列、validators、P1～P8 專測、120 場模擬、v19 遷移、production build、四裝置三遭遇與 3～5 分鐘節奏全過；22 項清單全數通過。
-- [→] 六角格海戰正式切換（2026-07-15 老闆核准）：本機程式、建構書、驗證器與 build 已完成；`USE_HEX_BATTLE=true`，舊 `BattleScene` 及 `?battle=legacy` 回退保留。待 Pages workflow 與正式站入口驗證後關閉。
+- [x] 六角格海戰正式切換（2026-07-15 老闆核准）：`USE_HEX_BATTLE=true`、建構書、驗證器、build、commit／push、Pages run `29398956575` 與正式站新版 JS 全部完成；舊 `BattleScene`、`?battle=legacy` 與單一旗標回退保留。
 
 ## 里程碑總覽
 
