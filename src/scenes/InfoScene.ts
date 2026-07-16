@@ -10,7 +10,8 @@ import {
   codexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
-  mateQuestStageStatuses, mateNextStepText, updateQuestProgress,
+  tradeRepBonus, adventureRepBonus, valorRepPirateReduction,
+  mateQuestStageStatuses, mateNextStepText, mateUnavailableReason, updateQuestProgress,
 } from '../state';
 import {
   codexIllustrationKey, codexIllustrationUrl, portraitKey,
@@ -218,10 +219,13 @@ export default class InfoScene extends Phaser.Scene {
 
     // 夥伴任務日誌：進行中的專屬任務，附所在港與下一步提示
     updateQuestProgress(s);
-    const activeQuests = Object.entries(s.mateQuests ?? {})
+    const trackedQuests = Object.entries(s.mateQuests ?? {})
       .filter(([, prog]) => prog.status === 'active')
       .map(([mateId]) => mateDefById(mateId))
       .filter((def): def is NonNullable<typeof def> => !!def && !s.mates.some((m) => m.id === def.id));
+    // 已錯過（限時過期／主角線不符）的任務不再列為進行中，改列一行說明，避免掛著永遠完成不了的目標
+    const expiredQuests = trackedQuests.filter((def) => mateUnavailableReason(s, def) !== null);
+    const activeQuests = trackedQuests.filter((def) => mateUnavailableReason(s, def) === null);
     const questLines = activeQuests.map((def) => {
       const stages = mateQuestStageStatuses(s, def);
       const doneCount = stages.filter((st) => st.ok).length;
@@ -230,12 +234,15 @@ export default class InfoScene extends Phaser.Scene {
       const tip = next ? `下一步：${next}` : `✅ 條件齊了！回【${port?.name ?? def.portId}】的酒館邀請入隊`;
       return `🧭 ${def.name}「${def.questTitle}」進度 ${doneCount}/${stages.length}（所在港：${port?.name ?? def.portId}）\n　　${tip}`;
     });
+    const expiredLines = expiredQuests.map((def) => `⏳ 已錯過：${def.name}「${def.questTitle}」（${mateUnavailableReason(s, def)}）`);
     this.addWrapped(
       290,
       420,
-      questLines.length
-        ? `— 夥伴專屬任務 —\n${questLines.join('\n')}`
-        : '— 夥伴專屬任務 —\n目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。',
+      [
+        '— 夥伴專屬任務 —',
+        questLines.length ? questLines.join('\n') : '目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。',
+        ...expiredLines,
+      ].join('\n'),
       840,
       15,
       '#5a4a30'
@@ -327,7 +334,15 @@ export default class InfoScene extends Phaser.Scene {
       `水手：${s.crew}/${crewMax(s)}　疲勞：${s.fatigue}/100　海上狀態：${statusSummary(s)}`,
       `能力（括號為含在隊夥伴加成）：\n${statLine}`,
       `聲望：\n${(['adventure', 'trade', 'valor'] as RepKind[])
-        .map((k) => `⚑${REP_NAMES[k]} ${s.reputation?.[k] ?? 0}——${repLevelDesc(k, s.reputation?.[k] ?? 0)}`)
+        .map((k) => {
+          const v = s.reputation?.[k] ?? 0;
+          const passive = k === 'trade'
+            ? `賣價 +${(tradeRepBonus(s) * 100).toFixed(1)}%`
+            : k === 'adventure'
+              ? `探索發現率 +${(adventureRepBonus(s) * 100).toFixed(1)}%`
+              : `海盜遭遇 −${Math.round(valorRepPirateReduction(s) * 100)}%`;
+          return `⚑${REP_NAMES[k]} ${v}——${repLevelDesc(k, v)}（${passive}）`;
+        })
         .join('\n')}`,
       ...Object.entries(s.friendship ?? {})
         .filter(([, v]) => v > 0)

@@ -528,9 +528,13 @@ export default class ShipyardScene extends Phaser.Scene {
     s.escorts.splice(idx, 1);
     s.food = Math.min(s.food, supplyMax(s));
     s.water = Math.min(s.water, supplyMax(s));
+    // 艦隊容量縮小時，超編的水手上岸（否則會在下一場海戰無聲消失）
+    const crewCap = crewMax(s);
+    const dismissed = Math.max(0, s.crew - crewCap);
+    s.crew = Math.min(s.crew, crewCap);
     saveGame(s);
     this.refreshFleet();
-    toast(this, `賣掉【${et.name}】，得 ${gain} 兩`);
+    toast(this, `賣掉【${et.name}】，得 ${gain} 兩${dismissed > 0 ? `；${dismissed} 名水手因艙位不足上岸` : ''}`);
   }
 
   private drawEquipmentPreview(): void {

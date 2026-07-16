@@ -255,9 +255,16 @@ export function settleHexBattle(
     const ship = fleetShips(state)[launch.playerShipIndexes[unit.id]];
     ship.hull = Math.max(1, Math.min(unit.hullMax, unit.status === 'sunk' ? 1 : unit.hull));
   }
-  state.crew = Math.max(1, ownedUnits
+  // 水手用「進場 − 存活」的差值扣，而不是直接以戰場總和覆蓋：
+  // 這樣即使 state.crew 超過艦隊容量（歷史狀態）也不會讓未進場的水手憑空消失。
+  const deployedCrew = launch.units
+    .filter((unit) => launch.playerShipIndexes[unit.id] !== undefined)
+    .reduce((sum, unit) => sum + unit.crew, 0);
+  const survivedCrew = ownedUnits
     .filter((unit) => unit.status !== 'sunk')
-    .reduce((sum, unit) => sum + unit.crew, 0));
+    .reduce((sum, unit) => sum + unit.crew, 0);
+  const crewLost = Math.max(0, deployedCrew - survivedCrew);
+  state.crew = Math.max(1, state.crew - crewLost);
   state.fatigue = Math.min(100, state.fatigue + 5);
 
   if (battle.winner === 'player') {
@@ -275,6 +282,7 @@ export function settleHexBattle(
       defeated: false,
       lines: [
         `\u6230\u5229\u54c1\uff1a${launch.loot} \u5169\uff01`,
+        crewLost > 0 ? `\u6298\u640d\u6c34\u624b ${crewLost} \u540d\u3002` : '',
         launch.request.questCombat ? '\u6d77\u6230\u59d4\u8a17\u5df2\u5b8c\u6210\uff0c\u53ef\u56de\u5546\u9928\u9818\u8cde\u3002' : '',
         reputation,
         level,
@@ -310,6 +318,9 @@ export function settleHexBattle(
 
   return {
     defeated: false,
-    lines: ['\u96d9\u65b9\u812b\u96e2\u6230\u5834\uff0c\u672a\u7372\u5f97\u6230\u5229\u54c1\u3002'],
+    lines: [
+      '\u96d9\u65b9\u812b\u96e2\u6230\u5834\uff0c\u672a\u7372\u5f97\u6230\u5229\u54c1\u3002',
+      crewLost > 0 ? `\u6298\u640d\u6c34\u624b ${crewLost} \u540d\u3002` : '',
+    ].filter(Boolean),
   };
 }
