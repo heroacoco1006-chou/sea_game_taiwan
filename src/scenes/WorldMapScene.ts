@@ -11,7 +11,7 @@ import {
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
   recordExplorationAttempt, addInventory, itemNameById,
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
-  addReputation, addFriendship, updateQuestProgress, pendingQuestDuel,
+  addReputation, addFriendship, updateQuestProgress, pendingQuestDuel, valorRepPirateReduction,
 } from '../state';
 import {
   explorationIconKey, facilityIconKey, shipWorldKey, shipWorldUrl,
@@ -998,7 +998,9 @@ export default class WorldMapScene extends Phaser.Scene {
       return;
     }
 
-    if (roll < stormP + 0.095 + 0.05 + 0.06 && s.day > 10) {
+    // 海上威名被動（B-5）：威名越高，海盜越不敢招惹（機率最多降一半）；任務決鬥遭遇不受影響
+    const pirateChance = 0.06 * (1 - valorRepPirateReduction(s));
+    if (roll < stormP + 0.095 + 0.05 + pirateChance && s.day > 10) {
       const tribute = Math.floor(s.gold * 0.1);
       this.pauseWithModal(
         '海盜船出現！',

@@ -786,7 +786,25 @@ export function tradeBonus(state: GameState): number {
   let d = accessoryEffect(state) === 'trade' ? 0.05 : 0;
   if (hasRole(state, 'purser')) d += 0.05;
   d += Math.min(0.1, fleetStat(state, 'neg') / 800); // 交涉能力加成
+  d += tradeRepBonus(state); // 商人聲望被動（B-5）
   return d;
+}
+
+// ---------- 聲望被動效果（2026-07-16 平衡調整）：讓三軌聲望達標後仍持續有用 ----------
+
+/** 商人聲望被動：賣價加成，每 20 點 +0.5%，上限 +5%（聲望 200 滿）。 */
+export function tradeRepBonus(state: GameState): number {
+  return Math.min(0.05, (state.reputation?.trade ?? 0) / 4000);
+}
+
+/** 冒險名聲被動：探索發現率加成，每 50 點 +1%，上限 +10%（聲望 500 滿；一般玩家約 +2～4%）。 */
+export function adventureRepBonus(state: GameState): number {
+  return Math.min(0.1, (state.reputation?.adventure ?? 0) / 5000);
+}
+
+/** 海上威名被動：海盜遭遇機率下降比例，威名 200 時減半（上限 −50%）——海盜聽過你就會躲著走。 */
+export function valorRepPirateReduction(state: GameState): number {
+  return Math.min(0.5, (state.reputation?.valor ?? 0) / 400);
 }
 
 // ---------- 夥伴職位 ----------
@@ -845,8 +863,11 @@ export function fleetStat(state: GameState, key: StatKey): number {
   return v;
 }
 
+/** 升級所需經驗（2026-07-16 平衡調整：原 100+(L−1)×60 通關僅約 Lv15，
+ *  改緩為 80+(L−1)×20，讓正常玩完主線＋委託的玩家落在 Lv25～30，成長感更連續。
+ *  舊存檔不需遷移：level／xp 原樣保留，下次獲得經驗時依新門檻自然升級。 */
 export function xpForNextLevel(level: number): number {
-  return 100 + (level - 1) * 60;
+  return 80 + (level - 1) * 20;
 }
 
 const LEVEL_POINTS = 5; // 每級成長點數
@@ -2415,7 +2436,8 @@ export function explorationFindChance(state: GameState, point: ExplorationPoint)
   const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
   const retry = Math.min(0.2, explorationAttemptCount(state, point.id) * 0.05);
   const know = Math.min(0.15, fleetStat(state, 'kno') / 600); // 知識能力加成
-  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry + know));
+  const renown = adventureRepBonus(state); // 冒險名聲被動（B-5）
+  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry + know + renown));
 }
 
 export function explorationCostForState(state: GameState, point: ExplorationPoint): { food: number; water: number; days: number } {
