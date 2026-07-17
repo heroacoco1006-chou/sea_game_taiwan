@@ -13,6 +13,7 @@ import {
   type RandomSource,
   directionBetweenAdjacent,
   repairAmount,
+  repairExhausted,
   resolveBoarding,
   rollCannonDamage,
   sideTurnLimitScore,
@@ -52,7 +53,11 @@ export function createBattleState(options: CreateBattleStateOptions): BattleStat
 function cloneState(state: BattleState): BattleState {
   return {
     ...state,
-    units: state.units.map((unit) => ({ ...unit, hex: { ...unit.hex } })),
+    units: state.units.map((unit) => ({
+      ...unit,
+      hex: { ...unit.hex },
+      undo: unit.undo ? { ...unit.undo, hex: { ...unit.undo.hex } } : unit.undo,
+    })),
     log: state.log.map((entry) => ({ ...entry })),
   };
 }
@@ -143,6 +148,8 @@ function resetSideUnits(state: BattleState, side: Side): void {
     unit.moveSpent = 0;
     unit.moved = false;
     unit.acted = false;
+    unit.repaired = false; // B-6：修整改為每回合可用（受累計配額 repairUsed 限制）
+    unit.undo = null; // 反悔快照只在本回合行動前有效
   }
 }
 
@@ -208,6 +215,8 @@ export function applyCommand(
     const next = cloneState(state);
     const movedUnit = findUnit(next, actor.id)!;
     const from = { ...movedUnit.hex };
+    // 反悔快照：行動確定前可用 undo_move 退回移動前的位置與朝向
+    movedUnit.undo = { hex: { ...movedUnit.hex }, facing: movedUnit.facing, moveSpent: movedUnit.moveSpent };
     movedUnit.hex = { ...path.value.destination };
     movedUnit.facing = path.value.facing;
     movedUnit.moveSpent += path.value.cost;
@@ -232,6 +241,29 @@ export function applyCommand(
     next.selectedUnitId = turned.id;
     const events: BattleEvent[] = [{ type: 'unit_turned', unitId: turned.id, facing: turned.facing }];
     pushLog(next, 'UNIT_TURNED', turned.id, undefined, turned.facing);
+    return { ok: true, state: next, events };
+  }
+
+  if (command.type === 'undo_move') {
+    // 反悔移動（老闆 2026-07-16 核定）：移動後、行動前可退回原位原朝向，讓玩家有思考空間
+    if (actor.acted) return failure(state, 'ALREADY_ACTED');
+    if (!actor.moved || !actor.undo) return failure(state, 'NOTHING_TO_UNDO');
+    const occupied = state.units.some((other) => (
+      other.id !== actor.id && other.status === 'active'
+      && other.hex.q === actor.undo!.hex.q && other.hex.r === actor.undo!.hex.r
+    ));
+    if (occupied) return failure(state, 'UNDO_BLOCKED');
+    const next = cloneState(state);
+    const reverted = findUnit(next, actor.id)!;
+    reverted.hex = { ...reverted.undo!.hex };
+    reverted.facing = reverted.undo!.facing;
+    reverted.moveSpent = reverted.undo!.moveSpent;
+    reverted.moved = false;
+    reverted.undo = null;
+    next.selectedUnitId = reverted.id;
+    next.phase = next.activeSide === 'player' ? 'player_move_preview' : 'enemy_turn';
+    const events: BattleEvent[] = [{ type: 'unit_move_undone', unitId: reverted.id, to: { ...reverted.hex }, facing: reverted.facing }];
+    pushLog(next, 'MOVE_UNDONE', reverted.id);
     return { ok: true, state: next, events };
   }
 
@@ -292,11 +324,13 @@ export function applyCommand(
 
   if (command.type === 'repair') {
     if (actor.repaired) return failure(state, 'REPAIR_ALREADY_USED');
+    if (repairExhausted(actor)) return failure(state, 'REPAIR_EXHAUSTED'); // B-6：累計修理達 25% 上限
     if (actor.hull >= actor.hullMax) return failure(state, 'FULL_HULL');
     const next = cloneState(state);
     const repaired = findUnit(next, actor.id)!;
     const amount = Math.min(repairAmount(repaired), repaired.hullMax - repaired.hull);
     repaired.hull += amount;
+    repaired.repairUsed = (repaired.repairUsed ?? 0) + amount;
     repaired.repaired = true;
     repaired.acted = true;
     const events: BattleEvent[] = [{ type: 'unit_repaired', unitId: repaired.id, amount }];

@@ -25,6 +25,7 @@ import {
   deploymentHexes,
   findPath,
   reachableHexes,
+  repairExhausted,
   terrainAt,
   validateBoardingAttack,
   validateCannonAttack,
@@ -123,9 +124,13 @@ const ERROR_TEXT: Partial<Record<BattleErrorCode, string>> = {
   NOT_BROADSIDE: '目標位於船首或船尾死角',
   BLOCKED_LOS: '砲線被島嶼阻擋',
   NOT_ADJACENT: '接舷必須靠在敵船旁邊',
+  TARGET_TOO_STURDY: '敵船還太完整，先用砲擊削弱到七成以下才能接舷',
   NOT_ON_RETREAT_EDGE: '撤退必須先移動到我方左側邊界',
-  REPAIR_ALREADY_USED: '這艘船本場已修整過',
+  REPAIR_ALREADY_USED: '這艘船本回合已修整過',
+  REPAIR_EXHAUSTED: '本場修理量已達上限（耐久上限的 25%）',
   FULL_HULL: '耐久已滿，不需要修整',
+  NOTHING_TO_UNDO: '這艘船目前沒有可反悔的移動',
+  UNDO_BLOCKED: '原本的位置已被其他船佔住，無法退回',
 };
 
 export default class BattleHexScene extends Phaser.Scene {
@@ -174,6 +179,7 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnTakeControl!: Phaser.GameObjects.Container;
   private btnReturn!: Phaser.GameObjects.Container;
   private btnRetreat!: Phaser.GameObjects.Container;
+  private btnUndo!: Phaser.GameObjects.Container;
 
   constructor() {
     super('BattleHex');
@@ -305,6 +311,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnTakeControl = makeButton(this, 1128, 602, 220, 42, '接手指揮', () => this.takeControl(), 17);
     this.btnReturn = makeButton(this, 1185, 682, 110, 44, this.launch ? '\u8fd4\u56de\u5927\u6d77' : '\u8fd4\u56de\u6a19\u984c', () => this.leaveBattle(), 16);
     this.btnRetreat = makeButton(this, 1128, 548, 220, 38, '撤退（需在我方邊界）', () => this.retreatSelected(), 14);
+    this.btnUndo = makeButton(this, 1128, 504, 220, 38, '↩ 反悔移動', () => this.undoMoveSelected(), 14);
     this.battleTouchControls.push(
       { id: 'turn-left', button: this.btnTurnL, defaultX: 475, defaultY: 682, visualWidth: 70, visualHeight: 44 },
       { id: 'turn-right', button: this.btnTurnR, defaultX: 555, defaultY: 682, visualWidth: 70, visualHeight: 44 },
@@ -319,6 +326,7 @@ export default class BattleHexScene extends Phaser.Scene {
       { id: 'take-control', button: this.btnTakeControl, defaultX: 1128, defaultY: 602, visualWidth: 220, visualHeight: 42 },
       { id: 'return', button: this.btnReturn, defaultX: 1185, defaultY: 682, visualWidth: 110, visualHeight: 44 },
       { id: 'retreat', button: this.btnRetreat, defaultX: 1128, defaultY: 548, visualWidth: 220, visualHeight: 38 },
+      { id: 'undo-move', button: this.btnUndo, defaultX: 1128, defaultY: 504, visualWidth: 220, visualHeight: 38 },
     );
     this.decorateCommandButton(this.btnTurnL, 'turn_left', -18, 10, 22);
     this.decorateCommandButton(this.btnTurnR, 'turn_right', -18, 10, 22);
@@ -488,6 +496,8 @@ export default class BattleHexScene extends Phaser.Scene {
           moved: false,
           acted: false,
           repaired: false,
+          repairUsed: 0,
+          undo: null,
           status: 'active',
         });
       });
@@ -747,6 +757,29 @@ export default class BattleHexScene extends Phaser.Scene {
     this.refreshHud();
     const repaired = this.selectedUnit();
     if (repaired) this.updateInfo(repaired.hex, repaired);
+  }
+
+  /** 反悔移動（2026-07-16 老闆核定）：移動後、行動前退回原位原朝向，給小朋友重新思考的機會。 */
+  private undoMoveSelected(): void {
+    const unit = this.selectedUnit();
+    if (!unit || this.animating) return;
+    const result = this.applyCmd({ type: 'undo_move', unitId: unit.id });
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '目前無法反悔移動');
+      return;
+    }
+    // 退回後恢復移動預覽狀態，可重新規劃路徑
+    const reverted = this.selectedUnit()!;
+    this.previewPath = null;
+    this.targetUnitId = null;
+    this.actionMode = null;
+    this.reachable = reachableHexes(this.currentMap(), this.battle.units, reverted);
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+    this.updateInfo(reverted.hex, reverted);
+    toast(this, '已退回移動前的位置，可以重新移動');
   }
 
   private waitSelected(): void {
@@ -1023,6 +1056,8 @@ export default class BattleHexScene extends Phaser.Scene {
         if (event.status === 'surrendered') effectArt(event.unitId, 'surrender_flag', 54);
         effectText(event.unitId, label, '#ffffff');
         messages.push(`一艘船${label}。`);
+      } else if (event.type === 'unit_move_undone') {
+        messages.push('已退回移動前的位置。');
       } else if (event.type === 'unit_waited') {
         messages.push('這艘船留在原位等待。');
       } else if (event.type === 'unit_moved') {
@@ -1467,8 +1502,11 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnCannon.setVisible(actionReady);
     this.btnBoard.setVisible(actionReady);
     this.btnRepair.setVisible(actionReady);
+    if (actionReady) this.btnRepair.setAlpha(repairExhausted(unit) ? 0.45 : 1); // B-6：配額用罄灰階提示
     this.btnWait.setVisible(actionReady);
     this.btnRetreat.setVisible(actionReady);
+    // 反悔移動：只在「已移動、尚未行動」時出現
+    this.btnUndo.setVisible(actionReady && unit.moved && !!unit.undo);
 
     const target = this.battle.units.find((item) => item.id === this.targetUnitId);
     const validTarget = !!target && this.targetError(target) === null;

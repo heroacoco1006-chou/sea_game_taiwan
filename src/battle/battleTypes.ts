@@ -48,7 +48,12 @@ export interface BattleUnit {
   moveSpent: number;
   moved: boolean;
   acted: boolean;
+  /** 本回合已修整（每回合重置；累計修理量另見 repairUsed） */
   repaired: boolean;
+  /** 本場累計修理量；上限＝hullMax × repair.totalPercentCap（B-6） */
+  repairUsed: number;
+  /** 反悔移動用快照：move 指令寫入、行動或換回合清除（僅玩家 UI 使用） */
+  undo?: { hex: Hex; facing: Facing; moveSpent: number } | null;
   status: BattleUnitStatus;
 }
 
@@ -85,6 +90,7 @@ export type BattleCommand =
   | { type: 'repair'; unitId: string }
   | { type: 'retreat'; unitId: string }
   | { type: 'wait'; unitId: string }
+  | { type: 'undo_move'; unitId: string }
   | { type: 'end_turn' };
 
 export type BattleEvent =
@@ -96,6 +102,7 @@ export type BattleEvent =
   | { type: 'crew_changed'; unitId: string; amount: number }
   | { type: 'unit_status_changed'; unitId: string; status: BattleUnitStatus }
   | { type: 'unit_repaired'; unitId: string; amount: number }
+  | { type: 'unit_move_undone'; unitId: string; to: Hex; facing: Facing }
   | { type: 'unit_retreated'; unitId: string }
   | { type: 'unit_waited'; unitId: string }
   | { type: 'turn_ended'; side: Side; round: number }
@@ -121,9 +128,13 @@ export type BattleErrorCode =
   | 'NOT_BROADSIDE'
   | 'BLOCKED_LOS'
   | 'NOT_ADJACENT'
+  | 'TARGET_TOO_STURDY'
   | 'REPAIR_ALREADY_USED'
+  | 'REPAIR_EXHAUSTED'
   | 'FULL_HULL'
-  | 'NOT_ON_RETREAT_EDGE';
+  | 'NOT_ON_RETREAT_EDGE'
+  | 'NOTHING_TO_UNDO'
+  | 'UNDO_BLOCKED';
 
 /**
  * 地圖資料檔（battleMaps.json）內的 q/r 是「視覺欄／列」座標（q=第幾欄、r=第幾列），

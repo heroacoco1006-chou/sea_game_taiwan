@@ -269,6 +269,11 @@ function adjustedCrewLoss(crew: number, rate: number, multiplier: number): numbe
 
 export function validateBoardingAttack(attacker: BattleUnit, target: BattleUnit): RuleResult<null> {
   if (hexDistance(attacker.hex, target.hex) !== 1) return { ok: false, error: 'NOT_ADJACENT' };
+  // B-1 平衡（2026-07-16 老闆核定）：目標耐久需先被打到門檻以下才能跳幫，
+  // 讓砲擊與走位成為接舷的前置，而不是開場貼臉一招通吃。
+  if (target.hull > target.hullMax * BATTLE_RULES.boarding.requireHullBelow) {
+    return { ok: false, error: 'TARGET_TOO_STURDY' };
+  }
   return { ok: true, value: null };
 }
 
@@ -299,9 +304,22 @@ export function resolveBoarding(attacker: BattleUnit, target: BattleUnit, rng: R
   };
 }
 
+/** 本場修理配額上限（B-6：累計修理不得超過耐久上限的 totalPercentCap）。 */
+export function repairTotalCap(unit: BattleUnit): number {
+  return Math.floor(unit.hullMax * BATTLE_RULES.repair.totalPercentCap);
+}
+
+/** 修理配額是否用罄（用罄後修整指令禁用）。 */
+export function repairExhausted(unit: BattleUnit): boolean {
+  return (unit.repairUsed ?? 0) >= repairTotalCap(unit);
+}
+
+/** 單次修理量：耐久上限的 hullPercent（夾 min/max），再受剩餘配額限制。 */
 export function repairAmount(unit: BattleUnit): number {
   const amount = Math.round(unit.hullMax * BATTLE_RULES.repair.hullPercent);
-  return Math.min(BATTLE_RULES.repair.maximum, Math.max(BATTLE_RULES.repair.minimum, amount));
+  const clamped = Math.min(BATTLE_RULES.repair.maximum, Math.max(BATTLE_RULES.repair.minimum, amount));
+  const remaining = Math.max(0, repairTotalCap(unit) - (unit.repairUsed ?? 0));
+  return Math.min(clamped, remaining);
 }
 
 export function sideTurnLimitScore(units: BattleUnit[], side: Side): number {

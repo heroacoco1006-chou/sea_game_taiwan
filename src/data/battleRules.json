@@ -35,12 +35,21 @@
     "randomMax": 1.1,
     "winnerCrewLossRate": 0.05,
     "balancedCrewLossRate": 0.15,
-    "failedCrewLossRate": 0.2
+    "failedCrewLossRate": 0.2,
+    "requireHullBelow": 0.7
   },
   "repair": {
-    "hullPercent": 0.05,
+    "hullPercent": 0.1,
     "minimum": 3,
-    "maximum": 12
+    "maximum": 25,
+    "totalPercentCap": 0.25
+  },
+  "capture": {
+    "perHullMax": 1.5
+  },
+  "retreatCost": {
+    "goldPercent": 0.05,
+    "goldCap": 1500
   },
   "autoBattle": {
     "minAdvantageRatio": 1.5

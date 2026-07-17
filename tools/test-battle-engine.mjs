@@ -16,7 +16,8 @@ const EXPECTED_ERRORS = [
   'BATTLE_OVER', 'UNIT_NOT_FOUND', 'TARGET_NOT_FOUND', 'WRONG_SIDE', 'UNIT_INACTIVE', 'FRIENDLY_TARGET',
   'ALREADY_MOVED', 'ALREADY_ACTED', 'INVALID_PATH', 'OUT_OF_BOUNDS', 'IMPASSABLE', 'OCCUPIED',
   'INSUFFICIENT_MOVE', 'INVALID_FACING', 'NO_CANNONS', 'OUT_OF_RANGE', 'NOT_BROADSIDE', 'BLOCKED_LOS',
-  'NOT_ADJACENT', 'REPAIR_ALREADY_USED', 'FULL_HULL', 'NOT_ON_RETREAT_EDGE',
+  'NOT_ADJACENT', 'TARGET_TOO_STURDY', 'REPAIR_ALREADY_USED', 'REPAIR_EXHAUSTED', 'FULL_HULL',
+  'NOT_ON_RETREAT_EDGE', 'NOTHING_TO_UNDO', 'UNDO_BLOCKED',
 ];
 const observedErrors = new Set();
 
@@ -25,7 +26,7 @@ const makeUnit = (overrides = {}) => ({
   hex: { q: 2, r: 2 }, facing: 0, hull: 100, hullMax: 100,
   cannons: 4, cannonTypeId: 'standard', cannonPower: 1, gunnerMod: 1, armorMultiplier: 1,
   crew: 30, boardingBonus: 0, crewLossMultiplier: 1,
-  movePoints: 3, moveSpent: 0, moved: false, acted: false, repaired: false, status: 'active',
+  movePoints: 3, moveSpent: 0, moved: false, acted: false, repaired: false, repairUsed: 0, undo: null, status: 'active',
   ...overrides,
   hex: { q: 2, r: 2, ...(overrides.hex ?? {}) },
 });
@@ -137,10 +138,10 @@ test('砲擊擊沉敵方旗艦立即勝利', () => {
   assert.equal(result.state.resultReason, 'ENEMY_FLAGSHIP_SUNK');
 });
 
-test('接舷優勢只使目標單船投降並結算旗艦', () => {
+test('接舷優勢只使目標單船投降並結算旗艦（目標耐久需低於七成）', () => {
   const state = makeState([
     makeUnit({ crew: 100, boardingBonus: 50, hex: { q: 2, r: 2 } }),
-    makeEnemy({ crew: 5, hex: { q: 2, r: 3 } }),
+    makeEnemy({ crew: 5, hull: 60, hex: { q: 2, r: 3 } }),
   ]);
   const result = apply(state, { type: 'board', attackerId: 'p1', targetId: 'e1' }, openSea, 3);
   assert.equal(result.ok, true);
@@ -149,13 +150,59 @@ test('接舷優勢只使目標單船投降並結算旗艦', () => {
   assert.equal(result.state.winner, 'player');
 });
 
-test('修整依 5%／3～12 規則且每場只能一次', () => {
-  const state = makeState([makeUnit({ hull: 90, hullMax: 100 }), makeEnemy()]);
+test('修整依 10%／3～25 規則、每回合一次並累計 repairUsed', () => {
+  const state = makeState([makeUnit({ hull: 60, hullMax: 100 }), makeEnemy()]);
   const result = apply(state, { type: 'repair', unitId: 'p1' });
   assert.equal(result.ok, true);
-  assert.equal(result.state.units[0].hull, 95);
+  assert.equal(result.state.units[0].hull, 70);
+  assert.equal(result.state.units[0].repairUsed, 10);
   assert.equal(result.state.units[0].repaired, true);
   assert.equal(result.state.units[0].acted, true);
+});
+
+test('修整換回合後可再用，累計達耐久 25% 即配額用罄', () => {
+  // hullMax 100 → 配額 25：第一次修 10、第二次修 10、第三次只剩 5、第四次 REPAIR_EXHAUSTED
+  let state = makeState([makeUnit({ hull: 20, hullMax: 100 }), makeEnemy()]);
+  const repairOnce = () => {
+    let result = apply(state, { type: 'repair', unitId: 'p1' });
+    assert.equal(result.ok, true);
+    state = result.state;
+    result = apply(state, { type: 'end_turn' }); // 玩家 → 敵方
+    state = result.state;
+    result = apply(state, { type: 'end_turn' }); // 敵方 → 下一回合，repaired 重置
+    state = result.state;
+  };
+  repairOnce();
+  assert.equal(state.units[0].hull, 30);
+  repairOnce();
+  assert.equal(state.units[0].hull, 40);
+  repairOnce();
+  assert.equal(state.units[0].hull, 45, '第三次只能修剩餘配額 5 點');
+  assert.equal(state.units[0].repairUsed, 25);
+  const exhausted = apply(state, { type: 'repair', unitId: 'p1' });
+  assert.equal(exhausted.ok, false);
+  assert.equal(exhausted.error, 'REPAIR_EXHAUSTED');
+});
+
+test('反悔移動：移動後行動前可退回原位原朝向並重新移動', () => {
+  let state = makeState([makeUnit({ hex: { q: 2, r: 2 }, facing: 0, movePoints: 3 }), makeEnemy({ hex: at(10, 3) })]);
+  const moved = apply(state, { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }, { q: 3, r: 2 }] });
+  assert.equal(moved.ok, true);
+  state = moved.state;
+  assert.equal(state.units[0].moved, true);
+  assert.ok(state.units[0].undo, '移動後應有反悔快照');
+  const undone = apply(state, { type: 'undo_move', unitId: 'p1' });
+  assert.equal(undone.ok, true);
+  state = undone.state;
+  assert.deepEqual(state.units[0].hex, { q: 2, r: 2 });
+  assert.equal(state.units[0].facing, 0);
+  assert.equal(state.units[0].moveSpent, 0);
+  assert.equal(state.units[0].moved, false);
+  assert.equal(state.units[0].undo, null);
+  assert.equal(undone.events[0].type, 'unit_move_undone');
+  // 反悔後可重新移動到另一格
+  const again = apply(state, { type: 'move', unitId: 'p1', path: [{ q: 2, r: 2 }, { q: 2, r: 3 }] });
+  assert.equal(again.ok, true);
 });
 
 test('全體由己方邊界撤退視為成功脫離', () => {
@@ -239,9 +286,17 @@ test('所有穩定非法指令 error code 都保持原 state 不變', () => {
   expectError('NOT_BROADSIDE', makeState([makeUnit({ facing: 0 }), makeEnemy({ hex: { q: 3, r: 2 } })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'NOT_BROADSIDE');
   expectError('BLOCKED_LOS', makeState([makeUnit({ hex: at(3, 3), facing: 1, cannonTypeId: 'ct_hongyi' }), makeEnemy({ hex: at(6, 3) })]), { type: 'cannon', attackerId: 'p1', targetId: 'e1' }, 'BLOCKED_LOS', islandChannel);
   expectError('NOT_ADJACENT', makeState(), { type: 'board', attackerId: 'p1', targetId: 'e1' }, 'NOT_ADJACENT');
+  expectError('TARGET_TOO_STURDY', makeState([makeUnit(), makeEnemy({ hex: { q: 2, r: 3 } })]), { type: 'board', attackerId: 'p1', targetId: 'e1' }, 'TARGET_TOO_STURDY');
   expectError('REPAIR_ALREADY_USED', makeState([makeUnit({ hull: 80, repaired: true }), makeEnemy()]), { type: 'repair', unitId: 'p1' }, 'REPAIR_ALREADY_USED');
+  expectError('REPAIR_EXHAUSTED', makeState([makeUnit({ hull: 50, repairUsed: 25 }), makeEnemy()]), { type: 'repair', unitId: 'p1' }, 'REPAIR_EXHAUSTED');
   expectError('FULL_HULL', makeState(), { type: 'repair', unitId: 'p1' }, 'FULL_HULL');
   expectError('NOT_ON_RETREAT_EDGE', makeState(), { type: 'retreat', unitId: 'p1' }, 'NOT_ON_RETREAT_EDGE');
+  expectError('NOTHING_TO_UNDO', makeState(), { type: 'undo_move', unitId: 'p1' }, 'NOTHING_TO_UNDO');
+  expectError('UNDO_BLOCKED', makeState([
+    makeUnit({ moved: true, moveSpent: 1, hex: { q: 3, r: 2 }, undo: { hex: { q: 2, r: 2 }, facing: 0, moveSpent: 0 } }),
+    makeUnit({ id: 'p2', flagship: false, hex: { q: 2, r: 2 } }),
+    makeEnemy({ hex: at(10, 3) }),
+  ]), { type: 'undo_move', unitId: 'p1' }, 'UNDO_BLOCKED');
   assert.deepEqual([...observedErrors].sort(), [...EXPECTED_ERRORS].sort());
 });
 
@@ -271,9 +326,12 @@ test('接舷勝出、勢均力敵與失敗三種結果固定', () => {
   assert.equal(lost.targetCrewLoss, 0);
 });
 
-test('修整量遵守最低 3 與最高 12', () => {
-  assert.equal(rules.repairAmount(makeUnit({ hullMax: 40 })), 3);
-  assert.equal(rules.repairAmount(makeUnit({ hullMax: 1000 })), 12);
+test('修整量遵守最低 3、最高 25 與剩餘配額', () => {
+  assert.equal(rules.repairAmount(makeUnit({ hullMax: 20 })), 3, '10% 不足 3 補到最低 3');
+  assert.equal(rules.repairAmount(makeUnit({ hullMax: 1000 })), 25, '10% 超過 25 夾到最高 25');
+  assert.equal(rules.repairAmount(makeUnit({ hullMax: 100, repairUsed: 20 })), 5, '剩餘配額 5 優先');
+  assert.equal(rules.repairAmount(makeUnit({ hullMax: 100, repairUsed: 25 })), 0, '配額用罄為 0');
+  assert.equal(rules.repairExhausted(makeUnit({ hullMax: 100, repairUsed: 25 })), true);
 });
 
 test('12 回合比分較高時判定玩家普通勝利', () => {
@@ -304,9 +362,11 @@ test('P5 砲擊預估範圍涵蓋固定 seed 實際事件值', () => {
 
 test('P5 接舷預覽與引擎共用同一合法性規則', () => {
   const attacker = makeUnit({ hex: at(3, 3) });
-  const adjacent = makeEnemy({ hex: at(4, 3) });
+  const adjacent = makeEnemy({ hex: at(4, 3), hull: 60 }); // 需低於七成耐久門檻
+  const sturdy = makeEnemy({ hex: at(4, 3) });
   const distant = makeEnemy({ hex: at(6, 3) });
   assert.equal(rules.validateBoardingAttack(attacker, adjacent).ok, true);
+  assert.deepEqual(rules.validateBoardingAttack(attacker, sturdy), { ok: false, error: 'TARGET_TOO_STURDY' });
   assert.deepEqual(rules.validateBoardingAttack(attacker, distant), { ok: false, error: 'NOT_ADJACENT' });
   const state = makeState([attacker, distant]);
   const result = apply(state, { type: 'board', attackerId: 'p1', targetId: 'e1' });
@@ -323,7 +383,7 @@ test('P5 修整與接舷事件數值等於引擎狀態差', () => {
 
   const boardState = makeState([
     makeUnit({ crew: 40, hex: at(3, 3) }),
-    makeEnemy({ crew: 40, hex: at(4, 3) }),
+    makeEnemy({ crew: 40, hull: 60, hex: at(4, 3) }),
   ]);
   const boarded = apply(boardState, { type: 'board', attackerId: 'p1', targetId: 'e1' }, openSea, 42);
   assert.equal(boarded.ok, true);

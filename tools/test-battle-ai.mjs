@@ -52,14 +52,22 @@ test('AI 優先砲擊可擊沉的玩家旗艦', () => {
   });
 });
 
-test('接舷勝率達 65% 時優先於一般砲擊', () => {
+test('接舷勝率達 65% 時優先於一般砲擊（目標耐久需低於七成門檻）', () => {
   const attacker = makeUnit({ id: 'e0', hex: at(4, 3), crew: 100, boardingBonus: 50, facing: 0 });
-  const target = makePlayer({ id: 'p0', hex: at(3, 3), crew: 5, hull: 100 });
+  const target = makePlayer({ id: 'p0', hex: at(3, 3), crew: 5, hull: 60, hullMax: 100 });
   const state = makeEnemyState([attacker, target]);
   assert.ok(ai.estimateBoardingWinChance(attacker, target) >= 0.65);
   const decision = ai.chooseBattleAiDecision(state, openSea, 'enemy');
   assert.equal(decision.reason, 'board_advantage');
   assert.deepEqual(decision.command, { type: 'board', attackerId: 'e0', targetId: 'p0' });
+});
+
+test('目標耐久高於七成時 AI 不接舷、改走砲擊', () => {
+  const attacker = makeUnit({ id: 'e0', hex: at(4, 3), crew: 100, boardingBonus: 50, facing: 0 });
+  const target = makePlayer({ id: 'p0', hex: at(3, 3), crew: 5, hull: 100, hullMax: 100 });
+  const state = makeEnemyState([attacker, target]);
+  const decision = ai.chooseBattleAiDecision(state, openSea, 'enemy');
+  assert.notEqual(decision.command.type, 'board', '滿血目標不可被 AI 接舷');
 });
 
 test('接舷勝率積分在強弱與五五波案例維持固定', () => {

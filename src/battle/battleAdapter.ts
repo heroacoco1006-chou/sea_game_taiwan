@@ -28,7 +28,7 @@ import type {
   ShipSize,
   Side,
 } from './battleTypes';
-import { deploymentHexes } from './battleRules';
+import { BATTLE_RULES, deploymentHexes } from './battleRules';
 
 type EncounterKind = 'pirate' | 'quest' | 'story' | 'mate';
 type ShipRow = [string, number, number, CannonTypeId?, string?];
@@ -149,6 +149,8 @@ function baseUnit(
     moved: false,
     acted: false,
     repaired: false,
+    repairUsed: 0,
+    undo: null,
     status: 'active',
     ...overrides,
   };
@@ -268,7 +270,12 @@ export function settleHexBattle(
   state.fatigue = Math.min(100, state.fatigue + 5);
 
   if (battle.winner === 'player') {
-    state.gold += launch.loot;
+    // A-3 俘船換戰利品（設計決策④）：接舷逼降的敵船依噸位折算額外戰利品，
+    // 讓「俘獲」與「擊沉」成為報酬不同的選擇。倍率資料化於 battleRules.json capture。
+    const capturedShips = battle.units.filter((unit) => unit.side === 'enemy' && unit.status === 'surrendered');
+    const captureBonus = Math.round(capturedShips
+      .reduce((sum, unit) => sum + unit.hullMax * BATTLE_RULES.capture.perHullMax, 0));
+    state.gold += launch.loot + captureBonus;
     if (launch.request.questCombat && state.quest?.type === 'combat') state.quest.completed = true;
     state.battleWins = (state.battleWins ?? 0) + 1;
     const reputation = addReputation(state, 'valor', 2 + launch.tier);
@@ -282,6 +289,7 @@ export function settleHexBattle(
       defeated: false,
       lines: [
         `\u6230\u5229\u54c1\uff1a${launch.loot} \u5169\uff01`,
+        captureBonus > 0 ? `\u4fd8\u7372\u6575\u8239 ${capturedShips.length} \u8258\uff0c\u6298\u7b97\u6230\u5229\u54c1\u53e6\u5f97 ${captureBonus} \u5169\uff01` : '',
         crewLost > 0 ? `\u6298\u640d\u6c34\u624b ${crewLost} \u540d\u3002` : '',
         launch.request.questCombat ? '\u6d77\u6230\u59d4\u8a17\u5df2\u5b8c\u6210\uff0c\u53ef\u56de\u5546\u9928\u9818\u8cde\u3002' : '',
         reputation,
@@ -316,10 +324,18 @@ export function settleHexBattle(
     };
   }
 
+  // B-2 \u64a4\u9000\u5c0f\u6210\u672c\uff08\u8001\u95c6 2026-07-16 \u6838\u5b9a\uff09\uff1a\u4e3b\u52d5\u64a4\u9000\u9700\u4ed8\u6574\u88dc\u8cbb\uff08\u6bd4\u4f8b\u5c01\u9802\uff0c\u5152\u7ae5\u5411\u4e0d\u91cd\u7f70\uff09\uff0c
+  // \u8b93\u300c\u64a4\u9000\u518d\u4f86\u300d\u4e0d\u518d\u5b8c\u5168\u514d\u8cbb\uff1b\u56de\u5408\u8017\u76e1\u7684\u812b\u96e2\u4e0d\u53e6\u6536\u8cbb\u3002
+  let retreatCost = 0;
+  if (battle.resultReason === 'PLAYER_RETREATED') {
+    retreatCost = Math.min(BATTLE_RULES.retreatCost.goldCap, Math.floor(state.gold * BATTLE_RULES.retreatCost.goldPercent));
+    state.gold -= retreatCost;
+  }
   return {
     defeated: false,
     lines: [
       '\u96d9\u65b9\u812b\u96e2\u6230\u5834\uff0c\u672a\u7372\u5f97\u6230\u5229\u54c1\u3002',
+      retreatCost > 0 ? `\u64a4\u9000\u6574\u88dc\u82b1\u8cbb ${retreatCost} \u5169\u3002` : '',
       crewLost > 0 ? `\u6298\u640d\u6c34\u624b ${crewLost} \u540d\u3002` : '',
     ].filter(Boolean),
   };
