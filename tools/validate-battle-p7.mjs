@@ -27,6 +27,6 @@ for(const [token,label] of [['type HexBattleLaunchData','launch type missing'],[
 const data=JSON.parse(encounters);
 for(const tier of [1,2,3]){const row=data.encounters.find((entry)=>entry.id===`pirate_t${tier}`);if(!row?.countWeights)fail(`tier ${tier} weights missing`);const sum=row.countWeights.reduce((total,item)=>total+item[1],0);if(Math.abs(sum-1)>1e-9)fail(`tier ${tier} weights do not sum to one`);}
 const named=data.encounters.find((entry)=>entry.id==='story_huflag');if(named?.fixedShips?.length!==4||named?.storyAllies?.length!==1)fail('named large battle or story ally data missing');
-need(state,'export const SAVE_VERSION = 19','v19 fallback changed');
+need(state,'export const SAVE_VERSION = 20','v20 save version missing');
 need(legacy,"super('Battle')",'legacy BattleScene removed');
-console.log('P7 integration validator passed: 3 entries, v19 fallback, tier data, named battle, story ally, settlement');
+console.log('P7 integration validator passed: 3 entries, v20 save, tier data, named battle, story ally, settlement');

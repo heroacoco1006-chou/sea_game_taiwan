@@ -5,6 +5,7 @@ import {
   currentStoryChapter, storyAdvanceCheck, storyChapterTeaser, storyTargetPort, storyRequirementText, storyStageProgressText,
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
   addXp, levelUpMessage, addReputation, addFriendship, updateQuestProgress,
+  reputationEventNoticeAtPort, reportReputationEventStage, reputationEventNextStepText, REP_NAMES,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -23,6 +24,7 @@ export default class FacilityScene extends Phaser.Scene {
   private door!: { x: number; y: number };
   private info!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
+  private skipReputationNotice = false;
 
   constructor() {
     super('Facility');
@@ -32,10 +34,11 @@ export default class FacilityScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { portId: string; type: FacilityType; door: { x: number; y: number } }): void {
+  init(data: { portId: string; type: FacilityType; door: { x: number; y: number }; skipReputationNotice?: boolean }): void {
     this.port = PORTS.find((p) => p.id === data.portId)!;
     this.type = data.type;
     this.door = data.door;
+    this.skipReputationNotice = !!data.skipReputationNotice;
   }
 
   create(): void {
@@ -185,6 +188,8 @@ export default class FacilityScene extends Phaser.Scene {
       toast(this, '上一件委託超過期限，已經失效了……');
     }
 
+    if (!this.skipReputationNotice && this.buildReputationEventNotice()) return;
+
     const chapter = currentStoryChapter(s);
     const targetPort = storyTargetPort(chapter);
     if (chapter && chapter.targetPortId === this.port.id) {
@@ -301,6 +306,53 @@ export default class FacilityScene extends Phaser.Scene {
       toast(this, '委託取消了（下次再接吧）');
       this.scene.restart({ portId: this.port.id, type: this.type, door: this.door });
     }, 17);
+  }
+
+  private buildReputationEventNotice(): boolean {
+    const notice = reputationEventNoticeAtPort(this.state, this.port.id);
+    if (!notice) return false;
+    const W = BASE_W;
+    const event = notice.event;
+    const current = this.state.reputation?.[event.kind] ?? 0;
+    const ret = { scene: 'Facility' as const, portId: this.port.id, type: this.type, door: this.door };
+    if (notice.action === 'available') {
+      this.body.setText(
+        `⭐【聲望特殊事件：${event.title}】\n` +
+        `${event.npc}正在等你。\n\n${event.summary}\n\n` +
+        `${REP_NAMES[event.kind]}：${current}（門檻 ${event.threshold}）\n` +
+        '這是一次性事件，不會占用普通委託欄，也沒有永久失敗。'
+      );
+      makeButton(this, W / 2, 500, 330, 52, '聽聽特殊事件', () => {
+        this.scene.start('Story', { mode: 'reputation', eventId: event.id, phase: 'intro', ret });
+      });
+    } else if (notice.action === 'report') {
+      const stage = event.stages[notice.stageIndex ?? 0];
+      this.body.setText(
+        `⭐【聲望特殊事件：${event.title}】\n\n` +
+        `已經完成「${stage.title}」的條件，可以向${event.npc}回報。\n\n` +
+        `下一步：${reputationEventNextStepText(this.state, event)}`
+      );
+      makeButton(this, W / 2, 500, 330, 52, stage.consumeCargo ? '交付並回報' : '回報事件進度', () => {
+        const result = reportReputationEventStage(this.state, event.id, this.port.id);
+        if (!result.ok) { toast(this, result.msg); return; }
+        saveGame(this.state);
+        showModal(this, event.title, result.msg, [{
+          label: '繼續', onPick: () => this.scene.restart({ portId: this.port.id, type: this.type, door: this.door }),
+        }]);
+      });
+    } else {
+      this.body.setText(
+        `⭐【聲望特殊事件：${event.title}】\n\n` +
+        `所有階段都完成了。${event.npc}準備好告訴你這件事的結果。`
+      );
+      makeButton(this, W / 2, 500, 330, 52, '完成事件（看結局）', () => {
+        this.scene.start('Story', { mode: 'reputation', eventId: event.id, phase: 'conclusion', ret });
+      });
+    }
+    makeButton(this, W / 2, 565, 330, 44, '稍後再說（查看一般事務）', () => {
+      this.scene.restart({ portId: this.port.id, type: this.type, door: this.door, skipReputationNotice: true });
+    }, 15);
+    return true;
   }
 
   private offerSummary(offer: Quest): string {

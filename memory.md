@@ -4,6 +4,15 @@
 > 流水帳寫 `log.md`，不寫這裡。
 
 ---
+
+## [2026-07-18] 聲望特殊事件與稀有道具約定
+
+- 三軌名稱固定為冒險名聲／商人聲望／海上威名，不使用海盜惡名。每軌 40、80 各一件一次性事件；80 階須先完成同軌 40 階。
+- 特殊事件進度保存於 v20 `reputationEvents`，與主線、普通委託、夥伴任務並行；不得占 `state.quest`，不得加期限或永久失敗，獎勵必須有一次性 guard。
+- 事件主資料唯一來源是 `src/data/reputationEvents.json`；具名海戰走共用 `pendingQuestDuel()`／`battleAdapter`，不得建立另一套戰鬥入口。官府／商館通知優先序為回報→結案→新事件，且必須保留「稍後再說」查看一般事務。
+- 三件 80 階稀有道具固定為海商信用牌、航海星盤、守航水師佩刀；價格 0、不進商店、不可出售、唯一發放。六分儀晚於本作年代，不可用在 1600～1662 的首批事件。
+- 修改事件資料後必跑 `npm run validate:reputation`、`npm run test:reputation`、全 validators、全 `test*.mjs` 與 production build。
+
 ## [2026-07-15] 六角格海戰正式入口與回退約定
 
 - P9 22／22 與老闆人工裝置／3～5 分鐘驗收完成後，老闆明確核准正式切換；正式預設為 `USE_HEX_BATTLE=true`，一般海盜、商館任務與主線／夥伴決鬥一律透過 `battleSceneKey()` 進入 `BattleHexScene`。

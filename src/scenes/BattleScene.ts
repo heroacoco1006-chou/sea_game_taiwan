@@ -3,7 +3,8 @@ import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
   cannonMod, weaponBoard, boardBonus, reduceCrewLoss, addXp, levelUpMessage,
-  addReputation, updateQuestProgress, pendingMateDuel, pendingStoryDuel, completeMateDuel, completeStoryDuel,
+  addReputation, updateQuestProgress, pendingMateDuel, pendingStoryDuel, pendingReputationDuel,
+  completeMateDuel, completeStoryDuel, completeReputationDuel,
 } from '../state';
 import { shipBattleKey, shipBattleUrl } from '../art';
 import { audio } from '../audio';
@@ -35,6 +36,7 @@ export default class BattleScene extends Phaser.Scene {
   private tier = 1;
   private duelMateId: string | null = null;
   private storyDuelChapterId: string | null = null;
+  private reputationEventId: string | null = null;
 
   constructor() {
     super('Battle');
@@ -44,14 +46,19 @@ export default class BattleScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data?: { questCombat?: boolean; mateDuelId?: string; storyDuelChapterId?: string }): void {
+  init(data?: { questCombat?: boolean; mateDuelId?: string; storyDuelChapterId?: string; reputationEventId?: string }): void {
     const s = this.state;
     this.questCombat = Boolean(data?.questCombat);
     // 夥伴任務海上決鬥：專屬敵人（較強、有名字），勝利後鎖存任務階段
     this.duelMateId = data?.mateDuelId ?? null;
     this.storyDuelChapterId = data?.storyDuelChapterId ?? null;
-    if (this.duelMateId || this.storyDuelChapterId) {
-      const duel = this.storyDuelChapterId ? pendingStoryDuel(s) : pendingMateDuel(s);
+    this.reputationEventId = data?.reputationEventId ?? null;
+    if (this.duelMateId || this.storyDuelChapterId || this.reputationEventId) {
+      const duel = this.storyDuelChapterId
+        ? pendingStoryDuel(s)
+        : this.duelMateId
+          ? pendingMateDuel(s)
+          : pendingReputationDuel(s);
       const tier = duel?.tier ?? 3;
       this.tier = tier;
       this.enemy = {
@@ -243,7 +250,9 @@ export default class BattleScene extends Phaser.Scene {
       ? completeStoryDuel(s, this.storyDuelChapterId)
       : this.duelMateId
         ? completeMateDuel(s, this.duelMateId)
-        : updateQuestProgress(s);
+        : this.reputationEventId
+          ? completeReputationDuel(s, this.reputationEventId)
+          : updateQuestProgress(s);
     audio.playSfx('victory');
     const lv = levelUpMessage(addXp(s, 40 + Math.min(40, Math.round(loot / 30))));
     if (lv) { audio.playSfx('levelup'); flashFx(this, BASE_W / 2, BASE_H / 2); }

@@ -12,6 +12,7 @@ import {
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
   tradeRepBonus, adventureRepBonus, valorRepPirateReduction,
   mateQuestStageStatuses, mateNextStepText, mateUnavailableReason, updateQuestProgress,
+  reputationEventJournalLines,
 } from '../state';
 import {
   codexIllustrationKey, codexIllustrationUrl, portraitKey,
@@ -235,16 +236,20 @@ export default class InfoScene extends Phaser.Scene {
       return `🧭 ${def.name}「${def.questTitle}」進度 ${doneCount}/${stages.length}（所在港：${port?.name ?? def.portId}）\n　　${tip}`;
     });
     const expiredLines = expiredQuests.map((def) => `⏳ 已錯過：${def.name}「${def.questTitle}」（${mateUnavailableReason(s, def)}）`);
+    const reputationLines = reputationEventJournalLines(s);
     this.addWrapped(
       290,
-      420,
+      395,
       [
+        '— 聲望特殊事件 —',
+        reputationLines.length ? reputationLines.join('\n') : '聲望達到 40 或 80 後，特定港口會出現一次性特殊事件。',
+        '',
         '— 夥伴專屬任務 —',
         questLines.length ? questLines.join('\n') : '目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。',
         ...expiredLines,
       ].join('\n'),
       840,
-      15,
+      14,
       '#5a4a30'
     );
   }
@@ -260,9 +265,9 @@ export default class InfoScene extends Phaser.Scene {
       15,
       '#5a4a30'
     );
-    this.drawEquipColumn('weapon', '武器', 410, 230, WEAPONS.map((x) => ({ id: x.id, label: `${x.name} 接舷+${x.board}` })));
+    this.drawEquipColumn('weapon', '武器', 410, 230, WEAPONS.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name} 接舷+${x.board}` })));
     this.drawEquipColumn('armor', '防具', 710, 230, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
-    this.drawEquipColumn('accessory', '飾品', 1010, 230, ACCESSORIES.map((x) => ({ id: x.id, label: x.name })));
+    this.drawEquipColumn('accessory', '飾品', 1010, 230, ACCESSORIES.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name}` })));
   }
 
   private drawEquipColumn(cat: EquipCat, title: string, x: number, y: number, rows: Array<{ id: string; label: string }>): void {

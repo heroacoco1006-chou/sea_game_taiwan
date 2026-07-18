@@ -13,6 +13,8 @@
     { "id": "story_huflag", "kind": "story", "tier": 3, "mapId": "reef_passage", "loot": 980, "matchNames": ["\u6e05\u65b9\u6504\u622a\u8239"], "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]], "storyAllies": [["fuchuan", 5, 28, "standard", "\u912d\u5bb6\u53cb\u8ecd"]] },
     { "id": "mate_t1", "kind": "mate", "tier": 1, "mapId": "open_sea", "loot": 300, "fixedShips": [["junk_large", 4, 22]] },
     { "id": "mate_t2", "kind": "mate", "tier": 2, "mapId": "island_channel", "loot": 520, "fixedShips": [["shuinsen", 4, 24], ["junk_large", 4, 22]] },
-    { "id": "mate_t3", "kind": "mate", "tier": 3, "mapId": "reef_passage", "loot": 900, "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] }
+    { "id": "mate_t3", "kind": "mate", "tier": 3, "mapId": "reef_passage", "loot": 900, "fixedShips": [["fuchuan", 6, 36, "ct_hongyi"], ["junk_large", 4, 24], ["shuinsen", 4, 22], ["junk_small", 2, 14]] },
+    { "id": "reputation_guard_t2", "kind": "reputation", "tier": 2, "mapId": "island_channel", "loot": 520, "matchNames": ["冒旗勒索船隊"], "fixedShips": [["shuinsen", 4, 24, "standard", "冒旗船隊旗艦"], ["junk_large", 4, 22, "standard", "冒旗船隊僚艦"]] },
+    { "id": "reputation_challenge_t3", "kind": "reputation", "tier": 3, "mapId": "reef_passage", "loot": 900, "matchNames": ["七海挑戰船隊"], "fixedShips": [["fuchuan", 6, 36, "ct_hongyi", "七海挑戰旗艦"], ["junk_large", 4, 24, "standard", "挑戰船隊僚艦一"], ["shuinsen", 4, 22, "standard", "挑戰船隊僚艦二"]] }
   ]
 }

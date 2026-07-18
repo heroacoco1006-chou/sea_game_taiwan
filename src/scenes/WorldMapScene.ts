@@ -972,12 +972,12 @@ export default class WorldMapScene extends Phaser.Scene {
       return;
     }
 
-    // 夥伴任務海上決鬥：有待決鬥時，海上遭遇優先變成對方船隊（機率也提高，較快遇到）
+    // 具名任務決鬥：主線、夥伴與聲望事件共用遭遇入口。
     const duel = pendingQuestDuel(s);
     if (duel && roll < stormP + 0.095 + 0.05 + 0.06 + 0.12 && s.day > 10) {
       this.pauseWithModal(
         `${duel.name}出現！`,
-        `${duel.kind === 'story' ? '主線任務' : '夥伴任務'}的船隊擋在航路上，對方鳴砲挑戰！\n\n（${duel.kind === 'story' ? `主線「${duel.ownerName}」` : `${duel.ownerName}的夥伴任務`}：擊敗【${duel.name}】才能繼續。）`,
+        `${duel.kind === 'story' ? '主線任務' : duel.kind === 'mate' ? '夥伴任務' : '聲望特殊事件'}的船隊擋在航路上，對方鳴砲挑戰！\n\n（${duel.kind === 'story' ? `主線「${duel.ownerName}」` : duel.kind === 'mate' ? `${duel.ownerName}的夥伴任務` : `特殊事件「${duel.ownerName}」`}：擊敗【${duel.name}】才能繼續。）`,
         [
           {
             label: '應戰！（進入海戰）',
@@ -985,10 +985,16 @@ export default class WorldMapScene extends Phaser.Scene {
               saveGame(s);
               const request: HexBattleRequest = duel.kind === 'story'
                 ? { kind: 'story', tier: duel.tier, duelName: duel.name, storyDuelChapterId: duel.id }
-                : { kind: 'mate', tier: duel.tier, duelName: duel.name, mateDuelId: duel.id };
+                : duel.kind === 'mate'
+                  ? { kind: 'mate', tier: duel.tier, duelName: duel.name, mateDuelId: duel.id }
+                  : { kind: 'reputation', tier: duel.tier, duelName: duel.name, reputationEventId: duel.id };
               this.startBattle(
                 request,
-                duel.kind === 'story' ? { storyDuelChapterId: duel.id } : { mateDuelId: duel.id },
+                duel.kind === 'story'
+                  ? { storyDuelChapterId: duel.id }
+                  : duel.kind === 'mate'
+                    ? { mateDuelId: duel.id }
+                    : { reputationEventId: duel.id },
               );
             },
           },

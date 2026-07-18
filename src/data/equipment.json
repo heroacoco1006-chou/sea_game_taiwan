@@ -4,7 +4,8 @@
     { "id": "w_saber", "name": "腰刀", "price": 30000, "board": 6, "desc": "明軍制式的腰刀，劈砍俐落。" },
     { "id": "w_katana", "name": "日本刀", "price": 60000, "board": 10, "desc": "鋒利的日本刀，接舷戰的利器。" },
     { "id": "w_rapier", "name": "西洋劍", "price": 90000, "board": 14, "desc": "歐洲劍士的細劍，刺擊快狠。" },
-    { "id": "w_musket", "name": "火繩槍", "price": 150000, "board": 20, "desc": "南蠻傳來的火槍，接舷前一輪齊射震懾敵膽。" }
+    { "id": "w_musket", "name": "火繩槍", "price": 150000, "board": 20, "desc": "南蠻傳來的火槍，接舷前一輪齊射震懾敵膽。" },
+    { "id": "w_guard_saber", "name": "守航水師佩刀", "price": 0, "board": 18, "rare": true, "source": "海上威名 80 特殊事件「旗號的分量」", "historyNote": "遊戲創作的象徵道具，不是特定歷史人物遺物。", "desc": "完成最高階海上威名事件取得。接舷 +18；刀身刻著「護航守信」，提醒持刀者克制力量。" }
   ],
   "armors": [
     { "id": "a_cloth", "name": "旅人服", "price": 10000, "defense": 2, "desc": "普通的布衣，擋擋風寒。" },
@@ -20,7 +21,9 @@
     { "id": "tr_mazu_amulet", "name": "海商護符", "price": 35000, "effect": "morale", "desc": "探索取得的護符，能安定船員心情（疲勞累積減緩）。" },
     { "id": "tr_merchant_abacus", "name": "堺商人的小算盤", "price": 70000, "effect": "trade", "desc": "堺商人留下的小算盤，適合精算買賣（交易價格優惠）。" },
     { "id": "tr_old_compass", "name": "古航海羅盤", "price": 85000, "effect": "speed", "desc": "帶著歲月痕跡的羅盤，能幫助判斷航向（航速小幅提升）。" },
-    { "id": "tr_seafarer_telescope", "name": "異國望遠鏡", "price": 95000, "effect": "scout", "desc": "探索取得的望遠鏡，能更早看見海上異狀（突襲較不易發生）。" }
+    { "id": "tr_seafarer_telescope", "name": "異國望遠鏡", "price": 95000, "effect": "scout", "desc": "探索取得的望遠鏡，能更早看見海上異狀（突襲較不易發生）。" },
+    { "id": "ac_merchant_credit", "name": "海商信用牌", "price": 0, "effect": "trade", "effectValue": 0.07, "rare": true, "source": "商人聲望 80 特殊事件「跨海商約」", "historyNote": "遊戲創作的象徵道具，不宣稱是真實出土文物或官方憑證。", "desc": "不同港口商人共同認可的信用象徵（買賣價格優惠 7%）。" },
+    { "id": "ac_mariner_astrolabe", "name": "航海星盤", "price": 0, "effect": "discover", "effectValue": 0.08, "rare": true, "source": "冒險名聲 80 特殊事件「星象與航路」", "historyNote": "工具類型符合本作時代；本件道具與人物關聯為遊戲創作。", "desc": "觀察太陽或星體高度的航海工具（探索發現率 +8%）。" }
   ],
   "figureheads": [
     { "id": "fh_mazu", "name": "媽祖像", "price": 100000, "effect": "storm", "desc": "船首的媽祖神像，鎮住風浪（暴風損害減半）。" },

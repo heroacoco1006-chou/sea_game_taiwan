@@ -9,6 +9,7 @@ import {
   addReputation,
   addXp,
   completeMateDuel,
+  completeReputationDuel,
   completeStoryDuel,
   fleetShips,
   fleetStat,
@@ -30,7 +31,7 @@ import type {
 } from './battleTypes';
 import { BATTLE_RULES, deploymentHexes } from './battleRules';
 
-type EncounterKind = 'pirate' | 'quest' | 'story' | 'mate';
+type EncounterKind = 'pirate' | 'quest' | 'story' | 'mate' | 'reputation';
 type ShipRow = [string, number, number, CannonTypeId?, string?];
 interface EncounterDefinition {
   id: string;
@@ -54,6 +55,7 @@ export interface HexBattleRequest {
   questCombat?: boolean;
   mateDuelId?: string;
   storyDuelChapterId?: string;
+  reputationEventId?: string;
   duelName?: string;
 }
 
@@ -283,7 +285,9 @@ export function settleHexBattle(
       ? completeStoryDuel(state, launch.request.storyDuelChapterId)
       : launch.request.mateDuelId
         ? completeMateDuel(state, launch.request.mateDuelId)
-        : updateQuestProgress(state);
+        : launch.request.reputationEventId
+          ? completeReputationDuel(state, launch.request.reputationEventId)
+          : updateQuestProgress(state);
     const level = levelUpMessage(addXp(state, 40 + Math.min(40, Math.round(launch.loot / 30))));
     return {
       defeated: false,

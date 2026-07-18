@@ -5,6 +5,7 @@ const root = process.cwd();
 const storyDir = path.join(root, 'src', 'data', 'story');
 const discoveries = JSON.parse(fs.readFileSync(path.join(root, 'src', 'data', 'discoveries.json'), 'utf8')).discoveries;
 const mates = JSON.parse(fs.readFileSync(path.join(root, 'src', 'data', 'mates.json'), 'utf8')).mates;
+const reputationEvents = JSON.parse(fs.readFileSync(path.join(root, 'src', 'data', 'reputationEvents.json'), 'utf8')).events;
 
 const categories = [
   { id: 'event', label: '歷史事件', desc: '改變航路、政權或地方生活的重要事件。' },
@@ -179,7 +180,18 @@ const mateEntries = mates.map((m) => makeEntry({
   unlockHint: '在酒館結識並招募這位夥伴後解鎖。',
 }));
 
-const allEntries = [...storyEntries, ...discoveryEntries, ...mateEntries];
+const reputationEventEntries = reputationEvents.map((event) => makeEntry({
+  id: event.codexEntry.id,
+  title: event.codexEntry.title,
+  type: '聲望特殊事件',
+  body: event.codexEntry.body,
+  category: event.codexEntry.category,
+  source: `reputation-event:${event.id}`,
+  sourceNote: event.codexEntry.sourceNote,
+  unlockHint: `完成聲望特殊事件「${event.title}」後解鎖。`,
+}));
+
+const allEntries = [...storyEntries, ...discoveryEntries, ...mateEntries, ...reputationEventEntries];
 const seen = new Set();
 for (const entry of allEntries) {
   if (seen.has(entry.id)) throw new Error(`Duplicate codex id: ${entry.id}`);
@@ -196,7 +208,7 @@ function codexMarkdown(entries) {
     'title: 大航海福爾摩沙圖鑑資料庫',
     'type: data',
     'tags: [sea_game, codex, 圖鑑, 教育資料]',
-    'updated: 2026-06-15',
+    'updated: 2026-07-18',
     'author: Codex',
     'status: draft',
     '---',

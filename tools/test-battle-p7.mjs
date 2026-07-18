@@ -65,9 +65,9 @@ test('victory writes owned hull crew reward and quest once without persisting al
   assert.equal(state.gold, beforeGold + launch.loot);
 });
 
-test('defeat sends fleet to a port and keeps v19 save structure readable', () => {
+test('defeat sends fleet to a port and keeps v20 save structure readable', () => {
   const state = fresh(3);
-  assert.equal(state.version, 19);
+  assert.equal(state.version, 20);
   const launch = adapter.createHexBattleLaunch(state, { kind: 'pirate', tier: 3 }, 33);
   const battle = engine.createBattleState({ seed: launch.seed, mapId: launch.mapId, units: launch.units });
   battle.winner = 'enemy';

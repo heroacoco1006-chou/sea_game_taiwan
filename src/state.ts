@@ -7,6 +7,7 @@ import matesData from './data/mates.json';
 import storyData from './data/story.json';
 import explorationData from './data/exploration_points.json';
 import explorationEventsData from './data/exploration_events.json';
+import reputationEventsData from './data/reputationEvents.json';
 import discoveriesData from './data/discoveries.json';
 import codexData from './data/codex.json';
 import mapReanchorV3Data from './data/map_reanchor_v3.json';
@@ -14,7 +15,7 @@ import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 export interface Good {
   id: string;
@@ -211,6 +212,38 @@ export interface MateQuestProgress {
 export type RepKind = 'adventure' | 'trade' | 'valor';
 export interface ReputationState { adventure: number; trade: number; valor: number; }
 export const REP_NAMES: Record<RepKind, string> = { adventure: '冒險名聲', trade: '商人聲望', valor: '海上威名' };
+export interface ReputationEventStage extends MateQuestStage {
+  /** 特殊事件可在不同港口回報，不綁定起始 NPC 所在港。 */
+  reportAtPortId?: string;
+}
+export interface ReputationEventReward {
+  gold: number;
+  xp: number;
+  reputation: number;
+  itemId?: string;
+  codexIds: string[];
+}
+export interface ReputationEventDef {
+  id: string;
+  kind: RepKind;
+  threshold: number;
+  prerequisiteEventId?: string;
+  title: string;
+  npc: string;
+  startPortId: string;
+  completionPortId: string;
+  summary: string;
+  introLines: import('./story/parseStory').StoryLine[];
+  conclusionLines: import('./story/parseStory').StoryLine[];
+  stages: ReputationEventStage[];
+  rewards: ReputationEventReward;
+}
+export interface ReputationEventProgress {
+  status: 'active' | 'done';
+  stagesDone: boolean[];
+  acceptedDay: number;
+  rewarded: boolean;
+}
 export const FACTION_NAMES: Record<string, string> = { sinckan: '新港社' };
 /** 客座夥伴設定：主線推進到 leaveAfterChapter 之後會自動離隊（限定章節同行，不影響史實結局）。
  *  heroIds 省略＝所有主角線適用；指定時只對該些主角線客座（如施琅只在彼得線短期雇用）。 */
@@ -250,9 +283,9 @@ export function mateGuestFor(def: MateDef, heroId: HeroId): MateGuest | null {
   return guests.find((g) => !g.heroIds || g.heroIds.includes(heroId)) ?? null;
 }
 
-export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; }
+export interface WeaponItem { id: string; name: string; price: number; board: number; desc: string; rare?: boolean; source?: string; historyNote?: string; }
 export interface ArmorItem { id: string; name: string; price: number; defense: number; desc: string; }
-export interface AccessoryItem { id: string; name: string; price: number; effect: string; desc: string; }
+export interface AccessoryItem { id: string; name: string; price: number; effect: string; effectValue?: number; desc: string; rare?: boolean; source?: string; historyNote?: string; }
 export interface FigureheadItem { id: string; name: string; price: number; effect: string; desc: string; }
 export interface ConsumableItem { id: string; name: string; price: number; effect: string; desc: string; }
 // 船隻裝備（旗艦）：裝甲、船帆、大砲種類
@@ -437,6 +470,8 @@ export interface GameState {
   battleWins: number;
   /** 夥伴專屬任務進度（v18），key＝夥伴 id */
   mateQuests: Record<string, MateQuestProgress>;
+  /** 聲望特殊事件進度（v20），key＝事件 id；可和主線、夥伴、普通委託並行。 */
+  reputationEvents: Record<string, ReputationEventProgress>;
 }
 
 export interface ExplorationState {
@@ -466,6 +501,7 @@ export const CANNON_TYPES: CannonTypeItem[] = equipData.cannonTypes;
 export const CONSUMABLES: ConsumableItem[] = equipData.consumables;
 export const ROLES: RoleDef[] = matesData.roles;
 export const MATE_DEFS: MateDef[] = matesData.mates as MateDef[];
+export const REPUTATION_EVENTS: ReputationEventDef[] = (reputationEventsData as unknown as { events: ReputationEventDef[] }).events;
 export const HEROES: HeroDef[] = storyData.heroes as HeroDef[];
 export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter[];
 export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
@@ -653,6 +689,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     tradeStats: { total: 0, byPort: {} },
     battleWins: 0,
     mateQuests: {},
+    reputationEvents: {},
   };
   // 主線要角開局自動同行（如林線顏思齊第一章即同行）
   processAutoJoins(state);
@@ -712,6 +749,11 @@ function accessoryEffect(state: GameState): string | null {
   return a ? a.effect : null;
 }
 
+function accessoryEffectValue(state: GameState, effect: string, fallback: number): number {
+  const accessory = ACCESSORIES.find((x) => x.id === state.equip.accessory);
+  return accessory?.effect === effect ? accessory.effectValue ?? fallback : 0;
+}
+
 /** 旗艦船隻裝備（裝甲／船帆／大砲種類），無則 null */
 export function shipArmor(state: GameState): HullPlatingItem | null {
   return HULL_PLATINGS.find((x) => x.id === state.ship.armor) ?? null;
@@ -732,7 +774,7 @@ export function figureheadEffect(state: GameState): string | null {
 /** 航速加成倍率（羅盤＋海龍像＋航海長） */
 export function gearSpeedMod(state: GameState): number {
   let b = 1;
-  if (accessoryEffect(state) === 'speed') b += 0.05;
+  b += accessoryEffectValue(state, 'speed', 0.05);
   if (figureheadEffect(state) === 'speed') b += 0.1;
   if (hasRole(state, 'navigator')) b += 0.08;
   b += fleetStat(state, 'nav') / 600; // 航海能力加成
@@ -783,7 +825,7 @@ export function cannonMod(state: GameState): number {
 
 /** 交易折扣比例（算盤飾品＋主計長夥伴）：買價×(1−d)、賣價×(1+d） */
 export function tradeBonus(state: GameState): number {
-  let d = accessoryEffect(state) === 'trade' ? 0.05 : 0;
+  let d = accessoryEffectValue(state, 'trade', 0.05);
   if (hasRole(state, 'purser')) d += 0.05;
   d += Math.min(0.1, fleetStat(state, 'neg') / 800); // 交涉能力加成
   d += tradeRepBonus(state); // 商人聲望被動（B-5）
@@ -967,6 +1009,201 @@ export function repLevelDesc(kind: RepKind, value: number): string {
   if (value >= 40) return t[2];
   if (value >= 15) return t[1];
   return t[0];
+}
+
+// ---------- 聲望特殊事件（v20；獨立於主線、普通委託與夥伴任務） ----------
+
+export function reputationEventById(eventId: string): ReputationEventDef | undefined {
+  return REPUTATION_EVENTS.find((event) => event.id === eventId);
+}
+
+export function reputationEventProgress(state: GameState, eventId: string): ReputationEventProgress | null {
+  return state.reputationEvents?.[eventId] ?? null;
+}
+
+/** 尚未接取、聲望與前置事件都達成，且人在事件起始港。 */
+export function reputationEventAvailableAtPort(state: GameState, event: ReputationEventDef, portId: string): boolean {
+  if (event.startPortId !== portId || state.reputationEvents?.[event.id]) return false;
+  if ((state.reputation?.[event.kind] ?? 0) < event.threshold) return false;
+  if (!event.prerequisiteEventId) return true;
+  const prerequisite = state.reputationEvents?.[event.prerequisiteEventId];
+  return prerequisite?.status === 'done' && prerequisite.rewarded;
+}
+
+/** 接下特殊事件；事件進度永遠獨立保存，不會占用普通委託欄。 */
+export function acceptReputationEvent(state: GameState, eventId: string, portId: string): { ok: boolean; msg: string } {
+  const event = reputationEventById(eventId);
+  if (!event) return { ok: false, msg: '找不到這個聲望特殊事件。' };
+  if (!reputationEventAvailableAtPort(state, event, portId)) {
+    return { ok: false, msg: '目前還不能接下這個聲望特殊事件。' };
+  }
+  state.reputationEvents = state.reputationEvents ?? {};
+  state.reputationEvents[event.id] = {
+    status: 'active', stagesDone: event.stages.map(() => false), acceptedDay: state.day, rewarded: false,
+  };
+  const latched = updateReputationEventProgress(state);
+  return { ok: true, msg: [`⭐ 接下聲望特殊事件「${event.title}」！`, ...latched].join('\n') };
+}
+
+function reputationRequirementLines(state: GameState, stage: ReputationEventStage): string[] {
+  return mateConditionChecklist(state, stage.requirement).filter((item) => !item.met).map((item) => item.text);
+}
+
+/** 自動鎖存探索等已完成條件；交付、回報及決鬥仍由玩家親自完成。 */
+export function updateReputationEventProgress(state: GameState): string[] {
+  const msgs: string[] = [];
+  for (const event of REPUTATION_EVENTS) {
+    const progress = state.reputationEvents?.[event.id];
+    if (!progress || progress.status !== 'active') continue;
+    while (progress.stagesDone.length < event.stages.length) progress.stagesDone.push(false);
+    for (let index = 0; index < event.stages.length; index++) {
+      if (progress.stagesDone[index]) continue;
+      const stage = event.stages[index];
+      if (stage.reportAtPortId || stage.consumeCargo || stage.duel) break;
+      if (!checkStageDone(state, stage)) break;
+      progress.stagesDone[index] = true;
+      msgs.push(`⭐ 特殊事件「${event.title}」：完成「${stage.title}」（${index + 1}/${event.stages.length}）`);
+    }
+  }
+  return msgs;
+}
+
+export function reputationEventStageStatuses(
+  state: GameState,
+  event: ReputationEventDef,
+): Array<{ title: string; ok: boolean; lines: string[] }> {
+  const progress = state.reputationEvents?.[event.id];
+  return event.stages.map((stage, index) => {
+    const ok = !!progress?.stagesDone?.[index];
+    if (ok) return { title: stage.title, ok, lines: [] };
+    if (stage.duel) return { title: stage.title, ok, lines: [`出海航行，擊敗【${stage.duel.name}】`] };
+    const lines = reputationRequirementLines(state, stage);
+    if (!lines.length && stage.reportAtPortId) {
+      const portName = PORTS.find((port) => port.id === stage.reportAtPortId)?.name ?? stage.reportAtPortId;
+      lines.push(`到【${portName}】官府／商館回報`);
+    }
+    return { title: stage.title, ok, lines };
+  });
+}
+
+export function reputationEventNextStepText(state: GameState, event: ReputationEventDef): string {
+  const progress = state.reputationEvents?.[event.id];
+  if (!progress) {
+    const portName = PORTS.find((port) => port.id === event.startPortId)?.name ?? event.startPortId;
+    return `到【${portName}】官府／商館接事件（需要${REP_NAMES[event.kind]} ${event.threshold}）`;
+  }
+  for (const status of reputationEventStageStatuses(state, event)) {
+    if (!status.ok) return status.lines[0] ?? status.title;
+  }
+  const portName = PORTS.find((port) => port.id === event.completionPortId)?.name ?? event.completionPortId;
+  return `到【${portName}】官府／商館完成事件`;
+}
+
+export function reportableReputationEventStageIndex(state: GameState, event: ReputationEventDef, portId: string): number {
+  const progress = state.reputationEvents?.[event.id];
+  if (!progress || progress.status !== 'active') return -1;
+  for (let index = 0; index < event.stages.length; index++) {
+    if (progress.stagesDone[index]) continue;
+    const stage = event.stages[index];
+    if (!stage.reportAtPortId || stage.reportAtPortId !== portId) return -1;
+    return reputationRequirementLines(state, stage).length === 0 ? index : -1;
+  }
+  return -1;
+}
+
+export function reportReputationEventStage(state: GameState, eventId: string, portId: string): { ok: boolean; msg: string } {
+  const event = reputationEventById(eventId);
+  if (!event) return { ok: false, msg: '找不到這個聲望特殊事件。' };
+  const index = reportableReputationEventStageIndex(state, event, portId);
+  if (index < 0) return { ok: false, msg: '目前沒有可以在這裡回報的事件進度。' };
+  const stage = event.stages[index];
+  const delivered: string[] = [];
+  if (stage.consumeCargo) {
+    for (const cargo of stage.requirement?.cargo ?? []) {
+      const owned = state.cargo[cargo.goodId] ?? 0;
+      if (owned < cargo.qty) return { ok: false, msg: '貨物不足，還不能交付。' };
+      const basis = state.costBasis[cargo.goodId] ?? 0;
+      state.costBasis[cargo.goodId] = Math.round(basis * ((owned - cargo.qty) / owned));
+      state.cargo[cargo.goodId] = owned - cargo.qty;
+      if (state.cargo[cargo.goodId] === 0) {
+        delete state.cargo[cargo.goodId];
+        delete state.costBasis[cargo.goodId];
+      }
+      delivered.push(`${GOODS.find((good) => good.id === cargo.goodId)?.name ?? cargo.goodId}×${cargo.qty}`);
+    }
+  }
+  state.reputationEvents[event.id].stagesDone[index] = true;
+  const msgs = [
+    `⭐ 特殊事件「${event.title}」：完成「${stage.title}」（${index + 1}/${event.stages.length}）`,
+    delivered.length ? `交付了 ${delivered.join('、')}。` : '',
+    stage.dialogue ? `${event.npc}：「${stage.dialogue}」` : '',
+    ...updateReputationEventProgress(state),
+  ];
+  return { ok: true, msg: msgs.filter(Boolean).join('\n') };
+}
+
+export function reputationEventReadyToComplete(state: GameState, event: ReputationEventDef, portId: string): boolean {
+  const progress = state.reputationEvents?.[event.id];
+  return !!progress && progress.status === 'active' && event.completionPortId === portId
+    && event.stages.every((_, index) => !!progress.stagesDone[index]);
+}
+
+/** 結算只允許一次；稀有道具也做唯一性保護。 */
+export function completeReputationEvent(state: GameState, eventId: string, portId: string): { ok: boolean; msg: string } {
+  const event = reputationEventById(eventId);
+  if (!event || !reputationEventReadyToComplete(state, event, portId)) return { ok: false, msg: '事件條件尚未完成。' };
+  const progress = state.reputationEvents[event.id];
+  if (progress.rewarded) return { ok: false, msg: '獎勵已經領過了。' };
+  progress.rewarded = true;
+  progress.status = 'done';
+  state.gold += event.rewards.gold;
+  const xpMessage = levelUpMessage(addXp(state, event.rewards.xp));
+  const reputationMessage = addReputation(state, event.kind, event.rewards.reputation);
+  const unlocked = unlockCodex(state, event.rewards.codexIds);
+  let itemMessage = '';
+  if (event.rewards.itemId && !hasInventory(state, event.rewards.itemId)) {
+    addInventory(state, event.rewards.itemId);
+    itemMessage = `🏆 稀有道具：【${itemNameById(event.rewards.itemId)}】`;
+  }
+  const lines = [
+    `✅ 完成聲望特殊事件「${event.title}」！`,
+    `獲得 ${event.rewards.gold} 兩、經驗 ${event.rewards.xp}。`, reputationMessage, itemMessage,
+    unlocked.length ? `📖 圖鑑解鎖：${unlocked.join('、')}` : '', xpMessage,
+  ];
+  return { ok: true, msg: lines.filter(Boolean).join('\n') };
+}
+
+export interface ReputationEventNotice {
+  action: 'available' | 'report' | 'complete';
+  event: ReputationEventDef;
+  stageIndex?: number;
+}
+
+/** 官府／商館入口通知：先回報，再結案，最後才提示新事件。 */
+export function reputationEventNoticeAtPort(state: GameState, portId: string): ReputationEventNotice | null {
+  updateReputationEventProgress(state);
+  for (const event of REPUTATION_EVENTS) {
+    const index = reportableReputationEventStageIndex(state, event, portId);
+    if (index >= 0) return { action: 'report', event, stageIndex: index };
+  }
+  for (const event of REPUTATION_EVENTS) {
+    if (reputationEventReadyToComplete(state, event, portId)) return { action: 'complete', event };
+  }
+  const available = REPUTATION_EVENTS.find((event) => reputationEventAvailableAtPort(state, event, portId));
+  return available ? { action: 'available', event: available } : null;
+}
+
+export function reputationEventJournalLines(state: GameState): string[] {
+  const lines: string[] = [];
+  let doneCount = 0;
+  for (const event of REPUTATION_EVENTS) {
+    const progress = state.reputationEvents?.[event.id];
+    if (progress?.status === 'done') doneCount += 1;
+    else if (progress?.status === 'active') lines.push(`⭐ ${event.title}：${reputationEventNextStepText(state, event)}`);
+    else if ((state.reputation?.[event.kind] ?? 0) >= event.threshold) lines.push(`🔔 ${event.title}：${reputationEventNextStepText(state, event)}`);
+  }
+  if (doneCount > 0) lines.push(`✅ 已完成聲望特殊事件 ${doneCount}/${REPUTATION_EVENTS.length}`);
+  return lines;
 }
 
 /** 夥伴條件清單項：text 為條件描述（含目前進度），met 為是否已達成。 */
@@ -1170,8 +1407,9 @@ export function pendingMateDuel(state: GameState): PendingMateDuel | null {
 }
 
 export interface PendingStoryDuel { chapterId: string; chapterTitle: string; stageIndex: number; name: string; tier: number; }
+export interface PendingReputationDuel { eventId: string; eventTitle: string; stageIndex: number; name: string; tier: number; }
 export interface PendingQuestDuel {
-  kind: 'story' | 'mate';
+  kind: 'story' | 'mate' | 'reputation';
   id: string;
   ownerName: string;
   name: string;
@@ -1191,12 +1429,30 @@ export function pendingStoryDuel(state: GameState): PendingStoryDuel | null {
     : null;
 }
 
+export function pendingReputationDuel(state: GameState): PendingReputationDuel | null {
+  for (const event of REPUTATION_EVENTS) {
+    const progress = state.reputationEvents?.[event.id];
+    if (!progress || progress.status !== 'active') continue;
+    for (let index = 0; index < event.stages.length; index++) {
+      if (progress.stagesDone[index]) continue;
+      const duel = event.stages[index].duel;
+      if (duel) return { eventId: event.id, eventTitle: event.title, stageIndex: index, name: duel.name, tier: duel.tier };
+      break;
+    }
+  }
+  return null;
+}
+
 /** 主線決鬥優先於夥伴決鬥，兩者共用同一個海上遭遇與 battleSceneKey()。 */
 export function pendingQuestDuel(state: GameState): PendingQuestDuel | null {
   const story = pendingStoryDuel(state);
   if (story) return { kind: 'story', id: story.chapterId, ownerName: story.chapterTitle, name: story.name, tier: story.tier };
   const mate = pendingMateDuel(state);
-  return mate ? { kind: 'mate', id: mate.mateId, ownerName: mate.mateName, name: mate.name, tier: mate.tier } : null;
+  if (mate) return { kind: 'mate', id: mate.mateId, ownerName: mate.mateName, name: mate.name, tier: mate.tier };
+  const reputation = pendingReputationDuel(state);
+  return reputation
+    ? { kind: 'reputation', id: reputation.eventId, ownerName: reputation.eventTitle, name: reputation.name, tier: reputation.tier }
+    : null;
 }
 
 /** 海上決鬥獲勝：鎖存該決鬥階段並巡檢後續；回傳提示文字。 */
@@ -1215,6 +1471,23 @@ export function completeMateDuel(state: GameState, mateId: string): string[] {
       stage.dialogue ? `${def.name}：「${stage.dialogue}」` : '',
       ...updateQuestProgress(state),
     ].filter(Boolean);
+  }
+  return [];
+}
+
+export function completeReputationDuel(state: GameState, eventId: string): string[] {
+  const event = reputationEventById(eventId);
+  const progress = state.reputationEvents?.[eventId];
+  if (!event || !progress || progress.status !== 'active') return [];
+  for (let index = 0; index < event.stages.length; index++) {
+    if (progress.stagesDone[index]) continue;
+    const stage = event.stages[index];
+    if (!stage.duel) return [];
+    progress.stagesDone[index] = true;
+    return [
+      `⚔ 擊敗了${stage.duel.name}！完成特殊事件「${stage.title}」（${index + 1}/${event.stages.length}）`,
+      ...updateQuestProgress(state),
+    ];
   }
   return [];
 }
@@ -1403,6 +1676,10 @@ export function isTreasureItem(id: string): boolean {
   return DISCOVERIES.some((x) => x.kind === 'treasure' && (x.id === id || x.rewardItemId === id));
 }
 
+export function isRareEquipmentItem(id: string): boolean {
+  return !!WEAPONS.find((item) => item.id === id)?.rare || !!ACCESSORIES.find((item) => item.id === id)?.rare;
+}
+
 export function itemSellValueById(id: string): number {
   const equipPrice =
     WEAPONS.find((x) => x.id === id)?.price ??
@@ -1430,6 +1707,7 @@ function consumeInventory(state: GameState, id: string): void {
 
 export function sellInventoryItem(state: GameState, id: string): string {
   if (!hasInventory(state, id)) return `背包裡沒有【${itemNameById(id)}】。`;
+  if (isRareEquipmentItem(id)) return `【${itemNameById(id)}】是特殊事件的唯一紀念，不能賣掉。`;
   const value = itemSellValueById(id);
   consumeInventory(state, id);
   state.gold += value;
@@ -1791,7 +2069,14 @@ function migrateSave(raw: string): GameState | null {
       full.story.chapterStages = chapterStages;
       full.version = 19;
     }
+    // v19 → v20：六個聲望特殊事件的獨立持久進度；不占普通委託欄。
+    if (s.version < 20) {
+      const full = s as GameState;
+      full.reputationEvents = full.reputationEvents ?? {};
+      full.version = 20;
+    }
     (s as GameState).story.chapterStages = (s as GameState).story.chapterStages ?? {};
+    (s as GameState).reputationEvents = (s as GameState).reputationEvents ?? {};
     return s as GameState;
   } catch {
     return null;
@@ -1927,7 +2212,7 @@ export function updateStoryStageProgress(state: GameState): string[] {
 
 /** 所有會改變任務條件的事件統一呼叫，避免主線與夥伴巡檢漏接。 */
 export function updateQuestProgress(state: GameState): string[] {
-  return [...updateStoryStageProgress(state), ...updateMateQuestProgress(state)];
+  return [...updateStoryStageProgress(state), ...updateMateQuestProgress(state), ...updateReputationEventProgress(state)];
 }
 
 export function storyTargetPort(chapter: StoryChapter | undefined): Port | undefined {
@@ -2434,10 +2719,11 @@ export function explorationFindChance(state: GameState, point: ExplorationPoint)
   const guide = hasRole(state, 'guide') ? 0.16 : 0;
   const scholar = hasRole(state, 'scholar') ? 0.08 : 0;
   const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
+  const astrolabe = accessoryEffectValue(state, 'discover', 0.08);
   const retry = Math.min(0.2, explorationAttemptCount(state, point.id) * 0.05);
   const know = Math.min(0.15, fleetStat(state, 'kno') / 600); // 知識能力加成
   const renown = adventureRepBonus(state); // 冒險名聲被動（B-5）
-  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + retry + know + renown));
+  return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + astrolabe + retry + know + renown));
 }
 
 export function explorationCostForState(state: GameState, point: ExplorationPoint): { food: number; water: number; days: number } {

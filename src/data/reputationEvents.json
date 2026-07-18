@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "id": "rep_trade_40", "kind": "trade", "threshold": 40,
+      "title": "秤與信用", "npc": "月港老商人", "startPortId": "yuegang", "completionPortId": "hirado",
+      "summary": "替月港商人護送一批按實數秤好的生絲到平戶，證明信用比一時多賺幾兩更長久。",
+      "introLines": [
+        { "kind": "scene", "text": "月港商館・驗貨桌前" },
+        { "kind": "speech", "speaker": "月港老商人", "text": "最近有人把秤砣動了手腳，貨看起來一樣，實際卻少了幾斤。這種便宜只能占一次。" },
+        { "kind": "speech", "speaker": "月港老商人", "text": "你的商人聲望傳到月港了。請你照實秤好十二箱生絲，送到平戶，讓大家知道這條商路還能相信。" },
+        { "kind": "objective", "text": "備妥生絲 12 件，送到平戶官府／商館回報。" }
+      ],
+      "stages": [{
+        "title": "送出足秤生絲", "desc": "把按實數秤好的生絲送到平戶。",
+        "requirement": { "cargo": [{ "goodId": "silk_raw", "qty": 12 }] },
+        "consumeCargo": true, "reportAtPortId": "hirado",
+        "dialogue": "平戶商人重新過秤後點頭：一件不少。信用就是看不見的航路。"
+      }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "平戶商館・重新過秤" },
+        { "kind": "speech", "speaker": "平戶商人", "text": "十二箱全都足秤。往後看到你的旗號，我們知道帳目和貨物都可信。" },
+        { "kind": "narration", "text": "大航海時代的遠距交易很難當面查驗每批貨物，因此信用、介紹人與商人網絡都非常重要。" }
+      ],
+      "rewards": { "gold": 1200, "xp": 120, "reputation": 5, "codexIds": ["rep_codex_trade_40"] },
+      "codexEntry": {
+        "id": "rep_codex_trade_40", "title": "海商的信用網", "category": "system",
+        "body": "十七世紀的跨海交易要經過許多港口，商人未必每次都能親自驗貨。是否足秤、是否按時交貨、介紹人是否可靠，會決定別人願不願意繼續合作。遊戲中的故事是依這種商業環境設計的教學事件，不是某一件真實案件。",
+        "sourceNote": "遊戲教學事件；依十七世紀跨港商業信用與商人網絡概念改編。"
+      }
+    },
+    {
+      "id": "rep_trade_80", "kind": "trade", "threshold": 80, "prerequisiteEventId": "rep_trade_40",
+      "title": "跨海商約", "npc": "平戶商人代表", "startPortId": "hirado", "completionPortId": "tayouan",
+      "summary": "集合中國生絲、日本白銀與南洋胡椒，在大員完成一份照顧三方需要的跨海商約。",
+      "introLines": [
+        { "kind": "scene", "text": "平戶商館・三地商人會談" },
+        { "kind": "speech", "speaker": "平戶商人代表", "text": "一條長久的商路不能只讓一邊得利。中國商人要白銀，日本商人要生絲，南洋商人也要有人公平買下香料。" },
+        { "kind": "speech", "speaker": "平戶商人代表", "text": "請帶著三地的代表貨物到大員。我們要訂一份大家都看得懂、也都願意遵守的商約。" },
+        { "kind": "objective", "text": "備妥絲綢 6、白銀 4、胡椒 4，送到大員官府／商館。" }
+      ],
+      "stages": [{
+        "title": "集合三地貨物", "desc": "用三地代表貨物證明這條商路能互通有無。",
+        "requirement": { "cargo": [{ "goodId": "silk_cloth", "qty": 6 }, { "goodId": "silver", "qty": 4 }, { "goodId": "pepper", "qty": 4 }] },
+        "consumeCargo": true, "reportAtPortId": "tayouan",
+        "dialogue": "三方代表逐項核對貨物與條文，終於在同一張商約上留下記號。"
+      }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "大員商館・跨海商約成立" },
+        { "kind": "speech", "speaker": "平戶商人代表", "text": "這塊信用牌不是官府特許，也不是免稅憑證。它只代表一件事：你曾讓不同地方的商人坐下來公平談生意。" },
+        { "kind": "narration", "text": "「海商信用牌」是遊戲創作的象徵道具，不宣稱是真實出土文物。它代表跨文化交易需要信用、翻譯與共同規則。" }
+      ],
+      "rewards": { "gold": 2500, "xp": 220, "reputation": 5, "itemId": "ac_merchant_credit", "codexIds": ["rep_codex_trade_80"] },
+      "codexEntry": {
+        "id": "rep_codex_trade_80", "title": "跨海商約與中介港", "category": "trade",
+        "body": "台灣位在中國、日本與東南亞航路之間，大員等港口能成為生絲、白銀、鹿皮與香料的中介地。不同商人使用的語言、貨幣與規則不完全相同，因此翻譯、信用和共同認可的契約很重要。事件與信用牌為遊戲創作，用來說明中介港的功能。",
+        "sourceNote": "遊戲教學事件與虛構象徵道具；用來呈現十七世紀東亞跨海商網。"
+      }
+    },
+    {
+      "id": "rep_adventure_40", "kind": "adventure", "threshold": 40,
+      "title": "澎湖針路殘頁", "npc": "澎湖老舵手", "startPortId": "penghu", "completionPortId": "naha",
+      "summary": "比對琉球首里與堺航路的觀察紀錄，補全一張不完整的東亞針路圖。",
+      "introLines": [
+        { "kind": "scene", "text": "澎湖港邊・風化的航海筆記" },
+        { "kind": "speech", "speaker": "澎湖老舵手", "text": "海圖不是畫得漂亮就有用。哪裡有暗流、季風何時轉向、遠方先看到哪座山，都要靠一趟趟航行記下來。" },
+        { "kind": "speech", "speaker": "澎湖老舵手", "text": "這幾頁少了琉球和日本內海的對照。你的冒險名聲夠響，請把首里和堺航路的紀錄補齊，再到那霸找通譯核對。" },
+        { "kind": "objective", "text": "確認探索點「首里城周邊」與「堺商路」，再到那霸官府／商館回報。" }
+      ],
+      "stages": [{
+        "title": "比對琉球與堺航路", "desc": "確認首里城周邊與堺商路的探索紀錄。",
+        "requirement": { "discoveredExplorationPoints": ["exp_ryukyu_shuri", "exp_sakai_route"] },
+        "reportAtPortId": "naha", "dialogue": "那霸通譯把兩地記錄疊在一起，缺失的季風與地標終於接上了。"
+      }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "那霸・針路圖核對完成" },
+        { "kind": "speech", "speaker": "那霸通譯", "text": "每一頁都不是秘密寶藏，而是許多舵手用風浪換來的經驗。把來源寫清楚，下一艘船才知道該相信什麼。" },
+        { "kind": "narration", "text": "早期航海圖與針路記錄會結合方位、距離、沿岸地標和水手經驗；它們不是現代精密海圖。" }
+      ],
+      "rewards": { "gold": 1000, "xp": 140, "reputation": 5, "codexIds": ["rep_codex_adventure_40"] },
+      "codexEntry": {
+        "id": "rep_codex_adventure_40", "title": "針路與沿岸地標", "category": "ship",
+        "body": "十七世紀船員會用羅盤方位、航行時間、海流、季風和沿岸山形記錄航路。這類針路知識常由多次航行累積，也需要不同港口的舵手互相校對。遊戲中的殘頁故事是教學改編，不代表一張特定史實海圖。",
+        "sourceNote": "遊戲教學事件；依早期近海導航與針路記錄方式改編。"
+      }
+    },
+    {
+      "id": "rep_adventure_80", "kind": "adventure", "threshold": 80, "prerequisiteEventId": "rep_adventure_40",
+      "title": "星象與航路", "npc": "大員航海學者", "startPortId": "tayouan", "completionPortId": "tayouan",
+      "summary": "把玉山、雲仙、爪哇火山與摩鹿加森林的觀察整理成跨海航行筆記。",
+      "introLines": [
+        { "kind": "scene", "text": "大員商館・航海記錄桌" },
+        { "kind": "speech", "speaker": "大員航海學者", "text": "遠洋航行不能只靠一件神奇工具。星象能幫忙估計緯度，羅盤能辨方向，沿岸山形和水手經驗同樣重要。" },
+        { "kind": "speech", "speaker": "大員航海學者", "text": "請把北方高山、火山島與香料群島的觀察整理齊全。完成後，我把這具航海星盤交給真正會記錄的人。" },
+        { "kind": "objective", "text": "確認玉山、雲仙火山、爪哇火山與摩鹿加森林四處探索點，再回大員官府／商館。" }
+      ],
+      "stages": [{
+        "title": "完成遠洋觀察錄", "desc": "整理東亞到南洋四處代表性探索紀錄。",
+        "requirement": { "discoveredExplorationPoints": ["exp_yushan", "exp_unzen", "exp_java_volcano", "exp_moluccas_forest"] },
+        "reportAtPortId": "tayouan", "dialogue": "學者逐頁核對觀察地點，確認筆記沒有把傳聞和親眼所見混在一起。"
+      }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "大員商館・遠洋觀察錄完成" },
+        { "kind": "speech", "speaker": "大員航海學者", "text": "這是航海星盤，可以觀察太陽或星體的高度，幫助估計緯度。它不是能直接指出位置的魔法地圖。" },
+        { "kind": "narration", "text": "本作使用「航海星盤」而不是六分儀；海用六分儀晚於本作時代。道具外觀與人物關聯為遊戲創作。" }
+      ],
+      "rewards": { "gold": 2200, "xp": 240, "reputation": 5, "itemId": "ac_mariner_astrolabe", "codexIds": ["rep_codex_adventure_80"] },
+      "codexEntry": {
+        "id": "rep_codex_adventure_80", "title": "航海星盤", "category": "ship",
+        "body": "航海星盤可用太陽或星體高度協助估計緯度。船員仍要搭配羅盤、航速推算、海流、季風與沿岸地標，才能判斷航線。六分儀在十八世紀才發展成熟，晚於本遊戲時代，因此本事件改用較符合十七世紀背景的航海星盤。",
+        "sourceNote": "道具為遊戲創作；工具類型依十七世紀航海背景選用。"
+      }
+    },
+    {
+      "id": "rep_valor_40", "kind": "valor", "threshold": 40,
+      "title": "護商還是掠奪", "npc": "澎湖水師哨官", "startPortId": "penghu", "completionPortId": "penghu",
+      "summary": "擊退冒充水師收取保護費的船隊，證明威名應用來保護航路。",
+      "introLines": [
+        { "kind": "scene", "text": "澎湖官署・商船求援" },
+        { "kind": "speech", "speaker": "澎湖水師哨官", "text": "有人掛著官旗，卻在外海向小商船強收保護費。旗號若只讓弱者害怕，就和海盜沒有兩樣。" },
+        { "kind": "speech", "speaker": "澎湖水師哨官", "text": "你的海上威名已經傳開。請擊退那支冒旗船隊，讓大家知道力量可以拿來守住航路。" },
+        { "kind": "objective", "text": "出海遭遇並擊敗「冒旗勒索船隊」，之後回澎湖官府／商館。" }
+      ],
+      "stages": [{ "title": "擊退冒旗船隊", "desc": "在海上擊敗冒充水師勒索商船的船隊。", "duel": { "name": "冒旗勒索船隊", "tier": 2 } }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "澎湖官署・商船平安返港" },
+        { "kind": "speech", "speaker": "澎湖水師哨官", "text": "商船記住的不是你打沉多少船，而是你來了之後，他們能平安回家。這才是旗號真正的分量。" },
+        { "kind": "narration", "text": "明末海上勢力的身分可能在商人、海盜與官軍之間變動。遊戲不把武力本身當成榮耀，而是看它保護或傷害了誰。" }
+      ],
+      "rewards": { "gold": 1400, "xp": 160, "reputation": 5, "codexIds": ["rep_codex_valor_40"] },
+      "codexEntry": {
+        "id": "rep_codex_valor_40", "title": "海商、海盜與水師", "category": "system",
+        "body": "明末東亞海域有官軍、商船、武裝海商與海盜等不同力量，身分界線有時並不固定。同一支船隊可能做貿易，也可能護航、走私或掠奪。判斷一個海上勢力，不能只看旗號，還要看它如何對待沿海居民與其他船隻。",
+        "sourceNote": "事件人物與船隊為遊戲創作；背景用來說明明末海上勢力身分交錯。"
+      }
+    },
+    {
+      "id": "rep_valor_80", "kind": "valor", "threshold": 80, "prerequisiteEventId": "rep_valor_40",
+      "title": "旗號的分量", "npc": "大員港務代表", "startPortId": "tayouan", "completionPortId": "tayouan",
+      "summary": "接受七海挑戰船隊的公開挑戰，勝利後約束追擊，讓威名成為減少衝突的力量。",
+      "introLines": [
+        { "kind": "scene", "text": "大員港外・公開挑戰書" },
+        { "kind": "speech", "speaker": "大員港務代表", "text": "一支自稱七海挑戰者的船隊放話：若你不應戰，他們就沿途攔查掛著你旗號的商船。" },
+        { "kind": "speech", "speaker": "大員港務代表", "text": "請正面擊敗他們，但對方降旗後就停止追擊。能控制力量，比只會使用力量更難。" },
+        { "kind": "objective", "text": "出海遭遇並擊敗「七海挑戰船隊」，之後回大員官府／商館。" }
+      ],
+      "stages": [{ "title": "接受七海挑戰", "desc": "正面擊敗挑戰船隊，勝利後停止追擊。", "duel": { "name": "七海挑戰船隊", "tier": 3 } }],
+      "conclusionLines": [
+        { "kind": "scene", "text": "大員官署・挑戰落幕" },
+        { "kind": "speech", "speaker": "大員港務代表", "text": "這把佩刀是守航水師的象徵。它不是某位歷史人物的遺物，而是提醒持刀的人：船員和平民的安全比炫耀戰績重要。" },
+        { "kind": "narration", "text": "「守航水師佩刀」為遊戲創作道具。事件以不血腥的方式呈現勝利、投降與克制。" }
+      ],
+      "rewards": { "gold": 2800, "xp": 260, "reputation": 5, "itemId": "w_guard_saber", "codexIds": ["rep_codex_valor_80"] },
+      "codexEntry": {
+        "id": "rep_codex_valor_80", "title": "海上威名與克制", "category": "event",
+        "body": "海上威名不只來自打勝仗，也來自是否遵守約定、保護商船與接受投降。遊戲把「能控制力量」設計成最高階事件主題，讓玩家思考武力如何影響普通水手與港口居民。守航水師佩刀與七海挑戰船隊皆為遊戲創作。",
+        "sourceNote": "遊戲教育事件與虛構道具；不是特定史實戰役或人物遺物。"
+      }
+    }
+  ]
+}

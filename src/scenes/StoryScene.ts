@@ -2,13 +2,15 @@ import Phaser from 'phaser';
 import {
   GameState, PORTS, Port, saveGame, heroDefById, completeStoryChapter, getChapterScript,
   getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
+  reputationEventById, acceptReputationEvent, completeReputationEvent,
 } from '../state';
 import type { StoryLine } from '../state';
 import { portraitKey, storyBackgroundKey, storyChapterBgKey, storyChapterBgUrl } from '../art';
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, flashFx } from '../ui';
 
-type StoryMode = 'story' | 'mate';
+type StoryMode = 'story' | 'mate' | 'reputation';
+type ReputationPhase = 'intro' | 'conclusion';
 interface ReturnTo {
   scene: 'Facility' | 'Mates';
   portId: string;
@@ -27,6 +29,8 @@ export default class StoryScene extends Phaser.Scene {
   private heroId = 'lin';
   private chapterNo = 1;
   private mateId = '';
+  private reputationEventId = '';
+  private reputationPhase: ReputationPhase = 'intro';
   private ret!: ReturnTo;
   private lines: StoryLine[] = [];
   private headerText = '';
@@ -46,7 +50,7 @@ export default class StoryScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { mode?: StoryMode; heroId?: string; chapter?: number; mateId?: string; ret: ReturnTo }): void {
+  init(data: { mode?: StoryMode; heroId?: string; chapter?: number; mateId?: string; eventId?: string; phase?: ReputationPhase; ret: ReturnTo }): void {
     this.mode = data.mode ?? 'story';
     this.heroId = data.heroId ?? this.state.story.heroId;
     this.ret = data.ret;
@@ -54,7 +58,13 @@ export default class StoryScene extends Phaser.Scene {
     this.dyn = [];
     this.finished = false;
 
-    if (this.mode === 'mate') {
+    if (this.mode === 'reputation') {
+      this.reputationEventId = data.eventId ?? '';
+      this.reputationPhase = data.phase ?? 'intro';
+      const event = reputationEventById(this.reputationEventId);
+      this.lines = [...(this.reputationPhase === 'intro' ? event?.introLines ?? [] : event?.conclusionLines ?? [])];
+      this.headerText = event ? `聲望特殊事件・${event.title}` : '聲望特殊事件';
+    } else if (this.mode === 'mate') {
       this.mateId = data.mateId ?? '';
       const def = mateDefById(this.mateId);
       this.lines = [...(getMateScript(this.mateId) ?? [])];
@@ -304,6 +314,10 @@ export default class StoryScene extends Phaser.Scene {
       this.finishMate();
       return;
     }
+    if (this.mode === 'reputation') {
+      this.finishReputation();
+      return;
+    }
 
     const port = PORTS.find((p) => p.id === this.ret.portId) as Port;
     const result = completeStoryChapter(this.state, port);
@@ -323,6 +337,17 @@ export default class StoryScene extends Phaser.Scene {
       : `${name} 這次沒能加入（資金不足或已在船隊）。`;
     showModal(this, def?.questTitle ?? '結識夥伴', message, [
       { label: '回到酒館', onPick: () => this.backToReturn() },
+    ]);
+  }
+
+  private finishReputation(): void {
+    const event = reputationEventById(this.reputationEventId);
+    const result = this.reputationPhase === 'intro'
+      ? acceptReputationEvent(this.state, this.reputationEventId, this.ret.portId)
+      : completeReputationEvent(this.state, this.reputationEventId, this.ret.portId);
+    saveGame(this.state);
+    showModal(this, event?.title ?? '聲望特殊事件', result.msg, [
+      { label: '回到官府／商館', onPick: () => this.backToReturn() },
     ]);
   }
 
