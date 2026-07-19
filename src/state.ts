@@ -1798,6 +1798,11 @@ export function removeSeaStatus(state: GameState, id: SeaStatusId): void {
   state.statuses = state.statuses.filter((x) => x.id !== id);
 }
 
+/** 入港後船隊完成休整，清除只會在海上持續的負面狀態。 */
+export function clearSeaStatusesOnPort(state: GameState): void {
+  state.statuses = [];
+}
+
 export function statusSummary(state: GameState): string {
   const active = state.statuses.filter((x) => x.days > 0);
   if (active.length === 0) return '無';
@@ -2627,6 +2632,17 @@ function deliveryReward(qty: number, basePrice: number, distDays: number): numbe
 function combatReward(tier: number, distDays: number): number {
   return 800 + tier * 350 + distDays * 60;
 }
+
+/** 一般海盜強度同時看航海天數與玩家戰力，避免長期貿易的新手被高階船隊壓制。 */
+export function pirateEncounterTier(state: GameState): number {
+  const dayTier = state.day < 60 ? 1 : state.day < 180 ? 2 : 3;
+  const readinessTier = state.captain.level < 8 || fleetShips(state).length < 2
+    ? 1
+    : state.captain.level < 18 || fleetShips(state).length < 3
+      ? 2
+      : 3;
+  return Math.min(dayTier, readinessTier);
+}
 function explorationReward(difficulty: number, distDays: number): number {
   return 550 + difficulty * 280 + distDays * 45;
 }
@@ -2649,7 +2665,7 @@ function combatQuestOfferAt(state: GameState, port: Port, slot: number): CombatQ
   const targetX = Math.max(20, Math.min(WORLD_W - 20, area.x + offsetX));
   const targetY = Math.max(20, Math.min(WORLD_H - 20, area.y + offsetY));
   const distDays = Math.max(1, Math.ceil(Math.hypot(targetX - port.x, targetY - port.y) / PX_PER_DAY_EST));
-  const tier = state.day < 120 ? 1 : state.day < 300 ? 2 : 3;
+  const tier = pirateEncounterTier(state);
   return {
     type: 'combat',
     title: `討伐${area.name}海盜`,
@@ -2852,17 +2868,19 @@ export function questTitle(q: Quest): string {
 }
 
 export function questProgressText(state: GameState, q: Quest): string {
+  const origin = PORTS.find((p) => p.id === q.originPortId);
+  const originText = `接取港口：【${origin?.name ?? q.originPortId ?? '不明'}】`;
   if (q.type === 'delivery') {
     const target = PORTS.find((p) => p.id === q.portId);
     const good = GOODS.find((g) => g.id === q.goodId);
     const have = state.cargo[q.goodId] ?? 0;
-    return `採購任務：送【${good?.name ?? q.goodId}×${q.qty}】到【${target?.name ?? q.portId}】\n持有：${have}/${q.qty}　期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩`;
+    return `採購任務：送【${good?.name ?? q.goodId}×${q.qty}】到【${target?.name ?? q.portId}】\n${originText}\n持有：${have}/${q.qty}　期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩`;
   }
   if (q.type === 'combat') {
-    return `海戰任務：${q.title}\n前往海上骷髏標記，擊退海盜後回到接任務的官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已討伐，回報中' : '尚未討伐'}`;
+    return `海戰任務：${q.title}\n${originText}\n前往海上骷髏標記，擊退海盜後回到【${origin?.name ?? q.originPortId}】官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已討伐，回報中' : '尚未討伐'}`;
   }
   const point = explorationPointById(q.pointId);
-  return `探險任務：${q.title}\n前往【${point?.name ?? q.pointId}】探索，完成後回到接任務的官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已完成，回報中' : '尚未完成'}`;
+  return `探險任務：${q.title}\n${originText}\n前往【${point?.name ?? q.pointId}】探索，完成後回到【${origin?.name ?? q.originPortId}】官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已完成，回報中' : '尚未完成'}`;
 }
 
 /** 酒館傳聞文字 */

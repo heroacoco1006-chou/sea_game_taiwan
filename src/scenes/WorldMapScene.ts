@@ -12,6 +12,7 @@ import {
   recordExplorationAttempt, addInventory, itemNameById,
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
   addReputation, addFriendship, updateQuestProgress, pendingQuestDuel, valorRepPirateReduction,
+  pirateEncounterTier, clearSeaStatusesOnPort,
 } from '../state';
 import {
   explorationIconKey, facilityIconKey, shipWorldKey, shipWorldUrl,
@@ -535,6 +536,7 @@ export default class WorldMapScene extends Phaser.Scene {
     if (this.nearPort) {
       this.state.daysAtSea = 0;
       this.state.fatigue = Math.max(0, this.state.fatigue - 10);
+      clearSeaStatusesOnPort(this.state);
       saveGame(this.state);
       this.scene.start('Port', { portId: this.nearPort.id });
       return;
@@ -1016,7 +1018,7 @@ export default class WorldMapScene extends Phaser.Scene {
             label: '應戰！（進入海戰）',
             onPick: () => {
               saveGame(s);
-              this.startBattle({ kind: 'pirate', tier: s.day < 60 ? 1 : s.day < 180 ? 2 : 3 });
+              this.startBattle({ kind: 'pirate', tier: pirateEncounterTier(s) });
             },
           },
           {

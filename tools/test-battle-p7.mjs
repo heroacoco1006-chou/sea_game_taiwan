@@ -37,6 +37,35 @@ test('tier counts stay inside approved ranges and exercise both weighted outcome
   }
 });
 
+test('一般海盜強度不會只因航海天數把新手推進礁岩高階戰', () => {
+  const novice = fresh(1);
+  novice.day = 500;
+  novice.captain.level = 1;
+  assert.equal(stateModule.pirateEncounterTier(novice), 1);
+  const noviceLaunch = adapter.createHexBattleLaunch(novice, { kind: 'pirate', tier: stateModule.pirateEncounterTier(novice) }, 9);
+  assert.equal(noviceLaunch.mapId, 'open_sea');
+  assert.ok(sideCount(noviceLaunch, 'enemy') <= 2);
+
+  const veteran = fresh(3);
+  veteran.day = 500;
+  veteran.captain.level = 20;
+  assert.equal(stateModule.pirateEncounterTier(veteran), 3);
+  assert.equal(adapter.createHexBattleLaunch(veteran, { kind: 'pirate', tier: 3 }, 9).mapId, 'reef_passage');
+});
+
+test('任務資訊顯示接取港，入港休整會清除海上負面狀態', () => {
+  const state = fresh(1);
+  state.statuses = [{ id: 'rats', days: 3 }, { id: 'storm', days: 2 }, { id: 'homesick', days: 4 }];
+  stateModule.clearSeaStatusesOnPort(state);
+  assert.deepEqual(state.statuses, []);
+  const text = stateModule.questProgressText(state, {
+    type: 'combat', title: '測試委託', originPortId: 'yuegang', targetX: 0, targetY: 0,
+    deadlineDay: 99, reward: 100, enemyTier: 1, completed: false, codexIds: [],
+  });
+  assert.match(text, /接取港口：【月港】/);
+  assert.match(text, /回到【月港】/);
+});
+
 test('named large battle is fixed and temporary ally never replaces owned ships', () => {
   const oneShip = adapter.createHexBattleLaunch(fresh(1), { kind: 'story', tier: 3, duelName: '\u6e05\u65b9\u6504\u622a\u8239' }, 77);
   assert.equal(oneShip.encounterId, 'story_huflag');
