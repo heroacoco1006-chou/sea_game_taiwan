@@ -3,6 +3,7 @@ import { hasAnySave, HEROES } from '../state';
 import type { HeroId } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel } from '../ui';
 import { audio } from '../audio';
+import { gameVersionLabel } from '../version';
 
 export default class TitleScene extends Phaser.Scene {
   constructor() {
@@ -68,11 +69,16 @@ export default class TitleScene extends Phaser.Scene {
     }, 16);
 
 
+    // 版本資訊固定置於遊戲入口最下方；發版只更新 version.ts。
+    this.add
+      .text(width / 2, 676, gameVersionLabel(), textStyle(14, '#f2d58a'))
+      .setOrigin(0.5);
+
     // 音樂版權標註（CC BY 4.0）— 詳細兩行於「設定」頁
     this.add
       .text(
         width / 2,
-        700,
+        704,
         '音樂 Music: Kevin MacLeod (incompetech.com)・PeriTune (peritune.com)・CC BY 4.0',
         textStyle(13, '#7fa0b2')
       )
