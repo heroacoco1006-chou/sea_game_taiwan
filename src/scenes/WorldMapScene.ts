@@ -25,6 +25,7 @@ import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
 import { TouchControls } from '../touchControls';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
+import { worldShipDirectionFrame } from '../worldShipDirection';
 
 type MapCollisionGrid = {
   worldWidth: number;
@@ -551,9 +552,7 @@ export default class WorldMapScene extends Phaser.Scene {
       this.ship.setFlipX(dx < 0);
       return;
     }
-    const frame = Math.abs(dx) > Math.abs(dy)
-      ? dx >= 0 ? 2 : 3
-      : dy >= 0 ? 0 : 1;
+    const frame = worldShipDirectionFrame(dx, dy);
     this.ship.setFrame(frame).setFlipX(false);
   }
 
