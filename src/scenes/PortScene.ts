@@ -236,10 +236,14 @@ export default class PortScene extends Phaser.Scene {
       this.createRoads(style);
       this.createDock(style);
     }
-    const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
-    const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
-    if (shipKey === 'ship') dockShip.setScale(1.5);
-    else dockShip.setDisplaySize(82, 62);
+    // 精緻港町底圖本身已有碼頭與船隻；只在程序 fallback 城鎮補畫玩家船，
+    // 避免把世界地圖用的方形船圖突兀地疊在港景上。
+    if (!townBackground) {
+      const shipKey = this.m5Texture(shipWorldKey(this.state.ship.typeId), 'ship');
+      const dockShip = this.add.image(this.dock.x + 230, TOWN_H - 38, shipKey);
+      if (shipKey === 'ship') dockShip.setScale(1.5);
+      else dockShip.setDisplaySize(82, 62);
+    }
 
     this.createBuildings(style);
 

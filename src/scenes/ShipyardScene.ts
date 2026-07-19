@@ -111,9 +111,9 @@ export default class ShipyardScene extends Phaser.Scene {
     if (availableShips.length === 0) {
       this.add.text(950, 140, '這座港口沒有可建造的船型。', textStyle(16, '#6b5530')).setOrigin(0.5);
     }
-    this.buyDetail = this.add.text(680, 396, '（點選上方船隻查看詳情）', { ...textStyle(14, '#5a4a30'), wordWrap: { width: 545 }, lineSpacing: 5 });
+    this.buyDetail = this.add.text(680, 300, '（點選上方船隻查看詳情）', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 545, useAdvancedWrap: true }, lineSpacing: 3 });
     this.buyDetail.setWordWrapWidth(365, true);
-    this.shipCardImage = this.add.image(1155, 405, 'ship').setVisible(false);
+    this.shipCardImage = this.add.image(1155, 360, 'ship').setVisible(false);
     makeButton(this, 820, 520, 260, 50, '建造新旗艦（折抵舊旗艦）', () => this.orderShip(false), 15);
     makeButton(this, 1100, 520, 220, 50, '建造僚艦', () => this.orderShip(true), 16);
 
