@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "created": "2026-07-20",
+  "generator": "OpenAI imagegen built-in (GPT Image 2.0)",
+  "sourceSize": { "width": 1536, "height": 1024 },
+  "runtimeSize": { "width": 768, "height": 432 },
+  "style": "17世紀東亞與東南亞、半寫實歷史冒險故事插畫、古紙與顏料質感、兒童友善",
+  "basePrompt": "17th-century exploration random-event illustration for a Phaser educational adventure game; cohesive semi-realistic historical adventure storybook digital painting; clear silhouettes; subtle antique paper and painted texture; landscape composition with a calm lower area for UI; historically plausible clothing and tools; suitable for grade 5-6 children; no text, watermark, modern objects, stereotypes, blood, or commercial-game imitation.",
+  "assets": [
+    { "id": "exp_event_safe_journey", "title": "一路平安", "category": "none", "source": "source/exp_event_safe_journey.png", "runtime": "runtime/exp_event_safe_journey.png", "promptSubject": "探險隊在晨光中的海岸森林小徑平安前進，一人查看手繪地圖。" },
+    { "id": "exp_event_indigenous_aid", "title": "部落朋友的幫助", "category": "encounter", "source": "source/exp_event_indigenous_aid.png", "runtime": "runtime/exp_event_indigenous_aid.png", "promptSubject": "台灣在地獵人與探險隊平等交流，分享芋頭、泉水並指向安全路線。" },
+    { "id": "exp_event_local_guide", "title": "居民指路", "category": "encounter", "source": "source/exp_event_local_guide.png", "runtime": "runtime/exp_event_local_guide.png", "promptSubject": "居民在森林岔路旁向探險隊指出安全的小徑。" },
+    { "id": "exp_event_fresh_spring", "title": "發現清澈泉水", "category": "supply", "source": "source/exp_event_fresh_spring.png", "runtime": "runtime/exp_event_fresh_spring.png", "promptSubject": "隊伍在苔蘚岩壁泉水旁用葫蘆與木製容器補水。" },
+    { "id": "exp_event_forest_food", "title": "採集可食野果", "category": "supply", "source": "source/exp_event_forest_food.png", "runtime": "runtime/exp_event_forest_food.png", "promptSubject": "熟悉植物的嚮導辨認可食果實，隊伍再採入藤籃。" },
+    { "id": "exp_event_lost_fog", "title": "濃霧迷路", "category": "hazard", "source": "source/exp_event_lost_fog.png", "runtime": "runtime/exp_event_lost_fog.png", "promptSubject": "探險隊停在濃霧森林的岔路，嚮導查看羅盤與環境線索。" },
+    { "id": "exp_event_storm_landslide", "title": "暴雨與山崩", "category": "hazard", "source": "source/exp_event_storm_landslide.png", "runtime": "runtime/exp_event_storm_landslide.png", "promptSubject": "暴雨造成山路落石，隊伍互相示警並躲到安全巨石後。" },
+    { "id": "exp_event_snake_hazard", "title": "草叢裡的毒蛇", "category": "hazard", "source": "source/exp_event_snake_hazard.png", "runtime": "runtime/exp_event_snake_hazard.png", "promptSubject": "嚮導發現草叢中的毒蛇後示意停步，隊伍冷靜繞行。" },
+    { "id": "exp_event_animal_tracks", "title": "動物的足跡", "category": "clue", "source": "source/exp_event_animal_tracks.png", "runtime": "runtime/exp_event_animal_tracks.png", "promptSubject": "隊伍觀察泥地的新鮮足跡，書記臨摹足跡形狀。" },
+    { "id": "exp_event_ancient_marks", "title": "古老刻痕", "category": "clue", "source": "source/exp_event_ancient_marks.png", "runtime": "runtime/exp_event_ancient_marks.png", "promptSubject": "探險隊尊重地觀察苔蘚石壁上的抽象古老刻痕，書記進行臨摹。" },
+    { "id": "exp_event_wreck_relic", "title": "沉船遺物", "category": "rare", "source": "source/exp_event_wreck_relic.png", "runtime": "runtime/exp_event_wreck_relic.png", "promptSubject": "退潮海灣的古老沉船殘骸中，隊伍發現航海器具與封閉木箱。" },
+    { "id": "exp_event_rare_specimen", "title": "罕見標本", "category": "rare", "source": "source/exp_event_rare_specimen.png", "runtime": "runtime/exp_event_rare_specimen.png", "promptSubject": "隊伍保持距離觀察罕見鳥類與植物，書記進行自然紀錄，不捕捉獵殺。" }
+  ]
+}
