@@ -24,6 +24,23 @@ Thumbs.db
 # Claude Code 工作檔
 .claude/
 
+# 本機開發文件與 Agent 工作紀錄（不公開到 GitHub）
+docs/
+.obsidian/
+need_to_fix/
+AGENTS.md
+CLAUDE.md
+memory.md
+status.md
+log.md
+
+# 其他內部 Markdown 預設不公開；僅保留專案入口、版本、授權與遊戲正式劇情
+*.md
+!/README.md
+!/VERSION.md
+!/assets/CREDITS.md
+!/src/data/story/*.md
+
 # 美術氛圍參考圖（僅供 Codex 產美術時參考，含商業遊戲截圖，絕不納入倉庫或遊戲）
 art/
 
