@@ -15,7 +15,7 @@ import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 
 export interface Good {
   id: string;
@@ -2080,6 +2080,12 @@ function migrateSave(raw: string): GameState | null {
       full.reputationEvents = full.reputationEvents ?? {};
       full.version = 20;
     }
+    // v20 → v21：流行由 30 天延長為 90 天；現有流行一次補回新增的 60 天。
+    if (s.version < 21) {
+      const full = s as GameState;
+      if (full.fad) full.fad.untilDay += 60;
+      full.version = 21;
+    }
     (s as GameState).story.chapterStages = (s as GameState).story.chapterStages ?? {};
     (s as GameState).reputationEvents = (s as GameState).reputationEvents ?? {};
     return s as GameState;
@@ -2525,7 +2531,7 @@ export function priceOf(state: GameState, port: Port, goodId: string, day: numbe
 const SAT_PER_UNIT = 0.003; // 每賣 1 件累積的供需飽和度（壓低後續賣價）
 const SAT_MAX = 0.5; // 飽和上限：賣價最多被壓 50%
 const SAT_RECOVER_PER_DAY = 0.018; // 每天回復的飽和度（約 28 天從滿回到 0）
-const FAD_DAYS = 30; // 流行持續天數（約一個月）
+export const FAD_DAYS = 90; // 流行持續天數（約三個月，足夠規劃跨區貿易）
 const FAD_MULT = 2; // 流行時賣價倍率
 
 /** 某港某貨目前的供需飽和度（0~SAT_MAX）：隨時間自動回復。 */

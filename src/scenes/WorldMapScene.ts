@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, Port, LANDS, LABELS, WORLD_W, WORLD_H,
+  GameState, PORTS, Port, GOODS, LANDS, LABELS, WORLD_W, WORLD_H,
   cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
@@ -73,6 +73,11 @@ export default class WorldMapScene extends Phaser.Scene {
   private windText!: Phaser.GameObjects.Text;
   private windArrow!: Phaser.GameObjects.Triangle;
   private miniShip!: Phaser.GameObjects.Rectangle;
+  private miniFadPort!: Phaser.GameObjects.Arc;
+  private fadPortRing!: Phaser.GameObjects.Arc;
+  private fadPortLabel!: Phaser.GameObjects.Text;
+  private fadTicker!: Phaser.GameObjects.Text;
+  private fadTickerKey = '';
   private distAcc = 0;
   private nearPort: Port | null = null;
   private landPolys: Phaser.Geom.Polygon[] = [];
@@ -116,6 +121,7 @@ export default class WorldMapScene extends Phaser.Scene {
     this.paused = false;
     this.distAcc = 0;
     this.landPolys = [];
+    refreshMarketEvents(this.state);
 
     // ----- 世界 -----
     this.createSeaBase();
@@ -131,6 +137,20 @@ export default class WorldMapScene extends Phaser.Scene {
       if (portKey !== 'port') portIcon.setDisplaySize(34, 34);
       this.add.text(p.x, p.y + 24, p.name, textStyle(15, '#fff4d6')).setOrigin(0.5).setDepth(11).setShadow(1, 1, '#000', 2);
     }
+    this.fadPortRing = this.add
+      .circle(0, 0, 27, 0xff8a24, 0.16)
+      .setStrokeStyle(5, 0xffd04a, 0.95)
+      .setDepth(12)
+      .setVisible(false);
+    this.fadPortLabel = this.add
+      .text(0, 0, '🔥 流行中', textStyle(15, '#fff2a8'))
+      .setOrigin(0.5)
+      .setDepth(13)
+      .setBackgroundColor('rgba(120, 45, 12, 0.88)')
+      .setPadding(6, 3, 6, 3)
+      .setShadow(1, 1, '#000', 2)
+      .setVisible(false);
+    this.tweens.add({ targets: this.fadPortRing, scale: { from: 0.9, to: 1.28 }, alpha: { from: 1, to: 0.42 }, duration: 900, yoyo: true, repeat: -1 });
 
     // ----- 船與鏡頭（近距離視角：看不到全貌，靠羅盤與小地圖） -----
     this.ensureShipStartsOnWater();
@@ -148,6 +168,13 @@ export default class WorldMapScene extends Phaser.Scene {
     const H = BASE_H;
     this.add.rectangle(W / 2, 34, W, 68, 0x3a2a14, 0.92).setDepth(100).setScrollFactor(0);
     this.createHudChips();
+    this.add.rectangle(W / 2, 82, W, 28, 0x6b2f16, 0.9).setDepth(100).setScrollFactor(0);
+    this.fadTicker = this.add
+      .text(W, 82, '', textStyle(15, '#ffe39a'))
+      .setOrigin(0, 0.5)
+      .setDepth(101)
+      .setScrollFactor(0)
+      .setShadow(1, 1, '#000', 2);
     makeButton(this, W - 62, 34, 96, 36, '選單', () => {
       saveGame(this.state);
       this.scene.start('Info', { from: 'WorldMap' });
@@ -161,7 +188,6 @@ export default class WorldMapScene extends Phaser.Scene {
     this.createMinimap(W - MINIMAP_W - 16, H - MINIMAP_H - 16);
 
     this.wind = windOf(this.state.day);
-    refreshMarketEvents(this.state);
     this.updateHud();
   }
 
@@ -435,6 +461,13 @@ export default class WorldMapScene extends Phaser.Scene {
     }
     g.fillStyle(0xe8554a, 1);
     for (const p of PORTS) g.fillRect(mx + p.x * sx - 1.5, my + p.y * sy - 1.5, 3, 3);
+    this.miniFadPort = this.add
+      .circle(0, 0, 6, 0xff8a24, 0.92)
+      .setStrokeStyle(2, 0xfff2a8, 1)
+      .setDepth(102)
+      .setScrollFactor(0)
+      .setVisible(false);
+    this.tweens.add({ targets: this.miniFadPort, scale: { from: 0.75, to: 1.35 }, alpha: { from: 1, to: 0.5 }, duration: 700, yoyo: true, repeat: -1 });
     this.miniShip = this.add
       .rectangle(mx + this.ship.x * sx, my + this.ship.y * sy, 5, 5, 0xffffff)
       .setDepth(101).setScrollFactor(0);
@@ -1214,6 +1247,43 @@ export default class WorldMapScene extends Phaser.Scene {
     v.fatigue.setText(`${s.fatigue}/100`).setColor(s.fatigue >= 70 ? warn : norm);
     const st = statusSummary(s);
     v.status.setText(st && st !== '正常' ? st : '正常').setColor(st && st !== '正常' ? warn : norm);
+    this.updateFadDisplay();
     this.updateWindHud();
+  }
+
+  private updateFadDisplay(): void {
+    const fad = this.state.fad;
+    const port = fad ? PORTS.find((entry) => entry.id === fad.portId) : undefined;
+    const good = fad ? GOODS.find((entry) => entry.id === fad.goodId) : undefined;
+    const active = Boolean(fad && port && good && fad.untilDay >= this.state.day);
+    this.fadPortRing?.setVisible(active);
+    this.fadPortLabel?.setVisible(active);
+    this.miniFadPort?.setVisible(active);
+    if (!active || !fad || !port || !good) {
+      this.setFadTicker('目前沒有新的流行情报');
+      return;
+    }
+
+    this.fadPortRing.setPosition(port.x, port.y);
+    this.fadPortLabel.setPosition(port.x, port.y - 38);
+    const mm = this.registry.get('minimapOrigin') as { mx: number; my: number; sx: number; sy: number } | undefined;
+    if (mm) this.miniFadPort.setPosition(mm.mx + port.x * mm.sx, mm.my + port.y * mm.sy);
+    const remaining = Math.max(0, fad.untilDay - this.state.day + 1);
+    this.setFadTicker(`🔥 流行情报：【${port.name}】正流行【${good.name}】｜賣價 ×2｜剩餘 ${remaining} 天`);
+  }
+
+  private setFadTicker(message: string): void {
+    if (!this.fadTicker || this.fadTickerKey === message) return;
+    this.fadTickerKey = message;
+    this.tweens.killTweensOf(this.fadTicker);
+    this.fadTicker.setText(message).setX(BASE_W);
+    const distance = BASE_W + this.fadTicker.width;
+    this.tweens.add({
+      targets: this.fadTicker,
+      x: -this.fadTicker.width,
+      duration: Math.max(9000, distance * 12),
+      ease: 'Linear',
+      repeat: -1,
+    });
   }
 }
