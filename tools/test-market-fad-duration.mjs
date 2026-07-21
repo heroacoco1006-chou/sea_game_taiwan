@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { FAD_DAYS, SAVE_VERSION, newGame, refreshMarketEvents } from '../src/state.ts';
 
 assert.equal(FAD_DAYS, 90, '流行必須持續約三個月（90 天）');
-assert.equal(SAVE_VERSION, 21, '流行期限改制必須升級存檔版本');
+assert.ok(SAVE_VERSION >= 21, '流行期限改制必須保留 v21 以上存檔版本');
 
 const state = newGame('lin');
 state.fad = null;

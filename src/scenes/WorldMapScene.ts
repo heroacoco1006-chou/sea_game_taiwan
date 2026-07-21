@@ -9,20 +9,21 @@ import {
   addSeaStatus, hasSeaStatus, statusSummary,
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
   unlockCodex, explorationFindChance, explorationCostForState, explorationFatigueGain,
-  recordExplorationAttempt, addInventory, itemNameById,
+  recordExplorationAttempt, explorationProgress, rollExplorationDiscovery, applyExplorationDiscoveryResult,
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
+  EXPLORATION_SAFE_IMAGE_ID,
   addReputation, addFriendship, updateQuestProgress, pendingQuestDuel, valorRepPirateReduction,
   pirateEncounterTier, clearSeaStatusesOnPort,
 } from '../state';
 import {
-  explorationIconKey, facilityIconKey, shipWorldKey, shipWorldUrl,
+  explorationIconKey, explorationEventKey, facilityIconKey, shipWorldKey, shipWorldUrl,
   shipWorldDirectionalKey, shipWorldDirectionalUrl, worldArtKey,
 } from '../art';
 import { battleSceneKey } from '../battle/battleConfig';
 import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAdapter';
 
 import { audio } from '../audio';
-import { BASE_W, BASE_H, COLORS, textStyle, showModal, makeButton, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, showModal, showIllustratedModal, makeButton, toast } from '../ui';
 import { TouchControls } from '../touchControls';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
 import { worldShipDirectionFrame } from '../worldShipDirection';
@@ -600,9 +601,9 @@ export default class WorldMapScene extends Phaser.Scene {
     }
     for (const marker of this.exploreMarkers) {
       const activeQuest = this.state.quest?.type === 'exploration' && this.state.quest.pointId === marker.point.id && !this.state.quest.completed;
-      const hasNewFind = marker.point.discoveries.some((id) => !found.has(id));
+      const hasNewFind = [...marker.point.mainDiscoveries, ...marker.point.rareDiscoveries].some((ref) => !found.has(ref.id));
       const known = activeQuest || this.isExplorationPointKnown(marker.point);
-      // 已知的點永遠保留在地圖上（全部發現物解鎖後半透明標示「已調查」），不再憑空消失
+      // 已知的點永遠保留在地圖上（全部發現物解鎖後半透明標示「可再調查」），不再憑空消失
       const visible = activeQuest || hasNewFind || known;
       const approach = this.explorationApproach(marker.point);
       const dist = Phaser.Math.Distance.Between(this.ship.x, this.ship.y, approach.x, approach.y);
@@ -620,7 +621,7 @@ export default class WorldMapScene extends Phaser.Scene {
       marker.icon.setDisplaySize(iconSize, iconSize);
       marker.icon.setAlpha(activeQuest ? 1 : exhausted ? 0.5 : known ? 0.88 : 0.68);
       marker.label.setPosition(marker.point.x, marker.point.y + EXPLORE_LABEL_OFFSET);
-      marker.label.setText(known ? (exhausted ? `${marker.point.name}（已調查）` : marker.point.name) : '？');
+      marker.label.setText(known ? (exhausted ? `${marker.point.name}（可再調查）` : marker.point.name) : '？');
       marker.label.setFontSize(known ? 12 : 15);
       marker.label.setAlpha(exhausted ? 0.7 : 1);
     }
@@ -633,7 +634,7 @@ export default class WorldMapScene extends Phaser.Scene {
   private isExplorationPointKnown(point: ExplorationPoint): boolean {
     return (
       this.state.discoveredExplorationPoints.includes(point.id) ||
-      point.discoveries.some((id) => this.state.story.codex.includes(id))
+      [...point.mainDiscoveries, ...point.rareDiscoveries].some((ref) => this.state.story.codex.includes(ref.id))
     );
   }
 
@@ -735,31 +736,29 @@ export default class WorldMapScene extends Phaser.Scene {
       ]);
       return;
     }
-    const nextDiscovery = point.discoveries.find((id) => !this.state.story.codex.includes(id));
-    const q = this.state.quest;
-    const questActive = q?.type === 'exploration' && q.pointId === point.id && !q.completed;
-    if (!nextDiscovery && !questActive) {
-      this.pauseWithModal(
-        point.name,
-        `這裡已經調查過了。\n\n${point.hint}`,
-        [{ label: '回到船上', onPick: () => {} }]
-      );
-      return;
-    }
+    const progress = explorationProgress(this.state, point);
+    const progressText = !progress.mainComplete
+      ? `主要發現 ${progress.mainFound}/${progress.mainTotal}｜仍有未確認的重大發現`
+      : (!progress.rareComplete
+        ? `主要發現已完成｜稀有發現 ${progress.rareFound}/${progress.rareTotal}`
+        : '主要與稀有發現已完成｜仍可取得小型調查成果');
+    const chanceText = progress.mainComplete
+      ? '主要發現已完成，本次仍可能找到稀有線索或小型成果。'
+      : `主要發現率約 ${Math.round(explorationFindChance(this.state, point) * 100)}%。`;
     this.pauseWithModal(
       `探索：${point.name}`,
-      `${point.hint}\n\n本次探索需要 ${explorationCostForState(this.state, point).days} 天，消耗糧食 ${explorationCostForState(this.state, point).food}、清水 ${explorationCostForState(this.state, point).water}。\n發現率約 ${Math.round(explorationFindChance(this.state, point) * 100)}%。探險嚮導、書記、望遠鏡會提高發現率；醫師可降低疲勞。`,
+      `${point.hint}\n\n${progressText}\n本次探索需要 ${explorationCostForState(this.state, point).days} 天，消耗糧食 ${explorationCostForState(this.state, point).food}、清水 ${explorationCostForState(this.state, point).water}。\n${chanceText}\n探險嚮導、書記、望遠鏡會提高發現率；醫師可降低疲勞。`,
       [
         { label: '先準備一下', onPick: () => {} },
         {
           label: '開始探索',
-          onPick: () => this.resolveExploration(point, nextDiscovery),
+          onPick: () => this.resolveExploration(point),
         },
       ]
     );
   }
 
-  private resolveExploration(point: ExplorationPoint, discoveryId: string | undefined): void {
+  private resolveExploration(point: ExplorationPoint): void {
     const s = this.state;
     const cost = explorationCostForState(s, point);
     if (s.food < cost.food || s.water < cost.water) {
@@ -781,25 +780,24 @@ export default class WorldMapScene extends Phaser.Scene {
     // 探索隨機事件（WP-3）：有選項的事件先讓玩家做決定，再結算探索
     const ev = rollExplorationEvent(s, point);
     if (ev && ev.choices && ev.choices.length > 0) {
-      this.pauseWithModal(`探索事件：${ev.title}`, ev.text, ev.choices.map((choice) => ({
+      this.pauseWithIllustratedModal(`探索事件：${ev.title}`, ev.text, ev.imageId, ev.choices.map((choice) => ({
         label: choice.label,
-        onPick: () => this.finishExploration(point, discoveryId, ev, choice),
+        onPick: () => this.finishExploration(point, ev, choice),
       })));
       return;
     }
-    this.finishExploration(point, discoveryId, ev, null);
+    this.finishExploration(point, ev, null);
   }
 
   private finishExploration(
     point: ExplorationPoint,
-    discoveryId: string | undefined,
     ev: ExplorationEventDef | null,
     choice: ExplorationEventChoice | null
   ): void {
     const s = this.state;
     const applied = ev
       ? applyExplorationEventEffects(s, ev, choice ? choice.effects : ev.effects)
-      : { lines: [], findBonus: 0 };
+      : { lines: [], findBonus: 0, rareBonus: 0, crewDelta: 0 };
     if (ev) refreshMarketEvents(s); // 事件可能多花天數，重算行情
     const eventText = ev
       ? `【${ev.title}】${choice ? choice.resultText : ev.text}`
@@ -811,27 +809,23 @@ export default class WorldMapScene extends Phaser.Scene {
       saveGame(s);
       this.refreshExplorationMarkers();
       this.updateHud();
-      this.pauseWithModal(`探索中止：${point.name}`, [eventText, effectLine].filter(Boolean).join('\n'), [
+      this.pauseWithIllustratedModal(`探索中止：${point.name}`, [eventText, effectLine].filter(Boolean).join('\n'), ev?.imageId ?? EXPLORATION_SAFE_IMAGE_ID, [
         { label: '回到船上', onPick: () => {} },
       ]);
       return;
     }
 
-    const chance = Math.min(0.95, explorationFindChance(s, point) + applied.findBonus);
+    const progressBefore = explorationProgress(s, point);
+    const chance = progressBefore.mainComplete ? 0 : Math.min(0.95, explorationFindChance(s, point) + applied.findBonus);
     const attempt = recordExplorationAttempt(s, point.id);
-    const foundThisTime = Boolean(discoveryId) && Math.random() < chance;
-    const unlockedIds = discoveryId && foundThisTime ? [discoveryId] : [];
-    const unlocked = unlockCodex(s, unlockedIds);
-    const found = discoveryId && foundThisTime ? DISCOVERIES.find((entry) => entry.id === discoveryId) : undefined;
-    const reward = found?.rewardGold ?? (found ? 80 + point.difficulty * 40 : 0);
-    if (reward > 0) s.gold += reward;
-    const rewardItemId = found?.kind === 'treasure' ? found.rewardItemId ?? found.id : undefined;
-    if (rewardItemId) addInventory(s, rewardItemId);
+    const discoveryRoll = rollExplorationDiscovery(s, point, chance, applied.rareBonus);
+    const rewardResult = applyExplorationDiscoveryResult(s, point, discoveryRoll);
+    const progressAfter = explorationProgress(s, point);
 
     const q = s.quest;
     if (q?.type === 'exploration' && q.pointId === point.id) {
       q.completed = true;
-      q.codexIds = [...new Set([...q.codexIds, ...unlockedIds])];
+      q.codexIds = [...new Set([...q.codexIds, ...rewardResult.unlockedIds])];
     }
 
     const mateQuestMsgs = updateQuestProgress(s);
@@ -841,14 +835,16 @@ export default class WorldMapScene extends Phaser.Scene {
     const resultLines = [
       eventText,
       effectLine,
-      found ? `\n發現：${found.title}\n${found.body}` : `\n這次完成了地點調查，但沒有新的重大發現。下次再探索，發現機會會稍微提高。（第 ${attempt} 次調查）`,
-      unlocked.length > 0 ? `\n解鎖圖鑑：${unlocked.join('、')}` : '',
-      reward > 0 ? `\n獲得記錄獎金 ${reward} 兩。` : '',
-      rewardItemId ? `\n取得寶物：${itemNameById(rewardItemId)}，已放入背包。` : '',
+      discoveryRoll.kind === 'repeat' && !progressBefore.mainComplete
+        ? `\n這次沒有新的重大發現，下次主要發現機會會稍微提高。（第 ${attempt} 次調查）`
+        : '',
+      `\n${rewardResult.lines.filter(Boolean).join('\n')}`,
+      rewardResult.unlockedIds.length > 0 ? `\n解鎖圖鑑：${rewardResult.unlockedIds.join('、')}` : '',
+      `\n主要發現 ${progressAfter.mainFound}/${progressAfter.mainTotal}｜稀有發現 ${progressAfter.rareFound}/${progressAfter.rareTotal}`,
       q?.type === 'exploration' && q.pointId === point.id ? '\n探險委託已完成，回接任務的官府／商館領賞。' : '',
       mateQuestMsgs.length ? `\n${mateQuestMsgs.join('\n')}` : '',
     ];
-    this.pauseWithModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), [
+    this.pauseWithIllustratedModal(`探索結果：${point.name}`, resultLines.filter(Boolean).join('\n'), ev?.imageId ?? EXPLORATION_SAFE_IMAGE_ID, [
       { label: '記下來', onPick: () => {} },
     ]);
   }
@@ -1119,6 +1115,26 @@ export default class WorldMapScene extends Phaser.Scene {
         c.onPick();
       },
     })));
+  }
+
+  private pauseWithIllustratedModal(
+    title: string,
+    body: string,
+    imageId: string,
+    choices: { label: string; onPick: () => void }[],
+  ): void {
+    this.paused = true;
+    showIllustratedModal(this, title, body, choices.map((choice) => ({
+      label: choice.label,
+      onPick: () => {
+        this.paused = false;
+        choice.onPick();
+      },
+    })), {
+      imageKey: explorationEventKey(imageId),
+      fallbackImageKey: explorationEventKey(EXPLORATION_SAFE_IMAGE_ID),
+      imageAlt: title,
+    });
   }
 
   private isLand(x: number, y: number): boolean {

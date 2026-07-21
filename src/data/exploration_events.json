@@ -1,63 +1,28 @@
 {
-  "comment": "探索隨機事件表（WP-3，2026-07-05）。依《2026-06-14_探索系統架構手冊》§4-3 設計。id 對應 exploration_points.json 各點的 events 欄位。effects：food/water/gold/fatigue 為加減值、days 為多花天數、dailySupplies 為多消耗幾天份糧水、findBonus 加成本次發現率。halfWeightRole：該職位在隊時此事件出現機率減半；fatigueHalfRole：該職位在隊時疲勞效果減半。文字須白話、不血腥、不刻板印象（原住民與地方居民一律呈現互助交流）。",
-  "chance": 0.55,
+  "comment": "探索隨機事件表 v2（V2.2.0）。事件率 70%，同地點連續一次未觸發後由程式保底。所有可抽事件必須有 runtime 圖片；文字白話、不血腥、不刻板印象。",
+  "version": 2,
+  "chance": 0.7,
+  "safeEventImageId": "exp_event_safe_journey",
   "events": [
-    {
-      "id": "aid_indigenous",
-      "title": "部落朋友的幫助",
-      "text": "山路上遇到附近部落的獵人。隊伍用小禮物和手勢交上朋友，他們帶大家走了一條安全的近路，還分享了烤芋頭和乾淨的泉水。",
-      "effects": { "food": 4, "water": 4 }
-    },
-    {
-      "id": "aid_local",
-      "title": "居民指路",
-      "text": "當地居民熱心指點路線，告訴隊伍哪裡有好走的小徑、哪裡要小心。大家把力氣省下來，仔細調查了更多地方。",
-      "effects": { "findBonus": 0.12 }
-    },
-    {
-      "id": "lost",
-      "title": "迷路了！",
-      "text": "起了濃霧，樹林裡每個方向看起來都一樣，隊伍一時分不清回海邊的路……",
-      "halfWeightRole": "guide",
-      "choices": [
-        {
-          "label": "繼續找路（多花 1 天）",
-          "resultText": "隊伍多花了一天，靠著太陽的方向終於找回正確的路，也多消耗了一天份的糧水。",
-          "effects": { "days": 1, "dailySupplies": 1, "fatigue": 3 }
-        },
-        {
-          "label": "原路折返（中止這次探索）",
-          "resultText": "為了安全，隊伍沿原路回到船上。這次調查沒有完成，下次再來吧。",
-          "abort": true,
-          "effects": { "fatigue": 2 }
-        }
-      ]
-    },
-    {
-      "id": "wildlife",
-      "title": "動物的足跡",
-      "text": "隊伍在林間發現新鮮的動物足跡，大家放輕腳步、睜大眼睛跟著看——說不定能遇到沒見過的動物！",
-      "effects": { "findBonus": 0.1 }
-    },
-    {
-      "id": "landmark",
-      "title": "畫下地標",
-      "text": "瞭望手和書記合作，把這裡的地形和顯眼的地標仔細畫進航海筆記。這份紀錄回港後很值錢。",
-      "effects": { "gold": 40 }
-    },
-    {
-      "id": "forest",
-      "title": "濃密的森林",
-      "text": "森林又密又深，隊伍走得滿身大汗。不過越深的林子，越有機會找到少見的植物和鳥類。",
-      "fatigueHalfRole": "surgeon",
-      "effects": { "fatigue": 4, "findBonus": 0.08 }
-    },
-    {
-      "id": "cold_mountain",
-      "title": "山上的寒霧",
-      "text": "山上雲霧又濕又冷，隊伍放慢速度、互相提醒保暖，小心翼翼地前進。",
-      "fatigueHalfRole": "surgeon",
-      "effects": { "fatigue": 8 }
-    }
+    { "id": "aid_indigenous", "title": "部落朋友的幫助", "text": "山路上遇到熟悉附近地形的部落獵人。隊伍用小禮物和手勢交上朋友，他們分享烤芋頭和乾淨泉水，也提醒大家避開危險山路。", "imageId": "exp_event_indigenous_aid", "category": "encounter", "tags": ["taiwan", "forest", "settlement"], "weight": 1, "effects": { "food": 4, "water": 4 } },
+    { "id": "aid_local", "title": "居民指路", "text": "當地居民熱心指點路線，告訴隊伍哪裡有好走的小徑、哪裡需要小心。大家因此能調查更多地方。", "imageId": "exp_event_local_guide", "category": "encounter", "tags": ["settlement", "road", "coast"], "weight": 1, "effects": { "findBonus": 0.12 } },
+    { "id": "fresh_spring", "title": "發現清澈泉水", "text": "岩壁間流出清澈泉水。嚮導確認水源安全後，大家把水壺裝滿，也洗去一路的汗水。", "imageId": "exp_event_fresh_spring", "category": "supply", "tags": ["mountain", "forest", "volcanic"], "weight": 0.9, "effects": { "water": 6 } },
+    { "id": "forest_food", "title": "採集可食野果", "text": "熟悉植物的嚮導辨認出可以食用的果實。大家只採足夠的份量，把其餘留給森林裡的動物。", "imageId": "exp_event_forest_food", "category": "supply", "tags": ["forest", "tropical"], "weight": 0.9, "effects": { "food": 5 } },
+    { "id": "lost", "title": "濃霧迷路", "text": "濃霧讓每個方向看起來都一樣，隊伍一時分不清回海邊的路。", "imageId": "exp_event_lost_fog", "category": "hazard", "tags": ["mountain", "forest", "road"], "weight": 1, "halfWeightRole": "guide", "choices": [
+      { "label": "繼續找路（多花 1 天）", "resultText": "隊伍多花一天，靠著太陽與地形找回正確方向，也多消耗一天份糧水。", "risk": "medium", "effects": { "days": 1, "dailySupplies": 1, "fatigue": 3 } },
+      { "label": "原路折返（中止探索）", "resultText": "為了安全，隊伍沿原路回到船上。這次調查沒有完成，下次準備好再來。", "risk": "safe", "abort": true, "effects": { "fatigue": 2 } }
+    ] },
+    { "id": "storm_landslide", "title": "暴雨與山崩", "text": "大雨讓山坡鬆動，前方開始落下碎石。隊伍必須立刻決定如何通過。", "imageId": "exp_event_storm_landslide", "category": "hazard", "tags": ["mountain", "forest", "tropical"], "weight": 0.7, "difficultyMin": 2, "halfWeightRole": "guide", "crewLossHalfRole": "surgeon", "choices": [
+      { "label": "找掩護等待（安全）", "resultText": "大家互相提醒，躲到堅固岩石後方，等落石停止再出發。", "risk": "safe", "effects": { "days": 1, "fatigue": 4 } },
+      { "label": "冒險穿過（提高發現率）", "resultText": "隊伍趕在山路封住前通過，但有人受傷，必須回船休養。", "risk": "high", "effects": { "crew": -1, "findBonus": 0.15 } }
+    ] },
+    { "id": "snake_hazard", "title": "草叢裡的毒蛇", "text": "嚮導發現草叢裡盤著一條毒蛇，立刻舉手要大家停下。", "imageId": "exp_event_snake_hazard", "category": "hazard", "tags": ["forest", "tropical", "grassland"], "weight": 0.8, "crewLossHalfRole": "surgeon", "choices": [
+      { "label": "安靜繞路（安全）", "resultText": "大家放慢腳步繞過草叢，沒有驚動毒蛇。", "risk": "safe", "effects": { "fatigue": 3 } },
+      { "label": "小心穿過（提高發現率）", "resultText": "隊伍小心穿過草地，但一名水手受傷，需要回船休養。", "risk": "high", "effects": { "crew": -1, "findBonus": 0.1 } }
+    ] },
+    { "id": "wildlife", "title": "動物的足跡", "text": "泥地上留著新鮮的動物足跡。書記把形狀畫下來，隊伍放輕腳步繼續觀察。", "imageId": "exp_event_animal_tracks", "category": "clue", "tags": ["forest", "grassland", "tropical"], "weight": 1, "effects": { "findBonus": 0.1 } },
+    { "id": "ancient_marks", "title": "古老刻痕", "text": "苔蘚石壁上有一些古老刻痕。隊伍不碰壞現場，只讓書記仔細臨摹記錄。", "imageId": "exp_event_ancient_marks", "category": "clue", "tags": ["mountain", "road", "ruins"], "weight": 0.7, "effects": { "gold": 20, "findBonus": 0.08 } },
+    { "id": "wreck_relic", "title": "沉船遺物", "text": "退潮後的海灣露出老沉船殘骸，破木板間似乎藏著航海器具與封閉木箱。", "imageId": "exp_event_wreck_relic", "category": "rare", "tags": ["coast", "island"], "weight": 0.3, "difficultyMin": 2, "effects": { "rareBonus": 0.08 } },
+    { "id": "rare_specimen", "title": "罕見標本", "text": "隊伍看見少見的鳥與植物。大家保持距離觀察，讓書記把特徵畫進筆記。", "imageId": "exp_event_rare_specimen", "category": "rare", "tags": ["forest", "tropical", "island"], "weight": 0.35, "difficultyMin": 2, "effects": { "rareBonus": 0.06 } }
   ]
 }

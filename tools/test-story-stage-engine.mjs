@@ -56,10 +56,10 @@ old.story.completed = ['lin_01', 'lin_02', 'lin_03'];
 delete old.story.chapterStages;
 localStorage.setItem('seagame_save_slot0', JSON.stringify(old));
 const loaded = m.loadGame(0);
-assert(loaded?.version === 20, 'v18 存檔未連續升級至 v20');
+assert(loaded?.version === m.SAVE_VERSION, 'v18 存檔未連續升級至最新版');
 assert(loaded?.reputationEvents && Object.keys(loaded.reputationEvents).length === 0, 'v18 存檔未補上 v20 聲望事件進度');
 assert((loaded.story.chapterStages.lin_02 ?? []).length === 2, 'v18 已完成 lin_02 未完整回填');
 assert((loaded.story.chapterStages.lin_03 ?? []).length === 1, 'v18 已完成 lin_03 未完整回填');
 assert((loaded.story.chapterStages.lin_04 ?? []).length === 0, 'v18 當前章節不應預先完成');
 
-console.log('✅ 主線階段引擎測試通過：阻擋／鎖存／具名海戰／三線抽測／v18→v20 連續遷移');
+console.log('✅ 主線階段引擎測試通過：阻擋／鎖存／具名海戰／三線抽測／v18→最新版連續遷移');

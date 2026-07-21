@@ -7,8 +7,8 @@ const [config, main, world, legacy, book, p9] = await Promise.all([
   read('src/main.ts'),
   read('src/scenes/WorldMapScene.ts'),
   read('src/scenes/BattleScene.ts'),
-  read('2026-06-12_大航海福爾摩沙_遊戲建構書.md'),
-  read('2026-07-15_P9_六角格海戰總驗收清單.md'),
+  read('docs/2026-06-12_大航海福爾摩沙_遊戲建構書.md'),
+  read('docs/2026-07-15_P9_六角格海戰總驗收清單.md'),
 ]);
 
 assert.match(config, /USE_HEX_BATTLE\s*=\s*true/);

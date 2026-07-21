@@ -301,6 +301,90 @@ export function showModal(
   return container;
 }
 
+export interface IllustratedModalOptions {
+  imageKey?: string;
+  fallbackImageKey?: string;
+  imageAlt?: string;
+}
+
+/** 探險專用圖文彈窗；不改動共用 showModal，缺圖時安全退回純文字。 */
+export function showIllustratedModal(
+  scene: Phaser.Scene,
+  title: string,
+  body: string,
+  choices: ModalChoice[],
+  options: IllustratedModalOptions = {},
+): Phaser.GameObjects.Container {
+  const imageKey = options.imageKey && scene.textures.exists(options.imageKey)
+    ? options.imageKey
+    : (options.fallbackImageKey && scene.textures.exists(options.fallbackImageKey) ? options.fallbackImageKey : undefined);
+  if (!imageKey) return showModal(scene, title, body, choices);
+
+  const w = Math.min(900, BASE_W - 64);
+  const h = Math.min(660, BASE_H - 40);
+  const cx = BASE_W / 2;
+  const cy = BASE_H / 2;
+  const buttonStep = 54;
+  const buttonH = choices.length * buttonStep;
+  const imageW = Math.min(768, w - 52);
+  const imageH = Math.min(270, h - buttonH - 190);
+
+  const dim = scene.add.rectangle(cx, cy, BASE_W, BASE_H, 0x000000, 0.58).setInteractive();
+  dim.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => event.stopPropagation());
+  const panel = scene.add.graphics();
+  panel.fillStyle(COLORS.wood, 1);
+  panel.fillRoundedRect(cx - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 12);
+  panel.fillStyle(COLORS.parchment, 1);
+  panel.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, 9);
+
+  const titleT = scene.add.text(cx, cy - h / 2 + 30, title, {
+    ...textStyle(25), align: 'center', wordWrap: { width: w - 70 },
+  }).setOrigin(0.5);
+  const imageY = cy - h / 2 + 58;
+  const picture = scene.add.image(cx, imageY, imageKey).setOrigin(0.5, 0);
+  const source = picture.texture.getSourceImage() as { width?: number; height?: number };
+  const sourceW = source.width ?? 768;
+  const sourceH = source.height ?? 432;
+  const targetRatio = imageW / imageH;
+  const sourceRatio = sourceW / sourceH;
+  if (sourceRatio > targetRatio) {
+    const cropW = sourceH * targetRatio;
+    picture.setCrop((sourceW - cropW) / 2, 0, cropW, sourceH);
+  } else {
+    const cropH = sourceW / targetRatio;
+    picture.setCrop(0, (sourceH - cropH) / 2, sourceW, cropH);
+  }
+  picture.setDisplaySize(imageW, imageH);
+
+  const bodyY = imageY + imageH + 12;
+  const bodyH = Math.max(55, cy + h / 2 - buttonH - 18 - bodyY);
+  const bodyT = scene.add.text(cx, bodyY, body, {
+    ...textStyle(17), align: 'center', wordWrap: { width: w - 80 }, lineSpacing: 4,
+  }).setOrigin(0.5, 0);
+  while (bodyT.height > bodyH && Number.parseInt(String(bodyT.style.fontSize), 10) > 12) {
+    bodyT.setFontSize(Number.parseInt(String(bodyT.style.fontSize), 10) - 1);
+  }
+  let clip: Phaser.GameObjects.Graphics | null = null;
+  if (bodyT.height > bodyH) {
+    clip = scene.add.graphics().fillStyle(0xffffff, 1).fillRect(cx - w / 2 + 32, bodyY, w - 64, bodyH).setVisible(false);
+    bodyT.setMask(clip.createGeometryMask());
+  }
+
+  const parts: Phaser.GameObjects.GameObject[] = clip
+    ? [dim, panel, titleT, picture, bodyT, clip]
+    : [dim, panel, titleT, picture, bodyT];
+  const container = scene.add.container(0, 0, parts).setDepth(2000).setScrollFactor(0).setAlpha(0);
+  scene.tweens.add({ targets: container, alpha: 1, duration: 140, ease: 'Quad.easeOut' });
+  choices.forEach((choice, index) => {
+    const btn = makeButton(scene, cx, cy + h / 2 - (choices.length - index) * buttonStep - 2, Math.min(w - 150, 560), 44, choice.label, () => {
+      container.destroy();
+      choice.onPick();
+    }, 18).setScrollFactor(0);
+    container.add(btn);
+  });
+  return container;
+}
+
 /** 短暫浮現的提示訊息 */
 export function toast(scene: Phaser.Scene, msg: string, x = 640, y = 80): void {
   const t = scene.add

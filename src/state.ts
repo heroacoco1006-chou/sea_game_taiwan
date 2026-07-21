@@ -15,7 +15,7 @@ import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 export interface Good {
   id: string;
@@ -391,6 +391,26 @@ export interface DiscoveryEntry extends CodexEntry {
   rewardItemId?: string;
 }
 
+export interface WeightedDiscoveryRef {
+  id: string;
+  weight: number;
+}
+
+export interface WeightedExplorationEventRef {
+  id: string;
+  weight: number;
+}
+
+export interface ExplorationRepeatReward {
+  id: string;
+  weight: number;
+  gold?: number;
+  food?: number;
+  water?: number;
+  adventureRep?: number;
+  text: string;
+}
+
 export interface ExplorationPoint {
   id: string;
   name: string;
@@ -403,8 +423,11 @@ export interface ExplorationPoint {
   difficulty: number;
   baseDays: number;
   cost: { food: number; water: number };
-  discoveries: string[];
-  events: string[];
+  terrainTags: string[];
+  mainDiscoveries: WeightedDiscoveryRef[];
+  rareDiscoveries: WeightedDiscoveryRef[];
+  repeatRewards: ExplorationRepeatReward[];
+  events: WeightedExplorationEventRef[];
   hint: string;
 }
 
@@ -476,6 +499,10 @@ export interface GameState {
 
 export interface ExplorationState {
   attempts: Record<string, number>;
+  missStreaks: Record<string, number>;
+  noEventStreaks: Record<string, number>;
+  completedMainPoints: string[];
+  repeatRepDayByPoint: Record<string, number>;
   questOfferDay: number;
   questOfferPortId: string | null;
   questOffers: Quest[];
@@ -678,6 +705,10 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     },
     exploration: {
       attempts: {},
+      missStreaks: {},
+      noEventStreaks: {},
+      completedMainPoints: [],
+      repeatRepDayByPoint: {},
       questOfferDay: 0,
       questOfferPortId: null,
       questOffers: [],
@@ -2086,8 +2117,37 @@ function migrateSave(raw: string): GameState | null {
       if (full.fad) full.fad.untilDay += 60;
       full.version = 21;
     }
+    // v21 → v22：探險事件保底、主要／稀有發現池、地點完成與重複聲望紀錄。
+    if (s.version < 22) {
+      const full = s as GameState;
+      full.exploration = full.exploration ?? {
+        attempts: {},
+        missStreaks: {},
+        noEventStreaks: {},
+        completedMainPoints: [],
+        repeatRepDayByPoint: {},
+        questOfferDay: 0,
+        questOfferPortId: null,
+        questOffers: [],
+      };
+      full.exploration.missStreaks = full.exploration.missStreaks ?? {};
+      full.exploration.noEventStreaks = full.exploration.noEventStreaks ?? {};
+      full.exploration.completedMainPoints = full.exploration.completedMainPoints ?? [];
+      full.exploration.repeatRepDayByPoint = full.exploration.repeatRepDayByPoint ?? {};
+      for (const point of EXPLORATION_POINTS) {
+        const allMainFound = point.mainDiscoveries.every((ref) => full.story.codex.includes(ref.id));
+        if (allMainFound && !full.exploration.completedMainPoints.includes(point.id)) {
+          full.exploration.completedMainPoints.push(point.id);
+        }
+      }
+      full.version = 22;
+    }
     (s as GameState).story.chapterStages = (s as GameState).story.chapterStages ?? {};
     (s as GameState).reputationEvents = (s as GameState).reputationEvents ?? {};
+    (s as GameState).exploration.missStreaks = (s as GameState).exploration.missStreaks ?? {};
+    (s as GameState).exploration.noEventStreaks = (s as GameState).exploration.noEventStreaks ?? {};
+    (s as GameState).exploration.completedMainPoints = (s as GameState).exploration.completedMainPoints ?? [];
+    (s as GameState).exploration.repeatRepDayByPoint = (s as GameState).exploration.repeatRepDayByPoint ?? {};
     return s as GameState;
   } catch {
     return null;
@@ -2730,6 +2790,10 @@ export function explorationAttemptCount(state: GameState, pointId: string): numb
   return state.exploration.attempts[pointId] ?? 0;
 }
 
+export function explorationMissStreak(state: GameState, pointId: string): number {
+  return state.exploration.missStreaks[pointId] ?? 0;
+}
+
 export function recordExplorationAttempt(state: GameState, pointId: string): number {
   const next = explorationAttemptCount(state, pointId) + 1;
   state.exploration.attempts[pointId] = next;
@@ -2742,7 +2806,7 @@ export function explorationFindChance(state: GameState, point: ExplorationPoint)
   const scholar = hasRole(state, 'scholar') ? 0.08 : 0;
   const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
   const astrolabe = accessoryEffectValue(state, 'discover', 0.08);
-  const retry = Math.min(0.2, explorationAttemptCount(state, point.id) * 0.05);
+  const retry = Math.min(0.2, explorationMissStreak(state, point.id) * 0.05);
   const know = Math.min(0.15, fleetStat(state, 'kno') / 600); // 知識能力加成
   const renown = adventureRepBonus(state); // 冒險名聲被動（B-5）
   return Math.max(0.25, Math.min(0.92, base + guide + scholar + telescope + astrolabe + retry + know + renown));
@@ -2775,11 +2839,18 @@ export interface ExplorationEventEffects {
   dailySupplies?: number;
   /** 加成本次探索的發現率（0～1） */
   findBonus?: number;
+  rareBonus?: number;
+  crew?: number;
+  repeatRewardId?: string;
 }
+
+export type ExplorationEventCategory = 'supply' | 'hazard' | 'encounter' | 'clue' | 'rare';
+export type ExplorationRisk = 'safe' | 'medium' | 'high';
 
 export interface ExplorationEventChoice {
   label: string;
   resultText: string;
+  risk?: ExplorationRisk;
   abort?: boolean;
   effects?: ExplorationEventEffects;
 }
@@ -2788,41 +2859,85 @@ export interface ExplorationEventDef {
   id: string;
   title: string;
   text: string;
+  imageId: string;
+  category: ExplorationEventCategory;
+  tags: string[];
+  weight: number;
+  difficultyMin?: number;
+  difficultyMax?: number;
   effects?: ExplorationEventEffects;
   choices?: ExplorationEventChoice[];
   /** 該職位在隊時，此事件被抽中的權重減半（如探險嚮導之於迷路） */
   halfWeightRole?: string;
   /** 該職位在隊時，疲勞效果減半（如醫師） */
   fatigueHalfRole?: string;
+  crewLossHalfRole?: string;
 }
 
-export const EXPLORATION_EVENTS: ExplorationEventDef[] = (explorationEventsData as { events: ExplorationEventDef[] }).events;
-export const EXPLORATION_EVENT_CHANCE: number = (explorationEventsData as { chance: number }).chance;
+const explorationEventTable = explorationEventsData as {
+  events: ExplorationEventDef[];
+  chance: number;
+  safeEventImageId: string;
+};
+export const EXPLORATION_EVENTS: ExplorationEventDef[] = explorationEventTable.events;
+export const EXPLORATION_EVENT_CHANCE: number = explorationEventTable.chance;
+export const EXPLORATION_SAFE_IMAGE_ID: string = explorationEventTable.safeEventImageId;
 
-/** 依探索點的事件清單加權抽一個事件；未觸發回傳 null。 */
-export function rollExplorationEvent(state: GameState, point: ExplorationPoint): ExplorationEventDef | null {
-  if (Math.random() >= EXPLORATION_EVENT_CHANCE) return null;
-  const pool = point.events
-    .map((id) => EXPLORATION_EVENTS.find((ev) => ev.id === id))
-    .filter((ev): ev is ExplorationEventDef => Boolean(ev));
-  if (pool.length === 0) return null;
-  const weights = pool.map((ev) => (ev.halfWeightRole && hasRole(state, ev.halfWeightRole) ? 0.5 : 1));
-  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
-  for (let i = 0; i < pool.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return pool[i];
+export type RandomFn = () => number;
+
+function weightedPick<T>(items: T[], weightOf: (item: T) => number, rng: RandomFn): T | undefined {
+  const total = items.reduce((sum, item) => sum + Math.max(0, weightOf(item)), 0);
+  if (items.length === 0 || total <= 0) return undefined;
+  let roll = rng() * total;
+  for (const item of items) {
+    roll -= Math.max(0, weightOf(item));
+    if (roll <= 0) return item;
   }
-  return pool[pool.length - 1];
+  return items[items.length - 1];
+}
+
+/** 依地點、地形、難度與職位加權抽事件；同地點上次無事件時本次保底。 */
+export function rollExplorationEvent(
+  state: GameState,
+  point: ExplorationPoint,
+  rng: RandomFn = Math.random,
+): ExplorationEventDef | null {
+  const forced = (state.exploration.noEventStreaks[point.id] ?? 0) >= 1;
+  if (!forced && rng() >= EXPLORATION_EVENT_CHANCE) {
+    state.exploration.noEventStreaks[point.id] = 1;
+    return null;
+  }
+  const pool = point.events
+    .map((ref) => ({ ref, event: EXPLORATION_EVENTS.find((ev) => ev.id === ref.id) }))
+    .filter((entry): entry is { ref: WeightedExplorationEventRef; event: ExplorationEventDef } => {
+      const ev = entry.event;
+      if (!ev) return false;
+      if (ev.difficultyMin !== undefined && point.difficulty < ev.difficultyMin) return false;
+      if (ev.difficultyMax !== undefined && point.difficulty > ev.difficultyMax) return false;
+      return ev.tags.some((tag) => point.terrainTags.includes(tag));
+    });
+  const picked = weightedPick(pool, ({ ref, event }) => {
+    const roleMod = event.halfWeightRole && hasRole(state, event.halfWeightRole) ? 0.5 : 1;
+    return ref.weight * event.weight * roleMod;
+  }, rng);
+  if (!picked) {
+    state.exploration.noEventStreaks[point.id] = 1;
+    return null;
+  }
+  state.exploration.noEventStreaks[point.id] = 0;
+  return picked.event;
 }
 
 /** 套用事件效果到遊戲狀態，回傳白話效果行與本次發現率加成。 */
 export function applyExplorationEventEffects(
   state: GameState,
   ev: ExplorationEventDef,
-  effects: ExplorationEventEffects | undefined
-): { lines: string[]; findBonus: number } {
+  effects: ExplorationEventEffects | undefined,
+  rng: RandomFn = Math.random,
+): { lines: string[]; findBonus: number; rareBonus: number; crewDelta: number; repeatRewardId?: string } {
   const lines: string[] = [];
-  if (!effects) return { lines, findBonus: 0 };
+  if (!effects) return { lines, findBonus: 0, rareBonus: 0, crewDelta: 0 };
+  const crewBefore = state.crew;
   if (effects.food) {
     state.food = Math.max(0, Math.min(supplyMax(state), state.food + effects.food));
     lines.push(`糧食${effects.food > 0 ? '＋' : '−'}${Math.abs(effects.food)}`);
@@ -2853,7 +2968,153 @@ export function applyExplorationEventEffects(
     state.fatigue = Math.max(0, Math.min(100, state.fatigue + gain));
     lines.push(`疲勞＋${gain}${halved ? '（醫師照顧，減半）' : ''}`);
   }
-  return { lines, findBonus: effects.findBonus ?? 0 };
+  if (effects.crew && effects.crew < 0) {
+    if (state.crew < 8) {
+      state.fatigue = Math.min(100, state.fatigue + 5);
+      lines.push('大家互相照應，沒有人掉隊（疲勞＋5）');
+    } else {
+      let loss = Math.abs(effects.crew);
+      if (ev.crewLossHalfRole && hasRole(state, ev.crewLossHalfRole)) {
+        loss = loss === 1 ? (rng() < 0.5 ? 0 : 1) : Math.ceil(loss / 2);
+      }
+      const nextCrew = Math.max(5, state.crew - loss);
+      const actualLoss = state.crew - nextCrew;
+      state.crew = nextCrew;
+      lines.push(actualLoss > 0 ? `水手−${actualLoss}${ev.crewLossHalfRole && hasRole(state, ev.crewLossHalfRole) ? '（醫師照顧）' : ''}` : '醫師及時照顧，沒有人離隊');
+    }
+  }
+  return {
+    lines,
+    findBonus: effects.findBonus ?? 0,
+    rareBonus: effects.rareBonus ?? 0,
+    crewDelta: state.crew - crewBefore,
+    repeatRewardId: effects.repeatRewardId,
+  };
+}
+
+export interface ExplorationProgress {
+  mainFound: number;
+  mainTotal: number;
+  rareFound: number;
+  rareTotal: number;
+  mainComplete: boolean;
+  rareComplete: boolean;
+}
+
+export interface ExplorationDiscoveryRoll {
+  kind: 'main' | 'rare' | 'repeat';
+  discoveryId?: string;
+  repeatReward?: ExplorationRepeatReward;
+}
+
+export interface ExplorationRewardResult {
+  lines: string[];
+  unlockedIds: string[];
+  found?: DiscoveryEntry;
+  rewardItemId?: string;
+  adventureRepGained: number;
+}
+
+export function explorationProgress(state: GameState, point: ExplorationPoint): ExplorationProgress {
+  const mainFound = point.mainDiscoveries.filter((ref) => state.story.codex.includes(ref.id)).length;
+  const rareFound = point.rareDiscoveries.filter((ref) => state.story.codex.includes(ref.id)).length;
+  return {
+    mainFound,
+    mainTotal: point.mainDiscoveries.length,
+    rareFound,
+    rareTotal: point.rareDiscoveries.length,
+    mainComplete: mainFound === point.mainDiscoveries.length,
+    rareComplete: rareFound === point.rareDiscoveries.length,
+  };
+}
+
+export function rollExplorationDiscovery(
+  state: GameState,
+  point: ExplorationPoint,
+  findChance: number,
+  rareBonus: number,
+  rng: RandomFn = Math.random,
+): ExplorationDiscoveryRoll {
+  const remainingRare = point.rareDiscoveries.filter((ref) => !state.story.codex.includes(ref.id));
+  const remainingMain = point.mainDiscoveries.filter((ref) => !state.story.codex.includes(ref.id));
+  const rareChance = Math.min(0.2, Math.min(0.12, remainingRare.reduce((sum, ref) => sum + ref.weight, 0)) + rareBonus);
+  if (remainingRare.length > 0 && rng() < rareChance) {
+    const picked = weightedPick(remainingRare, (ref) => ref.weight, rng);
+    if (picked) return { kind: 'rare', discoveryId: picked.id };
+  }
+  if (remainingMain.length > 0 && rng() < findChance) {
+    const picked = weightedPick(remainingMain, (ref) => ref.weight, rng);
+    if (picked) return { kind: 'main', discoveryId: picked.id };
+  }
+  const repeatReward = weightedPick(point.repeatRewards, (reward) => reward.weight, rng);
+  return { kind: 'repeat', repeatReward };
+}
+
+export function applyExplorationDiscoveryResult(
+  state: GameState,
+  point: ExplorationPoint,
+  roll: ExplorationDiscoveryRoll,
+): ExplorationRewardResult {
+  const lines: string[] = [];
+  let adventureRepGained = 0;
+  const hadRemainingMain = point.mainDiscoveries.some((ref) => !state.story.codex.includes(ref.id));
+  if (roll.kind === 'repeat') {
+    if (hadRemainingMain) state.exploration.missStreaks[point.id] = explorationMissStreak(state, point.id) + 1;
+    const reward = roll.repeatReward;
+    if (!reward) return { lines: ['這次沒有新的重大發現。'], unlockedIds: [], adventureRepGained };
+    if (reward.gold) {
+      state.gold += reward.gold;
+      lines.push(`獲得調查報酬 ${reward.gold} 兩`);
+    }
+    if (reward.food) {
+      state.food = Math.min(supplyMax(state), state.food + reward.food);
+      lines.push(`糧食＋${reward.food}`);
+    }
+    if (reward.water) {
+      state.water = Math.min(supplyMax(state), state.water + reward.water);
+      lines.push(`清水＋${reward.water}`);
+    }
+    if ((reward.adventureRep ?? 0) > 0 && state.exploration.repeatRepDayByPoint[point.id] !== state.day) {
+      const rep = addReputation(state, 'adventure', 1);
+      state.exploration.repeatRepDayByPoint[point.id] = state.day;
+      adventureRepGained += 1;
+      if (rep) lines.push(rep);
+    }
+    lines.unshift(reward.text);
+    return { lines, unlockedIds: [], adventureRepGained };
+  }
+
+  const discoveryId = roll.discoveryId;
+  const found = discoveryId ? DISCOVERIES.find((entry) => entry.id === discoveryId) : undefined;
+  if (!found) return { lines: ['這次沒有新的重大發現。'], unlockedIds: [], adventureRepGained };
+  const unlockedIds = unlockCodex(state, [found.id]);
+  if (unlockedIds.length === 0) return { lines: ['這項發現已經記錄過了。'], unlockedIds, found, adventureRepGained };
+
+  const reward = found.rewardGold ?? (80 + point.difficulty * 40);
+  state.gold += reward;
+  lines.push(`發現：${found.title}`, found.body, `獲得記錄獎金 ${reward} 兩`);
+  const rewardItemId = found.kind === 'treasure' ? found.rewardItemId ?? found.id : undefined;
+  if (rewardItemId) {
+    addInventory(state, rewardItemId);
+    lines.push(`取得寶物：${itemNameById(rewardItemId)}`);
+  }
+  const discoveryRep = roll.kind === 'rare' ? 8 : 3;
+  state.exploration.missStreaks[point.id] = roll.kind === 'main'
+    ? 0
+    : (hadRemainingMain ? explorationMissStreak(state, point.id) + 1 : 0);
+  const rep = addReputation(state, 'adventure', discoveryRep);
+  adventureRepGained += discoveryRep;
+  if (rep) lines.push(rep);
+
+  const mainComplete = point.mainDiscoveries.every((ref) => state.story.codex.includes(ref.id));
+  if (mainComplete && !state.exploration.completedMainPoints.includes(point.id)) {
+    state.exploration.completedMainPoints.push(point.id);
+    const completionRep = addReputation(state, 'adventure', 6);
+    adventureRepGained += 6;
+    lines.push('主要發現全部完成！');
+    if (completionRep) lines.push(completionRep);
+  }
+  return { lines, unlockedIds, found, rewardItemId, adventureRepGained };
 }
 
 export function explorationPointById(id: string): ExplorationPoint | undefined {

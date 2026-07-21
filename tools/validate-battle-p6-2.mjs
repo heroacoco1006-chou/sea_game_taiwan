@@ -10,7 +10,7 @@ const [rules, scene, simulator, tests, config, worldMap, rulesJson, encountersJs
   read('src/scenes/WorldMapScene.ts'),
   read('src/data/battleRules.json'),
   read('src/data/battleEncounters.json'),
-  read('2026-07-11_六角格回合制海戰架構與低階模型施工規格.md'),
+  read('docs/2026-07-11_六角格回合制海戰架構與低階模型施工規格.md'),
 ]);
 
 const fail = (message) => { throw new Error('❌ ' + message); };
@@ -43,7 +43,7 @@ for (const [token, label] of [
   ["? 1200 : 180", '新回合 1.2 秒接手窗口'],
   ['this.time.delayedCall(nextDelay, () => this.runAutoBattleStep())', '加速逐步播放'],
   ["p6demo === 'auto'", '瀏覽器固定可用案例'],
-  ['六角格海戰（P8 美術整合）', 'P8 預覽標示'],
+  ['六角格海戰', '正式六角格海戰標題'],
 ]) requireText(scene, token, label);
 if (scene.includes('sidePower(')) fail('Scene 不得自行重算艦隊戰力');
 

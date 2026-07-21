@@ -76,6 +76,10 @@ export const EXPLORATION_ICON_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/exploration/icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
+export const EXPLORATION_EVENT_URLS = byBaseName(
+  import.meta.glob('/assets/m5/v2/exploration/events/runtime/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
 export const FACILITY_ICON_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/ui/icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
@@ -110,6 +114,7 @@ export const portTownBuildingKey = (id: string): string => `m5tb_${id}`;
 export const portTownBackgroundKey = (id: string): string => `m5town_${id}`;
 export const harborSceneKey = (id: string): string => `m5h_${id}`;
 export const explorationIconKey = (id: string): string => `m5x_${id}`;
+export const explorationEventKey = (id: string): string => `expevent_${id}`;
 export const facilityIconKey = (id: string): string => `m5u_${id}`;
 export const storyBackgroundKey = (id: string): string => `storybg_${id}`;
 export const storyChapterBgKey = (heroId: string, chapter: number): string => `storybgch_${heroId}_${chapter}`;
@@ -138,5 +143,6 @@ export const characterWalkUrl = (id: string): string | undefined => CHARACTER_WA
 export const shipEquipmentUrl = (id: string): string | undefined => SHIP_EQUIPMENT_URLS[id];
 export const portTownBackgroundUrl = (id: string): string | undefined => PORT_TOWN_BACKGROUND_URLS[id];
 export const harborSceneUrl = (id: string): string | undefined => HARBOR_SCENE_URLS[id];
+export const explorationEventUrl = (id: string): string | undefined => EXPLORATION_EVENT_URLS[id];
 export const portTownBuildingUrlsForCulture = (culture: string): Array<[string, string]> =>
   Object.entries(PORT_TOWN_BUILDING_URLS).filter(([id]) => id.startsWith(`${culture}_`));

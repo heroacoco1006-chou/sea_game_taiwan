@@ -12,19 +12,78 @@
         "food": 6,
         "water": 6
       },
-      "discoveries": [
-        "view_qingshui_cliff",
-        "sp_taiwan_macaque",
-        "sp_swinhoe_frog"
-      ],
       "events": [
-        "aid_indigenous",
-        "lost",
-        "wildlife"
+        {
+          "id": "aid_indigenous",
+          "weight": 1.2
+        },
+        {
+          "id": "fresh_spring",
+          "weight": 1
+        },
+        {
+          "id": "lost",
+          "weight": 0.8
+        },
+        {
+          "id": "storm_landslide",
+          "weight": 0.5
+        },
+        {
+          "id": "wildlife",
+          "weight": 1
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.5
+        }
       ],
       "hint": "台灣東岸高山逼近海邊，峽谷與峭壁藏著許多生物。",
       "approachX": 4132,
-      "approachY": 2100
+      "approachY": 2100,
+      "terrainTags": [
+        "taiwan",
+        "mountain",
+        "forest",
+        "coast"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "view_qingshui_cliff",
+          "weight": 1
+        },
+        {
+          "id": "sp_taiwan_macaque",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_swinhoe_frog",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "sp_formosan_salmon",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 40,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 3,
+          "water": 3,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_yushan",
@@ -38,20 +97,73 @@
         "food": 9,
         "water": 9
       },
-      "discoveries": [
-        "geo_yushan",
-        "sp_mikado_pheasant",
-        "sp_taiwan_black_bear",
-        "tr_old_compass"
-      ],
       "events": [
-        "lost",
-        "cold_mountain",
-        "landmark"
+        {
+          "id": "fresh_spring",
+          "weight": 0.7
+        },
+        {
+          "id": "lost",
+          "weight": 1.1
+        },
+        {
+          "id": "storm_landslide",
+          "weight": 1
+        },
+        {
+          "id": "wildlife",
+          "weight": 0.8
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.7
+        }
       ],
       "hint": "從內陸山路遠望高山雲海，路程辛苦但收穫珍貴。",
       "approachX": 3548,
-      "approachY": 2364
+      "approachY": 2364,
+      "terrainTags": [
+        "taiwan",
+        "mountain",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "geo_yushan",
+          "weight": 1
+        },
+        {
+          "id": "sp_mikado_pheasant",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_taiwan_black_bear",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_old_compass",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 50,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 4,
+          "water": 4,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_alishan",
@@ -65,19 +177,81 @@
         "food": 6,
         "water": 6
       },
-      "discoveries": [
-        "geo_alishan",
-        "sp_taiwan_blue_magpie",
-        "sp_taiwan_salamander"
-      ],
       "events": [
-        "aid_indigenous",
-        "lost",
-        "forest"
+        {
+          "id": "aid_indigenous",
+          "weight": 1.1
+        },
+        {
+          "id": "fresh_spring",
+          "weight": 0.8
+        },
+        {
+          "id": "forest_food",
+          "weight": 0.9
+        },
+        {
+          "id": "lost",
+          "weight": 0.8
+        },
+        {
+          "id": "snake_hazard",
+          "weight": 0.6
+        },
+        {
+          "id": "wildlife",
+          "weight": 1.2
+        },
+        {
+          "id": "rare_specimen",
+          "weight": 0.25
+        }
       ],
       "hint": "高大的山林與雲霧，適合記錄鳥類和山林地形。",
       "approachX": 3548,
-      "approachY": 2436
+      "approachY": 2436,
+      "terrainTags": [
+        "taiwan",
+        "mountain",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "geo_alishan",
+          "weight": 1
+        },
+        {
+          "id": "sp_taiwan_blue_magpie",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_taiwan_salamander",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "sp_lanyu_scops_owl",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 40,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 3,
+          "water": 3,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_siraya",
@@ -91,18 +265,75 @@
         "food": 3,
         "water": 3
       },
-      "discoveries": [
-        "culture_siraya",
-        "sp_sika_deer",
-        "sp_green_turtle"
-      ],
       "events": [
-        "aid_indigenous",
-        "landmark"
+        {
+          "id": "aid_indigenous",
+          "weight": 1.4
+        },
+        {
+          "id": "aid_local",
+          "weight": 1
+        },
+        {
+          "id": "forest_food",
+          "weight": 0.6
+        },
+        {
+          "id": "snake_hazard",
+          "weight": 0.3
+        },
+        {
+          "id": "wildlife",
+          "weight": 0.8
+        }
       ],
       "hint": "靠近大員的平原社群，能了解鹿皮貿易與地方生活。",
       "approachX": 3588,
-      "approachY": 2580
+      "approachY": 2580,
+      "terrainTags": [
+        "taiwan",
+        "settlement",
+        "grassland",
+        "coast",
+        "tropical"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "culture_siraya",
+          "weight": 1
+        },
+        {
+          "id": "sp_sika_deer",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_green_turtle",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "view_taiwan_west_lagoons",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 30,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 2,
+          "water": 2,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_quanzhou_temple",
@@ -116,18 +347,57 @@
         "food": 2,
         "water": 2
       },
-      "discoveries": [
-        "view_quanzhou_mazu",
-        "culture_mazu",
-        "tr_mazu_amulet"
-      ],
       "events": [
-        "landmark",
-        "aid_local"
+        {
+          "id": "aid_local",
+          "weight": 1.4
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.7
+        }
       ],
       "hint": "福建海商出航前常祈求平安，信仰也是航海文化的一部分。",
       "approachX": 3348,
-      "approachY": 1940
+      "approachY": 1940,
+      "terrainTags": [
+        "settlement",
+        "road",
+        "coast"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "view_quanzhou_mazu",
+          "weight": 1
+        },
+        {
+          "id": "culture_mazu",
+          "weight": 0.9
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_mazu_amulet",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 30,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 2,
+          "water": 2,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_forbidden_city",
@@ -141,19 +411,65 @@
         "food": 10,
         "water": 10
       },
-      "discoveries": [
-        "place_forbidden_city",
-        "culture_ming_court",
-        "sp_giant_salamander",
-        "tr_seafarer_telescope"
-      ],
       "events": [
-        "lost",
-        "landmark"
+        {
+          "id": "aid_local",
+          "weight": 0.8
+        },
+        {
+          "id": "lost",
+          "weight": 0.8
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 1.2
+        }
       ],
       "hint": "由沿海港口接內陸遠行任務，觀察明末朝貢與宮城制度。",
       "approachX": 3772,
-      "approachY": 804
+      "approachY": 804,
+      "terrainTags": [
+        "settlement",
+        "road",
+        "ruins"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "place_forbidden_city",
+          "weight": 1
+        },
+        {
+          "id": "culture_ming_court",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_giant_salamander",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_seafarer_telescope",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 50,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 4,
+          "water": 4,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_seoul",
@@ -167,18 +483,77 @@
         "food": 6,
         "water": 6
       },
-      "discoveries": [
-        "place_hanyang",
-        "culture_korean_seowon",
-        "sp_red_crowned_crane"
-      ],
       "events": [
-        "aid_local",
-        "landmark"
+        {
+          "id": "aid_local",
+          "weight": 1.3
+        },
+        {
+          "id": "fresh_spring",
+          "weight": 0.6
+        },
+        {
+          "id": "forest_food",
+          "weight": 0.5
+        },
+        {
+          "id": "lost",
+          "weight": 0.5
+        },
+        {
+          "id": "wildlife",
+          "weight": 0.9
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.7
+        }
       ],
       "hint": "朝鮮都城與書院文化能讓圖鑑補上東亞鄰國視角。",
       "approachX": 4652,
-      "approachY": 692
+      "approachY": 692,
+      "terrainTags": [
+        "settlement",
+        "road",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "place_hanyang",
+          "weight": 1
+        },
+        {
+          "id": "culture_korean_seowon",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_red_crowned_crane",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "sp_korean_tiger",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 40,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 3,
+          "water": 3,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_ryukyu_shuri",
@@ -192,18 +567,74 @@
         "food": 3,
         "water": 3
       },
-      "discoveries": [
-        "view_shuri_castle",
-        "sp_ryukyu_flying_fox",
-        "sp_ryukyu_kingfisher"
-      ],
       "events": [
-        "aid_local",
-        "landmark"
+        {
+          "id": "aid_local",
+          "weight": 1.3
+        },
+        {
+          "id": "fresh_spring",
+          "weight": 0.7
+        },
+        {
+          "id": "forest_food",
+          "weight": 0.7
+        },
+        {
+          "id": "wildlife",
+          "weight": 0.8
+        },
+        {
+          "id": "wreck_relic",
+          "weight": 0.3
+        }
       ],
       "hint": "琉球位在中國、日本與南洋之間，是轉口貿易的重要中介。",
       "approachX": 4740,
-      "approachY": 1820
+      "approachY": 1820,
+      "terrainTags": [
+        "settlement",
+        "island",
+        "coast",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "view_shuri_castle",
+          "weight": 1
+        },
+        {
+          "id": "sp_ryukyu_flying_fox",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_ryukyu_kingfisher",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "sp_sea_turtle",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 30,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 2,
+          "water": 2,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_unzen",
@@ -217,19 +648,78 @@
         "food": 5,
         "water": 5
       },
-      "discoveries": [
-        "geo_unzen",
-        "sp_japanese_macaque",
-        "sp_koi"
-      ],
       "events": [
-        "lost",
-        "landmark",
-        "wildlife"
+        {
+          "id": "fresh_spring",
+          "weight": 1
+        },
+        {
+          "id": "lost",
+          "weight": 0.9
+        },
+        {
+          "id": "storm_landslide",
+          "weight": 0.7
+        },
+        {
+          "id": "snake_hazard",
+          "weight": 0.5
+        },
+        {
+          "id": "wildlife",
+          "weight": 1
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.5
+        }
       ],
       "hint": "長崎附近的火山山路，能觀察溫泉、火山與日本山林生物。",
       "approachX": 5380,
-      "approachY": 1092
+      "approachY": 1092,
+      "terrainTags": [
+        "mountain",
+        "forest",
+        "volcanic",
+        "coast"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "geo_unzen",
+          "weight": 1
+        },
+        {
+          "id": "sp_japanese_macaque",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_koi",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "view_nagasaki_dejima",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 40,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 3,
+          "water": 3,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_sakai_route",
@@ -243,18 +733,61 @@
         "food": 3,
         "water": 3
       },
-      "discoveries": [
-        "culture_sakai_merchants",
-        "view_sakai_workshops",
-        "tr_merchant_abacus"
-      ],
       "events": [
-        "aid_local",
-        "landmark"
+        {
+          "id": "aid_local",
+          "weight": 1.5
+        },
+        {
+          "id": "lost",
+          "weight": 0.4
+        },
+        {
+          "id": "ancient_marks",
+          "weight": 0.7
+        }
       ],
       "hint": "堺是商人與工匠聚集的城市，能認識日本商業與手工業。",
       "approachX": 6292,
-      "approachY": 788
+      "approachY": 788,
+      "terrainTags": [
+        "settlement",
+        "road",
+        "coast"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "culture_sakai_merchants",
+          "weight": 1
+        },
+        {
+          "id": "view_sakai_workshops",
+          "weight": 0.9
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_merchant_abacus",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 30,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 2,
+          "water": 2,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_java_volcano",
@@ -268,20 +801,82 @@
         "food": 7,
         "water": 7
       },
-      "discoveries": [
-        "geo_java_volcano",
-        "sp_javan_rhino",
-        "sp_banteng_pepper",
-        "tr_coral_specimen"
-      ],
       "events": [
-        "lost",
-        "wildlife",
-        "landmark"
+        {
+          "id": "fresh_spring",
+          "weight": 0.7
+        },
+        {
+          "id": "forest_food",
+          "weight": 0.9
+        },
+        {
+          "id": "lost",
+          "weight": 0.8
+        },
+        {
+          "id": "storm_landslide",
+          "weight": 0.8
+        },
+        {
+          "id": "snake_hazard",
+          "weight": 0.8
+        },
+        {
+          "id": "wildlife",
+          "weight": 1.1
+        },
+        {
+          "id": "rare_specimen",
+          "weight": 0.25
+        }
       ],
       "hint": "爪哇火山讓土地肥沃，也讓胡椒與稻米貿易興盛。",
       "approachX": 2612,
-      "approachY": 5380
+      "approachY": 5380,
+      "terrainTags": [
+        "mountain",
+        "volcanic",
+        "tropical",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "geo_java_volcano",
+          "weight": 1
+        },
+        {
+          "id": "sp_javan_rhino",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_banteng_pepper",
+          "weight": 0.8
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_coral_specimen",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 40,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 3,
+          "water": 3,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     },
     {
       "id": "exp_moluccas_forest",
@@ -295,21 +890,86 @@
         "food": 9,
         "water": 9
       },
-      "discoveries": [
-        "view_banda_islands",
-        "sp_bird_of_paradise",
-        "sp_nutmeg_tree",
-        "sp_clove_tree",
-        "tr_spice_specimen"
-      ],
       "events": [
-        "lost",
-        "wildlife",
-        "forest"
+        {
+          "id": "fresh_spring",
+          "weight": 0.7
+        },
+        {
+          "id": "forest_food",
+          "weight": 1
+        },
+        {
+          "id": "lost",
+          "weight": 0.9
+        },
+        {
+          "id": "snake_hazard",
+          "weight": 0.8
+        },
+        {
+          "id": "wildlife",
+          "weight": 1.2
+        },
+        {
+          "id": "wreck_relic",
+          "weight": 0.3
+        },
+        {
+          "id": "rare_specimen",
+          "weight": 0.4
+        }
       ],
       "hint": "肉豆蔻與丁香讓香料群島成為各國爭奪的焦點。",
       "approachX": 5692,
-      "approachY": 5156
+      "approachY": 5156,
+      "terrainTags": [
+        "island",
+        "coast",
+        "tropical",
+        "forest"
+      ],
+      "mainDiscoveries": [
+        {
+          "id": "view_banda_islands",
+          "weight": 1
+        },
+        {
+          "id": "sp_bird_of_paradise",
+          "weight": 0.9
+        },
+        {
+          "id": "sp_nutmeg_tree",
+          "weight": 0.8
+        },
+        {
+          "id": "sp_clove_tree",
+          "weight": 0.7
+        }
+      ],
+      "rareDiscoveries": [
+        {
+          "id": "tr_spice_specimen",
+          "weight": 0.04
+        }
+      ],
+      "repeatRewards": [
+        {
+          "id": "field_notes",
+          "weight": 1,
+          "gold": 50,
+          "adventureRep": 1,
+          "text": "隊伍整理出一份實用的調查筆記。"
+        },
+        {
+          "id": "local_supplies",
+          "weight": 0.8,
+          "food": 4,
+          "water": 4,
+          "adventureRep": 0,
+          "text": "隊伍找到少量可安全使用的補給。"
+        }
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "sea-game-taiwan",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "大航海福爾摩沙 — 台灣大航海時代歷史教育遊戲",
   "type": "module",
@@ -9,7 +9,9 @@
     "build": "tsc --noEmit && vite build",
     "validate:reputation": "node tools/validate-reputation-events.mjs",
     "test:reputation": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-reputation-events.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "validate:exploration": "node tools/validate-exploration-v22.mjs && python tools/validate-exploration-event-images.py",
+    "test:exploration": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-exploration-v22.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0"
