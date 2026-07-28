@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, PORTS, Port, ShipType, shipTypeOf, shipTypeById,
   cargoCount, cargoMax, supplyMax, fleetShips, fleetMinCrew, crewMax, FLEET_MAX,
@@ -48,6 +49,7 @@ export default class ShipyardScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     for (const [id, url] of Object.entries(SHIP_CARD_URLS)) {
       const key = shipCardKey(id);
       if (!this.textures.exists(key)) this.load.image(key, url);
@@ -66,6 +68,7 @@ export default class ShipyardScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm(townBgmForRegion(this.port.region));
     const W = BASE_W;
     const H = BASE_H;

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
@@ -83,6 +84,7 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     const cardIds = new Set([this.state.ship.typeId, ...this.state.escorts.map((ship) => ship.typeId)]);
     for (const id of cardIds) {
       const url = shipCardUrl(id);
@@ -104,6 +106,7 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     const bgmPort = this.from === 'Port' && this.portId ? PORTS.find((p) => p.id === this.portId) : undefined;
     audio.playBgm(bgmPort ? townBgmForRegion(bgmPort.region) : 'sailing');
     const W = BASE_W;

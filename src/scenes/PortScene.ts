@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, updateQuestProgress } from '../state';
 import {
   characterWalkKey, characterWalkUrl, harborSceneKey, harborSceneUrl,
@@ -187,6 +188,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     const bgId = this.townLayout?.bgKey;
     const bgUrl = bgId ? portTownBackgroundUrl(bgId) : undefined;
     const bgKey = bgId ? portTownBackgroundKey(bgId) : '';
@@ -217,6 +219,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm(townBgmForRegion(this.port.region));
     // 先鎖存首次造訪，再巡檢主線／夥伴任務；否則 visitPorts 會延遲到下一個事件才完成。
     const firstVisit = !this.state.visitedPorts.includes(this.port.id);

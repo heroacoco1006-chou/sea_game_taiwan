@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   PORTRAIT_URLS, WORLD_ART_URLS, EXPLORATION_ICON_URLS, EXPLORATION_EVENT_URLS, FACILITY_ICON_URLS,
   STORY_BACKGROUND_URLS, TITLE_BG_URL,
@@ -14,6 +15,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     // Boot 只載標題與共用導航素材；港町、船隻、章節與圖鑑由使用場景按需載入。
     for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
     for (const [id, url] of Object.entries(WORLD_ART_URLS)) this.load.image(worldArtKey(id), url);
@@ -30,6 +32,7 @@ export default class BootScene extends Phaser.Scene {
     this.makePlayerTexture();
     this.makeMapMarkerTextures();
     this.makeGoodsIcons();
+    if (showLoadingFailureIfNeeded(this)) return;
     // 開發預覽：?hexmap=1（或 ?hexmap=地圖id）直接開六角格海戰 P3 戰場預覽；
     // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
     const query = new URLSearchParams(window.location.search);

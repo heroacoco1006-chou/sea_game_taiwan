@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, PORTS, Port, saveGame, heroDefById, completeStoryChapter, getChapterScript,
   getMateScript, mateDefById, recruitMate, roleName, HEROES, MATE_DEFS,
@@ -84,6 +85,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     if (this.mode !== 'story') return;
     const key = storyChapterBgKey(this.heroId, this.chapterNo);
     const url = storyChapterBgUrl(this.heroId, this.chapterNo);
@@ -91,6 +93,7 @@ export default class StoryScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     const W = BASE_W;
     const H = BASE_H;
     audio.playBgm('adventure');

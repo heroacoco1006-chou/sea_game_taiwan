@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, PORTS, Port, GOODS, LANDS, LABELS, WORLD_W, WORLD_H,
   cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
@@ -105,6 +106,7 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     const typeId = this.state.ship.typeId;
     const worldUrl = shipWorldUrl(typeId);
     const worldKey = shipWorldKey(typeId);
@@ -118,6 +120,7 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm('sailing');
     this.paused = false;
     this.distAcc = 0;
@@ -1276,7 +1279,7 @@ export default class WorldMapScene extends Phaser.Scene {
     this.fadPortLabel?.setVisible(active);
     this.miniFadPort?.setVisible(active);
     if (!active || !fad || !port || !good) {
-      this.setFadTicker('目前沒有新的流行情报');
+      this.setFadTicker('目前沒有新的流行情報');
       return;
     }
 
@@ -1285,7 +1288,7 @@ export default class WorldMapScene extends Phaser.Scene {
     const mm = this.registry.get('minimapOrigin') as { mx: number; my: number; sx: number; sy: number } | undefined;
     if (mm) this.miniFadPort.setPosition(mm.mx + port.x * mm.sx, mm.my + port.y * mm.sy);
     const remaining = Math.max(0, fad.untilDay - this.state.day + 1);
-    this.setFadTicker(`🔥 流行情报：【${port.name}】正流行【${good.name}】｜賣價 ×2｜剩餘 ${remaining} 天`);
+    this.setFadTicker(`🔥 流行情報：【${port.name}】正流行【${good.name}】｜賣價 ×2｜剩餘 ${remaining} 天`);
   }
 
   private setFadTicker(message: string): void {

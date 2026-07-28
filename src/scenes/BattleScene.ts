@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, shipTypeOf, saveGame, PORTS,
   fleetCannons, fleetHull, fleetHullMax, fleetShips, shipTypeById, damageFleet,
@@ -89,6 +90,7 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
+    installLoadingHud(this);
     const ids = new Set([shipTypeOf(this.state).id, this.enemy.shipType]);
     for (const id of ids) {
       const url = shipBattleUrl(id);
@@ -98,6 +100,7 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     const W = BASE_W;
     const H = BASE_H;
     audio.playBgm('battle');

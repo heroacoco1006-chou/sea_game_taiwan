@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import mapsData from '../data/battleMaps.json';
 import type {
   BattleCommand,
@@ -187,25 +188,7 @@ export default class BattleHexScene extends Phaser.Scene {
 
 
   preload(): void {
-    const loadingBg = this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, COLORS.seaDeep).setDepth(1000);
-    const loadingLabel = this.add.text(BASE_W / 2, BASE_H / 2 - 32, '正在展開海戰圖……', textStyle(22, '#f2e6c8'))
-      .setOrigin(0.5).setDepth(1001);
-    const loadingBar = this.add.graphics().setDepth(1001);
-    const drawProgress = (value: number): void => {
-      loadingBar.clear();
-      loadingBar.fillStyle(0x2c1b0d, 0.9);
-      loadingBar.fillRoundedRect(BASE_W / 2 - 180, BASE_H / 2 + 10, 360, 24, 8);
-      loadingBar.fillStyle(COLORS.gold, 1);
-      loadingBar.fillRoundedRect(BASE_W / 2 - 176, BASE_H / 2 + 14, 352 * value, 16, 6);
-    };
-    drawProgress(0);
-    this.load.on(Phaser.Loader.Events.PROGRESS, drawProgress);
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-      this.load.off(Phaser.Loader.Events.PROGRESS, drawProgress);
-      loadingBg.destroy();
-      loadingLabel.destroy();
-      loadingBar.destroy();
-    });
+    installLoadingHud(this);
     for (const [id, url] of Object.entries(BATTLE_HEX_SHIP_SHEET_URLS)) {
       const key = battleHexShipKey(id);
       if (!this.textures.exists(key)) this.load.spritesheet(key, url, { frameWidth: 256, frameHeight: 256 });
@@ -247,6 +230,7 @@ export default class BattleHexScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm('battle');
     this.battleTouchControls = [];
     this.mapButtons = [];
