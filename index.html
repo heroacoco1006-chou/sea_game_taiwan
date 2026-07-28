@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>大航海福爾摩沙</title>
     <style>
+      :root {
+        /* iPhone 四邊安全區不對稱；每組取較大值，避免瀏海又維持實體螢幕置中。 */
+        --safe-x: max(
+          env(safe-area-inset-left, 0px),
+          env(safe-area-inset-right, 0px)
+        );
+        --safe-y: max(
+          env(safe-area-inset-top, 0px),
+          env(safe-area-inset-bottom, 0px)
+        );
+      }
       html, body {
         margin: 0;
         padding: 0;
@@ -18,15 +29,9 @@
         -webkit-touch-callout: none;
       }
       #game {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-sizing: border-box;
-        width: 100%;
-        height: 100vh;
-        height: 100dvh;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right)
-          env(safe-area-inset-bottom) env(safe-area-inset-left);
+        /* Phaser 已會置中 canvas；外框不可再用 flex 重複置中。 */
+        position: fixed;
+        inset: var(--safe-y) var(--safe-x);
         touch-action: none;
       }
       canvas { image-rendering: pixelated; touch-action: none; }
