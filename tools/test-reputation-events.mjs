@@ -37,6 +37,9 @@ assert(m.completeReputationEvent(trade, 'rep_trade_80', 'tayouan').ok, '商人 8
 assert(trade.inventory.ac_merchant_credit === 1, '海商信用牌未唯一發放');
 assert(m.sellInventoryItem(trade, 'ac_merchant_credit').includes('不能賣掉'), '唯一稀有道具不應能賣掉');
 assert(trade.inventory.ac_merchant_credit === 1, '嘗試出售後稀有道具不應消失');
+const tradeBonusBeforeCredit = m.tradeBonus(trade);
+trade.equip.accessory = 'ac_merchant_credit';
+assert(Math.abs(m.tradeBonus(trade) - tradeBonusBeforeCredit - 0.07) < 1e-9, 'merchant credit trade bonus missing');
 
 const adventure = m.newGame('lin');
 adventure.reputation.adventure = 40;
@@ -44,6 +47,23 @@ assert(m.acceptReputationEvent(adventure, 'rep_adventure_40', 'penghu').ok, '冒
 adventure.discoveredExplorationPoints.push('exp_ryukyu_shuri', 'exp_sakai_route');
 assert(m.reportReputationEventStage(adventure, 'rep_adventure_40', 'naha').ok, '冒險 40 回報失敗');
 assert(m.completeReputationEvent(adventure, 'rep_adventure_40', 'naha').ok, '冒險 40 結算失敗');
+adventure.reputation.adventure = 80;
+assert(m.reputationEventAvailableAtPort(adventure, event('rep_adventure_80'), 'tayouan'), 'adventure 80 should unlock');
+assert(m.acceptReputationEvent(adventure, 'rep_adventure_80', 'tayouan').ok, 'adventure 80 acceptance failed');
+adventure.discoveredExplorationPoints.push('exp_yushan', 'exp_unzen', 'exp_java_volcano', 'exp_moluccas_forest');
+assert(m.reportReputationEventStage(adventure, 'rep_adventure_80', 'tayouan').ok, 'adventure 80 report failed');
+assert(m.completeReputationEvent(adventure, 'rep_adventure_80', 'tayouan').ok, 'adventure 80 completion failed');
+assert(adventure.inventory.ac_mariner_astrolabe === 1, 'astrolabe unique reward missing');
+m.sellInventoryItem(adventure, 'ac_mariner_astrolabe');
+assert(adventure.inventory.ac_mariner_astrolabe === 1, 'astrolabe must not be sellable');
+const yushan = m.explorationPointById('exp_yushan');
+assert(yushan, 'yushan exploration point missing');
+const chanceBeforeAstrolabe = m.explorationFindChance(adventure, yushan);
+adventure.equip.accessory = 'ac_mariner_astrolabe';
+assert(Math.abs(m.explorationFindChance(adventure, yushan) - chanceBeforeAstrolabe - 0.08) < 1e-9, 'astrolabe exploration bonus missing');
+assert(!m.completeReputationEvent(adventure, 'rep_adventure_80', 'tayouan').ok, 'adventure 80 must not complete twice');
+assert(adventure.inventory.ac_mariner_astrolabe === 1, 'adventure 80 duplicate reward detected');
+
 
 const valor = m.newGame('lin');
 valor.reputation.valor = 40;
@@ -52,6 +72,21 @@ const duel = m.pendingReputationDuel(valor);
 assert(duel?.name === '冒旗勒索船隊' && m.pendingQuestDuel(valor)?.kind === 'reputation', '聲望具名海戰未進入共用任務決鬥');
 assert(m.completeReputationDuel(valor, 'rep_valor_40').length > 0, '聲望具名海戰勝利未鎖存');
 assert(m.completeReputationEvent(valor, 'rep_valor_40', 'penghu').ok, '威名 40 結算失敗');
+valor.reputation.valor = 80;
+assert(m.reputationEventAvailableAtPort(valor, event('rep_valor_80'), 'tayouan'), 'valor 80 should unlock');
+assert(m.acceptReputationEvent(valor, 'rep_valor_80', 'tayouan').ok, 'valor 80 acceptance failed');
+const highValorDuel = m.pendingReputationDuel(valor);
+assert(highValorDuel?.name === event('rep_valor_80').stages[0].duel.name && highValorDuel.tier === 3, 'valor 80 duel data mismatch');
+assert(m.completeReputationDuel(valor, 'rep_valor_80').length > 0, 'valor 80 duel completion failed');
+assert(m.completeReputationEvent(valor, 'rep_valor_80', 'tayouan').ok, 'valor 80 completion failed');
+assert(valor.inventory.w_guard_saber === 1, 'guard saber unique reward missing');
+m.sellInventoryItem(valor, 'w_guard_saber');
+assert(valor.inventory.w_guard_saber === 1, 'guard saber must not be sellable');
+valor.equip.weapon = 'w_guard_saber';
+assert(m.weaponBoard(valor) === 18, 'guard saber boarding bonus missing');
+assert(!m.completeReputationEvent(valor, 'rep_valor_80', 'tayouan').ok, 'valor 80 must not complete twice');
+assert(valor.inventory.w_guard_saber === 1, 'valor 80 duplicate reward detected');
+
 
 const parallel = m.newGame('lin');
 parallel.reputation.trade = 40;
