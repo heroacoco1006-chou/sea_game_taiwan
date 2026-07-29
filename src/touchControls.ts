@@ -19,10 +19,16 @@ export class TouchControls {
   private actionQueued = false;
   private actionText?: Phaser.GameObjects.Text;
   private actionZone?: Phaser.GameObjects.Rectangle;
+  private directionAnchorZone?: Phaser.GameObjects.Rectangle;
 
   constructor(private scene: Phaser.Scene, actionLabel = '動作') {
     this.enabled = prefersTouchControls();
     if (!this.enabled) return;
+
+    this.directionAnchorZone = this.scene.add
+      .rectangle(160, 560, 290, 270, 0x000000, 0)
+      .setDepth(499)
+      .setScrollFactor(0);
 
     this.createDirectionButton(70, 560, '◀', -1, 0);
     this.createDirectionButton(250, 560, '▶', 1, 0);
@@ -56,6 +62,14 @@ export class TouchControls {
 
   clearAction(): void {
     this.actionQueued = false;
+  }
+
+  directionAnchor(): Phaser.GameObjects.Rectangle | undefined {
+    return this.directionAnchorZone;
+  }
+
+  actionAnchor(): Phaser.GameObjects.Rectangle | undefined {
+    return this.actionZone;
   }
 
   setActionLabel(label: string, active = true): void {

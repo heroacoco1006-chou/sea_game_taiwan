@@ -22,10 +22,15 @@ import {
 import { audio, townBgmForRegion } from '../audio';
 import { PORTS } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing, showModal } from '../ui';
+import { TutorialOverlay } from '../tutorialOverlay';
+import {
+  TUTORIAL_DATA, disableContextTutorials, enableContextTutorials,
+  tutorialModuleStatus, tutorialProgressText,
+} from '../tutorial';
 
 type ReturnTarget = 'WorldMap' | 'Port';
 type EquipCat = 'weapon' | 'armor' | 'accessory';
-type InfoTab = 'quest' | 'equipment' | 'backpack' | 'character' | 'mates' | 'fleet' | 'codex';
+type InfoTab = 'quest' | 'equipment' | 'backpack' | 'character' | 'mates' | 'fleet' | 'codex' | 'tutorial';
 
 const TABS: Array<{ key: InfoTab; label: string }> = [
   { key: 'quest', label: '任務' },
@@ -35,6 +40,7 @@ const TABS: Array<{ key: InfoTab; label: string }> = [
   { key: 'mates', label: '夥伴資訊' },
   { key: 'fleet', label: '船隊資訊' },
   { key: 'codex', label: '圖鑑' },
+  { key: 'tutorial', label: '玩法教學' },
 ];
 
 /** 六圍能力的小圖示（M5-6c）：統率／砲術／武勇／航海／知識／交涉。 */
@@ -57,6 +63,8 @@ export default class InfoScene extends Phaser.Scene {
   private codexImageLoading = new Set<string>();
   private codexImageFailed = new Set<string>();
   private dyn: Phaser.GameObjects.GameObject[] = [];
+  private tutorial?: TutorialOverlay;
+  private tutorialTopicPage = 0;
 
   constructor() {
     super('Info');
@@ -81,6 +89,7 @@ export default class InfoScene extends Phaser.Scene {
     this.codexImageLoading.clear();
     this.codexImageFailed.clear();
     this.dyn = [];
+    this.tutorialTopicPage = 0;
   }
 
   preload(): void {
@@ -139,7 +148,9 @@ export default class InfoScene extends Phaser.Scene {
       this.scene.pause();
     });
 
+    this.tutorial = new TutorialOverlay(this, this.state);
     this.render();
+    if (this.state.story.codex.length > 0) this.tutorial.emit('codex_available');
   }
 
   private render(): void {
@@ -160,6 +171,7 @@ export default class InfoScene extends Phaser.Scene {
       } else {
         btn.setAlpha(0.72);
       }
+      if (tab.key === 'codex') this.tutorial?.registerAnchor('info.codex', btn);
       this.dyn.push(btn);
     });
 
@@ -186,6 +198,9 @@ export default class InfoScene extends Phaser.Scene {
       case 'codex':
         this.drawCodex();
         break;
+      case 'tutorial':
+        this.drawTutorial();
+        break;
     }
   }
 
@@ -195,6 +210,44 @@ export default class InfoScene extends Phaser.Scene {
 
   private addWrapped(x: number, y: number, text: string, width = 860, size = 16, color = '#3a2a14'): void {
     this.dyn.push(this.add.text(x, y, text, { ...textStyle(size, color), wordWrap: { width }, lineSpacing: 6 }));
+  }
+
+  private drawTutorial(): void {
+    this.addTitle(`玩法教學　完成步驟 ${tutorialProgressText(this.state)}`);
+    const statusLines = TUTORIAL_DATA.modules.map((module) =>
+      `${module.title}：${tutorialModuleStatus(this.state, module)}`
+    );
+    this.addWrapped(300, 120, statusLines.join('　｜　'), 840, 14, '#6b5530');
+
+    const pageSize = 2;
+    const pageCount = Math.max(1, Math.ceil(TUTORIAL_DATA.manualTopics.length / pageSize));
+    this.tutorialTopicPage = Math.min(this.tutorialTopicPage, pageCount - 1);
+    const topics = TUTORIAL_DATA.manualTopics.slice(
+      this.tutorialTopicPage * pageSize, this.tutorialTopicPage * pageSize + pageSize,
+    );
+    topics.forEach((topic, index) => {
+      const y = 245 + index * 155;
+      this.dyn.push(this.add.text(320, y, topic.title, textStyle(20)));
+      this.addWrapped(320, y + 36, topic.body, 790, 16, '#5a4a30');
+    });
+
+    this.dyn.push(makeButton(this, 480, 585, 200, 42, '上一頁', () => {
+      this.tutorialTopicPage = Math.max(0, this.tutorialTopicPage - 1);
+      this.render();
+    }, 14));
+    this.dyn.push(this.add.text(730, 585, `${this.tutorialTopicPage + 1}/${pageCount}`, textStyle(15)).setOrigin(0.5));
+    this.dyn.push(makeButton(this, 980, 585, 200, 42, '下一頁', () => {
+      this.tutorialTopicPage = Math.min(pageCount - 1, this.tutorialTopicPage + 1);
+      this.render();
+    }, 14));
+
+    const tipsOn = this.state.tutorial.tipsEnabled;
+    this.dyn.push(makeButton(this, 730, 625, 330, 40, tipsOn ? '關閉第一次情境提示' : '重新開啟情境提示', () => {
+      const changed = tipsOn ? disableContextTutorials(this.state) : enableContextTutorials(this.state);
+      if (changed) saveGame(this.state);
+      this.render();
+      toast(this, tipsOn ? '已關閉情境提示；手冊仍可閱讀。' : '已重新開啟尚未完成的情境提示。');
+    }, 14));
   }
 
   private drawQuest(): void {
@@ -612,6 +665,7 @@ export default class InfoScene extends Phaser.Scene {
         this.codexId = entry.id;
         this.codexDetailPage = 0;
         this.codexDetailOpen = true;
+        if (entry.unlocked) this.tutorial?.emit('codex_entry_opened', { codexId: entry.id });
         this.render();
       }, 12);
       if (!entry.unlocked) btn.setAlpha(0.55);

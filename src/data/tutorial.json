@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "modules": [
+    {
+      "id": "core",
+      "title": "第一次出航",
+      "kind": "core",
+      "steps": [
+        {
+          "id": "core_welcome",
+          "scene": "WorldMap",
+          "presentation": "modal",
+          "title": "歡迎來到大航海福爾摩沙",
+          "body": {
+            "desktop": "這段簡短教學會帶你進港、買貨、補給，再完成第一次出航。每一步都可以稍後再學。",
+            "touch": "這段簡短教學會帶你進港、買貨、補給，再完成第一次出航。每一步都可以稍後再學。"
+          },
+          "completeOn": { "event": "tutorial_start" },
+          "canSkip": true
+        },
+        {
+          "id": "core_enter_port",
+          "scene": "WorldMap",
+          "presentation": "action",
+          "title": "先進入起始港",
+          "body": {
+            "desktop": "你的船已停在起始港旁。按 Enter 進港，不必先把船開走。",
+            "touch": "你的船已停在起始港旁。按右下角的「進港」按鈕。"
+          },
+          "anchor": { "desktop": "world.player", "touch": "world.touch.action" },
+          "completeOn": { "event": "port_entered" },
+          "canSkip": true
+        },
+        {
+          "id": "core_town_move",
+          "scene": "Port",
+          "presentation": "action",
+          "title": "在港町裡走走看",
+          "body": {
+            "desktop": "按方向鍵或 WASD，也可以用滑鼠點地面移動。先稍微走幾步。",
+            "touch": "按左下方向鍵，或直接點地面移動。先稍微走幾步。"
+          },
+          "anchor": { "desktop": "port.player", "touch": "port.touch.direction" },
+          "completeOn": { "event": "town_moved" },
+          "canSkip": true
+        },
+        {
+          "id": "core_find_trade",
+          "scene": "Port",
+          "presentation": "action",
+          "title": "找到交易所",
+          "body": {
+            "desktop": "看港町上的建築名稱，走到「交易所」門口後按 Enter。",
+            "touch": "直接點「交易所」建築，或走到門口後按「進入」。"
+          },
+          "anchor": { "desktop": "port.hint", "touch": "port.touch.action" },
+          "completeOn": { "event": "trade_opened" },
+          "canSkip": true
+        },
+        {
+          "id": "core_buy",
+          "scene": "Trade",
+          "presentation": "action",
+          "title": "先買一點貨物",
+          "body": {
+            "desktop": "點一項買得起的貨物，數量先留在 1，再按「買入」。不用一次把錢花光。",
+            "touch": "點一項買得起的貨物，數量先留在 1，再按「買入」。不用一次把錢花光。"
+          },
+          "anchor": { "desktop": "trade.buy", "touch": "trade.buy" },
+          "completeOn": { "event": "trade_bought" },
+          "canSkip": true
+        },
+        {
+          "id": "core_find_harbor",
+          "scene": "Port",
+          "presentation": "action",
+          "title": "回到港口準備出航",
+          "body": {
+            "desktop": "離開交易所後，找到「港口（補給・出航）」並進入。",
+            "touch": "離開交易所後，點「港口（補給・出航）」建築。"
+          },
+          "anchor": { "desktop": "port.hint", "touch": "port.touch.action" },
+          "completeOn": { "event": "harbor_opened" },
+          "canSkip": true
+        },
+        {
+          "id": "core_supply",
+          "scene": "Facility",
+          "presentation": "modal",
+          "title": "出海前先看糧食和清水",
+          "body": {
+            "desktop": "糧食與清水會在航行時消耗。這次不用強迫補滿；日後若太少，遊戲會在出航前提醒你。",
+            "touch": "糧食與清水會在航行時消耗。這次不用強迫補滿；日後若太少，遊戲會在出航前提醒你。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "core_depart",
+          "scene": "Facility",
+          "presentation": "action",
+          "title": "準備好就啟航",
+          "body": {
+            "desktop": "按「啟航出海」回到世界地圖。",
+            "touch": "按「啟航出海」回到世界地圖。"
+          },
+          "anchor": { "desktop": "harbor.depart", "touch": "harbor.depart" },
+          "completeOn": { "event": "world_departed" },
+          "canSkip": true
+        },
+        {
+          "id": "core_world_move",
+          "scene": "WorldMap",
+          "presentation": "action",
+          "title": "現在開始真正航行",
+          "body": {
+            "desktop": "按方向鍵或 WASD 航行一小段。羅盤與小地圖能幫你找下一個港口。",
+            "touch": "按住左下方向鍵航行一小段。羅盤與小地圖能幫你找下一個港口。"
+          },
+          "anchor": { "desktop": "world.player", "touch": "world.touch.direction" },
+          "completeOn": { "event": "world_moved" },
+          "canSkip": true
+        },
+        {
+          "id": "core_save",
+          "scene": "WorldMap",
+          "presentation": "modal",
+          "title": "重要進度會自動保存",
+          "body": {
+            "desktop": "進港、離開設施等重要轉場會自動存檔。你也能從右上「選單」把進度存到十個存檔格。教學完成，接下來自由航行吧！",
+            "touch": "進港、離開設施等重要轉場會自動存檔。你也能從右上「選單」把進度存到十個存檔格。教學完成，接下來自由航行吧！"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": false
+        }
+      ]
+    },
+    {
+      "id": "sell",
+      "title": "第一次賣貨",
+      "kind": "context",
+      "triggerEvent": "trade_sell_available",
+      "steps": [
+        {
+          "id": "sell_intro",
+          "scene": "Trade",
+          "presentation": "modal",
+          "title": "把貨物運到別的港口出售",
+          "body": {
+            "desktop": "左邊是你帶來的貨物。比較「均價」與「賣價」：賣價較高就能賺錢。",
+            "touch": "左邊是你帶來的貨物。比較「均價」與「賣價」：賣價較高就能賺錢。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "sell_action",
+          "scene": "Trade",
+          "presentation": "action",
+          "title": "試著賣出一件",
+          "body": {
+            "desktop": "點左邊的持有貨物，確認價格後按「賣出」。",
+            "touch": "點左邊的持有貨物，確認價格後按「賣出」。"
+          },
+          "anchor": { "desktop": "trade.sell", "touch": "trade.sell" },
+          "completeOn": { "event": "trade_sold" },
+          "canSkip": true
+        }
+      ]
+    },
+    {
+      "id": "quest",
+      "title": "官府與商館委託",
+      "kind": "context",
+      "triggerEvent": "office_opened",
+      "steps": [
+        {
+          "id": "quest_intro",
+          "scene": "Facility",
+          "presentation": "modal",
+          "title": "委託是賺錢與累積聲望的方法",
+          "body": {
+            "desktop": "每天可能有採購、海戰、探險三種委託。先看目的地、期限與獎金；一次只能接一件一般委託。",
+            "touch": "每天可能有採購、海戰、探險三種委託。先看目的地、期限與獎金；一次只能接一件一般委託。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "quest_accept",
+          "scene": "Facility",
+          "presentation": "action",
+          "title": "想做再接，不必勉強",
+          "body": {
+            "desktop": "查看三件候選工作，想挑戰時按「接受」。不想接可選稍後再學。",
+            "touch": "查看三件候選工作，想挑戰時按「接受」。不想接可選稍後再學。"
+          },
+          "completeOn": { "event": "quest_accepted" },
+          "canSkip": true
+        }
+      ]
+    },
+    {
+      "id": "battle",
+      "title": "六角格海戰",
+      "kind": "context",
+      "triggerEvent": "battle_started",
+      "steps": [
+        {
+          "id": "battle_intro",
+          "scene": "BattleHex",
+          "presentation": "modal",
+          "title": "海戰先看船首方向",
+          "body": {
+            "desktop": "先選我方船。移動與左右轉會影響側舷砲擊；紅色或橘色提示會告訴你合法目標。危險時也能撤退。",
+            "touch": "先點我方船。移動與左右轉會影響側舷砲擊；紅色或橘色提示會告訴你合法目標。危險時也能撤退。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "battle_action",
+          "scene": "BattleHex",
+          "presentation": "action",
+          "title": "完成第一個合法指令",
+          "body": {
+            "desktop": "可以移動、轉向、砲擊、接舷、修整或等待。完成任一合法指令後，提示就會收起。",
+            "touch": "可以移動、轉向、砲擊、接舷、修整或等待。完成任一合法指令後，提示就會收起。"
+          },
+          "anchor": { "desktop": "battle.commands", "touch": "battle.commands" },
+          "completeOn": { "event": "battle_command_completed" },
+          "canSkip": true
+        }
+      ]
+    },
+    {
+      "id": "mates",
+      "title": "結識夥伴",
+      "kind": "context",
+      "triggerEvent": "mates_opened",
+      "steps": [
+        {
+          "id": "mates_intro",
+          "scene": "Mates",
+          "presentation": "modal",
+          "title": "每位夥伴都有自己的加入條件",
+          "body": {
+            "desktop": "星級較高的夥伴通常需要聲望或專屬任務。先看詳情，不必現在就付謝禮或完成招募。",
+            "touch": "星級較高的夥伴通常需要聲望或專屬任務。先看詳情，不必現在就付謝禮或完成招募。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "mates_detail",
+          "scene": "Mates",
+          "presentation": "action",
+          "title": "點一位夥伴看詳情",
+          "body": {
+            "desktop": "點右側任一名字，查看條件、專長與下一步。看懂條件就算完成教學。",
+            "touch": "點右側任一名字，查看條件、專長與下一步。看懂條件就算完成教學。"
+          },
+          "completeOn": { "event": "mate_detail_opened" },
+          "canSkip": true
+        }
+      ]
+    },
+    {
+      "id": "codex",
+      "title": "圖鑑與歷史知識",
+      "kind": "context",
+      "triggerEvent": "codex_available",
+      "steps": [
+        {
+          "id": "codex_intro",
+          "scene": "Info",
+          "presentation": "modal",
+          "title": "圖鑑會保存旅途中發現的知識",
+          "body": {
+            "desktop": "人物、事件、港口、貿易品與發現物都可能解鎖圖鑑。尚未發現的內容會顯示為「???」。",
+            "touch": "人物、事件、港口、貿易品與發現物都可能解鎖圖鑑。尚未發現的內容會顯示為「???」。"
+          },
+          "completeOn": { "event": "tutorial_continue" },
+          "canSkip": true
+        },
+        {
+          "id": "codex_detail",
+          "scene": "Info",
+          "presentation": "action",
+          "title": "打開一筆已解鎖圖鑑",
+          "body": {
+            "desktop": "選擇分類，再點一筆已解鎖項目閱讀。圖鑑是補充知識，不是考試。",
+            "touch": "選擇分類，再點一筆已解鎖項目閱讀。圖鑑是補充知識，不是考試。"
+          },
+          "anchor": { "desktop": "info.codex", "touch": "info.codex" },
+          "completeOn": { "event": "codex_entry_opened" },
+          "canSkip": true
+        }
+      ]
+    }
+  ],
+  "manualTopics": [
+    {
+      "id": "navigation",
+      "title": "航行與進港",
+      "body": "世界地圖用方向鍵或左下觸控鍵航行。靠近港口後，按 Enter 或右下動作鍵進港。羅盤與小地圖能協助辨認方向。"
+    },
+    {
+      "id": "trade",
+      "title": "買低賣高",
+      "body": "每個港口販售的特產不同。先少量買入，再運到需求較高的港口出售；比較均價與賣價，就能知道每件是賺還是賠。"
+    },
+    {
+      "id": "supplies",
+      "title": "糧水與疲勞",
+      "body": "航行會消耗糧食與清水，也會增加疲勞。出海前到港口補給，疲勞太高時可到旅館休息。"
+    },
+    {
+      "id": "quests",
+      "title": "委託與主線",
+      "body": "官府或商館提供採購、海戰、探險委託，也負責推進主線。一般委託一次只能接一件，接取前先看期限與目的地。"
+    },
+    {
+      "id": "battle",
+      "title": "六角格海戰",
+      "body": "先選船，再決定移動、轉向、砲擊、接舷、修整或等待。側舷方向與島嶼遮蔽會影響砲擊；情勢不利時可撤退。"
+    },
+    {
+      "id": "mates",
+      "title": "夥伴與職位",
+      "body": "在酒館結識夥伴。不同夥伴有聲望、任務或資金條件；加入後可指派船上職位，強化貿易、航行、探索或戰鬥。"
+    },
+    {
+      "id": "codex",
+      "title": "圖鑑",
+      "body": "主線、人物、建築、貿易與探索都會解鎖圖鑑。圖鑑用白話補充史實與重要性，未解鎖項目會先顯示為「???」。"
+    },
+    {
+      "id": "advanced",
+      "title": "造船、裝備、探索與聲望",
+      "body": "造船廠可建造與改造船隻，道具屋提供裝備與消耗品。探索與三軌聲望屬進階玩法，可依任務提示慢慢認識。"
+    }
+  ]
+}

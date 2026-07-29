@@ -8,6 +8,7 @@ import {
   reputationEventNoticeAtPort, reportReputationEventStage, reputationEventNextStepText, REP_NAMES,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
+import { TutorialOverlay } from '../tutorialOverlay';
 import { audio, townBgmForRegion } from '../audio';
 
 type FacilityType = 'tavern' | 'inn' | 'harbor' | 'office';
@@ -25,6 +26,8 @@ export default class FacilityScene extends Phaser.Scene {
   private info!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private skipReputationNotice = false;
+  private tutorial?: TutorialOverlay;
+  private departButton?: Phaser.GameObjects.Container;
 
   constructor() {
     super('Facility');
@@ -67,6 +70,11 @@ export default class FacilityScene extends Phaser.Scene {
       saveGame(this.state);
       this.scene.start('Port', { portId: this.port.id, spawn: this.door });
     });
+
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.registerAnchor('harbor.depart', this.departButton);
+    if (this.type === 'harbor') this.tutorial.emit('harbor_opened', { portId: this.port.id });
+    if (this.type === 'office') this.tutorial.emit('office_opened', { portId: this.port.id });
   }
 
   private refreshInfo(): void {
@@ -137,12 +145,13 @@ export default class FacilityScene extends Phaser.Scene {
           toast(this, `補滿了！花費 ${cost} 兩`);
         });
         // 出航：整併自原棧橋，玩家在港口直接啟航最直覺
-        makeButton(this, W / 2, 540, 380, 64, '⚓ 啟 航 出 海 ', () => {
+        this.departButton = makeButton(this, W / 2, 540, 380, 64, '⚓ 啟 航 出 海 ', () => {
           const days = sailableDays(s);
           if (days <= 1) {
             this.confirmLowSupply();
             return;
           }
+          this.tutorial?.emit('world_departed', { portId: this.port.id });
           saveGame(s);
           this.scene.start('WorldMap');
         }, 24);
@@ -168,6 +177,7 @@ export default class FacilityScene extends Phaser.Scene {
         {
           label: '沒關係，啟航！',
           onPick: () => {
+            this.tutorial?.emit('world_departed', { portId: this.port.id });
             saveGame(s);
             this.scene.start('WorldMap');
           },
@@ -371,6 +381,7 @@ export default class FacilityScene extends Phaser.Scene {
   private acceptQuest(offer: Quest): void {
     const s = this.state;
     s.quest = { ...offer };
+    this.tutorial?.emit('quest_accepted', { type: offer.type });
     saveGame(s);
     this.refreshInfo();
     const msg = offer.type === 'delivery'

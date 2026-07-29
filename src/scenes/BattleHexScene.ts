@@ -44,6 +44,7 @@ import {
 import { audio } from '../audio';
 import { saveGame, type GameState } from '../state';
 import { settleHexBattle, type HexBattleLaunchData } from '../battle/battleAdapter';
+import { TutorialOverlay } from '../tutorialOverlay';
 import {
   BATTLE_HEX_COMMAND_URLS,
   BATTLE_HEX_EFFECT_URLS,
@@ -181,6 +182,8 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnReturn!: Phaser.GameObjects.Container;
   private btnRetreat!: Phaser.GameObjects.Container;
   private btnUndo!: Phaser.GameObjects.Container;
+  private tutorial?: TutorialOverlay;
+  private tutorialCommandAnchor?: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('BattleHex');
@@ -343,6 +346,11 @@ export default class BattleHexScene extends Phaser.Scene {
 
     this.switchMap(this.mapId);
     this.time.delayedCall(0, () => this.layoutBattleTouchControls());
+
+    this.tutorialCommandAnchor = this.add.rectangle(805, 682, 720, 64, 0x000000, 0).setScrollFactor(0);
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.registerAnchor('battle.commands', this.tutorialCommandAnchor);
+    this.tutorial.emit('battle_started');
   }
 
   // ---------- 戰鬥建立 ----------
@@ -578,7 +586,10 @@ export default class BattleHexScene extends Phaser.Scene {
 
   private applyCmd(command: BattleCommand): ReturnType<typeof applyCommand> {
     const result = applyCommand(this.battle, this.currentMap(), command, this.rng);
-    if (result.ok) this.battle = result.state;
+    if (result.ok) {
+      this.battle = result.state;
+      if (command.type !== 'select') this.tutorial?.emit('battle_command_completed', { command: command.type });
+    }
     return result;
   }
 

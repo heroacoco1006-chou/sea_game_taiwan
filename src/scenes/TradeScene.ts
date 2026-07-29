@@ -5,6 +5,7 @@ import {
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, floatText } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
+import { TutorialOverlay } from '../tutorialOverlay';
 
 const LIST_TOP = 150;
 const ROW_H = 40;
@@ -32,6 +33,7 @@ export default class TradeScene extends Phaser.Scene {
   private detailDesc!: Phaser.GameObjects.Text;
   private qtyText!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
+  private tutorial?: TutorialOverlay;
 
   constructor() {
     super('Trade');
@@ -121,8 +123,8 @@ export default class TradeScene extends Phaser.Scene {
     makeButton(this, 858, py + 26, 40, 38, '+1', () => this.changeQty(1), 15);
     makeButton(this, 908, py + 26, 46, 38, '+10', () => this.changeQty(10), 15);
 
-    makeButton(this, 1000, py + 26, 84, 40, '買入', () => this.buy(this.qty), 18);
-    makeButton(this, 1094, py + 26, 84, 40, '賣出', () => this.sell(this.qty), 18);
+    const buyBtn = makeButton(this, 1000, py + 26, 84, 40, '買入', () => this.buy(this.qty), 18);
+    const sellBtn = makeButton(this, 1094, py + 26, 84, 40, '賣出', () => this.sell(this.qty), 18);
     makeButton(this, 1000, py + 74, 84, 40, '全買', () => this.buyAll(), 18);
     makeButton(this, 1094, py + 74, 84, 40, '全賣', () => this.sellAll(), 18);
 
@@ -139,6 +141,14 @@ export default class TradeScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-DOWN', () => this.moveSelect(1));
     this.input.keyboard!.on('keydown-LEFT', () => this.switchSide('cargo'));
     this.input.keyboard!.on('keydown-RIGHT', () => this.switchSide('shop'));
+
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.registerAnchor('trade.buy', buyBtn);
+    this.tutorial.registerAnchor('trade.sell', sellBtn);
+    this.tutorial.emit('trade_opened', { portId: this.port.id });
+    if (this.state.visitedPorts.length >= 2 && cargoCount(this.state) > 0) {
+      this.tutorial.emit('trade_sell_available', { portId: this.port.id });
+    }
   }
 
   /** 重建左欄（買賣後持有變動） */
@@ -284,6 +294,7 @@ export default class TradeScene extends Phaser.Scene {
     s.gold -= price * can;
     s.cargo[id] = (s.cargo[id] ?? 0) + can;
     s.costBasis[id] = (s.costBasis[id] ?? 0) + price * can;
+    this.tutorial?.emit('trade_bought', { portId: this.port.id, goodId: id, qty: can });
     floatText(this, 1047, BASE_H - 150, `−${price * can} 兩`, '#ffb0a0');
     this.afterTrade();
     if (can < qty) toast(this, `只買得起／裝得下 ${can} 件`);
@@ -313,6 +324,7 @@ export default class TradeScene extends Phaser.Scene {
     floatText(this, 1047, BASE_H - 150, `+${price * can} 兩`, '#b8f0c0');
     // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）；同時累積交易統計與商人聲望
     const gainMsgs = recordSale(s, this.port, id, can, s.day, price * can);
+    this.tutorial?.emit('trade_sold', { portId: this.port.id, goodId: id, qty: can });
     if (gainMsgs.length) toast(this, gainMsgs.join('\n'), 640, 150);
     if (s.cargo[id] === 0) {
       delete s.cargo[id];

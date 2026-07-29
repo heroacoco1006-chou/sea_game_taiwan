@@ -9,6 +9,7 @@ import {
 import { audio, townBgmForRegion } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, showModal } from '../ui';
 import { TouchControls } from '../touchControls';
+import { TutorialOverlay } from '../tutorialOverlay';
 import portTownLayoutsData from '../data/portTownLayouts.json';
 import portTownThemesData from '../data/portTownThemes.json';
 
@@ -167,6 +168,8 @@ export default class PortScene extends Phaser.Scene {
   private dock = { x: TOWN_W / 2, y: TOWN_H - 90 };
   private townLayout: PortTownLayout | null = null;
   private touchControls?: TouchControls;
+  private tutorial?: TutorialOverlay;
+  private tutorialMoveOrigin?: { x: number; y: number };
 
   constructor() {
     super('Port');
@@ -185,6 +188,9 @@ export default class PortScene extends Phaser.Scene {
     this.spawn = data.spawn;
     this.moveTarget = null;
     this.autoEnterKey = null;
+    // Phaser 會重用 Scene 實例；上一輪 overlay 已在 shutdown 銷毀，重新進港必須建立新實例。
+    this.tutorial = undefined;
+    this.tutorialMoveOrigin = undefined;
   }
 
   preload(): void {
@@ -329,6 +335,8 @@ export default class PortScene extends Phaser.Scene {
     if (firstVisit) {
       saveGame(this.state);
       this.showPortIntro(true);
+    } else {
+      this.setupTutorial();
     }
   }
 
@@ -339,8 +347,24 @@ export default class PortScene extends Phaser.Scene {
     const body = `今地名：${p.modern}\n所屬勢力：${p.region}\n\n${p.desc}`;
     this.input.keyboard!.enabled = false;
     showModal(this, title, body, [
-      { label: firstTime ? '開始探索！' : '知道了', onPick: () => { this.input.keyboard!.enabled = true; } },
+      {
+        label: firstTime ? '開始探索！' : '知道了',
+        onPick: () => {
+          this.input.keyboard!.enabled = true;
+          if (firstTime) this.setupTutorial();
+        },
+      },
     ]);
+  }
+
+  private setupTutorial(): void {
+    if (this.tutorial) return;
+    this.tutorialMoveOrigin = { x: this.player.x, y: this.player.y };
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.registerAnchor('port.player', this.player);
+    this.tutorial.registerAnchor('port.hint', this.hint);
+    this.tutorial.registerAnchor('port.touch.direction', this.touchControls?.directionAnchor());
+    this.tutorial.registerAnchor('port.touch.action', this.touchControls?.actionAnchor());
   }
 
   private addTownBackground(): boolean {
@@ -809,6 +833,15 @@ export default class PortScene extends Phaser.Scene {
           this.moveTarget = null; // 卡到牆就停
           this.autoEnterKey = null;
         }
+      }
+    }
+
+    if (this.tutorialMoveOrigin) {
+      const movedForTutorial = Phaser.Math.Distance.Between(
+        this.tutorialMoveOrigin.x, this.tutorialMoveOrigin.y, this.player.x, this.player.y,
+      );
+      if (movedForTutorial >= 48 && this.tutorial?.emit('town_moved')) {
+        this.tutorialMoveOrigin = undefined;
       }
     }
 

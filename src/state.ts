@@ -15,7 +15,7 @@ import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
 export type { ParsedChapter, StoryLine } from './story/parseStory';
 
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 
 export interface Good {
   id: string;
@@ -440,6 +440,30 @@ export interface StoryState {
   chapterStages: Record<string, number[]>;
 }
 
+export type TutorialOnboarding = 'ask' | 'active' | 'complete' | 'skipped' | 'legacy';
+
+export interface TutorialProgress {
+  schemaVersion: 1;
+  onboarding: TutorialOnboarding;
+  tipsEnabled: boolean;
+  completedSteps: string[];
+  skippedModules: string[];
+  dismissedTips: string[];
+  activeContextModuleId: string | null;
+}
+
+export function defaultTutorialProgress(autoStart = true): TutorialProgress {
+  return {
+    schemaVersion: 1,
+    onboarding: autoStart ? 'ask' : 'legacy',
+    tipsEnabled: autoStart,
+    completedSteps: [],
+    skippedModules: [],
+    dismissedTips: [],
+    activeContextModuleId: null,
+  };
+}
+
 export interface GameState {
   version: number;
   gold: number;
@@ -495,6 +519,8 @@ export interface GameState {
   mateQuests: Record<string, MateQuestProgress>;
   /** 聲望特殊事件進度（v20），key＝事件 id；可和主線、夥伴、普通委託並行。 */
   reputationEvents: Record<string, ReputationEventProgress>;
+  /** 新手教學進度（v23）：每個存檔格獨立，舊存檔預設不自動打擾。 */
+  tutorial: TutorialProgress;
 }
 
 export interface ExplorationState {
@@ -721,6 +747,7 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
     battleWins: 0,
     mateQuests: {},
     reputationEvents: {},
+    tutorial: defaultTutorialProgress(true),
   };
   // 主線要角開局自動同行（如林線顏思齊第一章即同行）
   processAutoJoins(state);
@@ -2142,8 +2169,20 @@ function migrateSave(raw: string): GameState | null {
       }
       full.version = 22;
     }
+    // v22 → v23：加入每格獨立的新手教學進度。舊存檔不自動跳出教學，
+    // 玩家可從資訊選單的「玩法教學」自行閱讀並重新開啟情境提示。
+    if (s.version < 23) {
+      const full = s as GameState;
+      full.tutorial = full.tutorial ?? defaultTutorialProgress(false);
+      full.version = 23;
+    }
     (s as GameState).story.chapterStages = (s as GameState).story.chapterStages ?? {};
     (s as GameState).reputationEvents = (s as GameState).reputationEvents ?? {};
+    (s as GameState).tutorial = (s as GameState).tutorial ?? defaultTutorialProgress(false);
+    (s as GameState).tutorial.completedSteps = (s as GameState).tutorial.completedSteps ?? [];
+    (s as GameState).tutorial.skippedModules = (s as GameState).tutorial.skippedModules ?? [];
+    (s as GameState).tutorial.dismissedTips = (s as GameState).tutorial.dismissedTips ?? [];
+    (s as GameState).tutorial.activeContextModuleId = (s as GameState).tutorial.activeContextModuleId ?? null;
     (s as GameState).exploration.missStreaks = (s as GameState).exploration.missStreaks ?? {};
     (s as GameState).exploration.noEventStreaks = (s as GameState).exploration.noEventStreaks ?? {};
     (s as GameState).exploration.completedMainPoints = (s as GameState).exploration.completedMainPoints ?? [];

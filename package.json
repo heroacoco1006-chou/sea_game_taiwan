@@ -1,6 +1,6 @@
 {
   "name": "sea-game-taiwan",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "private": true,
   "description": "大航海福爾摩沙 — 台灣大航海時代歷史教育遊戲",
   "type": "module",
@@ -14,7 +14,9 @@
     "validate:loading": "node tools/validate-loading-hud.mjs",
     "validate:mobile-layout": "node tools/validate-mobile-layout.mjs",
     "validate:text": "node tools/validate-game-text.mjs",
-    "test:exploration": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-exploration-v22.mjs"
+    "validate:tutorial": "node tools/validate-tutorial-data.mjs",
+    "test:exploration": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-exploration-v22.mjs",
+    "test:tutorial": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-tutorial-engine.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0"

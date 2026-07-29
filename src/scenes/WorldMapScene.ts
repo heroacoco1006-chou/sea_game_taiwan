@@ -26,6 +26,7 @@ import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAd
 import { audio } from '../audio';
 import { BASE_W, BASE_H, COLORS, textStyle, showModal, showIllustratedModal, makeButton, toast } from '../ui';
 import { TouchControls } from '../touchControls';
+import { TutorialOverlay } from '../tutorialOverlay';
 import mapCollisionV3Data from '../data/map_collision_v3.json';
 import { worldShipDirectionFrame } from '../worldShipDirection';
 
@@ -87,6 +88,8 @@ export default class WorldMapScene extends Phaser.Scene {
   private heading = 0;
   private paused = false; // 事件對話框出現時暫停航行
   private touchControls?: TouchControls;
+  private tutorial?: TutorialOverlay;
+  private tutorialMoveOrigin?: { x: number; y: number };
   private discoveryMarkers: Array<{ entry: DiscoveryEntry; icon: Phaser.GameObjects.Image; approachMarker: Phaser.GameObjects.Arc }> = [];
   private exploreMarkers: Array<{ point: ExplorationPoint; icon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; approachMarker: Phaser.GameObjects.Arc }> = [];
   private pirateMarker: Phaser.GameObjects.Image | null = null;
@@ -193,6 +196,12 @@ export default class WorldMapScene extends Phaser.Scene {
 
     this.wind = windOf(this.state.day);
     this.updateHud();
+
+    this.tutorialMoveOrigin = { x: this.ship.x, y: this.ship.y };
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.registerAnchor('world.player', this.ship);
+    this.tutorial.registerAnchor('world.touch.direction', this.touchControls.directionAnchor());
+    this.tutorial.registerAnchor('world.touch.action', this.touchControls.actionAnchor());
   }
 
   private createPlayerShip(): void {
@@ -520,6 +529,15 @@ export default class WorldMapScene extends Phaser.Scene {
       this.updateWindHud();
     }
 
+    if (this.tutorialMoveOrigin) {
+      const movedForTutorial = Phaser.Math.Distance.Between(
+        this.tutorialMoveOrigin.x, this.tutorialMoveOrigin.y, this.ship.x, this.ship.y,
+      );
+      if (movedForTutorial >= 90 && this.tutorial?.emit('world_moved')) {
+        this.tutorialMoveOrigin = undefined;
+      }
+    }
+
     // 小地圖船位
     const mm = this.registry.get('minimapOrigin') as { mx: number; my: number; sx: number; sy: number };
     if (mm) this.miniShip.setPosition(mm.mx + this.ship.x * mm.sx, mm.my + this.ship.y * mm.sy);
@@ -572,6 +590,7 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private performContextAction(): void {
     if (this.nearPort) {
+      this.tutorial?.emit('port_entered', { portId: this.nearPort.id });
       this.state.daysAtSea = 0;
       this.state.fatigue = Math.max(0, this.state.fatigue - 10);
       clearSeaStatusesOnPort(this.state);

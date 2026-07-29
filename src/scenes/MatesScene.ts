@@ -8,6 +8,7 @@ import {
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, toast, selectionRing } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
+import { TutorialOverlay } from '../tutorialOverlay';
 
 /**
  * 夥伴：招募本港的夥伴、指派幹部職位（同職位互斥）。
@@ -23,6 +24,7 @@ export default class MatesScene extends Phaser.Scene {
   private candidatePage = 0;
   private detail: Phaser.GameObjects.Container | null = null;
   private detailWheel?: (pointer: Phaser.Input.Pointer, objects: unknown, dx: number, dy: number) => void;
+  private tutorial?: TutorialOverlay;
 
   constructor() {
     super('Mates');
@@ -64,6 +66,8 @@ export default class MatesScene extends Phaser.Scene {
     });
 
     this.rebuild();
+    this.tutorial = new TutorialOverlay(this, this.state);
+    this.tutorial.emit('mates_opened', { portId: this.port.id });
   }
 
   private rebuild(): void {
@@ -228,6 +232,7 @@ export default class MatesScene extends Phaser.Scene {
     const s = this.state;
     const def = mateDefById(id);
     if (!def) return;
+    this.tutorial?.emit('mate_detail_opened', { mateId: id });
     const status = mateRequirementStatus(s, def);
     const unavailable = mateUnavailableReason(s, def);
     const stages = mateQuestStageStatuses(s, def);

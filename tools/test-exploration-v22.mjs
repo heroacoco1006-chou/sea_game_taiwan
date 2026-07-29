@@ -17,7 +17,7 @@ const sequence = (...values) => {
   return () => values[Math.min(index++, values.length - 1)];
 };
 
-// v21 → v22：舊欄位保留，新欄位補齊，已完成主要發現不補發聲望。
+// v21 → 最新版：舊欄位保留，v22 探險欄位及後續欄位補齊，已完成主要發現不補發聲望。
 const old = m.newGame('lin');
 old.version = 21;
 old.story.codex.push(...point('exp_taroko').mainDiscoveries.map((ref) => ref.id));
@@ -28,7 +28,7 @@ delete old.exploration.completedMainPoints;
 delete old.exploration.repeatRepDayByPoint;
 store.set('seagame_save_slot0', JSON.stringify(old));
 const migrated = m.loadGame(0);
-assert(migrated?.version === 22, 'v21 save did not migrate to v22');
+assert(migrated?.version === m.SAVE_VERSION, 'v21 save did not migrate to latest version');
 assert(migrated.exploration.completedMainPoints.includes('exp_taroko'), 'completed main point was not backfilled');
 assert(migrated.reputation.adventure === oldAdventureRep, 'migration must not grant completion reputation');
 
