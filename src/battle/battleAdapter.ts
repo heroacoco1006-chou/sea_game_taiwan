@@ -15,6 +15,7 @@ import {
   fleetStat,
   levelUpMessage,
   reduceCrewLoss,
+  shipHullMax,
   shipTypeById,
   updateQuestProgress,
   weaponBoard,
@@ -196,7 +197,7 @@ export function createHexBattleLaunch(
     const cannon = CANNON_TYPES.find((entry) => entry.id === ship.cannonType);
     const plating = HULL_PLATINGS.find((entry) => entry.id === ship.armor);
     const figurehead = FIGUREHEADS.find((entry) => entry.id === ship.figurehead);
-    const hullMax = type.hullMax + (plating?.hullBonus ?? 0);
+    const hullMax = shipHullMax(ship);
     const armorMultiplier = plating?.id === 'hp_copper' ? 0.78 : plating?.id === 'hp_iron' ? 0.88 : plating ? 0.94 : 1;
     playerShipIndexes[id] = index;
     unitNames[id] = index === 0

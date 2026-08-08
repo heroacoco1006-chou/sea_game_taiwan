@@ -3,7 +3,7 @@ import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
   GameState, WEAPONS, ARMORS, ACCESSORIES, FIGUREHEADS, CONSUMABLES,
   cargoCount, cargoMax, supplyMax, crewMax, fleetMinCrew, fleetShips,
-  shipTypeById, shipTypeOf, itemNameById, saveGame, statusSummary, useConsumable,
+  shipTypeById, shipTypeOf, shipHullMax, itemNameById, saveGame, statusSummary, useConsumable,
   heroDefById, currentStoryChapter, storyTargetPort, storyRequirementText, storyStageProgressText,
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
@@ -449,7 +449,7 @@ export default class InfoScene extends Phaser.Scene {
     s.escorts.forEach((ship, i) => {
       const type = shipTypeById(ship.typeId);
       const y = 202 + i * 44;
-      this.addWrapped(300, y, `僚艦${i + 1}：${type.name}　船體 ${ship.hull}/${type.hullMax}　艙 ${ship.cargoSpace}/${ship.supplySpace}　砲 ${ship.cannons}`, 560, 14);
+      this.addWrapped(300, y, `僚艦${i + 1}：${type.name}　船體 ${ship.hull}/${shipHullMax(ship)}　艙 ${ship.cargoSpace}/${ship.supplySpace}　砲 ${ship.cannons}`, 560, 14);
       const btn = makeButton(this, 770, y + 10, 130, 34, '升為旗艦', () => this.promoteEscort(i), 14);
       this.dyn.push(btn);
     });

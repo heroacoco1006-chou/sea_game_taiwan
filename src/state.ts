@@ -640,6 +640,12 @@ export function fleetShips(state: GameState): PlayerShip[] {
   return [state.ship, ...state.escorts];
 }
 
+/** 單艘船的有效船體上限＝船型基礎值＋該船裝甲加成。 */
+export function shipHullMax(ship: PlayerShip): number {
+  const plating = HULL_PLATINGS.find((item) => item.id === ship.armor);
+  return shipTypeById(ship.typeId).hullMax + (plating?.hullBonus ?? 0);
+}
+
 /** 貨艙上限＝全艦隊商品艙加總 */
 export function cargoMax(state: GameState): number {
   return fleetShips(state).reduce((sum, sh) => sum + sh.cargoSpace, 0);
@@ -652,7 +658,7 @@ export function supplyMax(state: GameState): number {
 
 /** 旗艦船體上限（旅館保養、旗艦修理用） */
 export function hullMax(state: GameState): number {
-  return shipTypeOf(state).hullMax + (shipArmor(state)?.hullBonus ?? 0);
+  return shipHullMax(state.ship);
 }
 
 /** 水手上限＝全艦隊各船型 maxCrew 加總 */
@@ -675,9 +681,52 @@ export function fleetHull(state: GameState): number {
   return fleetShips(state).reduce((sum, sh) => sum + sh.hull, 0);
 }
 
-/** 全艦隊船體上限總和（旗艦含裝甲加成） */
+/** 全艦隊船體上限總和（每艘船都含自己的裝甲加成） */
 export function fleetHullMax(state: GameState): number {
-  return fleetShips(state).reduce((sum, sh) => sum + shipTypeById(sh.typeId).hullMax, 0) + (shipArmor(state)?.hullBonus ?? 0);
+  return fleetShips(state).reduce((sum, sh) => sum + shipHullMax(sh), 0);
+}
+
+export interface FleetRepairResult {
+  totalNeed: number;
+  repaired: number;
+  cost: number;
+  complete: boolean;
+}
+
+/**
+ * 依艦隊順序修理受損船隻。裝甲提供的合法耐久不會被當成負修理量，
+ * 因此船隊排序不會抵銷真正的受損點數或誤觸資金不足。
+ */
+export function repairFleetAtPrice(state: GameState, unitPrice: number): FleetRepairResult {
+  if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+    throw new Error('修理單價必須是正數');
+  }
+
+  const ships = fleetShips(state);
+  const needs = ships.map((ship) => Math.max(0, shipHullMax(ship) - ship.hull));
+  const totalNeed = needs.reduce((sum, need) => sum + need, 0);
+  const affordable = Math.max(0, Math.floor(state.gold / unitPrice));
+  const repaired = Math.min(totalNeed, affordable);
+
+  if (repaired <= 0) {
+    return { totalNeed, repaired: 0, cost: 0, complete: totalNeed === 0 };
+  }
+
+  state.gold -= repaired * unitPrice;
+  let remaining = repaired;
+  ships.forEach((ship, index) => {
+    if (remaining <= 0) return;
+    const fix = Math.min(needs[index], remaining);
+    ship.hull += fix;
+    remaining -= fix;
+  });
+
+  return {
+    totalNeed,
+    repaired,
+    cost: repaired * unitPrice,
+    complete: repaired === totalNeed,
+  };
 }
 
 /** 對全艦隊造成傷害（按各船血量比例分攤，每船至少留 1） */

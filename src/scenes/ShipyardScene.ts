@@ -6,6 +6,7 @@ import {
   saveGame, CANNON_PRICE, availableShipsAtPort, FIGUREHEADS, addInventory, hasInventory,
   dateText, newPlayerShip, shipBuildDays,
   HULL_PLATINGS, SAILS, CANNON_TYPES, shipArmor, shipSail, shipCannonType,
+  shipHullMax, repairFleetAtPrice,
 } from '../state';
 import { SHIP_CARD_URLS, SHIP_EQUIPMENT_URLS, shipCardKey, shipEquipmentKey } from '../art';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, showModal } from '../ui';
@@ -137,7 +138,7 @@ export default class ShipyardScene extends Phaser.Scene {
       `資金 ${s.gold} 兩　　水手 ${s.crew}/${crewMax(s)}（全隊最低需 ${fleetMinCrew(s)}）\n` +
       `艦隊共 ${fleetShips(s).length}/${FLEET_MAX} 艘　　總貨艙 ${cargoCount(s)}/${cargoMax(s)}　總糧水艙 ${supplyMax(s)}\n` +
       `\n【旗艦】${t.name}（${t.origin}）\n` +
-      `船體 ${s.ship.hull}/${t.hullMax}　航速 ${t.speed}　大砲 ${s.ship.cannons}/${t.cannonSlots}\n` +
+      `船體 ${s.ship.hull}/${shipHullMax(s.ship)}　航速 ${t.speed}　大砲 ${s.ship.cannons}/${t.cannonSlots}\n` +
       `商品艙 ${s.ship.cargoSpace} ＋ 糧水艙 ${s.ship.supplySpace}（總空間 ${t.space}）　折抵價 ${this.tradeInValue()} 兩`
     );
     const fig = FIGUREHEADS.find((x) => x.id === s.ship.figurehead);
@@ -163,7 +164,7 @@ export default class ShipyardScene extends Phaser.Scene {
     s.escorts.forEach((esc, i) => {
       const et = shipTypeById(esc.typeId);
       const y = top + 26 + i * 32;
-      const label = this.add.text(60, y, `僚艦${i + 1}：${et.name}　體 ${esc.hull}/${et.hullMax}　砲 ${esc.cannons}　艙 ${esc.cargoSpace}`, textStyle(14));
+      const label = this.add.text(60, y, `僚艦${i + 1}：${et.name}　體 ${esc.hull}/${shipHullMax(esc)}　砲 ${esc.cannons}　艙 ${esc.cargoSpace}`, textStyle(14));
       const promote = makeButton(this, 470, y + 8, 90, 30, '升旗艦', () => this.promoteEscort(i), 13);
       const sell = makeButton(this, 565, y + 8, 70, 30, '賣出', () => this.sellEscort(i), 13);
       this.escortObjs.push(label, promote, sell);
@@ -217,28 +218,17 @@ export default class ShipyardScene extends Phaser.Scene {
 
   private repairFleet(): void {
     const s = this.state;
-    let need = 0;
-    for (const sh of fleetShips(s)) need += shipTypeById(sh.typeId).hullMax - sh.hull;
-    if (need === 0) {
+    const result = repairFleetAtPrice(s, REPAIR_PRICE);
+    if (result.totalNeed === 0) {
       toast(this, '全艦隊船體都完好如新！');
       return;
     }
-    const afford = Math.min(need, Math.floor(s.gold / REPAIR_PRICE));
-    if (afford <= 0) {
+    if (result.repaired === 0) {
       toast(this, '資金不足！');
       return;
     }
-    s.gold -= afford * REPAIR_PRICE;
-    let budget = afford;
-    for (const sh of fleetShips(s)) {
-      const d = shipTypeById(sh.typeId).hullMax - sh.hull;
-      const fix = Math.min(d, budget);
-      sh.hull += fix;
-      budget -= fix;
-      if (budget <= 0) break;
-    }
     this.refreshFleet();
-    toast(this, afford === need ? `全艦隊修好了！花費 ${afford * REPAIR_PRICE} 兩` : `錢只夠修 ${afford} 點`);
+    toast(this, result.complete ? `全艦隊修好了！花費 ${result.cost} 兩` : `錢只夠修 ${result.repaired} 點`);
   }
 
   private selectShip(t: ShipType): void {
