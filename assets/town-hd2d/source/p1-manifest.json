@@ -1,0 +1,58 @@
+{
+  "phase": "P1",
+  "status": "candidate-awaiting-owner-selection",
+  "created": "2026-09-14",
+  "generator": "OpenAI built-in imagegen",
+  "operator": "Codex",
+  "usage": "Visual-direction review only; not a runtime game asset",
+  "license": "Project-original AI-assisted generated material; may be used and modified by this project",
+  "references": [
+    "assets/m5/v2/m5-2/ports/town-backgrounds/anhai-town-bg-v1-review.png",
+    "assets/m5/v2/characters/portraits/lin.png",
+    "assets/m5/v2/characters/walk/lin.png"
+  ],
+  "sharedPrompt": {
+    "useCase": "historical-scene",
+    "assetType": "P1 HD-2D walking port-town concept art",
+    "scene": "Early-17th-century Yuegang, Zhangzhou, Fujian; dock, stone quay, broad main street, market square and readable trading-house entrance",
+    "hero": "Lin Haisheng, project-consistent dark-blue travel clothes and blue headband, approximately 8 to 10 percent of image height",
+    "style": "Refined non-pixel hand-painted nautical RPG with layered HD-2D spatial staging",
+    "lighting": "Warm late-afternoon daylight with cool harbor fill and one coherent shadow direction",
+    "palette": "Sea blue, warm ochre, deep walnut, muted red and old gold",
+    "constraints": "No UI, text, watermark, modern or fantasy objects, violence, commercial-game references, copied imagery, dramatic blur or full pixel-art conversion"
+  },
+  "candidates": [
+    {
+      "id": "camera-a-35deg",
+      "title": "方案 A｜較低斜俯視：街景臨場感優先",
+      "shortTitle": "A｜約 35°：臨場感較強",
+      "camera": "正交斜俯視約 35°",
+      "comparison": "屋簷與立面較有份量；需特別防止前景遮門。",
+      "source": "yuegang-camera-a-35deg-source.png",
+      "review": "yuegang-camera-a-35deg-review.png",
+      "route": [[500, 745], [640, 620], [732, 488], [1005, 353]],
+      "markers": [
+        {"x": 500, "y": 745, "label": "碼頭出生"},
+        {"x": 732, "y": 488, "label": "林海生比例"},
+        {"x": 1005, "y": 353, "label": "交易所入口"}
+      ],
+      "reviewNote": "優點：建築立面與街巷較有臨場感。注意：右下前景屋簷遮擋面積較大。"
+    },
+    {
+      "id": "camera-b-45deg",
+      "title": "方案 B｜較高斜俯視：操作可讀性優先",
+      "shortTitle": "B｜約 45°：路線較清楚",
+      "camera": "正交斜俯視約 45°",
+      "comparison": "可走地面與轉角更容易判讀；立面張力略低。",
+      "source": "yuegang-camera-b-45deg-source.png",
+      "review": "yuegang-camera-b-45deg-review.png",
+      "route": [[480, 690], [620, 575], [766, 420], [1032, 290]],
+      "markers": [
+        {"x": 480, "y": 690, "label": "碼頭出生"},
+        {"x": 766, "y": 420, "label": "林海生比例"},
+        {"x": 1032, "y": 290, "label": "交易所入口"}
+      ],
+      "reviewNote": "優點：主街、廣場與入口關係清楚。注意：正式灰模仍要補屋後遮擋案例。"
+    }
+  ]
+}
