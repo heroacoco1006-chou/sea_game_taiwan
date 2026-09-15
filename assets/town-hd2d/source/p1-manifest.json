@@ -1,6 +1,8 @@
 {
   "phase": "P1",
-  "status": "candidate-awaiting-owner-selection",
+  "status": "selected-for-p2-prototype",
+  "selectedCandidate": "camera-b-45deg",
+  "selectedByOwnerOn": "2026-09-14",
   "created": "2026-09-14",
   "generator": "OpenAI built-in imagegen",
   "operator": "Codex",

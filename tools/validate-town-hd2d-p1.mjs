@@ -32,7 +32,10 @@ check(fs.existsSync(MANIFEST_PATH), '缺少 P1 manifest')
 if (fs.existsSync(MANIFEST_PATH)) {
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'))
   check(manifest.phase === 'P1', 'manifest phase 必須是 P1')
-  check(manifest.status === 'candidate-awaiting-owner-selection', 'P1 未經老闆選圖前必須保持 candidate 狀態')
+  check(['candidate-awaiting-owner-selection', 'selected-for-p2-prototype'].includes(manifest.status), 'P1 manifest 狀態不合法')
+  if (manifest.status === 'selected-for-p2-prototype') {
+    check(manifest.selectedCandidate === 'camera-b-45deg', '目前已核准的 P1 選擇必須是 B 方案')
+  }
   check(manifest.generator === 'OpenAI built-in imagegen', 'manifest 必須記錄生成方式')
   check(Array.isArray(manifest.candidates) && manifest.candidates.length === 2, 'P1 必須有 2 張視角候選')
   check(new Set(manifest.candidates?.map((item) => item.id)).size === 2, '候選 id 必須唯一')

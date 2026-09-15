@@ -36,6 +36,12 @@ export default class BootScene extends Phaser.Scene {
     // 開發預覽：?hexmap=1（或 ?hexmap=地圖id）直接開六角格海戰 P3 戰場預覽；
     // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
     const query = new URLSearchParams(window.location.search);
+    if (query.get('townPreview') === 'hd2d') {
+      // P2 隔離預覽：只建立記憶體內測試狀態；Port 原型分支不呼叫 saveGame。
+      this.registry.set('state', newGame('lin'));
+      this.scene.start('Port', { portId: query.get('port') ?? 'yuegang', hd2dPrototype: true });
+      return;
+    }
     const p7demo = query.get('p7demo');
     if (query.get('battle') === 'hex' && p7demo) {
       const state = newGame('lin');

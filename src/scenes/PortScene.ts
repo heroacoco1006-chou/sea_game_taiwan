@@ -12,6 +12,7 @@ import { TouchControls } from '../touchControls';
 import { TutorialOverlay } from '../tutorialOverlay';
 import portTownLayoutsData from '../data/portTownLayouts.json';
 import portTownThemesData from '../data/portTownThemes.json';
+import { TownHd2dPrototype } from '../town/TownHd2dPrototype';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -170,6 +171,8 @@ export default class PortScene extends Phaser.Scene {
   private touchControls?: TouchControls;
   private tutorial?: TutorialOverlay;
   private tutorialMoveOrigin?: { x: number; y: number };
+  private hd2dPrototypeMode = false;
+  private hd2dPrototype?: TownHd2dPrototype;
 
   constructor() {
     super('Port');
@@ -179,7 +182,10 @@ export default class PortScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { portId: string; spawn?: { x: number; y: number } }): void {
+  init(data: { portId: string; spawn?: { x: number; y: number }; hd2dPrototype?: boolean }): void {
+    this.hd2dPrototype?.dispose();
+    this.hd2dPrototype = undefined;
+    this.hd2dPrototypeMode = data.hd2dPrototype === true;
     this.port = PORTS.find((p) => p.id === data.portId)!;
     const themeId = PORT_TOWN_THEMES[this.port.id];
     this.townLayout = themeId ? PORT_TOWN_LAYOUTS[themeId] ?? null : null;
@@ -194,6 +200,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   preload(): void {
+    if (this.hd2dPrototypeMode) return;
     installLoadingHud(this);
     const bgId = this.townLayout?.bgKey;
     const bgUrl = bgId ? portTownBackgroundUrl(bgId) : undefined;
@@ -225,6 +232,11 @@ export default class PortScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (this.hd2dPrototypeMode) {
+      this.hd2dPrototype = new TownHd2dPrototype(this);
+      this.hd2dPrototype.mount();
+      return;
+    }
     if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm(townBgmForRegion(this.port.region));
     // 先鎖存首次造訪，再巡檢主線／夥伴任務；否則 visitPorts 會延遲到下一個事件才完成。
@@ -796,7 +808,11 @@ export default class PortScene extends Phaser.Scene {
     this.registry.set('townMini', { mx, my, sx, sy });
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
+    if (this.hd2dPrototypeMode) {
+      this.hd2dPrototype?.update(time, delta);
+      return;
+    }
     const dt = delta / 1000;
     let dx = 0;
     let dy = 0;

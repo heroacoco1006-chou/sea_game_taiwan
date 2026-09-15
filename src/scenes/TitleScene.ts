@@ -68,6 +68,13 @@ export default class TitleScene extends Phaser.Scene {
       this.scene.pause();
     }, 16);
 
+    // P2 開發預覽往返入口；只有帶 ?townPreview=hd2d 時可見，不影響普通玩家。
+    if (new URLSearchParams(window.location.search).get('townPreview') === 'hd2d') {
+      makeButton(this, 155, 654, 250, 42, '返回 HD-2D 原型', () => {
+        this.scene.start('Port', { portId: 'yuegang', hd2dPrototype: true });
+      }, 15);
+    }
+
 
     // 版本資訊固定置於遊戲入口最下方；發版只更新 version.ts。
     this.add
