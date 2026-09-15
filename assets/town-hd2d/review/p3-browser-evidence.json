@@ -1,0 +1,48 @@
+{
+  "phase": "P3",
+  "testedAt": "2026-09-15",
+  "entry": "http://127.0.0.1:5173/?townPreview=hd2d&port=yuegang&touch=1",
+  "viewportCss": { "width": 1280, "height": 720 },
+  "drawingBuffer": { "width": 2560, "height": 1440 },
+  "checks": {
+    "mode": "P3-B",
+    "sevenFacilitiesRendered": true,
+    "sevenFacilitiesReachable": true,
+    "pointGroundNavigation": true,
+    "keyboardCollisionMovement": true,
+    "touchHoldCollisionMovement": true,
+    "calibratorValidation": true,
+    "calibratorTextReload": true,
+    "consoleErrors": 0,
+    "storageWrites": 0
+  },
+  "facilityRoutes": [
+    { "key": "trade", "reached": "trade", "player": { "u": 2.35, "v": 3.2 } },
+    { "key": "tavern", "reached": "tavern", "player": { "u": -3.3, "v": 3.1 } },
+    { "key": "inn", "reached": "inn", "player": { "u": -2, "v": 2.95 } },
+    { "key": "office", "reached": "office", "player": { "u": 2.1, "v": 2.95 } },
+    { "key": "item", "reached": "item", "player": { "u": -6.15, "v": -0.95 } },
+    { "key": "shipyard", "reached": "shipyard", "player": { "u": 6.25, "v": -0.95 } },
+    { "key": "harbor", "reached": "harbor", "player": { "u": 0, "v": -2.2 } }
+  ],
+  "manualInput": {
+    "keyboardLeft": { "playerXBefore": 7.913395021259563, "playerXAfter": 7.85630702125956 },
+    "touchHoldLeft": { "playerXBefore": 7.85630702125956, "playerXAfter": 7.402675021259548 },
+    "rightBoundaryBlockedAt": { "u": 7.913395021259563, "v": -2.313500644882078 }
+  },
+  "calibrator": {
+    "url": "http://127.0.0.1:5173/tools/calibrate-town-hd2d.html",
+    "status": "通過：schema、引用、角色半徑與七設施可達性皆有效。",
+    "consoleErrors": 0
+  },
+  "stress": {
+    "cyclesWithActiveRoute": 20,
+    "mounts": 20,
+    "disposes": 20,
+    "activeRenderersAfterReturn": 0,
+    "geometriesAfterReturn": 0,
+    "texturesAfterReturn": 0,
+    "renderCallsAfterReturn": 0,
+    "lastError": null
+  }
+}

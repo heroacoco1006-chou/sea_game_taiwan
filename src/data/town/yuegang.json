@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "yuegang-hd2d",
+  "themeId": "china",
+  "layoutRevision": "p3-r1",
+  "world": {
+    "width": 18,
+    "height": 10,
+    "unitsToWorld": 1,
+    "playerRadius": 0.28,
+    "navigationStep": 0.35
+  },
+  "camera": {
+    "projection": "orthographic",
+    "pitchDeg": 45,
+    "yawDeg": 37,
+    "viewSpan": 10
+  },
+  "spawn": { "u": 0, "v": -2.45 },
+  "walkable": [
+    [
+      { "u": -8.35, "v": -2.85 },
+      { "u": 8.35, "v": -2.85 },
+      { "u": 8.35, "v": 5.55 },
+      { "u": -8.35, "v": 5.55 }
+    ]
+  ],
+  "obstacles": [
+    {
+      "id": "collision:trade-house",
+      "polygon": [
+        { "u": 3.15, "v": 2.05 }, { "u": 6.45, "v": 2.05 },
+        { "u": 6.45, "v": 4.35 }, { "u": 3.15, "v": 4.35 }
+      ]
+    },
+    {
+      "id": "collision:tavern-house",
+      "polygon": [
+        { "u": -7.1, "v": 2.05 }, { "u": -4.1, "v": 2.05 },
+        { "u": -4.1, "v": 4.15 }, { "u": -7.1, "v": 4.15 }
+      ]
+    },
+    {
+      "id": "collision:inn-house",
+      "polygon": [
+        { "u": -3.35, "v": 3.75 }, { "u": -0.65, "v": 3.75 },
+        { "u": -0.65, "v": 5.35 }, { "u": -3.35, "v": 5.35 }
+      ]
+    },
+    {
+      "id": "collision:office-house",
+      "polygon": [
+        { "u": 0.7, "v": 3.75 }, { "u": 3.5, "v": 3.75 },
+        { "u": 3.5, "v": 5.35 }, { "u": 0.7, "v": 5.35 }
+      ]
+    },
+    {
+      "id": "collision:item-house",
+      "polygon": [
+        { "u": -7.45, "v": -0.15 }, { "u": -4.85, "v": -0.15 },
+        { "u": -4.85, "v": 1.65 }, { "u": -7.45, "v": 1.65 }
+      ]
+    },
+    {
+      "id": "collision:shipyard-house",
+      "polygon": [
+        { "u": 4.75, "v": -0.15 }, { "u": 7.75, "v": -0.15 },
+        { "u": 7.75, "v": 1.65 }, { "u": 4.75, "v": 1.65 }
+      ]
+    }
+  ],
+  "facilities": [
+    { "key": "trade", "label": "交易所", "objectId": "trade-house", "door": { "u": 2.82, "v": 3.2 }, "approach": { "u": 2.35, "v": 3.2 }, "interactionRadius": 0.72 },
+    { "key": "tavern", "label": "酒館", "objectId": "tavern-house", "door": { "u": -3.77, "v": 3.1 }, "approach": { "u": -3.3, "v": 3.1 }, "interactionRadius": 0.72 },
+    { "key": "inn", "label": "旅館", "objectId": "inn-house", "door": { "u": -2, "v": 3.42 }, "approach": { "u": -2, "v": 2.95 }, "interactionRadius": 0.72 },
+    { "key": "office", "label": "官府／商館", "objectId": "office-house", "door": { "u": 2.1, "v": 3.42 }, "approach": { "u": 2.1, "v": 2.95 }, "interactionRadius": 0.72 },
+    { "key": "item", "label": "道具屋", "objectId": "item-house", "door": { "u": -6.15, "v": -0.48 }, "approach": { "u": -6.15, "v": -0.95 }, "interactionRadius": 0.72 },
+    { "key": "shipyard", "label": "造船廠", "objectId": "shipyard-house", "door": { "u": 6.25, "v": -0.48 }, "approach": { "u": 6.25, "v": -0.95 }, "interactionRadius": 0.72 },
+    { "key": "harbor", "label": "港務局", "objectId": "harbor-gate", "door": { "u": 0, "v": -2.55 }, "approach": { "u": 0, "v": -2.2 }, "interactionRadius": 0.72 }
+  ],
+  "objects": [
+    { "id": "trade-house", "assetId": "greybox-trade", "at": { "u": 4.8, "v": 3.2 }, "elevation": 0, "scale": 1, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "tavern-house", "assetId": "greybox-tavern", "at": { "u": -5.6, "v": 3.1 }, "elevation": 0, "scale": 0.92, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "inn-house", "assetId": "greybox-inn", "at": { "u": -2, "v": 4.55 }, "elevation": 0, "scale": 0.82, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "office-house", "assetId": "greybox-office", "at": { "u": 2.1, "v": 4.55 }, "elevation": 0, "scale": 0.85, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "item-house", "assetId": "greybox-item", "at": { "u": -6.15, "v": 0.75 }, "elevation": 0, "scale": 0.78, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "shipyard-house", "assetId": "greybox-shipyard", "at": { "u": 6.25, "v": 0.75 }, "elevation": 0, "scale": 0.9, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "harbor-gate", "assetId": "greybox-harbor", "at": { "u": 0, "v": -2.75 }, "elevation": 0, "scale": 0.72, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "harbor-water", "assetId": "greybox-water", "at": { "u": 0, "v": -4.8 }, "elevation": -0.18, "scale": 1, "rotationDeg": 0, "occlusion": "none" }
+  ],
+  "ambience": [
+    { "id": "water-wave", "kind": "water", "objectId": "harbor-water", "seed": 31415 }
+  ]
+}

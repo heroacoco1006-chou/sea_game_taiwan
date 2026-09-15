@@ -17,7 +17,9 @@
     "validate:text": "node tools/validate-game-text.mjs",
     "validate:tutorial": "node tools/validate-tutorial-data.mjs",
     "test:exploration": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-exploration-v22.mjs",
-    "test:tutorial": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-tutorial-engine.mjs"
+    "test:tutorial": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-tutorial-engine.mjs",
+    "validate:town-hd2d": "node tools/validate-town-hd2d.mjs",
+    "test:town-navigation": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-navigation.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0",

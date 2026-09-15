@@ -233,8 +233,17 @@ export default class PortScene extends Phaser.Scene {
 
   create(): void {
     if (this.hd2dPrototypeMode) {
-      this.hd2dPrototype = new TownHd2dPrototype(this);
-      this.hd2dPrototype.mount();
+      try {
+        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id);
+        this.hd2dPrototype.mount();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.add.rectangle(BASE_W / 2, BASE_H / 2, 760, 190, 0x3a2018, 0.96);
+        this.add.text(BASE_W / 2, BASE_H / 2 - 28, `HD-2D 預覽未啟動\n${message}`, {
+          ...textStyle(20, '#fff0d0'), align: 'center', lineSpacing: 8,
+        }).setOrigin(0.5);
+        makeButton(this, BASE_W / 2, BASE_H / 2 + 58, 220, 44, '安全回標題', () => this.scene.start('Title'));
+      }
       return;
     }
     if (showLoadingFailureIfNeeded(this)) return;
