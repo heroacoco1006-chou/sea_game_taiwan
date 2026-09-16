@@ -24,10 +24,7 @@ class ThreeTownExtern extends Phaser.GameObjects.Extern {
   }
 }
 
-/**
- * P2 共用 context 原型。Three 不建立自己的 canvas／RAF，也不改 Phaser canvas 尺寸。
- * 正式資料、導航與美術都留到 P3／P4；這裡只驗證兩套 renderer 的生命週期。
- */
+/** P4 港町 renderer。Three 不建立自己的 canvas／RAF，也不改 Phaser canvas 尺寸。 */
 export class ThreeTownRenderer implements TownRenderer {
   private readonly threeScene = new THREE.Scene();
   private readonly camera = new THREE.OrthographicCamera(-8.9, 8.9, 5, -5, 0.1, 100);
@@ -45,9 +42,18 @@ export class ThreeTownRenderer implements TownRenderer {
   private playerCanvas?: HTMLCanvasElement;
   private playerContext?: CanvasRenderingContext2D;
   private routeLine?: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
+  private ground?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
+  private groundMaterial?: THREE.MeshStandardMaterial;
   private heroImage?: HTMLImageElement;
   private lastHeroFrame = -1;
   private water?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
+  private waterMaterial?: THREE.MeshStandardMaterial;
+  private playerShadow?: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
+  private readonly loadedTextures: THREE.Texture[] = [];
+  private readonly facilityFallbacks = new Map<TownFacilityKey, THREE.Object3D[]>();
+  private readonly animatedFlags: Array<{ mesh: THREE.Mesh; phase: number }> = [];
+  private readonly animatedFoliage: Array<{ group: THREE.Group; phase: number }> = [];
+  private readonly ambienceGroups = new Map<string, THREE.Group>();
   private mounted = false;
   private paused = false;
   private disposed = false;
@@ -57,6 +63,7 @@ export class ThreeTownRenderer implements TownRenderer {
     private readonly phaserScene: Phaser.Scene,
     private readonly heroTextureUrl: string | undefined,
     private readonly sceneData: TownSceneData,
+    private readonly assetUrl: (assetId: string) => string | undefined,
   ) {}
 
   mount(): void {
@@ -92,6 +99,7 @@ export class ThreeTownRenderer implements TownRenderer {
     this.clock.start();
     townPrototypeDiagnostics.mounted();
     this.loadHeroTexture();
+    this.loadFormalArt();
   }
 
   update(time: number, delta: number, movement: TownMovementInput): void {
@@ -105,6 +113,12 @@ export class ThreeTownRenderer implements TownRenderer {
       this.playerMaterial!.rotation = nx < -0.1 ? 0.025 : nx > 0.1 ? -0.025 : 0;
     }
     if (this.water) this.water.position.y = -0.18 + Math.sin(time / 700) * 0.025;
+    if (this.waterMaterial?.map) {
+      this.waterMaterial.map.offset.x = (time / 70000) % 1;
+      this.waterMaterial.map.offset.y = (time / 110000) % 1;
+    }
+    for (const flag of this.animatedFlags) flag.mesh.rotation.y = Math.sin(time / 420 + flag.phase) * 0.16;
+    for (const foliage of this.animatedFoliage) foliage.group.rotation.z = Math.sin(time / 900 + foliage.phase) * 0.025;
   }
 
   getPlayerPosition(): TownGroundPoint {
@@ -113,6 +127,7 @@ export class ThreeTownRenderer implements TownRenderer {
 
   setPlayerPosition(point: TownGroundPoint): void {
     this.player?.position.set(point.u, 0.04, point.v);
+    this.playerShadow?.position.set(point.u, 0.025, point.v);
   }
 
   setNavigationPath(points: TownGroundPoint[]): void {
@@ -143,6 +158,11 @@ export class ThreeTownRenderer implements TownRenderer {
       if (key) return key;
     }
     return null;
+  }
+
+  worldToScreen(point: TownGroundPoint, viewportWidth: number, viewportHeight: number): { x: number; y: number } {
+    const projected = new THREE.Vector3(point.u, 0.95, point.v).project(this.camera);
+    return { x: (projected.x + 1) * 0.5 * viewportWidth, y: (1 - projected.y) * 0.5 * viewportHeight };
   }
 
   pause(): void {
@@ -204,6 +224,8 @@ export class ThreeTownRenderer implements TownRenderer {
       const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
       for (const material of materials) material.dispose();
     });
+    for (const texture of this.loadedTextures) texture.dispose();
+    this.loadedTextures.length = 0;
     this.fallbackPlayerTexture?.dispose();
     this.fallbackPlayerTexture = undefined;
     this.playerTexture = undefined;
@@ -232,7 +254,7 @@ export class ThreeTownRenderer implements TownRenderer {
     const distance = 19;
     const horizontal = Math.cos(pitch) * distance;
     this.camera.position.set(Math.sin(yaw) * horizontal, Math.sin(pitch) * distance, Math.cos(yaw) * horizontal);
-    this.camera.lookAt(0, 0.7, 1.25);
+    this.camera.lookAt(0, 0.7, 1.8);
     this.camera.updateProjectionMatrix();
 
     this.threeScene.add(new THREE.HemisphereLight(0xd9f0f1, 0x745638, 2.2));
@@ -240,22 +262,20 @@ export class ThreeTownRenderer implements TownRenderer {
     sun.position.set(-5, 10, -7);
     this.threeScene.add(sun);
 
-    const ground = new THREE.Mesh(
+    this.groundMaterial = new THREE.MeshStandardMaterial({ color: 0xc9ad73, roughness: 0.92 });
+    this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(this.sceneData.world.width, this.sceneData.world.height),
-      new THREE.MeshStandardMaterial({ color: 0xc9ad73, roughness: 0.92 }),
+      this.groundMaterial,
     );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.z = 1.35;
-    this.threeScene.add(ground);
+    this.ground.rotation.x = -Math.PI / 2;
+    this.ground.position.z = 1.35;
+    this.threeScene.add(this.ground);
 
-    const grid = new THREE.GridHelper(this.sceneData.world.width, 24, 0x725b38, 0xa58a58);
-    grid.position.set(0, 0.015, 1.35);
-    this.threeScene.add(grid);
-
-    const waterObject = this.sceneData.objects.find((object) => object.assetId === 'greybox-water');
+    const waterObject = this.sceneData.objects.find((object) => object.id === 'harbor-water');
+    this.waterMaterial = new THREE.MeshStandardMaterial({ color: 0x1e6d83, roughness: 0.35, metalness: 0.08 });
     this.water = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 4),
-      new THREE.MeshStandardMaterial({ color: 0x1e6d83, roughness: 0.35, metalness: 0.08 }),
+      this.waterMaterial,
     );
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.set(waterObject?.at.u ?? 0, waterObject?.elevation ?? -0.18, waterObject?.at.v ?? -4.8);
@@ -267,8 +287,21 @@ export class ThreeTownRenderer implements TownRenderer {
     this.threeScene.add(quay);
 
     const wood = new THREE.MeshStandardMaterial({ color: 0x6b4527, roughness: 0.9 });
-    const dock = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.28, 3.5), wood);
+    const dock = new THREE.Group();
     dock.position.set(-3.8, -0.02, -4.65);
+    for (let index = 0; index < 12; index += 1) {
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.18, 0.25), wood);
+      plank.position.set(0, Math.sin(index * 1.7) * 0.015, -1.38 + index * 0.25);
+      dock.add(plank);
+    }
+    const postMaterial = new THREE.MeshStandardMaterial({ color: 0x4c301f, roughness: 0.95 });
+    for (const x of [-1.42, 1.42]) {
+      for (const z of [-1.38, 1.35]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 1.15, 8), postMaterial);
+        post.position.set(x, -0.22, z);
+        dock.add(post);
+      }
+    }
     this.threeScene.add(dock);
 
     for (const facility of this.sceneData.facilities) {
@@ -298,6 +331,7 @@ export class ThreeTownRenderer implements TownRenderer {
       wall.userData.facilityKey = facility.key;
       this.threeScene.add(wall);
       this.facilityMeshes.set(wall, facility.key);
+      const fallbacks: THREE.Object3D[] = [wall];
 
       if (facility.key !== 'harbor') {
         const roof = new THREE.Mesh(
@@ -310,7 +344,9 @@ export class ThreeTownRenderer implements TownRenderer {
         roof.userData.facilityKey = facility.key;
         this.threeScene.add(roof);
         this.facilityMeshes.set(roof, facility.key);
+        fallbacks.push(roof);
       }
+      this.facilityFallbacks.set(facility.key, fallbacks);
 
       const door = new THREE.Mesh(
         new THREE.BoxGeometry(0.72, 1.25, 0.1),
@@ -320,6 +356,7 @@ export class ThreeTownRenderer implements TownRenderer {
       door.userData.facilityKey = facility.key;
       this.threeScene.add(door);
       this.facilityMeshes.set(door, facility.key);
+      this.facilityFallbacks.get(facility.key)?.push(door);
 
       const marker = new THREE.Mesh(
         new THREE.CircleGeometry(0.34, 24),
@@ -330,6 +367,17 @@ export class ThreeTownRenderer implements TownRenderer {
       this.threeScene.add(marker);
     }
 
+    this.buildAmbienceObjects();
+    this.buildSetDressing();
+
+    this.playerShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.38, 24),
+      new THREE.MeshBasicMaterial({ color: 0x1d1710, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    this.playerShadow.rotation.x = -Math.PI / 2;
+    this.playerShadow.position.set(this.sceneData.spawn.u, 0.025, this.sceneData.spawn.v);
+    this.threeScene.add(this.playerShadow);
+
     this.fallbackPlayerTexture = this.makeFallbackPlayerTexture();
     this.playerMaterial = new THREE.SpriteMaterial({ map: this.fallbackPlayerTexture, transparent: true });
     this.player = new THREE.Sprite(this.playerMaterial);
@@ -337,6 +385,232 @@ export class ThreeTownRenderer implements TownRenderer {
     this.player.scale.set(1.25, 1.9, 1);
     this.player.position.set(this.sceneData.spawn.u, 0.04, this.sceneData.spawn.v);
     this.threeScene.add(this.player);
+  }
+
+  private loadFormalArt(): void {
+    const surfaceLoads: Array<{ id: string; repeat: [number, number]; apply: (texture: THREE.Texture) => void }> = [
+      {
+        id: this.sceneData.surfaces.groundAssetId,
+        repeat: [7, 4],
+        apply: (texture) => {
+          if (!this.groundMaterial) return;
+          this.groundMaterial.map = texture;
+          this.groundMaterial.color.setHex(0xffffff);
+          this.groundMaterial.needsUpdate = true;
+        },
+      },
+      {
+        id: this.sceneData.surfaces.waterAssetId,
+        repeat: [4, 1],
+        apply: (texture) => {
+          if (!this.waterMaterial) return;
+          this.waterMaterial.map = texture;
+          this.waterMaterial.color.setHex(0xffffff);
+          this.waterMaterial.needsUpdate = true;
+        },
+      },
+    ];
+
+    for (const load of surfaceLoads) {
+      const url = this.assetUrl(load.id);
+      if (!url) {
+        townPrototypeDiagnostics.failed(new Error(`找不到 P4 港町材質：${load.id}`));
+        continue;
+      }
+      void this.loadTexture(url, load.repeat).then(load.apply).catch((error) => {
+        if (!this.disposed) townPrototypeDiagnostics.failed(error);
+      });
+    }
+
+    for (const ambience of this.sceneData.ambience.filter((candidate) => candidate.kind === 'foliage')) {
+      const object = this.sceneData.objects.find((candidate) => candidate.id === ambience.objectId);
+      const group = this.ambienceGroups.get(ambience.objectId);
+      const url = object ? this.assetUrl(object.assetId) : undefined;
+      if (!object || !group || !url) continue;
+      void this.loadTexture(url).then((texture) => {
+        if (this.disposed) return;
+        for (const child of group.children) child.visible = false;
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.08, depthWrite: true }));
+        sprite.center.set(0.5, 0.03);
+        sprite.scale.set(3.25, 3.45, 1);
+        group.add(sprite);
+      }).catch((error) => {
+        if (!this.disposed) townPrototypeDiagnostics.failed(error);
+      });
+    }
+
+    for (const facility of this.sceneData.facilities) {
+      const object = this.sceneData.objects.find((candidate) => candidate.id === facility.objectId);
+      if (!object) continue;
+      const url = this.assetUrl(object.assetId);
+      if (!url) {
+        townPrototypeDiagnostics.failed(new Error(`找不到 P4 設施素材：${object.assetId}`));
+        continue;
+      }
+      void this.loadTexture(url).then((texture) => {
+        if (this.disposed) return;
+        const obstacle = this.sceneData.obstacles.find((candidate) => candidate.id === `collision:${object.id}`);
+        const us = obstacle?.polygon.map((point) => point.u) ?? [object.at.u - 0.8, object.at.u + 0.8];
+        const width = Math.max(...us) - Math.min(...us);
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          alphaTest: 0.08,
+          depthWrite: true,
+        }));
+        sprite.center.set(0.5, 0.08);
+        sprite.position.set(object.at.u, object.elevation + 0.03, object.at.v + 0.08);
+        sprite.scale.set(width * 2.05, (facility.key === 'harbor' ? 3.05 : 4.65) * object.scale, 1);
+        sprite.userData.facilityKey = facility.key;
+        this.threeScene.add(sprite);
+        this.facilityMeshes.set(sprite, facility.key);
+        for (const fallback of this.facilityFallbacks.get(facility.key) ?? []) fallback.visible = false;
+      }).catch((error) => {
+        if (!this.disposed) townPrototypeDiagnostics.failed(error);
+      });
+    }
+  }
+
+  private async loadTexture(url: string, repeat?: [number, number]): Promise<THREE.Texture> {
+    const image = await this.assetLoader.loadImage(url);
+    if (this.disposed) throw new Error('港町離場後不建立新貼圖');
+    const texture = new THREE.Texture(image);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    if (repeat) {
+      texture.wrapS = THREE.MirroredRepeatWrapping;
+      texture.wrapT = THREE.MirroredRepeatWrapping;
+      texture.repeat.set(repeat[0], repeat[1]);
+    }
+    texture.needsUpdate = true;
+    this.loadedTextures.push(texture);
+    return texture;
+  }
+
+  private buildAmbienceObjects(): void {
+    for (const ambience of this.sceneData.ambience) {
+      const object = this.sceneData.objects.find((candidate) => candidate.id === ambience.objectId);
+      if (!object) continue;
+      if (ambience.kind === 'flag') {
+        const pole = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.035, 0.05, 2.35, 8),
+          new THREE.MeshStandardMaterial({ color: 0x4b3424, roughness: 0.9 }),
+        );
+        pole.position.set(object.at.u, 1.17, object.at.v);
+        this.threeScene.add(pole);
+        const flagTexture = this.makeFlagTexture();
+        const cloth = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.76, 1.12),
+          new THREE.MeshBasicMaterial({ map: flagTexture, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }),
+        );
+        cloth.position.set(object.at.u + 0.38, 1.72, object.at.v);
+        this.threeScene.add(cloth);
+        this.animatedFlags.push({ mesh: cloth, phase: ambience.seed % 13 });
+      } else if (ambience.kind === 'foliage') {
+        const group = new THREE.Group();
+        group.position.set(object.at.u, 0, object.at.v);
+        const trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.12, 0.18, 1.55, 8),
+          new THREE.MeshStandardMaterial({ color: 0x5a3b27, roughness: 0.95 }),
+        );
+        trunk.position.y = 0.78;
+        group.add(trunk);
+        const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x54743b, roughness: 0.9 });
+        for (const [x, y, z, scale] of [[0, 1.75, 0, 0.72], [-0.34, 1.55, 0, 0.52], [0.34, 1.58, 0.04, 0.56]] as const) {
+          const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(scale, 0), leafMaterial);
+          crown.position.set(x, y, z);
+          group.add(crown);
+        }
+        group.scale.setScalar(object.scale);
+        this.threeScene.add(group);
+        this.ambienceGroups.set(object.id, group);
+        this.animatedFoliage.push({ group, phase: ambience.seed % 17 });
+      }
+    }
+  }
+
+  private makeFlagTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 192;
+    const context = canvas.getContext('2d')!;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#9f3f2f';
+    context.beginPath();
+    context.moveTo(8, 8);
+    context.lineTo(118, 8);
+    context.lineTo(118, 142);
+    context.lineTo(88, 180);
+    context.lineTo(62, 150);
+    context.lineTo(34, 180);
+    context.lineTo(8, 142);
+    context.closePath();
+    context.fill();
+    context.strokeStyle = '#d0a45a';
+    context.lineWidth = 7;
+    context.stroke();
+    context.strokeStyle = 'rgba(255,225,155,0.5)';
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(30, 55);
+    context.quadraticCurveTo(64, 38, 98, 55);
+    context.moveTo(30, 82);
+    context.quadraticCurveTo(64, 65, 98, 82);
+    context.stroke();
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    this.loadedTextures.push(texture);
+    return texture;
+  }
+
+  private buildSetDressing(): void {
+    const wood = new THREE.MeshStandardMaterial({ color: 0x76502f, roughness: 0.94 });
+    const darkWood = new THREE.MeshStandardMaterial({ color: 0x4d3425, roughness: 0.96 });
+    const canvas = new THREE.MeshStandardMaterial({ color: 0xd7bd82, roughness: 0.9, side: THREE.DoubleSide });
+    const goods = new THREE.MeshStandardMaterial({ color: 0xa05f2e, roughness: 0.9 });
+    for (const object of this.sceneData.objects) {
+      if (object.assetId === 'decor-market-stall') {
+        const group = new THREE.Group();
+        group.position.set(object.at.u, object.elevation, object.at.v);
+        const table = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.14, 0.62), wood);
+        table.position.y = 0.72;
+        group.add(table);
+        for (const x of [-0.62, 0.62]) {
+          for (const z of [-0.22, 0.22]) {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.55, 0.08), darkWood);
+            leg.position.set(x, 0.78, z);
+            group.add(leg);
+          }
+        }
+        const awning = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.1), canvas);
+        awning.rotation.x = -Math.PI / 2;
+        awning.position.set(0, 1.55, 0);
+        group.add(awning);
+        for (const x of [-0.48, 0, 0.48]) {
+          const basket = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), goods);
+          basket.scale.y = 0.58;
+          basket.position.set(x, 0.87, 0);
+          group.add(basket);
+        }
+        group.scale.setScalar(object.scale);
+        this.threeScene.add(group);
+      } else if (object.assetId === 'decor-crates') {
+        const group = new THREE.Group();
+        group.position.set(object.at.u, object.elevation, object.at.v);
+        for (const [x, y, z, scale] of [[0, 0.25, 0, 0.5], [0.43, 0.2, 0.05, 0.4], [0.12, 0.66, 0.02, 0.36]] as const) {
+          const crate = new THREE.Mesh(new THREE.BoxGeometry(scale, scale, scale), wood);
+          crate.position.set(x, y, z);
+          group.add(crate);
+        }
+        group.scale.setScalar(object.scale);
+        this.threeScene.add(group);
+      }
+    }
   }
 
   private loadHeroTexture(): void {

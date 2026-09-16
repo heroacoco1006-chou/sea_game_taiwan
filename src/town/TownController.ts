@@ -18,10 +18,14 @@ export class TownController {
   private routeTarget: TownGroundPoint | null = null;
   private targetFacility: TownFacilityKey | null = null;
 
-  constructor(private readonly data: TownSceneData, private readonly renderer: TownRenderer) {
+  constructor(
+    private readonly data: TownSceneData,
+    private readonly renderer: TownRenderer,
+    initialPosition: TownGroundPoint = data.spawn,
+  ) {
     this.navigator = new TownNavigator(data);
     if (!this.navigator.isNavigable(data.spawn)) throw new Error('港町出生點不可通行');
-    this.player = { ...data.spawn };
+    this.player = this.navigator.isNavigable(initialPosition) ? { ...initialPosition } : { ...data.spawn };
     renderer.setPlayerPosition(this.player);
   }
 

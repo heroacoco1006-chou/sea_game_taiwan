@@ -185,7 +185,8 @@ export default class PortScene extends Phaser.Scene {
   init(data: { portId: string; spawn?: { x: number; y: number }; hd2dPrototype?: boolean }): void {
     this.hd2dPrototype?.dispose();
     this.hd2dPrototype = undefined;
-    this.hd2dPrototypeMode = data.hd2dPrototype === true;
+    const queryPreview = new URLSearchParams(window.location.search).get('townPreview') === 'hd2d';
+    this.hd2dPrototypeMode = data.hd2dPrototype === true || queryPreview;
     this.port = PORTS.find((p) => p.id === data.portId)!;
     const themeId = PORT_TOWN_THEMES[this.port.id];
     this.townLayout = themeId ? PORT_TOWN_LAYOUTS[themeId] ?? null : null;
@@ -234,7 +235,7 @@ export default class PortScene extends Phaser.Scene {
   create(): void {
     if (this.hd2dPrototypeMode) {
       try {
-        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id);
+        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id, this.spawn);
         this.hd2dPrototype.mount();
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

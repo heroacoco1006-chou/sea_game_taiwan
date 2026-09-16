@@ -1,0 +1,44 @@
+{
+  "phase": "P4",
+  "testedAt": "2026-09-16",
+  "branch": "feature/port-hd2d",
+  "url": "http://127.0.0.1:5173/?townPreview=hd2d&port=yuegang&touch=1",
+  "viewport": "1280x720",
+  "checks": {
+    "mode": "P4-B",
+    "formalArtLoaded": true,
+    "pointerSupersamplingFixed": true,
+    "tradeRoundTrip": true,
+    "menuRoundTrip": true,
+    "tutorialTradePurchase": true,
+    "harborOpened": true,
+    "supplyAndDeparture": true,
+    "transientStorageWrites": 0,
+    "consoleErrors": 0
+  },
+  "flow": {
+    "trade": "港町點地移動 → 交易所導覽 → 進入 → 購買茶葉 1 件（1000→977 兩、0/30→1/30）→ 返回原入口",
+    "menu": "港町 → 資訊選單 → 離開回到遊戲 → 保留返回位置並重建正式素材",
+    "harbor": "港務局導覽 → 進入 → 糧食 +10（1000→980 兩、15→25）→ 啟航出海 → 世界地圖 → 再進月港",
+    "tutorial": "core_town_move、core_find_trade 與 core_buy 以觸控模式實際完成；P4 沿用既有 TutorialOverlay 與正式場景事件",
+    "storage": "瀏覽器使用 transient GameState；另以 test:town-hd2d-p4 固定案例確認任何 saveGame 呼叫都不改作用中格或玩家原存檔"
+  },
+  "stress": {
+    "mounts": 20,
+    "disposes": 20,
+    "activeRenderersAfterReturn": 0,
+    "geometriesAfterReturn": 0,
+    "texturesAfterReturn": 0,
+    "lastError": null
+  },
+  "visual": {
+    "camera": "45-degree orthographic B route with water and quay in the foreground",
+    "surfaces": ["p4-yuegang-stone", "p4-yuegang-water"],
+    "facilities": "seven existing project han_* transparent cutouts",
+    "ambience": ["animated water", "two cloth flags", "two generated tree cutouts", "market stalls", "crates", "player shadow"]
+  },
+  "notes": [
+    "Three r162 emits a WebGL1 deprecation warning; no console error occurred.",
+    "The first long stress batch reached 14/14 before the automation time limit; the same browser session completed the remaining six cycles and ended at exactly 20/20."
+  ]
+}

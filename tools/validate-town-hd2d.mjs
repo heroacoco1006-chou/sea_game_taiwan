@@ -20,16 +20,23 @@ const schema = read('src/town/townSceneData.ts')
 const renderer = read('src/town/ThreeTownRenderer.ts')
 const registry = read('src/town/townSceneRegistry.ts')
 const prototype = read('src/town/TownHd2dPrototype.ts')
+const pointer = read('src/town/townPointer.ts')
+const state = read('src/state.ts')
 const boot = read('src/scenes/BootScene.ts')
+const art = read('src/art.ts')
 const calibrator = read('tools/calibrate-town-hd2d.html')
-const evidence = JSON.parse(read('assets/town-hd2d/review/p3-browser-evidence.json'))
+const p3Evidence = JSON.parse(read('assets/town-hd2d/review/p3-browser-evidence.json'))
+const p4Evidence = JSON.parse(read('assets/town-hd2d/review/p4-browser-evidence.json'))
+const p4Manifest = JSON.parse(read('assets/town-hd2d/source/p4-manifest.json'))
 
 check(data.schemaVersion === 1, 'town scene schemaVersion 必須為 1')
 check(index.schemaVersion === 1 && index.ports?.yuegang === data.id, 'town index 必須以 portId 對應月港 scene id')
-check(data.id === 'yuegang-hd2d' && data.themeId === 'china', 'P3 樣板必須是月港／china 主題')
-check(data.camera?.projection === 'orthographic' && data.camera?.pitchDeg === 45, 'P3 必須使用老闆選定的 B 方案 45° 正交相機')
-check(data.facilities.length === 7, '月港 P3 必須有七設施')
-check(facilityKeys.every((key) => data.facilities.some((facility) => facility.key === key)), '月港 P3 七設施 key 不完整')
+check(data.id === 'yuegang-hd2d' && data.themeId === 'china', 'P4 樣板必須是月港／china 主題')
+check(data.layoutRevision === 'p4-r1', 'P4 layoutRevision 必須為 p4-r1')
+check(data.camera?.projection === 'orthographic' && data.camera?.pitchDeg === 45 && data.camera?.yawDeg === -143, 'P4 必須使用老闆選定的 B 方案 45° 正交相機與港灣前景')
+check(data.surfaces?.groundAssetId === 'p4-yuegang-stone' && data.surfaces?.waterAssetId === 'p4-yuegang-water', 'P4 地面與水面素材引用不完整')
+check(data.facilities.length === 7, '月港 P4 必須有七設施')
+check(facilityKeys.every((key) => data.facilities.some((facility) => facility.key === key)), '月港 P4 七設施 key 不完整')
 check(unique(data.facilities.map((item) => item.key)), 'facility key 不可重複')
 check(unique(ids(data.objects)) && unique(ids(data.obstacles)) && unique(ids(data.ambience)), 'object／obstacle／ambience id 不可重複')
 check(data.facilities.every((facility) => objectIds.has(facility.objectId)), 'facility objectId 必須存在')
@@ -37,28 +44,55 @@ check(data.ambience.every((item) => objectIds.has(item.objectId)), 'ambience obj
 check(data.walkable.every((polygon) => polygon.length >= 3), 'walkable polygon 至少三點')
 check(data.obstacles.every((obstacle) => obstacle.polygon.length >= 3), 'obstacle polygon 至少三點')
 
-for (const file of ['src/town/types.ts', 'src/town/TownController.ts', 'src/town/navigation.ts', 'src/town/townSceneData.ts', 'tools/test-town-navigation.mjs', 'tools/calibrate-town-hd2d.html']) {
-  check(exists(file), `缺少 P3 檔案：${file}`)
+for (const file of [
+  'src/town/types.ts',
+  'src/town/TownController.ts',
+  'src/town/navigation.ts',
+  'src/town/townSceneData.ts',
+  'src/town/townPointer.ts',
+  'tools/test-town-navigation.mjs',
+  'tools/test-town-hd2d-p4.mjs',
+  'tools/calibrate-town-hd2d.html',
+  'tools/build-town-hd2d-p4-assets.py',
+  'assets/town-hd2d/source/p4-yuegang-stone-source.png',
+  'assets/town-hd2d/source/p4-yuegang-water-source.png',
+  'assets/town-hd2d/source/p4-yuegang-tree-source.png',
+  'assets/town-hd2d/runtime/p4-yuegang-stone.png',
+  'assets/town-hd2d/runtime/p4-yuegang-water.png',
+  'assets/town-hd2d/runtime/p4-yuegang-tree.png',
+]) {
+  check(exists(file), `缺少 P4 檔案：${file}`)
 }
 check(controller.includes('moveWithCollision') && controller.includes('navigateToFacility'), 'controller 必須讓方向與點擊路線共用碰撞層')
 check(navigation.includes('segmentIsNavigable') && navigation.includes('du !== 0 && dv !== 0'), 'navigation 必須驗證線段且禁止對角切角')
 check(schema.includes('validateTownSceneData') && schema.includes('parseTownScene') && schema.includes('serializeTownScene'), '缺少 schema 驗證或匯入／匯出')
-check(renderer.includes('screenToGround') && renderer.includes('pickFacility'), 'renderer 必須提供螢幕投影與建築選取')
+check(renderer.includes('screenToGround') && renderer.includes('pickFacility') && renderer.includes('worldToScreen'), 'renderer 必須提供雙向螢幕投影與建築選取')
+check(renderer.includes('loadFormalArt') && renderer.includes('MirroredRepeatWrapping') && renderer.includes('buildSetDressing'), 'P4 renderer 必須載入正式材質與街景小物')
 check(registry.includes('townSceneForPort') && registry.includes('townIndex.ports'), 'P3 必須透過資料索引選擇港町，不可在 PortScene 寫月港特例')
-check(prototype.includes("dataset.townHd2dMode = 'P3-B'"), '預覽診斷模式必須標記 P3-B')
+check(prototype.includes("dataset.townHd2dMode = 'P4-B'"), '預覽診斷模式必須標記 P4-B')
 check(prototype.includes("scene.input.on('pointerdown'"), 'P3 預覽缺少點地導航')
+check(pointer.includes('viewportWidth / canvasWidth') && prototype.includes('townViewportPoint'), 'P4 必須修正 2 倍超取樣指標座標')
+check(prototype.includes('new TutorialOverlay') && prototype.includes("scene.scene.start('Trade'") && prototype.includes("scene.scene.start('Shipyard'") && prototype.includes("scene.scene.start('ItemShop'") && prototype.includes("scene.scene.start('Facility'"), 'P4 必須接回正式教學與七設施場景流程')
+check(state.includes('TRANSIENT_STATES') && state.includes('if (isTransientGameState(state)) return'), 'P4 驗收狀態不得覆寫玩家存檔')
+check(boot.includes('markTransientGameState') && !boot.includes("yuegang.json"), 'Boot 必須建立暫態 P4 狀態且不得預載港町 JSON')
+check(art.includes('HD2D_TOWN_URLS') && art.includes('portTownBuildingUrl') && art.includes('hd2dTownUrl'), 'P4 正式與既有設施素材 URL 未接線')
 check(calibrator.includes('parseTownScene') && calibrator.includes('serializeTownScene') && calibrator.includes('type="file"'), '校準工具必須可驗證、匯出與重載')
-check(!boot.includes("yuegang.json"), 'Boot 不得預載 P3 港町資料')
-check(evidence.checks?.mode === 'P3-B' && evidence.checks?.sevenFacilitiesReachable === true, 'P3 瀏覽器證據必須確認 B 視角七設施可達')
-check(evidence.facilityRoutes?.length === 7 && evidence.facilityRoutes.every((route) => route.key === route.reached), 'P3 瀏覽器七設施到達結果不完整')
-check(evidence.checks?.consoleErrors === 0 && evidence.calibrator?.consoleErrors === 0, 'P3 遊戲與校準工具不得有 console error')
-check(evidence.stress?.mounts === 20 && evidence.stress?.disposes === 20 && evidence.stress?.activeRenderersAfterReturn === 0, 'P3 必須完成 20 次含路線的 mount／dispose 壓力測試')
-check(evidence.stress?.geometriesAfterReturn === 0 && evidence.stress?.texturesAfterReturn === 0, 'P3 返回後 Three 資源計數必須歸零')
+check(p4Manifest.phase === 'P4' && p4Manifest.generator === 'OpenAI built-in imagegen' && p4Manifest.assets?.length === 3, 'P4 生成素材 manifest 不完整')
+check(data.facilities.every((facility) => data.objects.find((object) => object.id === facility.objectId)?.assetId.startsWith('han_')), 'P4 七設施必須使用正式透明 cutout')
+
+// P3 證據保留為架構回歸基線，P4 證據覆蓋正式流程與素材驗收。
+check(p3Evidence.checks?.mode === 'P3-B' && p3Evidence.checks?.sevenFacilitiesReachable === true, 'P3 歷史瀏覽器基線遺失')
+check(p4Evidence.checks?.mode === 'P4-B' && p4Evidence.checks?.formalArtLoaded === true, 'P4 瀏覽器證據必須確認正式素材與 B 視角')
+check(p4Evidence.checks?.pointerSupersamplingFixed === true && p4Evidence.checks?.tradeRoundTrip === true && p4Evidence.checks?.menuRoundTrip === true, 'P4 點選、交易所與選單返回流程不完整')
+check(p4Evidence.checks?.tutorialTradePurchase === true && p4Evidence.checks?.harborOpened === true && p4Evidence.checks?.supplyAndDeparture === true, 'P4 核心教學、補給與出航流程不完整')
+check(p4Evidence.checks?.transientStorageWrites === 0 && p4Evidence.checks?.consoleErrors === 0, 'P4 不得寫玩家存檔或產生 console error')
+check(p4Evidence.stress?.mounts === 20 && p4Evidence.stress?.disposes === 20 && p4Evidence.stress?.activeRenderersAfterReturn === 0, 'P4 必須完成 20 次 mount／dispose 壓力測試')
+check(p4Evidence.stress?.geometriesAfterReturn === 0 && p4Evidence.stress?.texturesAfterReturn === 0, 'P4 返回後 Three 資源計數必須歸零')
 
 if (failures.length) {
-  console.error(`HD-2D P3 驗證失敗（${failures.length} 項）：`)
+  console.error(`HD-2D P4 驗證失敗（${failures.length} 項）：`)
   failures.forEach((failure) => console.error(`- ${failure}`))
   process.exit(1)
 }
 
-console.log('HD-2D P3 結構驗證通過：月港七設施、資料引用、共用導航、投影與校準工具均已接線。')
+console.log('HD-2D P4 結構驗證通過：正式素材、七設施流程、教學、暫態存檔保護與壓力證據均已接線。')

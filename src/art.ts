@@ -68,6 +68,10 @@ export const PORT_TOWN_BACKGROUND_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/ports/town-backgrounds/*-town-bg-v1.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
 
+export const HD2D_TOWN_URLS = byBaseName(
+  import.meta.glob('/assets/town-hd2d/runtime/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+);
+
 export const HARBOR_SCENE_URLS = byBaseName(
   import.meta.glob('/assets/m5/v2/m5-2/ports/harbors/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 );
@@ -140,8 +144,10 @@ export const shipWorldDirectionalUrl = (id: string): string | undefined => SHIP_
 export const shipBattleUrl = (id: string): string | undefined => SHIP_BATTLE_URLS[id];
 export const shipCardUrl = (id: string): string | undefined => SHIP_CARD_URLS[id];
 export const characterWalkUrl = (id: string): string | undefined => CHARACTER_WALK_URLS[id];
+export const portTownBuildingUrl = (id: string): string | undefined => PORT_TOWN_BUILDING_URLS[id];
 export const shipEquipmentUrl = (id: string): string | undefined => SHIP_EQUIPMENT_URLS[id];
 export const portTownBackgroundUrl = (id: string): string | undefined => PORT_TOWN_BACKGROUND_URLS[id];
+export const hd2dTownUrl = (id: string): string | undefined => HD2D_TOWN_URLS[id];
 export const harborSceneUrl = (id: string): string | undefined => HARBOR_SCENE_URLS[id];
 export const explorationEventUrl = (id: string): string | undefined => EXPLORATION_EVENT_URLS[id];
 export const portTownBuildingUrlsForCulture = (culture: string): Array<[string, string]> =>

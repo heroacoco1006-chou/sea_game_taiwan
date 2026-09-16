@@ -2,6 +2,15 @@
 
 > 本檔記錄遊戲正式採用或預備採用的素材來源。外部素材必須標明作者、來源與授權；專案內原創生成素材也需記錄產生方式。
 
+## 港町街道 HD-2D P4 月港材質（2026-09-15）
+
+- **素材位置**：`assets/town-hd2d/source/p4-*`、`assets/town-hd2d/runtime/p4-*`。
+- **內容**：月港石板地面、港灣水面與一棵透明榕樹 source，另輸出 WebGL1 可用的 1024×1024 runtime 材質／cutout；七設施沿用本專案既有 `han_*` 透明建築，林海生沿用既有行走圖。
+- **作者／操作者**：Codex。
+- **產生方式**：三張素材由 OpenAI 內建 imagegen 分別生成；`tools/build-town-hd2d-p4-assets.py` 只做 Lanczos 縮圖、置中與 RGB／RGBA 正規化，原始圖完整保留。完整 prompt 與處理方式記於 `assets/town-hd2d/source/p4-manifest.json`，未使用外部素材。
+- **授權**：本專案自製 AI 輔助生成素材，可隨本專案使用與修改。
+- **備註**：素材依 P1 核准的 B 視角與非像素航海手繪方向製作；沒有複製、裁切、描圖或改作 KOEI 與其他商業遊戲素材。
+
 ## 港町街道 HD-2D P1 視覺候選（2026-09-14）
 
 - **素材位置**：`assets/town-hd2d/source/`、`assets/town-hd2d/review/`。

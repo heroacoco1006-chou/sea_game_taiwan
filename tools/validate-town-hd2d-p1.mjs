@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SOURCE_DIR = path.join(ROOT, 'assets', 'town-hd2d', 'source')
 const REVIEW_DIR = path.join(ROOT, 'assets', 'town-hd2d', 'review')
+const RUNTIME_DIR = path.join(ROOT, 'assets', 'town-hd2d', 'runtime')
 const MANIFEST_PATH = path.join(SOURCE_DIR, 'p1-manifest.json')
 
 const failures = []
@@ -54,7 +55,8 @@ expectPng(REVIEW_DIR, 'yuegang-p1-layout-sketch.png', 1600, 900)
 
 const credits = fs.readFileSync(path.join(ROOT, 'assets', 'CREDITS.md'), 'utf8')
 check(credits.includes('港町街道 HD-2D P1 視覺候選'), 'CREDITS 缺少 P1 候選素材紀錄')
-check(!fs.existsSync(path.join(ROOT, 'assets', 'town-hd2d', 'runtime')), 'P1 不得建立 runtime 素材目錄')
+const runtimeFiles = fs.existsSync(RUNTIME_DIR) ? fs.readdirSync(RUNTIME_DIR) : []
+check(!runtimeFiles.some((filename) => /p1|camera-[ab]|candidate/i.test(filename)), 'P1 視覺候選不得進入 runtime；後續 phase 正式素材不受此限制')
 
 if (failures.length > 0) {
   console.error(`HD-2D P1 驗證失敗（${failures.length} 項）：`)

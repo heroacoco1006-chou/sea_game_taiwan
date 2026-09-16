@@ -15,6 +15,7 @@ const title = read('src/scenes/TitleScene.ts')
 const renderer = read('src/town/ThreeTownRenderer.ts')
 const session = read('src/town/TownHd2dPrototype.ts')
 const loader = read('src/town/TownAssetLoader.ts')
+const state = read('src/state.ts')
 const manifest = JSON.parse(read('assets/town-hd2d/source/p1-manifest.json'))
 const browserEvidence = JSON.parse(read('assets/town-hd2d/review/p2-browser-evidence.json'))
 
@@ -26,7 +27,7 @@ check(manifest.selectedCandidate === 'camera-b-45deg', 'P1 必須記錄老闆選
 check(boot.includes("query.get('townPreview') === 'hd2d'"), 'Boot 缺少隔離預覽入口')
 check(boot.includes("hd2dPrototype: true"), 'Boot 未把預覽旗標傳給 Port')
 check(port.includes('if (this.hd2dPrototypeMode)'), 'Port 缺少原型隔離分支')
-check(title.includes('返回 HD-2D 原型'), 'Title 缺少 20 次往返用開發入口')
+check(title.includes('返回 HD-2D 原型') || title.includes('返回 HD-2D 月港'), 'Title 缺少 20 次往返用開發入口')
 check(renderer.includes('new THREE.WebGLRenderer'), 'P2 未建立 Three renderer')
 check(renderer.includes('context: gl'), 'P2 未共用 Phaser WebGL context')
 check(renderer.includes('renderer.resetState()'), 'P2 未重設 Three WebGL state')
@@ -38,13 +39,16 @@ for (const [name, source] of [['renderer', renderer], ['session', session], ['lo
   check(!source.includes('requestAnimationFrame'), `${name} 不得建立第二個 RAF`)
   check(!source.includes('.setSize('), `${name} 不得改寫 Phaser canvas 尺寸`)
   check(!source.includes('localStorage'), `${name} 不得讀寫玩家存檔 storage`)
-  check(!source.includes('saveGame('), `${name} 不得寫入 GameState`)
   check(!source.includes('forceContextLoss'), `${name} 不得強制遺失共用 context`)
 }
+for (const [name, source] of [['renderer', renderer], ['loader', loader]]) {
+  check(!source.includes('saveGame('), `${name} 不得寫入 GameState`)
+}
+check(state.includes('TRANSIENT_STATES') && state.includes('if (isTransientGameState(state)) return'), 'P4 正式場景往返必須以 transient state 保持 P2 零存檔邊界')
 
 check(session.includes("scene.scene.launch('Settings'"), 'P2 必須驗證 Phaser 設定覆蓋層')
 check(session.includes("scene.scene.start('Title')"), 'P2 必須可回既有標題場景')
-check(session.includes('storageWrites: 0'), 'P2 偵錯資訊必須明示零存檔寫入')
+check(session.includes('storageWrites = isTransientGameState') && session.includes('townHd2dStorageWrites'), 'P2／P4 偵錯資訊必須明示 transient 預覽零存檔寫入')
 check(session.includes('dataset.townHd2dDiagnostics'), 'P2 必須把資源計數發佈到 canvas 診斷屬性')
 check(renderer.includes('playerX: this.player?.position.x'), 'P2 診斷必須提供角色 X 座標以驗證輸入')
 check(renderer.includes('playerZ: this.player?.position.z'), 'P2 診斷必須提供角色 Z 座標以驗證輸入')

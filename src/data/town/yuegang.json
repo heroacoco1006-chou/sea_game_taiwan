@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "yuegang-hd2d",
   "themeId": "china",
-  "layoutRevision": "p3-r1",
+  "layoutRevision": "p4-r1",
   "world": {
     "width": 18,
     "height": 10,
@@ -13,8 +13,12 @@
   "camera": {
     "projection": "orthographic",
     "pitchDeg": 45,
-    "yawDeg": 37,
+    "yawDeg": -143,
     "viewSpan": 10
+  },
+  "surfaces": {
+    "groundAssetId": "p4-yuegang-stone",
+    "waterAssetId": "p4-yuegang-water"
   },
   "spawn": { "u": 0, "v": -2.45 },
   "walkable": [
@@ -76,19 +80,31 @@
     { "key": "office", "label": "官府／商館", "objectId": "office-house", "door": { "u": 2.1, "v": 3.42 }, "approach": { "u": 2.1, "v": 2.95 }, "interactionRadius": 0.72 },
     { "key": "item", "label": "道具屋", "objectId": "item-house", "door": { "u": -6.15, "v": -0.48 }, "approach": { "u": -6.15, "v": -0.95 }, "interactionRadius": 0.72 },
     { "key": "shipyard", "label": "造船廠", "objectId": "shipyard-house", "door": { "u": 6.25, "v": -0.48 }, "approach": { "u": 6.25, "v": -0.95 }, "interactionRadius": 0.72 },
-    { "key": "harbor", "label": "港務局", "objectId": "harbor-gate", "door": { "u": 0, "v": -2.55 }, "approach": { "u": 0, "v": -2.2 }, "interactionRadius": 0.72 }
+    { "key": "harbor", "label": "港務局", "objectId": "harbor-gate", "door": { "u": 1.5, "v": -2.55 }, "approach": { "u": 1.5, "v": -2.2 }, "interactionRadius": 0.72 }
   ],
   "objects": [
-    { "id": "trade-house", "assetId": "greybox-trade", "at": { "u": 4.8, "v": 3.2 }, "elevation": 0, "scale": 1, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "tavern-house", "assetId": "greybox-tavern", "at": { "u": -5.6, "v": 3.1 }, "elevation": 0, "scale": 0.92, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "inn-house", "assetId": "greybox-inn", "at": { "u": -2, "v": 4.55 }, "elevation": 0, "scale": 0.82, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "office-house", "assetId": "greybox-office", "at": { "u": 2.1, "v": 4.55 }, "elevation": 0, "scale": 0.85, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "item-house", "assetId": "greybox-item", "at": { "u": -6.15, "v": 0.75 }, "elevation": 0, "scale": 0.78, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "shipyard-house", "assetId": "greybox-shipyard", "at": { "u": 6.25, "v": 0.75 }, "elevation": 0, "scale": 0.9, "rotationDeg": 0, "occlusion": "solid" },
-    { "id": "harbor-gate", "assetId": "greybox-harbor", "at": { "u": 0, "v": -2.75 }, "elevation": 0, "scale": 0.72, "rotationDeg": 0, "occlusion": "none" },
-    { "id": "harbor-water", "assetId": "greybox-water", "at": { "u": 0, "v": -4.8 }, "elevation": -0.18, "scale": 1, "rotationDeg": 0, "occlusion": "none" }
+    { "id": "trade-house", "assetId": "han_trade", "at": { "u": 4.8, "v": 3.2 }, "elevation": 0, "scale": 1, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "tavern-house", "assetId": "han_tavern", "at": { "u": -5.6, "v": 3.1 }, "elevation": 0, "scale": 0.92, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "inn-house", "assetId": "han_inn", "at": { "u": -2, "v": 4.55 }, "elevation": 0, "scale": 0.82, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "office-house", "assetId": "han_office", "at": { "u": 2.1, "v": 4.55 }, "elevation": 0, "scale": 0.85, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "item-house", "assetId": "han_item", "at": { "u": -6.15, "v": 0.75 }, "elevation": 0, "scale": 0.78, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "shipyard-house", "assetId": "han_shipyard", "at": { "u": 6.25, "v": 0.75 }, "elevation": 0, "scale": 0.9, "rotationDeg": 0, "occlusion": "solid" },
+    { "id": "harbor-gate", "assetId": "han_harbor", "at": { "u": 1.5, "v": -3.2 }, "elevation": 0, "scale": 0.72, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "harbor-water", "assetId": "p4-yuegang-water", "at": { "u": 0, "v": -4.8 }, "elevation": -0.18, "scale": 1, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "flag-west", "assetId": "decor-flag", "at": { "u": -3.7, "v": 1.9 }, "elevation": 0, "scale": 0.9, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "flag-east", "assetId": "decor-flag", "at": { "u": 3.25, "v": 1.75 }, "elevation": 0, "scale": 0.82, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "tree-west", "assetId": "p4-yuegang-tree", "at": { "u": -4.1, "v": 4.9 }, "elevation": 0, "scale": 0.82, "rotationDeg": 0, "occlusion": "fade" },
+    { "id": "tree-east", "assetId": "p4-yuegang-tree", "at": { "u": 5.8, "v": 4.85 }, "elevation": 0, "scale": 0.9, "rotationDeg": 0, "occlusion": "fade" },
+    { "id": "market-west", "assetId": "decor-market-stall", "at": { "u": -7.55, "v": 4.55 }, "elevation": 0, "scale": 0.78, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "market-east", "assetId": "decor-market-stall", "at": { "u": 7.45, "v": 3.05 }, "elevation": 0, "scale": 0.8, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "crates-west", "assetId": "decor-crates", "at": { "u": -2.7, "v": -2.35 }, "elevation": 0, "scale": 0.72, "rotationDeg": 0, "occlusion": "none" },
+    { "id": "crates-east", "assetId": "decor-crates", "at": { "u": 3.35, "v": -2.3 }, "elevation": 0, "scale": 0.78, "rotationDeg": 0, "occlusion": "none" }
   ],
   "ambience": [
-    { "id": "water-wave", "kind": "water", "objectId": "harbor-water", "seed": 31415 }
+    { "id": "water-wave", "kind": "water", "objectId": "harbor-water", "seed": 31415 },
+    { "id": "flag-sway-west", "kind": "flag", "objectId": "flag-west", "seed": 1207 },
+    { "id": "flag-sway-east", "kind": "flag", "objectId": "flag-east", "seed": 2718 },
+    { "id": "foliage-west", "kind": "foliage", "objectId": "tree-west", "seed": 1618 },
+    { "id": "foliage-east", "kind": "foliage", "objectId": "tree-east", "seed": 5772 }
   ]
 }

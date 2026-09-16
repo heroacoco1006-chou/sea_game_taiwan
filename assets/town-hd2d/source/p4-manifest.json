@@ -1,0 +1,37 @@
+{
+  "phase": "P4",
+  "status": "runtime-candidate",
+  "created": "2026-09-15",
+  "generator": "OpenAI built-in imagegen",
+  "operator": "Codex",
+  "license": "Project-original AI-assisted generated material; may be used and modified by this project",
+  "cameraDirection": "camera-b-45deg",
+  "assets": [
+    {
+      "id": "p4-yuegang-stone",
+      "source": "p4-yuegang-stone-source.png",
+      "runtime": "../runtime/p4-yuegang-stone.png",
+      "useCase": "stylized-concept",
+      "purpose": "repeatable warm Fujian harbor flagstone ground material",
+      "prompt": "Early-17th-century Fujian harbor-town stone paving; refined non-pixel hand-painted nautical RPG texture; strict top-down square material sample; warm ochre irregular flagstones, dusty mortar, restrained moss; seamless repeat; no objects, text, marks, UI or commercial-game references."
+    },
+    {
+      "id": "p4-yuegang-water",
+      "source": "p4-yuegang-water-source.png",
+      "runtime": "../runtime/p4-yuegang-water.png",
+      "useCase": "stylized-concept",
+      "purpose": "repeatable animated deep-teal harbor water material",
+      "prompt": "Calm deep-teal coastal harbor water with small hand-painted ripples and restrained warm reflection; refined non-pixel nautical RPG texture; strict top-down square material sample; seamless repeat; no shore, dock, boat, objects, text, marks, UI or commercial-game references."
+    },
+    {
+      "id": "p4-yuegang-tree",
+      "source": "p4-yuegang-tree-source.png",
+      "runtime": "../runtime/p4-yuegang-tree.png",
+      "useCase": "stylized-concept",
+      "purpose": "transparent animated shade-tree cutout for the Yuegang market street",
+      "prompt": "One complete mature Chinese banyan-like shade tree for an early-17th-century Fujian harbor; refined non-pixel hand-painted nautical RPG prop; full three-quarter orthographic silhouette; warm late-afternoon light; genuine transparent background; no ground, people, buildings, text, marks, UI or commercial-game references."
+    }
+  ],
+  "processing": "tools/build-town-hd2d-p4-assets.py normalizes preserved sources to WebGL1-safe 1024x1024 runtime textures with Lanczos filtering; RGB for surfaces and RGBA for the tree cutout",
+  "reusedProjectAssets": "Existing han_trade, han_tavern, han_inn, han_office, han_item, han_shipyard and han_harbor transparent cutouts; existing lin walk spritesheet"
+}

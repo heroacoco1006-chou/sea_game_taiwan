@@ -36,6 +36,7 @@ export interface TownSceneData {
   layoutRevision: string;
   world: { width: number; height: number; unitsToWorld: number; playerRadius: number; navigationStep: number };
   camera: { projection: 'orthographic'; pitchDeg: number; yawDeg: number; viewSpan: number };
+  surfaces: { groundAssetId: string; waterAssetId: string };
   spawn: TownGroundPoint;
   walkable: TownGroundPoint[][];
   obstacles: { id: string; polygon: TownGroundPoint[] }[];
@@ -68,6 +69,7 @@ export interface TownRenderer {
   setNavigationPath(points: TownGroundPoint[]): void;
   screenToGround(screenX: number, screenY: number, viewportWidth: number, viewportHeight: number): TownGroundPoint | null;
   pickFacility(screenX: number, screenY: number, viewportWidth: number, viewportHeight: number): TownFacilityKey | null;
+  worldToScreen(point: TownGroundPoint, viewportWidth: number, viewportHeight: number): { x: number; y: number };
   snapshot(): TownRendererSnapshot;
 }
 

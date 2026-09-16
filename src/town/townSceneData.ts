@@ -77,6 +77,11 @@ export function validateTownSceneData(raw: unknown): string[] {
       if (!isFiniteNumber(raw.camera[key])) errors.push(`camera.${key} 必須是有限數`);
     }
   }
+  if (!isRecord(raw.surfaces)) errors.push('surfaces 必須是物件');
+  else {
+    if (typeof raw.surfaces.groundAssetId !== 'string' || !raw.surfaces.groundAssetId) errors.push('surfaces.groundAssetId 必須是非空字串');
+    if (typeof raw.surfaces.waterAssetId !== 'string' || !raw.surfaces.waterAssetId) errors.push('surfaces.waterAssetId 必須是非空字串');
+  }
   if (!pointValid(raw.spawn)) errors.push('spawn 必須是有限座標');
 
   const polygons: TownGroundPoint[][] = [];
