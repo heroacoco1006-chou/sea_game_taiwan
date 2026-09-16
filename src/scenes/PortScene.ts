@@ -182,11 +182,16 @@ export default class PortScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { portId: string; spawn?: { x: number; y: number }; hd2dPrototype?: boolean }): void {
+  init(data: { portId: string; spawn?: { x: number; y: number }; hd2dPrototype?: boolean; forceLegacy?: boolean }): void {
     this.hd2dPrototype?.dispose();
     this.hd2dPrototype = undefined;
-    const queryPreview = new URLSearchParams(window.location.search).get('townPreview') === 'hd2d';
-    this.hd2dPrototypeMode = data.hd2dPrototype === true || queryPreview;
+    const query = new URLSearchParams(window.location.search);
+    const queryPreview = query.get('townPreview') === 'hd2d';
+    const queryLegacy = query.get('townRenderer') === 'legacy';
+    if (data.forceLegacy === true || queryLegacy) this.registry.set('townRendererOverride', 'legacy');
+    const forceLegacy = this.registry.get('townRendererOverride') === 'legacy';
+    this.hd2dPrototypeMode = !forceLegacy && (data.hd2dPrototype === true || queryPreview);
+    this.game.canvas.dataset.townRendererMode = this.hd2dPrototypeMode ? 'hd2d' : 'legacy';
     this.port = PORTS.find((p) => p.id === data.portId)!;
     const themeId = PORT_TOWN_THEMES[this.port.id];
     this.townLayout = themeId ? PORT_TOWN_LAYOUTS[themeId] ?? null : null;

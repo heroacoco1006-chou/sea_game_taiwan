@@ -81,6 +81,9 @@ export interface TownRendererSnapshot {
   cameraX: number;
   cameraZ: number;
   viewSpan: number;
+  frameSamples: number;
+  medianFps: number;
+  p95FrameMs: number;
 }
 
 export interface TownRenderer {

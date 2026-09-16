@@ -21,7 +21,10 @@
     "validate:town-hd2d": "node tools/validate-town-hd2d.mjs",
     "test:town-navigation": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-navigation.mjs",
     "test:town-hd2d-p4": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-hd2d-p4.mjs",
-    "test:town-hd2d-p5": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-hd2d-p5.mjs"
+    "test:town-hd2d-p5": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-hd2d-p5.mjs",
+    "test:town-transitions": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-transitions.mjs",
+    "test:town-hd2d-p6": "node --experimental-loader ./tools/node-ts-json-loader.mjs tools/test-town-hd2d-p6.mjs",
+    "validate:town-hd2d-p6": "node tools/validate-town-hd2d-p6.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0",

@@ -1,0 +1,56 @@
+{
+  "phase": "P6",
+  "date": "2026-09-16",
+  "environment": {
+    "host": "Windows local development host",
+    "browser": "Codex in-app Chromium",
+    "drawingBuffer": [2560, 1440],
+    "note": "iPad and iPhone rows are viewport simulations, not physical iOS Safari devices. Physical-device confirmation remains an owner or designated tester check before public release."
+  },
+  "performance": [
+    { "label": "desktop", "viewport": [1280, 720], "samples": 295, "medianFps": 59.9, "p95FrameMs": 21.3, "thresholdFps": 55, "thresholdP95Ms": 25, "passed": true },
+    { "label": "ipad-simulated", "viewport": [1180, 820], "samples": 336, "medianFps": 59.9, "p95FrameMs": 17.4, "thresholdFps": 30, "thresholdP95Ms": 45, "passed": true },
+    { "label": "iphone-landscape-simulated", "viewport": [844, 390], "samples": 328, "medianFps": 59.9, "p95FrameMs": 18.0, "thresholdFps": 30, "thresholdP95Ms": 45, "passed": true },
+    { "label": "iphone-portrait-simulated", "viewport": [390, 844], "samples": 214, "medianFps": 49.0, "p95FrameMs": 30.1, "thresholdFps": 30, "thresholdP95Ms": 45, "passed": true }
+  ],
+  "optimization": {
+    "before": { "desktopMedianFps": 47.4, "desktopP95FrameMs": 28.6, "renderCalls": 56, "geometries": 58 },
+    "after": { "desktopMedianFps": 59.9, "desktopP95FrameMs": 21.3, "renderCalls": 39, "geometries": 42 },
+    "method": "Instanced repeated dock, market and crate geometry; Lambert materials for baked ground, water and dressing."
+  },
+  "assetBudget": {
+    "largestCombination": "yuegang/chiyo",
+    "compressedMiB": 5.33,
+    "decodedMipEstimateMiB": 23.44,
+    "compressedLimitMiB": 12,
+    "decodedLimitMiB": 128,
+    "passed": true
+  },
+  "stress": {
+    "cycles": 20,
+    "mounts": 20,
+    "disposes": 20,
+    "activeRenderersAfterReturn": 0,
+    "geometriesAfterReturn": 0,
+    "texturesAfterReturn": 0,
+    "renderCallsAfterReturn": 0,
+    "storageWrites": 0,
+    "consoleErrors": 0
+  },
+  "fallback": {
+    "missingAsset": "han_trade",
+    "fallbackGeometryVisible": true,
+    "navigationStillWorks": true,
+    "storageWrites": 0,
+    "consoleErrors": 0,
+    "legacyQuery": "townRenderer=legacy",
+    "legacyRendererMode": "legacy",
+    "threeRendererCreated": false,
+    "legacyVisualLoaded": true
+  },
+  "knownLimits": [
+    "No physical iPad or iPhone Safari device was available to Codex in this run.",
+    "The automated samples are short engineering checks, not the proposed 60-second walk plus 10-minute thermal soak.",
+    "20 Mbps cold-cache timing was not emulated; the compressed asset budget is below the 12 MiB gate and first-load timing remains a pre-release physical-network check."
+  ]
+}

@@ -73,8 +73,9 @@ export default class TitleScene extends Phaser.Scene {
     if (previewQuery.get('townPreview') === 'hd2d') {
       const previewPortId = previewQuery.get('port') ?? 'yuegang';
       const previewPortName = PORTS.find((port) => port.id === previewPortId)?.name ?? previewPortId;
-      makeButton(this, 155, 654, 250, 42, `返回 HD-2D ${previewPortName}`, () => {
-        this.scene.start('Port', { portId: previewPortId, hd2dPrototype: true });
+      const previewLegacy = previewQuery.get('townRenderer') === 'legacy';
+      makeButton(this, 155, 654, 250, 42, `返回${previewLegacy ? '舊版' : ' HD-2D'} ${previewPortName}`, () => {
+        this.scene.start('Port', { portId: previewPortId, hd2dPrototype: !previewLegacy, forceLegacy: previewLegacy });
       }, 15);
     }
 

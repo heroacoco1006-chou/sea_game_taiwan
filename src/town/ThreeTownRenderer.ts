@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import * as THREE from 'three';
 import { TownAssetLoader } from './TownAssetLoader';
 import { townCameraFollowTarget } from './townCamera';
+import { summarizeTownFrameTimes } from './townPerformance';
 import { townPrototypeDiagnostics } from './prototypeDiagnostics';
 import type {
   TownFacilityKey,
@@ -58,12 +59,12 @@ export class ThreeTownRenderer implements TownRenderer {
   private playerCanvas?: HTMLCanvasElement;
   private playerContext?: CanvasRenderingContext2D;
   private routeLine?: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
-  private ground?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  private groundMaterial?: THREE.MeshStandardMaterial;
+  private ground?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
+  private groundMaterial?: THREE.MeshLambertMaterial;
   private heroImage?: HTMLImageElement;
   private lastHeroFrame = -1;
-  private water?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  private waterMaterial?: THREE.MeshStandardMaterial;
+  private water?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
+  private waterMaterial?: THREE.MeshLambertMaterial;
   private playerShadow?: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
   private readonly loadedTextures: THREE.Texture[] = [];
   private readonly facilityFallbacks = new Map<TownFacilityKey, THREE.Object3D[]>();
@@ -78,6 +79,9 @@ export class ThreeTownRenderer implements TownRenderer {
   private paused = false;
   private disposed = false;
   private frames = 0;
+  private diagnosticsMounted = false;
+  private readonly frameTimes: number[] = [];
+  private lastFrameAt = 0;
 
   constructor(
     private readonly phaserScene: Phaser.Scene,
@@ -120,12 +124,19 @@ export class ThreeTownRenderer implements TownRenderer {
     this.mounted = true;
     this.clock.start();
     townPrototypeDiagnostics.mounted();
+    this.diagnosticsMounted = true;
     this.loadHeroTexture();
     this.loadFormalArt();
   }
 
   update(time: number, delta: number, movement: TownMovementInput): void {
     if (!this.mounted || this.paused || this.disposed || !this.player) return;
+    const frameAt = performance.now();
+    if (this.lastFrameAt > 0) {
+      this.frameTimes.push(frameAt - this.lastFrameAt);
+      if (this.frameTimes.length > 3600) this.frameTimes.splice(0, this.frameTimes.length - 3600);
+    }
+    this.lastFrameAt = frameAt;
     const length = Math.hypot(movement.x, movement.y);
     const nx = length > 0 ? movement.x / length : 0;
 
@@ -199,12 +210,14 @@ export class ThreeTownRenderer implements TownRenderer {
 
   pause(): void {
     this.paused = true;
+    this.lastFrameAt = 0;
     this.clock.stop();
   }
 
   resume(): void {
     if (!this.mounted || this.disposed) return;
     this.paused = false;
+    this.lastFrameAt = performance.now();
     this.clock.start();
   }
 
@@ -228,6 +241,7 @@ export class ThreeTownRenderer implements TownRenderer {
 
   snapshot(): TownRendererSnapshot {
     const info = this.threeRenderer?.info;
+    const performance = summarizeTownFrameTimes(this.frameTimes);
     return {
       mounted: this.mounted && !this.disposed,
       paused: this.paused,
@@ -242,6 +256,9 @@ export class ThreeTownRenderer implements TownRenderer {
       cameraX: this.cameraTarget.x,
       cameraZ: this.cameraTarget.z,
       viewSpan: this.sceneData.camera.viewSpan,
+      frameSamples: performance.samples,
+      medianFps: performance.medianFps,
+      p95FrameMs: performance.p95FrameMs,
     };
   }
 
@@ -271,7 +288,10 @@ export class ThreeTownRenderer implements TownRenderer {
     this.threeRenderer?.dispose();
     this.threeRenderer = undefined;
     this.mounted = false;
-    townPrototypeDiagnostics.disposed();
+    if (this.diagnosticsMounted) {
+      this.diagnosticsMounted = false;
+      townPrototypeDiagnostics.disposed();
+    }
   }
 
   private buildPrototypeScene(): void {
@@ -303,7 +323,7 @@ export class ThreeTownRenderer implements TownRenderer {
     sun.position.set(-5, 10, -7);
     this.threeScene.add(sun);
 
-    this.groundMaterial = new THREE.MeshStandardMaterial({ color: palette.groundTint, roughness: 0.92 });
+    this.groundMaterial = new THREE.MeshLambertMaterial({ color: palette.groundTint });
     this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(this.sceneData.world.width, this.sceneData.world.height),
       this.groundMaterial,
@@ -313,7 +333,7 @@ export class ThreeTownRenderer implements TownRenderer {
     this.threeScene.add(this.ground);
 
     const waterObject = this.sceneData.objects.find((object) => object.id === 'harbor-water');
-    this.waterMaterial = new THREE.MeshStandardMaterial({ color: palette.waterTint, roughness: 0.35, metalness: 0.08 });
+    this.waterMaterial = new THREE.MeshLambertMaterial({ color: palette.waterTint });
     this.water = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 4),
       this.waterMaterial,
@@ -322,27 +342,35 @@ export class ThreeTownRenderer implements TownRenderer {
     this.water.position.set(waterObject?.at.u ?? 0, waterObject?.elevation ?? -0.18, waterObject?.at.v ?? -4.8);
     this.threeScene.add(this.water);
 
-    const stone = new THREE.MeshStandardMaterial({ color: palette.stone, roughness: 0.95 });
+    const stone = new THREE.MeshLambertMaterial({ color: palette.stone });
     const quay = new THREE.Mesh(new THREE.BoxGeometry(this.sceneData.world.width, 0.55, 0.7), stone);
     quay.position.set(0, 0.12, -3.15);
     this.threeScene.add(quay);
 
-    const wood = new THREE.MeshStandardMaterial({ color: palette.wood, roughness: 0.9 });
+    const wood = new THREE.MeshLambertMaterial({ color: palette.wood });
     const dock = new THREE.Group();
     dock.position.set(-3.8, -0.02, -4.65);
+    const plankGeometry = new THREE.BoxGeometry(3.15, 0.18, 0.25);
+    const planks = new THREE.InstancedMesh(plankGeometry, wood, 12);
+    const instanceMatrix = new THREE.Matrix4();
     for (let index = 0; index < 12; index += 1) {
-      const plank = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.18, 0.25), wood);
-      plank.position.set(0, Math.sin(index * 1.7) * 0.015, -1.38 + index * 0.25);
-      dock.add(plank);
+      instanceMatrix.makeTranslation(0, Math.sin(index * 1.7) * 0.015, -1.38 + index * 0.25);
+      planks.setMatrixAt(index, instanceMatrix);
     }
-    const postMaterial = new THREE.MeshStandardMaterial({ color: 0x4c301f, roughness: 0.95 });
+    planks.instanceMatrix.needsUpdate = true;
+    dock.add(planks);
+    const postMaterial = new THREE.MeshLambertMaterial({ color: 0x4c301f });
+    const posts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.13, 1.15, 8), postMaterial, 4);
+    let postIndex = 0;
     for (const x of [-1.42, 1.42]) {
       for (const z of [-1.38, 1.35]) {
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 1.15, 8), postMaterial);
-        post.position.set(x, -0.22, z);
-        dock.add(post);
+        instanceMatrix.makeTranslation(x, -0.22, z);
+        posts.setMatrixAt(postIndex, instanceMatrix);
+        postIndex += 1;
       }
     }
+    posts.instanceMatrix.needsUpdate = true;
+    dock.add(posts);
     this.threeScene.add(dock);
 
     for (const facility of this.sceneData.facilities) {
@@ -626,10 +654,12 @@ export class ThreeTownRenderer implements TownRenderer {
   }
 
   private buildSetDressing(): void {
-    const wood = new THREE.MeshStandardMaterial({ color: 0x76502f, roughness: 0.94 });
-    const darkWood = new THREE.MeshStandardMaterial({ color: 0x4d3425, roughness: 0.96 });
-    const canvas = new THREE.MeshStandardMaterial({ color: 0xd7bd82, roughness: 0.9, side: THREE.DoubleSide });
-    const goods = new THREE.MeshStandardMaterial({ color: 0xa05f2e, roughness: 0.9 });
+    const wood = new THREE.MeshLambertMaterial({ color: 0x76502f });
+    const darkWood = new THREE.MeshLambertMaterial({ color: 0x4d3425 });
+    const canvas = new THREE.MeshLambertMaterial({ color: 0xd7bd82, side: THREE.DoubleSide });
+    const goods = new THREE.MeshLambertMaterial({ color: 0xa05f2e });
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
     for (const object of this.sceneData.objects) {
       if (object.assetId === 'decor-market-stall') {
         const group = new THREE.Group();
@@ -637,33 +667,40 @@ export class ThreeTownRenderer implements TownRenderer {
         const table = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.14, 0.62), wood);
         table.position.y = 0.72;
         group.add(table);
+        const legs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.08, 1.55, 0.08), darkWood, 4);
+        let legIndex = 0;
         for (const x of [-0.62, 0.62]) {
           for (const z of [-0.22, 0.22]) {
-            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.55, 0.08), darkWood);
-            leg.position.set(x, 0.78, z);
-            group.add(leg);
+            matrix.makeTranslation(x, 0.78, z);
+            legs.setMatrixAt(legIndex, matrix);
+            legIndex += 1;
           }
         }
+        legs.instanceMatrix.needsUpdate = true;
+        group.add(legs);
         const awning = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.1), canvas);
         awning.rotation.x = -Math.PI / 2;
         awning.position.set(0, 1.55, 0);
         group.add(awning);
-        for (const x of [-0.48, 0, 0.48]) {
-          const basket = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), goods);
-          basket.scale.y = 0.58;
-          basket.position.set(x, 0.87, 0);
-          group.add(basket);
-        }
+        const baskets = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 8, 6), goods, 3);
+        [-0.48, 0, 0.48].forEach((x, index) => {
+          matrix.compose(new THREE.Vector3(x, 0.87, 0), quaternion, new THREE.Vector3(1, 0.58, 1));
+          baskets.setMatrixAt(index, matrix);
+        });
+        baskets.instanceMatrix.needsUpdate = true;
+        group.add(baskets);
         group.scale.setScalar(object.scale);
         this.threeScene.add(group);
       } else if (object.assetId === 'decor-crates') {
         const group = new THREE.Group();
         group.position.set(object.at.u, object.elevation, object.at.v);
-        for (const [x, y, z, scale] of [[0, 0.25, 0, 0.5], [0.43, 0.2, 0.05, 0.4], [0.12, 0.66, 0.02, 0.36]] as const) {
-          const crate = new THREE.Mesh(new THREE.BoxGeometry(scale, scale, scale), wood);
-          crate.position.set(x, y, z);
-          group.add(crate);
-        }
+        const crates = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), wood, 3);
+        [[0, 0.25, 0, 0.5], [0.43, 0.2, 0.05, 0.4], [0.12, 0.66, 0.02, 0.36]].forEach(([x, y, z, scale], index) => {
+          matrix.compose(new THREE.Vector3(x, y, z), quaternion, new THREE.Vector3(scale, scale, scale));
+          crates.setMatrixAt(index, matrix);
+        });
+        crates.instanceMatrix.needsUpdate = true;
+        group.add(crates);
         group.scale.setScalar(object.scale);
         this.threeScene.add(group);
       }

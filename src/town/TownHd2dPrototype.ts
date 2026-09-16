@@ -121,7 +121,10 @@ export class TownHd2dPrototype {
     try {
       const schemaErrors = validateTownSceneData(this.sceneData);
       if (schemaErrors.length > 0) throw new Error(schemaErrors.join('；'));
-      const resolveAsset = (assetId: string): string | undefined => hd2dTownUrl(assetId) ?? portTownBuildingUrl(assetId);
+      const failedAssetId = new URLSearchParams(window.location.search).get('townAssetFailure');
+      const resolveAsset = (assetId: string): string | undefined => (
+        assetId === failedAssetId ? undefined : hd2dTownUrl(assetId) ?? portTownBuildingUrl(assetId)
+      );
       this.renderer = new ThreeTownRenderer(this.scene, characterWalkUrl(this.state.story.heroId), this.sceneData, resolveAsset);
       this.renderer.mount();
       this.controller = new TownController(this.sceneData, this.renderer, this.initialPosition);
@@ -134,20 +137,24 @@ export class TownHd2dPrototype {
       const port = PORTS.find((candidate) => candidate.id === this.portId);
       if (port) audio.playBgm(townBgmForRegion(port.region));
       this.statusText.setText(`P5 ${this.portName}已啟動｜${this.sceneData.themeId} 主題｜正式素材會自動取代安全灰模`);
+      this.scene.game.canvas.dataset.townHd2dInteractiveMs = performance.now().toFixed(1);
       this.publishDiagnostics();
     } catch (error) {
+      this.renderer?.dispose();
+      this.renderer = undefined;
       townPrototypeDiagnostics.failed(error);
       const message = error instanceof Error ? error.message : String(error);
       this.statusText.setText(`原型未啟動：${message}`);
       this.publishDiagnostics();
-      this.scene.add.rectangle(BASE_W / 2, BASE_H / 2, 760, 160, 0x3a2018, 0.94).setDepth(90);
+      this.scene.add.rectangle(BASE_W / 2, BASE_H / 2, 760, 220, 0x3a2018, 0.94).setDepth(90);
       this.scene.add
-        .text(BASE_W / 2, BASE_H / 2, `此裝置不支援 HD-2D ${this.portName}樣板。\n${message}\n正式遊戲仍使用舊港町，不受影響。`, {
+        .text(BASE_W / 2, BASE_H / 2 - 28, `此裝置無法啟動 HD-2D ${this.portName}。\n${message}\n可立即切回舊版港町，遊戲進度不會改變。`, {
           ...textStyle(20, '#fff0d0'),
           align: 'center',
           lineSpacing: 8,
         })
         .setOrigin(0.5).setDepth(91);
+      makeButton(this.scene, BASE_W / 2, BASE_H / 2 + 72, 230, 44, '改用舊版港町', () => this.switchToLegacy(), 16).setDepth(92);
     }
   }
 
@@ -220,7 +227,7 @@ export class TownHd2dPrototype {
 
   private onContextLost = (event: Event): void => {
     event.preventDefault();
-    this.statusText.setText('WebGL context 已中斷；請回標題後重新進入，正式舊港町不受此預覽影響。');
+    this.statusText.setText('WebGL context 已中斷，整個遊戲畫面需要重新建立；請回標題或重新整理。');
   };
 
   private onContextRestored = (): void => {
@@ -309,5 +316,10 @@ export class TownHd2dPrototype {
       portId: this.portId,
       spawn: { x: position.u, y: position.v },
     });
+  }
+
+  private switchToLegacy(): void {
+    this.scene.registry.set('townRendererOverride', 'legacy');
+    this.scene.scene.start('Port', { portId: this.portId, forceLegacy: true });
   }
 }
