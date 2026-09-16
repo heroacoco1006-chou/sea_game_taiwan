@@ -8,6 +8,7 @@ import { BASE_H, BASE_W, makeButton, textStyle } from '../ui';
 import { TownController } from './TownController';
 import { ThreeTownRenderer } from './ThreeTownRenderer';
 import { townPrototypeDiagnostics } from './prototypeDiagnostics';
+import { screenMovementToGround } from './townCamera';
 import { validateTownSceneData } from './townSceneData';
 import { townViewportPoint } from './townPointer';
 import { townSceneForPort } from './townSceneRegistry';
@@ -87,7 +88,7 @@ export class TownHd2dPrototype {
       .setOrigin(0, 1).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
     this.hintText = scene.add.text(BASE_W / 2, BASE_H - 14, '', textStyle(16, '#fff4d6'))
       .setOrigin(0.5, 1).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
-    this.playerAnchor = scene.add.rectangle(0, 0, 44, 64, 0xffffff, 0.001)
+    this.playerAnchor = scene.add.rectangle(0, 0, 31, 45, 0xffffff, 0.001)
       .setDepth(99).setScrollFactor(0);
 
     scene.events.on(Phaser.Scenes.Events.PAUSE, this.pause, this);
@@ -156,7 +157,8 @@ export class TownHd2dPrototype {
     const touch = this.touchControls.direction();
     x += touch.x;
     y += touch.y;
-    this.controller?.update(time, delta, { x, y });
+    const groundMovement = screenMovementToGround({ x, y }, this.sceneData.camera.yawDeg);
+    this.controller?.update(time, delta, groundMovement);
 
     const navigation = this.controller?.snapshot();
     if (navigation) {

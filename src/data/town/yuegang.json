@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "yuegang-hd2d",
   "themeId": "china",
-  "layoutRevision": "p4-r1",
+  "layoutRevision": "p4-r2",
   "world": {
     "width": 18,
     "height": 10,
@@ -14,7 +14,12 @@
     "projection": "orthographic",
     "pitchDeg": 45,
     "yawDeg": -143,
-    "viewSpan": 10
+    "viewSpan": 8,
+    "follow": {
+      "mode": "player",
+      "smoothingMs": 120,
+      "lookAhead": 0.85
+    }
   },
   "surfaces": {
     "groundAssetId": "p4-yuegang-stone",

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { TownAssetLoader } from './TownAssetLoader';
+import { townCameraFollowTarget } from './townCamera';
 import { townPrototypeDiagnostics } from './prototypeDiagnostics';
 import type {
   TownFacilityKey,
@@ -54,6 +55,10 @@ export class ThreeTownRenderer implements TownRenderer {
   private readonly animatedFlags: Array<{ mesh: THREE.Mesh; phase: number }> = [];
   private readonly animatedFoliage: Array<{ group: THREE.Group; phase: number }> = [];
   private readonly ambienceGroups = new Map<string, THREE.Group>();
+  private readonly cameraOffset = new THREE.Vector3();
+  private readonly cameraTarget = new THREE.Vector3();
+  private desiredCameraTarget: TownGroundPoint;
+  private cameraFollowInitialized = false;
   private mounted = false;
   private paused = false;
   private disposed = false;
@@ -64,7 +69,9 @@ export class ThreeTownRenderer implements TownRenderer {
     private readonly heroTextureUrl: string | undefined,
     private readonly sceneData: TownSceneData,
     private readonly assetUrl: (assetId: string) => string | undefined,
-  ) {}
+  ) {
+    this.desiredCameraTarget = { ...sceneData.spawn };
+  }
 
   mount(): void {
     if (this.disposed) throw new Error('不能重新掛載已銷毀的港町 renderer');
@@ -119,6 +126,7 @@ export class ThreeTownRenderer implements TownRenderer {
     }
     for (const flag of this.animatedFlags) flag.mesh.rotation.y = Math.sin(time / 420 + flag.phase) * 0.16;
     for (const foliage of this.animatedFoliage) foliage.group.rotation.z = Math.sin(time / 900 + foliage.phase) * 0.025;
+    this.updateFollowCamera(delta);
   }
 
   getPlayerPosition(): TownGroundPoint {
@@ -128,6 +136,15 @@ export class ThreeTownRenderer implements TownRenderer {
   setPlayerPosition(point: TownGroundPoint): void {
     this.player?.position.set(point.u, 0.04, point.v);
     this.playerShadow?.position.set(point.u, 0.025, point.v);
+    const follow = this.sceneData.camera.follow;
+    if (follow?.mode === 'player') {
+      this.desiredCameraTarget = townCameraFollowTarget(point, this.sceneData.camera.yawDeg, follow.lookAhead);
+      if (!this.cameraFollowInitialized) {
+        this.cameraTarget.set(this.desiredCameraTarget.u, 0.7, this.desiredCameraTarget.v);
+        this.applyCameraTransform();
+        this.cameraFollowInitialized = true;
+      }
+    }
   }
 
   setNavigationPath(points: TownGroundPoint[]): void {
@@ -207,6 +224,9 @@ export class ThreeTownRenderer implements TownRenderer {
       canvasHeight: this.phaserScene.game.canvas.height,
       playerX: this.player?.position.x ?? 0,
       playerZ: this.player?.position.z ?? 0,
+      cameraX: this.cameraTarget.x,
+      cameraZ: this.cameraTarget.z,
+      viewSpan: this.sceneData.camera.viewSpan,
     };
   }
 
@@ -253,8 +273,13 @@ export class ThreeTownRenderer implements TownRenderer {
     const yaw = THREE.MathUtils.degToRad(this.sceneData.camera.yawDeg);
     const distance = 19;
     const horizontal = Math.cos(pitch) * distance;
-    this.camera.position.set(Math.sin(yaw) * horizontal, Math.sin(pitch) * distance, Math.cos(yaw) * horizontal);
-    this.camera.lookAt(0, 0.7, 1.8);
+    this.cameraOffset.set(Math.sin(yaw) * horizontal, Math.sin(pitch) * distance, Math.cos(yaw) * horizontal);
+    const initialTarget = this.sceneData.camera.follow?.mode === 'player'
+      ? townCameraFollowTarget(this.sceneData.spawn, this.sceneData.camera.yawDeg, this.sceneData.camera.follow.lookAhead)
+      : { u: 0, v: 1.8 };
+    this.cameraTarget.set(initialTarget.u, 0.7, initialTarget.v);
+    this.desiredCameraTarget = { ...initialTarget };
+    this.applyCameraTransform();
     this.camera.updateProjectionMatrix();
 
     this.threeScene.add(new THREE.HemisphereLight(0xd9f0f1, 0x745638, 2.2));
@@ -371,7 +396,7 @@ export class ThreeTownRenderer implements TownRenderer {
     this.buildSetDressing();
 
     this.playerShadow = new THREE.Mesh(
-      new THREE.CircleGeometry(0.38, 24),
+      new THREE.CircleGeometry(0.21, 24),
       new THREE.MeshBasicMaterial({ color: 0x1d1710, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide }),
     );
     this.playerShadow.rotation.x = -Math.PI / 2;
@@ -382,9 +407,25 @@ export class ThreeTownRenderer implements TownRenderer {
     this.playerMaterial = new THREE.SpriteMaterial({ map: this.fallbackPlayerTexture, transparent: true });
     this.player = new THREE.Sprite(this.playerMaterial);
     this.player.center.set(0.5, 0);
-    this.player.scale.set(1.25, 1.9, 1);
+    // viewSpan 10 → 8 會放大 1.25 倍；乘 0.56 後，畫面上的人物正好縮為原本約 70%。
+    this.player.scale.set(0.7, 1.064, 1);
     this.player.position.set(this.sceneData.spawn.u, 0.04, this.sceneData.spawn.v);
     this.threeScene.add(this.player);
+  }
+
+  private updateFollowCamera(delta: number): void {
+    const follow = this.sceneData.camera.follow;
+    if (follow?.mode !== 'player' || !this.cameraFollowInitialized) return;
+    const alpha = 1 - Math.exp(-Math.min(delta, 50) / follow.smoothingMs);
+    this.cameraTarget.x = THREE.MathUtils.lerp(this.cameraTarget.x, this.desiredCameraTarget.u, alpha);
+    this.cameraTarget.z = THREE.MathUtils.lerp(this.cameraTarget.z, this.desiredCameraTarget.v, alpha);
+    this.applyCameraTransform();
+  }
+
+  private applyCameraTransform(): void {
+    this.camera.position.copy(this.cameraTarget).add(this.cameraOffset);
+    this.camera.lookAt(this.cameraTarget);
+    this.camera.updateMatrixWorld();
   }
 
   private loadFormalArt(): void {

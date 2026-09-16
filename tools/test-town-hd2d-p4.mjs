@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import sceneData from '../src/data/town/yuegang.json'
 import { TownController } from '../src/town/TownController.ts'
+import { groundMovementToScreen, screenMovementToGround, townCameraFollowTarget } from '../src/town/townCamera.ts'
 import { townViewportPoint } from '../src/town/townPointer.ts'
 import { validateTownSceneData } from '../src/town/townSceneData.ts'
 
@@ -38,14 +39,33 @@ class FakeRenderer {
 const tests = []
 const test = (name, fn) => tests.push({ name, fn })
 
-test('P4 場景資料含正式表面、B 視角、七設施與環境動態', () => {
+test('P4 場景資料含正式表面、B 視角、跟隨鏡頭、七設施與環境動態', () => {
   assert.deepEqual(validateTownSceneData(sceneData), [])
-  assert.equal(sceneData.layoutRevision, 'p4-r1')
-  assert.deepEqual(sceneData.camera, { projection: 'orthographic', pitchDeg: 45, yawDeg: -143, viewSpan: 10 })
+  assert.equal(sceneData.layoutRevision, 'p4-r2')
+  assert.deepEqual(sceneData.camera, {
+    projection: 'orthographic', pitchDeg: 45, yawDeg: -143, viewSpan: 8,
+    follow: { mode: 'player', smoothingMs: 120, lookAhead: 0.85 },
+  })
   assert.deepEqual(sceneData.surfaces, { groundAssetId: 'p4-yuegang-stone', waterAssetId: 'p4-yuegang-water' })
   assert.equal(sceneData.facilities.length, 7)
   assert.ok(sceneData.facilities.every((facility) => sceneData.objects.find((object) => object.id === facility.objectId)?.assetId.startsWith('han_')))
   assert.deepEqual(new Set(sceneData.ambience.map((item) => item.kind)), new Set(['water', 'flag', 'foliage']))
+})
+
+test('方向鍵依畫面方向投影到地面，45 度鏡頭下不會顛倒', () => {
+  for (const input of [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }]) {
+    const ground = screenMovementToGround(input, sceneData.camera.yawDeg)
+    const screen = groundMovementToScreen(ground, sceneData.camera.yawDeg)
+    assert.ok(Math.abs(screen.x - input.x) < 1e-10)
+    assert.ok(Math.abs(screen.y - input.y) < 1e-10)
+    assert.ok(Math.abs(Math.hypot(ground.x, ground.y) - 1) < 1e-10)
+  }
+})
+
+test('跟隨鏡頭保留角色前方視野並使用較近視野形成捲動場景', () => {
+  const target = townCameraFollowTarget(sceneData.spawn, sceneData.camera.yawDeg, sceneData.camera.follow.lookAhead)
+  assert.ok(Math.hypot(target.u - sceneData.spawn.u, target.v - sceneData.spawn.v) > 0.8)
+  assert.equal(sceneData.camera.viewSpan, 8)
 })
 
 test('2 倍超取樣指標會還原為 1280x720 邏輯座標', () => {

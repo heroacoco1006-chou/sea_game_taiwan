@@ -76,6 +76,18 @@ export function validateTownSceneData(raw: unknown): string[] {
     for (const key of ['pitchDeg', 'yawDeg', 'viewSpan']) {
       if (!isFiniteNumber(raw.camera[key])) errors.push(`camera.${key} 必須是有限數`);
     }
+    if (raw.camera.follow !== undefined) {
+      if (!isRecord(raw.camera.follow)) errors.push('camera.follow 必須是物件');
+      else {
+        if (raw.camera.follow.mode !== 'player') errors.push('camera.follow.mode 必須是 player');
+        if (!isFiniteNumber(raw.camera.follow.smoothingMs) || raw.camera.follow.smoothingMs <= 0) {
+          errors.push('camera.follow.smoothingMs 必須是正有限數');
+        }
+        if (!isFiniteNumber(raw.camera.follow.lookAhead) || raw.camera.follow.lookAhead < 0) {
+          errors.push('camera.follow.lookAhead 必須是非負有限數');
+        }
+      }
+    }
   }
   if (!isRecord(raw.surfaces)) errors.push('surfaces 必須是物件');
   else {
