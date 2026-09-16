@@ -29,9 +29,10 @@ class FakeRenderer {
 test('P3 schema、引用、polygon 與七設施資料完整', () => {
   assert.deepEqual(validateTownSceneData(sceneData), [])
   assert.deepEqual(new Set(sceneData.facilities.map((facility) => facility.key)), new Set(['trade', 'tavern', 'inn', 'office', 'item', 'shipyard', 'harbor']))
-  assert.deepEqual(registeredTownPorts(), ['yuegang'])
-  assert.equal(townSceneForPort('yuegang')?.id, 'yuegang-hd2d')
-  assert.equal(townSceneForPort('anhai'), null)
+  assert.equal(registeredTownPorts().length, 22)
+  assert.equal(townSceneForPort('yuegang')?.id, 'china-hd2d')
+  assert.equal(townSceneForPort('anhai')?.themeId, 'china')
+  assert.equal(townSceneForPort('missing-port'), null)
 })
 
 test('出生點到七設施 door／approach 扣除角色半徑後全部可達', () => {

@@ -13,6 +13,21 @@ import type {
 } from './types';
 import { TownRendererUnsupportedError } from './types';
 
+const DEFAULT_PALETTE = {
+  sky: '#88afbb',
+  fog: '#88afbb',
+  lightSky: '#d9f0f1',
+  lightGround: '#745638',
+  sun: '#ffd69a',
+  groundTint: '#c9ad73',
+  waterTint: '#1e6d83',
+  stone: '#756a59',
+  wood: '#6b4527',
+  flagPrimary: '#9f3f2f',
+  flagTrim: '#d0a45a',
+  foliage: '#54743b',
+} as const;
+
 type PhaserWebGLRenderer = Phaser.Renderer.WebGL.WebGLRenderer & { gl: WebGLRenderingContext };
 
 class ThreeTownExtern extends Phaser.GameObjects.Extern {
@@ -25,7 +40,7 @@ class ThreeTownExtern extends Phaser.GameObjects.Extern {
   }
 }
 
-/** P4 港町 renderer。Three 不建立自己的 canvas／RAF，也不改 Phaser canvas 尺寸。 */
+/** P5 港町 renderer。Three 不建立自己的 canvas／RAF，也不改 Phaser canvas 尺寸。 */
 export class ThreeTownRenderer implements TownRenderer {
   private readonly threeScene = new THREE.Scene();
   private readonly camera = new THREE.OrthographicCamera(-8.9, 8.9, 5, -5, 0.1, 100);
@@ -202,7 +217,7 @@ export class ThreeTownRenderer implements TownRenderer {
     renderer.setRenderTarget(null);
     renderer.setScissorTest(false);
     renderer.setViewport(0, 0, canvas.width, canvas.height);
-    renderer.setClearColor(0x88afbb, 1);
+    renderer.setClearColor(this.sceneData.palette?.sky ?? DEFAULT_PALETTE.sky, 1);
     renderer.clear(true, true, true);
     renderer.render(this.threeScene, this.camera);
     renderer.resetState();
@@ -260,8 +275,9 @@ export class ThreeTownRenderer implements TownRenderer {
   }
 
   private buildPrototypeScene(): void {
-    this.threeScene.background = new THREE.Color(0x88afbb);
-    this.threeScene.fog = new THREE.Fog(0x88afbb, 15, 30);
+    const palette = this.sceneData.palette ?? DEFAULT_PALETTE;
+    this.threeScene.background = new THREE.Color(palette.sky);
+    this.threeScene.fog = new THREE.Fog(palette.fog, 15, 30);
 
     const aspect = this.phaserScene.game.canvas.width / this.phaserScene.game.canvas.height;
     const halfHeight = this.sceneData.camera.viewSpan / 2;
@@ -282,12 +298,12 @@ export class ThreeTownRenderer implements TownRenderer {
     this.applyCameraTransform();
     this.camera.updateProjectionMatrix();
 
-    this.threeScene.add(new THREE.HemisphereLight(0xd9f0f1, 0x745638, 2.2));
-    const sun = new THREE.DirectionalLight(0xffd69a, 2.4);
+    this.threeScene.add(new THREE.HemisphereLight(palette.lightSky, palette.lightGround, 2.2));
+    const sun = new THREE.DirectionalLight(palette.sun, 2.4);
     sun.position.set(-5, 10, -7);
     this.threeScene.add(sun);
 
-    this.groundMaterial = new THREE.MeshStandardMaterial({ color: 0xc9ad73, roughness: 0.92 });
+    this.groundMaterial = new THREE.MeshStandardMaterial({ color: palette.groundTint, roughness: 0.92 });
     this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(this.sceneData.world.width, this.sceneData.world.height),
       this.groundMaterial,
@@ -297,7 +313,7 @@ export class ThreeTownRenderer implements TownRenderer {
     this.threeScene.add(this.ground);
 
     const waterObject = this.sceneData.objects.find((object) => object.id === 'harbor-water');
-    this.waterMaterial = new THREE.MeshStandardMaterial({ color: 0x1e6d83, roughness: 0.35, metalness: 0.08 });
+    this.waterMaterial = new THREE.MeshStandardMaterial({ color: palette.waterTint, roughness: 0.35, metalness: 0.08 });
     this.water = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 4),
       this.waterMaterial,
@@ -306,12 +322,12 @@ export class ThreeTownRenderer implements TownRenderer {
     this.water.position.set(waterObject?.at.u ?? 0, waterObject?.elevation ?? -0.18, waterObject?.at.v ?? -4.8);
     this.threeScene.add(this.water);
 
-    const stone = new THREE.MeshStandardMaterial({ color: 0x756a59, roughness: 0.95 });
+    const stone = new THREE.MeshStandardMaterial({ color: palette.stone, roughness: 0.95 });
     const quay = new THREE.Mesh(new THREE.BoxGeometry(this.sceneData.world.width, 0.55, 0.7), stone);
     quay.position.set(0, 0.12, -3.15);
     this.threeScene.add(quay);
 
-    const wood = new THREE.MeshStandardMaterial({ color: 0x6b4527, roughness: 0.9 });
+    const wood = new THREE.MeshStandardMaterial({ color: palette.wood, roughness: 0.9 });
     const dock = new THREE.Group();
     dock.position.set(-3.8, -0.02, -4.65);
     for (let index = 0; index < 12; index += 1) {
@@ -436,7 +452,7 @@ export class ThreeTownRenderer implements TownRenderer {
         apply: (texture) => {
           if (!this.groundMaterial) return;
           this.groundMaterial.map = texture;
-          this.groundMaterial.color.setHex(0xffffff);
+          this.groundMaterial.color.set(this.sceneData.palette?.groundTint ?? '#ffffff');
           this.groundMaterial.needsUpdate = true;
         },
       },
@@ -446,7 +462,7 @@ export class ThreeTownRenderer implements TownRenderer {
         apply: (texture) => {
           if (!this.waterMaterial) return;
           this.waterMaterial.map = texture;
-          this.waterMaterial.color.setHex(0xffffff);
+          this.waterMaterial.color.set(this.sceneData.palette?.waterTint ?? '#ffffff');
           this.waterMaterial.needsUpdate = true;
         },
       },
@@ -455,7 +471,7 @@ export class ThreeTownRenderer implements TownRenderer {
     for (const load of surfaceLoads) {
       const url = this.assetUrl(load.id);
       if (!url) {
-        townPrototypeDiagnostics.failed(new Error(`找不到 P4 港町材質：${load.id}`));
+        townPrototypeDiagnostics.failed(new Error(`找不到 P5 港町材質：${load.id}`));
         continue;
       }
       void this.loadTexture(url, load.repeat).then(load.apply).catch((error) => {
@@ -485,7 +501,7 @@ export class ThreeTownRenderer implements TownRenderer {
       if (!object) continue;
       const url = this.assetUrl(object.assetId);
       if (!url) {
-        townPrototypeDiagnostics.failed(new Error(`找不到 P4 設施素材：${object.assetId}`));
+        townPrototypeDiagnostics.failed(new Error(`找不到 P5 設施素材：${object.assetId}`));
         continue;
       }
       void this.loadTexture(url).then((texture) => {
@@ -558,7 +574,7 @@ export class ThreeTownRenderer implements TownRenderer {
         );
         trunk.position.y = 0.78;
         group.add(trunk);
-        const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x54743b, roughness: 0.9 });
+        const leafMaterial = new THREE.MeshStandardMaterial({ color: this.sceneData.palette?.foliage ?? DEFAULT_PALETTE.foliage, roughness: 0.9 });
         for (const [x, y, z, scale] of [[0, 1.75, 0, 0.72], [-0.34, 1.55, 0, 0.52], [0.34, 1.58, 0.04, 0.56]] as const) {
           const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(scale, 0), leafMaterial);
           crown.position.set(x, y, z);
@@ -578,7 +594,7 @@ export class ThreeTownRenderer implements TownRenderer {
     canvas.height = 192;
     const context = canvas.getContext('2d')!;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = '#9f3f2f';
+    context.fillStyle = this.sceneData.palette?.flagPrimary ?? DEFAULT_PALETTE.flagPrimary;
     context.beginPath();
     context.moveTo(8, 8);
     context.lineTo(118, 8);
@@ -589,7 +605,7 @@ export class ThreeTownRenderer implements TownRenderer {
     context.lineTo(8, 142);
     context.closePath();
     context.fill();
-    context.strokeStyle = '#d0a45a';
+    context.strokeStyle = this.sceneData.palette?.flagTrim ?? DEFAULT_PALETTE.flagTrim;
     context.lineWidth = 7;
     context.stroke();
     context.strokeStyle = 'rgba(255,225,155,0.5)';

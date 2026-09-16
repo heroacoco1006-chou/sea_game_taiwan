@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "themes": {
+    "china-hd2d": {
+      "themeId": "china",
+      "layoutRevision": "p5-r1",
+      "transform": { "mirrorU": false, "uScale": 1, "vScale": 1, "uOffset": 0, "vOffset": 0 },
+      "palette": {
+        "sky": "#88afbb", "fog": "#88afbb", "lightSky": "#d9f0f1", "lightGround": "#745638",
+        "sun": "#ffd69a", "groundTint": "#fff8e8", "waterTint": "#d8f3f2", "stone": "#756a59",
+        "wood": "#6b4527", "flagPrimary": "#9f3f2f", "flagTrim": "#d0a45a", "foliage": "#54743b"
+      }
+    },
+    "japan-hd2d": {
+      "themeId": "japan",
+      "layoutRevision": "p5-r1",
+      "transform": { "mirrorU": true, "uScale": 1, "vScale": 1, "uOffset": 0, "vOffset": 0 },
+      "palette": {
+        "sky": "#9fb5c1", "fog": "#9fb5c1", "lightSky": "#e7eef2", "lightGround": "#5f5149",
+        "sun": "#ffd7b0", "groundTint": "#f2f0ea", "waterTint": "#dbe9ee", "stone": "#6c6d68",
+        "wood": "#5b3e2b", "flagPrimary": "#405f86", "flagTrim": "#e2c78e", "foliage": "#496b48"
+      }
+    },
+    "taiwan-hd2d": {
+      "themeId": "taiwan",
+      "layoutRevision": "p5-r1",
+      "transform": { "mirrorU": false, "uScale": 0.92, "vScale": 1, "uOffset": 0, "vOffset": 0.05 },
+      "palette": {
+        "sky": "#90b9bd", "fog": "#90b9bd", "lightSky": "#e0f1eb", "lightGround": "#59644a",
+        "sun": "#ffdb9f", "groundTint": "#f4edcf", "waterTint": "#c9f0e8", "stone": "#77725d",
+        "wood": "#705039", "flagPrimary": "#2f6f65", "flagTrim": "#e0bb68", "foliage": "#3f7b4d"
+      }
+    },
+    "sea-hd2d": {
+      "themeId": "sea",
+      "layoutRevision": "p5-r1",
+      "transform": { "mirrorU": true, "uScale": 0.96, "vScale": 0.96, "uOffset": 0, "vOffset": 0.1 },
+      "palette": {
+        "sky": "#75b6c0", "fog": "#75b6c0", "lightSky": "#e5f4e9", "lightGround": "#765b3d",
+        "sun": "#ffe2a8", "groundTint": "#f3dfb1", "waterTint": "#bdebea", "stone": "#88745b",
+        "wood": "#765137", "flagPrimary": "#28745b", "flagTrim": "#e6bd52", "foliage": "#3d7f45"
+      }
+    }
+  }
+}

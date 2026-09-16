@@ -1,6 +1,27 @@
 {
   "schemaVersion": 1,
   "ports": {
-    "yuegang": "yuegang-hd2d"
+    "anhai": "china-hd2d",
+    "yuegang": "china-hd2d",
+    "guangzhou": "china-hd2d",
+    "macau": "china-hd2d",
+    "tayouan": "taiwan-hd2d",
+    "keelung": "taiwan-hd2d",
+    "tamsui": "taiwan-hd2d",
+    "ponkan": "taiwan-hd2d",
+    "penghu": "taiwan-hd2d",
+    "hirado": "japan-hd2d",
+    "nagasaki": "japan-hd2d",
+    "sakai": "japan-hd2d",
+    "naha": "japan-hd2d",
+    "manila": "sea-hd2d",
+    "hoian": "sea-hd2d",
+    "ayutthaya": "sea-hd2d",
+    "malacca": "sea-hd2d",
+    "batavia": "sea-hd2d",
+    "banten": "sea-hd2d",
+    "ambon": "sea-hd2d",
+    "banda": "sea-hd2d",
+    "ternate": "sea-hd2d"
   }
 }

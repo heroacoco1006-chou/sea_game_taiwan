@@ -1,0 +1,25 @@
+{
+  "phase": "P5",
+  "date": "2026-09-16",
+  "branch": "feature/port-hd2d",
+  "representatives": [
+    { "portId": "yuegang", "themeId": "china", "heroId": "lin", "mode": "P5-B", "textures": 14, "lastError": null, "storageWrites": 0, "consoleErrors": 0 },
+    { "portId": "hirado", "themeId": "japan", "heroId": "chiyo", "mode": "P5-B", "textures": 14, "lastError": null, "storageWrites": 0, "consoleErrors": 0 },
+    { "portId": "tayouan", "themeId": "taiwan", "heroId": "lin", "mode": "P5-B", "textures": 14, "lastError": null, "storageWrites": 0, "consoleErrors": 0 },
+    { "portId": "batavia", "themeId": "sea", "heroId": "peter", "mode": "P5-B", "textures": 14, "lastError": null, "storageWrites": 0, "consoleErrors": 0 }
+  ],
+  "checks": {
+    "all22PortsRegistered": true,
+    "allFacilitiesReachable": true,
+    "cultureAssetsResolved": true,
+    "threeHeroesResolved": true,
+    "fourThemesRendered": true,
+    "transientStorageWrites": 0,
+    "consoleErrors": 0
+  },
+  "notes": [
+    "代表港均以 2560x1440 drawing buffer、viewSpan 8 實際載入。",
+    "Three.js r162 的 WebGL1 deprecated 與非 2 次方貼圖縮放警告是既有相容性警告，不屬 console error。",
+    "正式 main、公開網站、SAVE_VERSION=23 與 legacy 港町均未切換。"
+  ]
+}

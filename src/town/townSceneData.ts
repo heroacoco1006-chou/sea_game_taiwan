@@ -4,6 +4,7 @@ import type { TownFacilityKey, TownGroundPoint, TownSceneData } from './types';
 const FACILITY_KEYS: TownFacilityKey[] = ['trade', 'tavern', 'inn', 'office', 'item', 'shipyard', 'harbor'];
 const AMBIENCE_KINDS = new Set(['water', 'flag', 'foliage', 'smoke', 'npc']);
 const OCCLUSION_MODES = new Set(['solid', 'fade', 'none']);
+const PALETTE_KEYS = ['sky', 'fog', 'lightSky', 'lightGround', 'sun', 'groundTint', 'waterTint', 'stone', 'wood', 'flagPrimary', 'flagTrim', 'foliage'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -94,6 +95,14 @@ export function validateTownSceneData(raw: unknown): string[] {
     if (typeof raw.surfaces.groundAssetId !== 'string' || !raw.surfaces.groundAssetId) errors.push('surfaces.groundAssetId 必須是非空字串');
     if (typeof raw.surfaces.waterAssetId !== 'string' || !raw.surfaces.waterAssetId) errors.push('surfaces.waterAssetId 必須是非空字串');
   }
+  if (raw.palette !== undefined) {
+    if (!isRecord(raw.palette)) errors.push('palette 必須是物件');
+    else for (const key of PALETTE_KEYS) {
+      if (typeof raw.palette[key] !== 'string' || !/^#[0-9a-f]{6}$/i.test(raw.palette[key] as string)) {
+        errors.push(`palette.${key} 必須是 #RRGGBB 色碼`);
+      }
+    }
+  }
   if (!pointValid(raw.spawn)) errors.push('spawn 必須是有限座標');
 
   const polygons: TownGroundPoint[][] = [];
@@ -154,7 +163,9 @@ export function validateTownSceneData(raw: unknown): string[] {
     if (!isFiniteNumber(facility.interactionRadius) || facility.interactionRadius <= 0) errors.push(`facilities[${index}].interactionRadius 必須為正數`);
   }
   checkUnique(facilityKeys, 'facility key', errors);
-  for (const key of FACILITY_KEYS) if (!facilityKeys.includes(key)) errors.push(`缺少設施：${key}`);
+  for (const key of FACILITY_KEYS.filter((candidate) => candidate !== 'shipyard')) {
+    if (!facilityKeys.includes(key)) errors.push(`缺少設施：${key}`);
+  }
 
   const ambience = Array.isArray(raw.ambience) ? raw.ambience : [];
   if (!Array.isArray(raw.ambience)) errors.push('ambience 必須是陣列');

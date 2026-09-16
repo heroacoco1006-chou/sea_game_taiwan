@@ -29,6 +29,21 @@ export interface TownObjectData {
   occlusion: 'solid' | 'fade' | 'none';
 }
 
+export interface TownVisualPalette {
+  sky: string;
+  fog: string;
+  lightSky: string;
+  lightGround: string;
+  sun: string;
+  groundTint: string;
+  waterTint: string;
+  stone: string;
+  wood: string;
+  flagPrimary: string;
+  flagTrim: string;
+  foliage: string;
+}
+
 export interface TownSceneData {
   schemaVersion: 1;
   id: string;
@@ -43,6 +58,7 @@ export interface TownSceneData {
     follow?: { mode: 'player'; smoothingMs: number; lookAhead: number };
   };
   surfaces: { groundAssetId: string; waterAssetId: string };
+  palette?: TownVisualPalette;
   spawn: TownGroundPoint;
   walkable: TownGroundPoint[][];
   obstacles: { id: string; polygon: TownGroundPoint[] }[];

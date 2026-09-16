@@ -27,7 +27,7 @@ check(manifest.selectedCandidate === 'camera-b-45deg', 'P1 必須記錄老闆選
 check(boot.includes("query.get('townPreview') === 'hd2d'"), 'Boot 缺少隔離預覽入口')
 check(boot.includes("hd2dPrototype: true"), 'Boot 未把預覽旗標傳給 Port')
 check(port.includes('if (this.hd2dPrototypeMode)'), 'Port 缺少原型隔離分支')
-check(title.includes('返回 HD-2D 原型') || title.includes('返回 HD-2D 月港'), 'Title 缺少 20 次往返用開發入口')
+check(title.includes('返回 HD-2D ${previewPortName}') && title.includes("portId: previewPortId"), 'Title 缺少沿用目前港口的開發預覽返回入口')
 check(renderer.includes('new THREE.WebGLRenderer'), 'P2 未建立 Three renderer')
 check(renderer.includes('context: gl'), 'P2 未共用 Phaser WebGL context')
 check(renderer.includes('renderer.resetState()'), 'P2 未重設 Three WebGL state')

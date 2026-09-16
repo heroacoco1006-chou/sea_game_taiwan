@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { hasAnySave, HEROES } from '../state';
+import { hasAnySave, HEROES, PORTS } from '../state';
 import type { HeroId } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel } from '../ui';
 import { audio } from '../audio';
@@ -69,9 +69,12 @@ export default class TitleScene extends Phaser.Scene {
     }, 16);
 
     // HD-2D 開發預覽往返入口；只有帶 ?townPreview=hd2d 時可見，不影響普通玩家。
-    if (new URLSearchParams(window.location.search).get('townPreview') === 'hd2d') {
-      makeButton(this, 155, 654, 250, 42, '返回 HD-2D 月港', () => {
-        this.scene.start('Port', { portId: 'yuegang', hd2dPrototype: true });
+    const previewQuery = new URLSearchParams(window.location.search);
+    if (previewQuery.get('townPreview') === 'hd2d') {
+      const previewPortId = previewQuery.get('port') ?? 'yuegang';
+      const previewPortName = PORTS.find((port) => port.id === previewPortId)?.name ?? previewPortId;
+      makeButton(this, 155, 654, 250, 42, `返回 HD-2D ${previewPortName}`, () => {
+        this.scene.start('Port', { portId: previewPortId, hd2dPrototype: true });
       }, 15);
     }
 

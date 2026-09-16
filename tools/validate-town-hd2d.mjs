@@ -10,6 +10,9 @@ const check = (condition, message) => { if (!condition) failures.push(message) }
 
 const data = JSON.parse(read('src/data/town/yuegang.json'))
 const index = JSON.parse(read('src/data/town/index.json'))
+const themePacks = JSON.parse(read('src/data/town/themes.json'))
+const portThemes = JSON.parse(read('src/data/portTownThemes.json'))
+const ports = JSON.parse(read('src/data/ports.json')).ports
 const ids = (items) => items.map((item) => item.id)
 const unique = (values) => new Set(values).size === values.length
 const facilityKeys = ['trade', 'tavern', 'inn', 'office', 'item', 'shipyard', 'harbor']
@@ -27,10 +30,14 @@ const art = read('src/art.ts')
 const calibrator = read('tools/calibrate-town-hd2d.html')
 const p3Evidence = JSON.parse(read('assets/town-hd2d/review/p3-browser-evidence.json'))
 const p4Evidence = JSON.parse(read('assets/town-hd2d/review/p4-browser-evidence.json'))
+const p5Evidence = JSON.parse(read('assets/town-hd2d/review/p5-browser-evidence.json'))
 const p4Manifest = JSON.parse(read('assets/town-hd2d/source/p4-manifest.json'))
 
 check(data.schemaVersion === 1, 'town scene schemaVersion 必須為 1')
-check(index.schemaVersion === 1 && index.ports?.yuegang === data.id, 'town index 必須以 portId 對應月港 scene id')
+check(index.schemaVersion === 1 && Object.keys(index.ports ?? {}).length === 22, 'town index 必須收錄 22 港')
+check(index.ports?.yuegang === 'china-hd2d' && index.ports?.hirado === 'japan-hd2d' && index.ports?.tayouan === 'taiwan-hd2d' && index.ports?.batavia === 'sea-hd2d', '四個代表港必須對應四主題 scene id')
+check(Object.keys(themePacks.themes ?? {}).length === 4 && Object.keys(portThemes.ports ?? {}).length === 22, 'P5 四主題或 22 港主題對照不完整')
+check(ports.every((port) => index.ports?.[port.id] && portThemes.ports?.[port.id]), '每個 ports.json 港口都必須有 P5 scene 與主題')
 check(data.id === 'yuegang-hd2d' && data.themeId === 'china', 'P4 樣板必須是月港／china 主題')
 check(data.layoutRevision === 'p4-r2', 'P4 layoutRevision 必須為 p4-r2')
 check(data.camera?.projection === 'orthographic' && data.camera?.pitchDeg === 45 && data.camera?.yawDeg === -143, 'P4 必須使用老闆選定的 B 方案 45° 正交相機與港灣前景')
@@ -53,6 +60,9 @@ for (const file of [
   'src/town/townPointer.ts',
   'tools/test-town-navigation.mjs',
   'tools/test-town-hd2d-p4.mjs',
+  'tools/test-town-hd2d-p5.mjs',
+  'src/data/town/themes.json',
+  'assets/town-hd2d/review/p5-browser-evidence.json',
   'tools/calibrate-town-hd2d.html',
   'tools/build-town-hd2d-p4-assets.py',
   'assets/town-hd2d/source/p4-yuegang-stone-source.png',
@@ -71,7 +81,8 @@ check(renderer.includes('screenToGround') && renderer.includes('pickFacility') &
 check(renderer.includes('updateFollowCamera') && prototype.includes('screenMovementToGround'), 'P4 必須有玩家跟隨鏡頭及畫面方向移動換算')
 check(renderer.includes('loadFormalArt') && renderer.includes('MirroredRepeatWrapping') && renderer.includes('buildSetDressing'), 'P4 renderer 必須載入正式材質與街景小物')
 check(registry.includes('townSceneForPort') && registry.includes('townIndex.ports'), 'P3 必須透過資料索引選擇港町，不可在 PortScene 寫月港特例')
-check(prototype.includes("dataset.townHd2dMode = 'P4-B'"), '預覽診斷模式必須標記 P4-B')
+check(prototype.includes("dataset.townHd2dMode = 'P5-B'"), '預覽診斷模式必須標記 P5-B')
+check(prototype.includes('characterWalkUrl(this.state.story.heroId)'), 'P5 必須依目前主角載入行走圖')
 check(prototype.includes("scene.input.on('pointerdown'"), 'P3 預覽缺少點地導航')
 check(pointer.includes('viewportWidth / canvasWidth') && prototype.includes('townViewportPoint'), 'P4 必須修正 2 倍超取樣指標座標')
 check(prototype.includes('new TutorialOverlay') && prototype.includes("scene.scene.start('Trade'") && prototype.includes("scene.scene.start('Shipyard'") && prototype.includes("scene.scene.start('ItemShop'") && prototype.includes("scene.scene.start('Facility'"), 'P4 必須接回正式教學與七設施場景流程')
@@ -90,11 +101,16 @@ check(p4Evidence.checks?.tutorialTradePurchase === true && p4Evidence.checks?.ha
 check(p4Evidence.checks?.transientStorageWrites === 0 && p4Evidence.checks?.consoleErrors === 0, 'P4 不得寫玩家存檔或產生 console error')
 check(p4Evidence.stress?.mounts === 20 && p4Evidence.stress?.disposes === 20 && p4Evidence.stress?.activeRenderersAfterReturn === 0, 'P4 必須完成 20 次 mount／dispose 壓力測試')
 check(p4Evidence.stress?.geometriesAfterReturn === 0 && p4Evidence.stress?.texturesAfterReturn === 0, 'P4 返回後 Three 資源計數必須歸零')
+check(p5Evidence.phase === 'P5' && p5Evidence.representatives?.length === 4, 'P5 必須保留四個代表港瀏覽器證據')
+check(new Set(p5Evidence.representatives?.map((item) => item.themeId)).size === 4, 'P5 瀏覽器證據必須覆蓋四主題')
+check(new Set(p5Evidence.representatives?.map((item) => item.heroId)).size === 3, 'P5 瀏覽器證據必須覆蓋三主角')
+check(p5Evidence.representatives?.every((item) => item.mode === 'P5-B' && item.lastError === null && item.storageWrites === 0 && item.consoleErrors === 0), 'P5 代表港不得有 renderer／存檔／console 錯誤')
+check(p5Evidence.checks?.all22PortsRegistered === true && p5Evidence.checks?.allFacilitiesReachable === true && p5Evidence.checks?.cultureAssetsResolved === true, 'P5 22 港資料、導航或文化素材證據不完整')
 
 if (failures.length) {
-  console.error(`HD-2D P4 驗證失敗（${failures.length} 項）：`)
+  console.error(`HD-2D P5 驗證失敗（${failures.length} 項）：`)
   failures.forEach((failure) => console.error(`- ${failure}`))
   process.exit(1)
 }
 
-console.log('HD-2D P4 結構驗證通過：正式素材、七設施流程、教學、暫態存檔保護與壓力證據均已接線。')
+console.log('HD-2D P5 結構驗證通過：四主題、三主角、22 港索引與 P4 正式流程回歸證據均已接線。')

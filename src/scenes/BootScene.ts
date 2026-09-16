@@ -5,7 +5,7 @@ import {
   STORY_BACKGROUND_URLS, TITLE_BG_URL,
   portraitKey, worldArtKey, explorationIconKey, explorationEventKey, facilityIconKey, storyBackgroundKey,
 } from '../art';
-import { markTransientGameState, newGame, newPlayerShip } from '../state';
+import { HEROES, markTransientGameState, newGame, newPlayerShip } from '../state';
 import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAdapter';
 
 /** 程式產生基礎貼圖；M5 起載入 V2 美術素材，缺圖時仍保留 fallback */
@@ -37,12 +37,17 @@ export default class BootScene extends Phaser.Scene {
     // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
     const query = new URLSearchParams(window.location.search);
     if (query.get('townPreview') === 'hd2d') {
-      // P4 驗收狀態可走正式設施與教學，但 saveGame 會識別 transient state，絕不寫入玩家存檔格。
-      const state = markTransientGameState(newGame('lin'));
+      // P5 驗收狀態可切換 22 港與三位主角；saveGame 會識別 transient state，絕不寫入玩家存檔格。
+      const portId = query.get('port') ?? 'yuegang';
+      const requestedHero = query.get('hero');
+      const heroId = HEROES.find((hero) => hero.id === requestedHero)?.id
+        ?? HEROES.find((hero) => hero.startPortId === portId)?.id
+        ?? 'lin';
+      const state = markTransientGameState(newGame(heroId));
       state.tutorial.onboarding = 'active';
       state.tutorial.completedSteps = ['core_welcome', 'core_enter_port'];
       this.registry.set('state', state);
-      this.scene.start('Port', { portId: query.get('port') ?? 'yuegang', hd2dPrototype: true });
+      this.scene.start('Port', { portId, hd2dPrototype: true });
       return;
     }
     const p7demo = query.get('p7demo');
