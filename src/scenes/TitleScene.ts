@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { hasAnySave, HEROES } from '../state';
+import { hasAnySave, HEROES, PORTS } from '../state';
 import type { HeroId } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel } from '../ui';
 import { audio } from '../audio';
@@ -67,6 +67,17 @@ export default class TitleScene extends Phaser.Scene {
       this.scene.launch('Settings', { caller: 'Title' });
       this.scene.pause();
     }, 16);
+
+    // HD-2D 開發診斷往返入口；只有帶 ?townPreview=hd2d 時可見，不影響普通玩家。
+    const previewQuery = new URLSearchParams(window.location.search);
+    if (previewQuery.get('townPreview') === 'hd2d') {
+      const previewPortId = previewQuery.get('port') ?? 'yuegang';
+      const previewPortName = PORTS.find((port) => port.id === previewPortId)?.name ?? previewPortId;
+      const previewLegacy = previewQuery.get('townRenderer') === 'legacy';
+      makeButton(this, 155, 654, 250, 42, `返回${previewLegacy ? '舊版' : ' HD-2D'} ${previewPortName}`, () => {
+        this.scene.start('Port', { portId: previewPortId, hd2dPrototype: !previewLegacy, forceLegacy: previewLegacy });
+      }, 15);
+    }
 
 
     // 版本資訊固定置於遊戲入口最下方；發版只更新 version.ts。

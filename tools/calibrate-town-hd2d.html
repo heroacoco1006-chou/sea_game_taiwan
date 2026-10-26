@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HD-2D 港町 P3 校準工具</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Microsoft JhengHei", sans-serif; }
+    body { margin: 0; background: #14252d; color: #f7ead0; }
+    header { padding: 14px 20px; background: #0d1b21; border-bottom: 1px solid #9b773f; }
+    main { display: grid; grid-template-columns: minmax(560px, 1.6fr) minmax(360px, 1fr); gap: 14px; padding: 14px; }
+    canvas { width: 100%; background: #86aeb7; border: 2px solid #c89b48; cursor: crosshair; }
+    aside { display: flex; flex-direction: column; gap: 10px; }
+    textarea { width: 100%; min-height: 430px; resize: vertical; box-sizing: border-box; background: #0d171c; color: #daf4f1; border: 1px solid #81663e; padding: 10px; font: 13px Consolas, monospace; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button, select, label { min-height: 38px; }
+    button, select { background: #ead8a9; color: #392914; border: 2px solid #7c5430; border-radius: 6px; padding: 6px 11px; }
+    #status.ok { color: #88efae; } #status.error { color: #ff9c91; white-space: pre-wrap; }
+    @media (max-width: 950px) { main { grid-template-columns: 1fr; } textarea { min-height: 300px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>HD-2D 港町 P3 校準工具</strong>｜選設施與座標種類後點地圖；所有匯出都先跑正式 schema／可達性驗證。
+  </header>
+  <main>
+    <section>
+      <div class="controls">
+        <select id="facility"></select>
+        <label><input type="radio" name="point" value="approach" checked /> approach</label>
+        <label><input type="radio" name="point" value="door" /> door</label>
+        <label><input type="radio" name="point" value="spawn" /> spawn</label>
+        <button id="apply">套用文字資料</button>
+        <button id="reset">重設</button>
+      </div>
+      <canvas id="map" width="900" height="520" aria-label="港町俯視校準圖"></canvas>
+      <p id="status" role="status"></p>
+    </section>
+    <aside>
+      <div class="controls">
+        <button id="validate">驗證</button>
+        <button id="download">匯出 JSON</button>
+        <label>重載 JSON <input id="file" type="file" accept="application/json,.json" /></label>
+      </div>
+      <textarea id="json" spellcheck="false" aria-label="港町 JSON"></textarea>
+    </aside>
+  </main>
+  <script type="module">
+    import source from '/src/data/town/yuegang.json';
+    import { parseTownScene, serializeTownScene, validateTownSceneData } from '/src/town/townSceneData.ts';
+
+    const canvas = document.querySelector('#map');
+    const context = canvas.getContext('2d');
+    const textarea = document.querySelector('#json');
+    const facilitySelect = document.querySelector('#facility');
+    const status = document.querySelector('#status');
+    const original = structuredClone(source);
+    let data = structuredClone(source);
+    const bounds = { minU: -9, maxU: 9, minV: -3.3, maxV: 6.2 };
+
+    const toCanvas = (point) => ({
+      x: ((point.u - bounds.minU) / (bounds.maxU - bounds.minU)) * canvas.width,
+      y: canvas.height - ((point.v - bounds.minV) / (bounds.maxV - bounds.minV)) * canvas.height,
+    });
+    const fromCanvas = (x, y) => ({
+      u: Math.round((bounds.minU + (x / canvas.width) * (bounds.maxU - bounds.minU)) * 100) / 100,
+      v: Math.round((bounds.minV + ((canvas.height - y) / canvas.height) * (bounds.maxV - bounds.minV)) * 100) / 100,
+    });
+
+    function drawPolygon(points, fill, stroke) {
+      context.beginPath();
+      points.forEach((point, index) => {
+        const at = toCanvas(point);
+        if (index === 0) context.moveTo(at.x, at.y); else context.lineTo(at.x, at.y);
+      });
+      context.closePath();
+      context.fillStyle = fill; context.fill();
+      context.strokeStyle = stroke; context.lineWidth = 2; context.stroke();
+    }
+
+    function drawPoint(point, color, label) {
+      const at = toCanvas(point);
+      context.beginPath(); context.arc(at.x, at.y, 7, 0, Math.PI * 2);
+      context.fillStyle = color; context.fill();
+      context.fillStyle = '#102028'; context.font = 'bold 14px Microsoft JhengHei';
+      context.fillText(label, at.x + 9, at.y - 8);
+    }
+
+    function render() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#236d82'; context.fillRect(0, 0, canvas.width, canvas.height);
+      data.walkable.forEach((polygon) => drawPolygon(polygon, '#c9ad73', '#715a37'));
+      data.obstacles.forEach((obstacle) => drawPolygon(obstacle.polygon, '#59483b', '#2c2420'));
+      data.facilities.forEach((facility) => {
+        drawPoint(facility.door, '#f3a83b', `${facility.label} door`);
+        drawPoint(facility.approach, '#28d6df', `${facility.label} approach`);
+      });
+      drawPoint(data.spawn, '#ffef8b', 'spawn');
+      textarea.value = serializeTownScene(data);
+      facilitySelect.innerHTML = data.facilities.map((facility) => `<option value="${facility.key}">${facility.label}</option>`).join('');
+    }
+
+    function report(errors) {
+      status.className = errors.length ? 'error' : 'ok';
+      status.textContent = errors.length ? errors.join('\n') : '通過：schema、引用、角色半徑與七設施可達性皆有效。';
+      return errors.length === 0;
+    }
+
+    canvas.addEventListener('click', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const point = fromCanvas((event.clientX - rect.left) * canvas.width / rect.width, (event.clientY - rect.top) * canvas.height / rect.height);
+      const mode = document.querySelector('input[name="point"]:checked').value;
+      if (mode === 'spawn') data.spawn = point;
+      else {
+        const facility = data.facilities.find((candidate) => candidate.key === facilitySelect.value);
+        facility[mode] = point;
+      }
+      render(); report(validateTownSceneData(data));
+    });
+
+    document.querySelector('#apply').addEventListener('click', () => {
+      try { data = parseTownScene(textarea.value); render(); report([]); }
+      catch (error) { report(String(error.message ?? error).split('\n')); }
+    });
+    document.querySelector('#validate').addEventListener('click', () => {
+      try { data = parseTownScene(textarea.value); report([]); }
+      catch (error) { report(String(error.message ?? error).split('\n')); }
+    });
+    document.querySelector('#reset').addEventListener('click', () => { data = structuredClone(original); render(); report([]); });
+    document.querySelector('#download').addEventListener('click', () => {
+      try {
+        data = parseTownScene(textarea.value);
+        const blob = new Blob([serializeTownScene(data)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob); link.download = `${data.id}-${data.layoutRevision}.json`; link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 0); report([]);
+      } catch (error) { report(String(error.message ?? error).split('\n')); }
+    });
+    document.querySelector('#file').addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try { data = parseTownScene(await file.text()); render(); report([]); }
+      catch (error) { report(String(error.message ?? error).split('\n')); }
+    });
+
+    render(); report(validateTownSceneData(data));
+  </script>
+</body>
+</html>

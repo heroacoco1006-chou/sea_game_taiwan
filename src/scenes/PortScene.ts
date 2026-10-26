@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
-import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, updateQuestProgress } from '../state';
+import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, isTransientGameState } from '../state';
 import {
   characterWalkKey, characterWalkUrl, harborSceneKey, harborSceneUrl,
   portBuildingKey, portTownBackgroundKey, portTownBackgroundUrl,
@@ -12,6 +12,8 @@ import { TouchControls } from '../touchControls';
 import { TutorialOverlay } from '../tutorialOverlay';
 import portTownLayoutsData from '../data/portTownLayouts.json';
 import portTownThemesData from '../data/portTownThemes.json';
+import { TownHd2dPrototype } from '../town/TownHd2dPrototype';
+import { applyTownArrival } from '../town/townArrival';
 
 /**
  * 走動式港町（仿大航海時代2）：
@@ -170,6 +172,8 @@ export default class PortScene extends Phaser.Scene {
   private touchControls?: TouchControls;
   private tutorial?: TutorialOverlay;
   private tutorialMoveOrigin?: { x: number; y: number };
+  private hd2dPrototypeMode = true;
+  private hd2dPrototype?: TownHd2dPrototype;
 
   constructor() {
     super('Port');
@@ -179,7 +183,16 @@ export default class PortScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { portId: string; spawn?: { x: number; y: number } }): void {
+  init(data: { portId: string; spawn?: { x: number; y: number }; hd2dPrototype?: boolean; forceLegacy?: boolean }): void {
+    this.hd2dPrototype?.dispose();
+    this.hd2dPrototype = undefined;
+    const query = new URLSearchParams(window.location.search);
+    const queryLegacy = query.get('townRenderer') === 'legacy';
+    if (data.forceLegacy === true || queryLegacy) this.registry.set('townRendererOverride', 'legacy');
+    const forceLegacy = this.registry.get('townRendererOverride') === 'legacy';
+    // P7 正式切換：HD-2D 為所有港口的預設 renderer；網址參數與失敗按鈕保留完整 legacy 回退。
+    this.hd2dPrototypeMode = !forceLegacy;
+    this.game.canvas.dataset.townRendererMode = this.hd2dPrototypeMode ? 'hd2d' : 'legacy';
     this.port = PORTS.find((p) => p.id === data.portId)!;
     const themeId = PORT_TOWN_THEMES[this.port.id];
     this.townLayout = themeId ? PORT_TOWN_LAYOUTS[themeId] ?? null : null;
@@ -194,6 +207,7 @@ export default class PortScene extends Phaser.Scene {
   }
 
   preload(): void {
+    if (this.hd2dPrototypeMode) return;
     installLoadingHud(this);
     const bgId = this.townLayout?.bgKey;
     const bgUrl = bgId ? portTownBackgroundUrl(bgId) : undefined;
@@ -225,16 +239,35 @@ export default class PortScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (this.hd2dPrototypeMode) {
+      try {
+        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id, this.spawn);
+        if (!this.hd2dPrototype.mount()) return;
+        const formalAudit = new URLSearchParams(window.location.search).has('townAudit');
+        if (isTransientGameState(this.state) && !formalAudit) {
+          this.hd2dPrototype.startTutorial();
+          return;
+        }
+        const firstVisit = this.processPortArrival();
+        if (firstVisit) {
+          saveGame(this.state);
+          this.showPortIntro(true);
+        } else {
+          this.hd2dPrototype.startTutorial();
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.add.rectangle(BASE_W / 2, BASE_H / 2, 760, 190, 0x3a2018, 0.96);
+        this.add.text(BASE_W / 2, BASE_H / 2 - 28, `HD-2D 港町未啟動\n${message}`, {
+          ...textStyle(20, '#fff0d0'), align: 'center', lineSpacing: 8,
+        }).setOrigin(0.5);
+        makeButton(this, BASE_W / 2, BASE_H / 2 + 58, 220, 44, '改用舊版港町', () => this.switchToLegacy());
+      }
+      return;
+    }
     if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm(townBgmForRegion(this.port.region));
-    // 先鎖存首次造訪，再巡檢主線／夥伴任務；否則 visitPorts 會延遲到下一個事件才完成。
-    const firstVisit = !this.state.visitedPorts.includes(this.port.id);
-    if (firstVisit) this.state.visitedPorts.push(this.port.id);
-    const mateQuestMsgs = updateQuestProgress(this.state);
-    if (mateQuestMsgs.length) {
-      saveGame(this.state);
-      this.time.delayedCall(400, () => showModal(this, '任務進度', mateQuestMsgs.join('\n'), [{ label: '知道了', onPick: () => {} }]));
-    }
+    const firstVisit = this.processPortArrival();
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
     const townBackground = this.addTownBackground();
@@ -351,10 +384,28 @@ export default class PortScene extends Phaser.Scene {
         label: firstTime ? '開始探索！' : '知道了',
         onPick: () => {
           this.input.keyboard!.enabled = true;
-          if (firstTime) this.setupTutorial();
+          if (firstTime) {
+            if (this.hd2dPrototypeMode) this.hd2dPrototype?.startTutorial();
+            else this.setupTutorial();
+          }
         },
       },
     ]);
+  }
+
+  /** 正式新舊 renderer 共用的到港副作用，避免切換畫面後漏掉任務或首次造訪。 */
+  private processPortArrival(): boolean {
+    const { firstVisit, messages: mateQuestMsgs } = applyTownArrival(this.state, this.port.id);
+    if (mateQuestMsgs.length) {
+      saveGame(this.state);
+      this.time.delayedCall(400, () => showModal(this, '任務進度', mateQuestMsgs.join('\n'), [{ label: '知道了', onPick: () => {} }]));
+    }
+    return firstVisit;
+  }
+
+  private switchToLegacy(): void {
+    this.registry.set('townRendererOverride', 'legacy');
+    this.scene.start('Port', { portId: this.port.id, spawn: this.spawn, forceLegacy: true });
   }
 
   private setupTutorial(): void {
@@ -796,7 +847,11 @@ export default class PortScene extends Phaser.Scene {
     this.registry.set('townMini', { mx, my, sx, sy });
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
+    if (this.hd2dPrototypeMode) {
+      this.hd2dPrototype?.update(time, delta);
+      return;
+    }
     const dt = delta / 1000;
     let dx = 0;
     let dy = 0;

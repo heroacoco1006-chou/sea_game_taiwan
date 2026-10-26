@@ -1,0 +1,49 @@
+{
+  "phase": "P2",
+  "testedAt": "2026-09-15",
+  "entry": "http://127.0.0.1:5173/?townPreview=hd2d&port=yuegang",
+  "viewportCss": {
+    "width": 1280,
+    "height": 720
+  },
+  "drawingBuffer": {
+    "width": 2560,
+    "height": 1440
+  },
+  "selectedCamera": "B",
+  "checks": {
+    "sharedCanvasRendered": true,
+    "phaserUiAboveThree": true,
+    "keyboardMovement": true,
+    "touchMovementQuery": true,
+    "settingsRoundTrip": true,
+    "titleRoundTrip": true,
+    "consoleErrors": 0,
+    "storageWrites": 0
+  },
+  "stress": {
+    "cycles": 20,
+    "mounts": 20,
+    "disposes": 20,
+    "activeRenderersAfterReturn": 0,
+    "lastError": null
+  },
+  "pauseCheck": {
+    "paused": true,
+    "framesAtOpen": 282,
+    "framesAfter500ms": 282
+  },
+  "touchCheck": {
+    "query": "touch=1",
+    "direction": "right",
+    "playerXBefore": -0.5,
+    "playerXAfter": -0.4466559999999998
+  },
+  "disposeCheck": {
+    "mounted": false,
+    "geometries": 0,
+    "textures": 0,
+    "renderCalls": 0
+  },
+  "knownExpectedWarning": "Three.js r162 在 Phaser WebGL1 context 建立 renderer 時會輸出一次 WebGL1 deprecated 警告；此相容版特意鎖定在 r162，P2 未出現 console error。"
+}

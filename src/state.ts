@@ -578,6 +578,7 @@ export const SEA_STATUS_DEFS: Record<SeaStatusId, { name: string; desc: string }
 export const SAVE_SLOT_COUNT = 10;
 const LEGACY_SAVE_KEY = 'seagame_save1'; // 舊版單一存檔，會自動搬到第 1 格
 const ACTIVE_SLOT_KEY = 'seagame_active_slot'; // 目前正在玩的格子（自動存檔會寫到這格）
+const TRANSIENT_STATES = new WeakSet<object>();
 function slotKey(slot: number): string {
   return `seagame_save_slot${slot}`;
 }
@@ -1970,8 +1971,19 @@ export function setActiveSlot(slot: number): void {
   if (slot >= 0 && slot < SAVE_SLOT_COUNT) localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
 }
 
+/** 開發／驗收預覽可沿用正式場景，但不得覆寫玩家任何存檔格。 */
+export function markTransientGameState(state: GameState): GameState {
+  TRANSIENT_STATES.add(state);
+  return state;
+}
+
+export function isTransientGameState(state: GameState): boolean {
+  return TRANSIENT_STATES.has(state);
+}
+
 /** 存檔到指定格（預設為作用中的格子）；存到哪格，之後的自動存檔就跟到哪格。 */
 export function saveGame(state: GameState, slot: number = getActiveSlot()): void {
+  if (isTransientGameState(state)) return;
   setActiveSlot(slot);
   localStorage.setItem(slotKey(slot), JSON.stringify(state));
 }
