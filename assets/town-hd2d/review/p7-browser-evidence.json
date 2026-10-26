@@ -1,0 +1,51 @@
+{
+  "phase": "P7",
+  "date": "2026-09-16",
+  "environment": {
+    "host": "Windows local development host",
+    "browser": "Codex in-app Chromium",
+    "route": "?townAudit=yuegang&hero=lin&touch=1",
+    "note": "townAudit 使用 transient state 驗收正式 Port 流程，不讀寫玩家存檔。"
+  },
+  "formalAudit": {
+    "port": "yuegang",
+    "rendererMode": "hd2d",
+    "hd2dMode": "formal",
+    "theme": "china",
+    "firstVisitModal": "初次抵達・月港",
+    "tutorialPrompt": "在港町裡走走看",
+    "movementAndCameraFollow": true,
+    "developerFacilityShortcutsVisible": false,
+    "coordinateDiagnosticsVisible": false,
+    "frames": 1486,
+    "medianFps": 59.9,
+    "p95FrameMs": 17.2,
+    "player": { "u": -2.496342278390255, "v": 1.23659230983956 },
+    "routePoints": 0,
+    "storageWrites": 0,
+    "consoleErrors": 0,
+    "lastError": null,
+    "passed": true
+  },
+  "legacyRegression": {
+    "evidenceSource": "assets/town-hd2d/review/p6-browser-evidence.json",
+    "query": "townRenderer=legacy",
+    "rendererMode": "legacy",
+    "threeRendererCreated": false,
+    "legacyVisualLoaded": true,
+    "p7AutomatedOverrideCheck": true,
+    "passed": true
+  },
+  "releaseCandidate": {
+    "gameVersion": "2.5.0",
+    "versionName": "HD-2D 港町版",
+    "saveVersion": 23,
+    "publicSiteChanged": false,
+    "mainBranchChanged": false
+  },
+  "knownLimits": [
+    "P7 的 legacy 路徑沿用同一功能分支 P6 已通過的瀏覽器證據，並由 P7 自動化測試複驗 override 接線；本次瀏覽器控制重連逾時，未新增第二份 legacy 畫面證據。",
+    "沒有可用的實體 iPad 或 iPhone Safari；P6 的 iOS 尺寸為 Chromium viewport 模擬。",
+    "本證據只核准 feature branch 發版候選，不代表 main 合併或公開網站部署。"
+  ]
+}

@@ -36,8 +36,22 @@ export default class BootScene extends Phaser.Scene {
     // 開發預覽：?hexmap=1（或 ?hexmap=地圖id）直接開六角格海戰 P3 戰場預覽；
     // 正式流程不受影響（無參數時照常進標題）。P7 整合後改用 ?battle=hex。
     const query = new URLSearchParams(window.location.search);
+    const townAuditPortId = query.get('townAudit');
+    if (townAuditPortId) {
+      // P7 正式入口驗收：使用 transient state 跑一般 Port 流程，不顯示開發捷徑、不碰玩家存檔。
+      const requestedHero = query.get('hero');
+      const heroId = HEROES.find((hero) => hero.id === requestedHero)?.id
+        ?? HEROES.find((hero) => hero.startPortId === townAuditPortId)?.id
+        ?? 'lin';
+      const state = markTransientGameState(newGame(heroId));
+      state.tutorial.onboarding = 'active';
+      state.tutorial.completedSteps = ['core_welcome', 'core_enter_port'];
+      this.registry.set('state', state);
+      this.scene.start('Port', { portId: townAuditPortId });
+      return;
+    }
     if (query.get('townPreview') === 'hd2d') {
-      // P5 驗收狀態可切換 22 港與三位主角；saveGame 會識別 transient state，絕不寫入玩家存檔格。
+      // 診斷狀態可切換 22 港與三位主角；saveGame 會識別 transient state，絕不寫入玩家存檔格。
       const portId = query.get('port') ?? 'yuegang';
       const requestedHero = query.get('hero');
       const heroId = HEROES.find((hero) => hero.id === requestedHero)?.id

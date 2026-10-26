@@ -68,7 +68,7 @@ export default class TitleScene extends Phaser.Scene {
       this.scene.pause();
     }, 16);
 
-    // HD-2D 開發預覽往返入口；只有帶 ?townPreview=hd2d 時可見，不影響普通玩家。
+    // HD-2D 開發診斷往返入口；只有帶 ?townPreview=hd2d 時可見，不影響普通玩家。
     const previewQuery = new URLSearchParams(window.location.search);
     if (previewQuery.get('townPreview') === 'hd2d') {
       const previewPortId = previewQuery.get('port') ?? 'yuegang';

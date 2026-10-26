@@ -34,7 +34,7 @@ declare global {
   }
 }
 
-/** PortScene 內的 P5 多港驗收 session；可走正式設施，但 transient state 不寫玩家存檔。 */
+/** PortScene 內的正式 HD-2D 港町；開發預覽使用 transient state，因此不寫玩家存檔。 */
 export class TownHd2dPrototype {
   private renderer?: ThreeTownRenderer;
   private controller?: TownController;
@@ -50,6 +50,7 @@ export class TownHd2dPrototype {
   private tutorialMoveOrigin?: { u: number; v: number };
   private disposed = false;
   private readonly portName: string;
+  private readonly diagnosticsVisible: boolean;
 
   private get state(): GameState {
     return this.scene.registry.get('state') as GameState;
@@ -60,14 +61,15 @@ export class TownHd2dPrototype {
     if (!sceneData) throw new Error(`尚未建立 HD-2D 港町資料：${portId}`);
     this.sceneData = sceneData;
     this.portName = PORTS.find((candidate) => candidate.id === portId)?.name ?? portId;
+    this.diagnosticsVisible = new URLSearchParams(window.location.search).get('townPreview') === 'hd2d';
     this.initialPosition = spawn ? { u: spawn.x, v: spawn.y } : { ...sceneData.spawn };
     this.cursors = scene.input.keyboard!.createCursorKeys();
     this.keys = scene.input.keyboard!.addKeys('W,A,S,D,ENTER') as PrototypeKeys;
-    this.touchControls = new TouchControls(scene, '原型說明');
+    this.touchControls = new TouchControls(scene, '進入');
 
     scene.add.rectangle(BASE_W / 2, 25, BASE_W, 50, 0x17262d, 0.94).setDepth(100).setScrollFactor(0);
     scene.add
-      .text(18, 6, `${this.portName}・HD-2D P5`, textStyle(18, '#ffe39a'))
+      .text(18, 6, `${this.portName}・HD-2D 港町`, textStyle(18, '#ffe39a'))
       .setDepth(101).setScrollFactor(0);
     const state = this.state;
     scene.add.text(250, 14, `${dateText(state.day)}　資金 ${state.gold} 兩　貨艙 ${cargoCount(state)}/${cargoMax(state)}　水手 ${state.crew} 人`, textStyle(15, '#d9e8eb'))
@@ -79,8 +81,10 @@ export class TownHd2dPrototype {
     }, 15).setDepth(102).setScrollFactor(0);
     makeButton(scene, BASE_W - 162, 25, 116, 36, '選單', () => this.openMenu(), 15)
       .setDepth(102).setScrollFactor(0);
-    makeButton(scene, BASE_W - 52, 25, 92, 36, '回標題', () => scene.scene.start('Title'), 14)
-      .setDepth(102).setScrollFactor(0);
+    if (this.diagnosticsVisible) {
+      makeButton(scene, BASE_W - 52, 25, 92, 36, '回標題', () => scene.scene.start('Title'), 14)
+        .setDepth(102).setScrollFactor(0);
+    }
 
     scene.add.text(BASE_W - 18, 70, '金色圓圈＝設施入口', textStyle(13, '#fff0bd'))
       .setOrigin(1, 0).setDepth(101).setScrollFactor(0).setShadow(1, 1, '#000', 2);
@@ -108,16 +112,16 @@ export class TownHd2dPrototype {
       snapshot: () => townPrototypeDiagnostics.snapshot(),
       navigation: () => this.controller?.snapshot() ?? null,
     };
-    this.scene.game.canvas.dataset.townHd2dMode = 'P5-B';
+    this.scene.game.canvas.dataset.townHd2dMode = 'formal';
     this.scene.game.canvas.dataset.townHd2dPort = this.portId;
     this.scene.game.canvas.dataset.townHd2dTheme = this.sceneData.themeId;
     this.scene.game.canvas.dataset.townHd2dHero = this.state.story.heroId;
     this.scene.game.canvas.dataset.townHd2dStorageWrites = String(storageWrites);
-    this.createFacilityButtons();
+    if (this.diagnosticsVisible) this.createFacilityButtons();
     this.publishDiagnostics();
   }
 
-  mount(): void {
+  mount(): boolean {
     try {
       const schemaErrors = validateTownSceneData(this.sceneData);
       if (schemaErrors.length > 0) throw new Error(schemaErrors.join('；'));
@@ -128,23 +132,20 @@ export class TownHd2dPrototype {
       this.renderer = new ThreeTownRenderer(this.scene, characterWalkUrl(this.state.story.heroId), this.sceneData, resolveAsset);
       this.renderer.mount();
       this.controller = new TownController(this.sceneData, this.renderer, this.initialPosition);
-      this.tutorialMoveOrigin = { ...this.controller.snapshot().player };
-      this.tutorial = new TutorialOverlay(this.scene, this.state);
-      this.tutorial.registerAnchor('port.player', this.playerAnchor);
-      this.tutorial.registerAnchor('port.hint', this.hintText);
-      this.tutorial.registerAnchor('port.touch.direction', this.touchControls.directionAnchor());
-      this.tutorial.registerAnchor('port.touch.action', this.touchControls.actionAnchor());
       const port = PORTS.find((candidate) => candidate.id === this.portId);
       if (port) audio.playBgm(townBgmForRegion(port.region));
-      this.statusText.setText(`P5 ${this.portName}已啟動｜${this.sceneData.themeId} 主題｜正式素材會自動取代安全灰模`);
+      this.statusText.setText(`${this.portName} HD-2D 港町已啟動｜${this.sceneData.themeId} 主題`);
+      this.statusText.setVisible(this.diagnosticsVisible);
       this.scene.game.canvas.dataset.townHd2dInteractiveMs = performance.now().toFixed(1);
       this.publishDiagnostics();
+      return true;
     } catch (error) {
       this.renderer?.dispose();
       this.renderer = undefined;
       townPrototypeDiagnostics.failed(error);
       const message = error instanceof Error ? error.message : String(error);
-      this.statusText.setText(`原型未啟動：${message}`);
+      this.statusText.setText(`HD-2D 港町未啟動：${message}`);
+      this.statusText.setVisible(true);
       this.publishDiagnostics();
       this.scene.add.rectangle(BASE_W / 2, BASE_H / 2, 760, 220, 0x3a2018, 0.94).setDepth(90);
       this.scene.add
@@ -155,7 +156,18 @@ export class TownHd2dPrototype {
         })
         .setOrigin(0.5).setDepth(91);
       makeButton(this.scene, BASE_W / 2, BASE_H / 2 + 72, 230, 44, '改用舊版港町', () => this.switchToLegacy(), 16).setDepth(92);
+      return false;
     }
+  }
+
+  startTutorial(): void {
+    if (this.tutorial || !this.controller) return;
+    this.tutorialMoveOrigin = { ...this.controller.snapshot().player };
+    this.tutorial = new TutorialOverlay(this.scene, this.state);
+    this.tutorial.registerAnchor('port.player', this.playerAnchor);
+    this.tutorial.registerAnchor('port.hint', this.hintText);
+    this.tutorial.registerAnchor('port.touch.direction', this.touchControls.directionAnchor());
+    this.tutorial.registerAnchor('port.touch.action', this.touchControls.actionAnchor());
   }
 
   update(time: number, delta: number): void {
@@ -208,9 +220,11 @@ export class TownHd2dPrototype {
     if (Math.floor(time / 500) !== Math.floor((time - delta) / 500)) {
       const d = townPrototypeDiagnostics.snapshot();
       const r = this.renderer.snapshot();
-      this.statusText.setText(
-        `P5 ${this.portName}｜${this.sceneData.themeId}｜mount ${d.mounts}／dispose ${d.disposes}｜路點 ${this.controller?.snapshot().route.length ?? 0}｜座標 ${r.playerX.toFixed(2)}, ${r.playerZ.toFixed(2)}｜frame ${r.frames}`,
-      );
+      if (this.diagnosticsVisible) {
+        this.statusText.setText(
+          `${this.portName}｜${this.sceneData.themeId}｜mount ${d.mounts}／dispose ${d.disposes}｜路點 ${this.controller?.snapshot().route.length ?? 0}｜座標 ${r.playerX.toFixed(2)}, ${r.playerZ.toFixed(2)}｜frame ${r.frames}`,
+        );
+      }
       this.publishDiagnostics();
     }
   }
@@ -227,11 +241,13 @@ export class TownHd2dPrototype {
 
   private onContextLost = (event: Event): void => {
     event.preventDefault();
+    this.statusText.setVisible(true);
     this.statusText.setText('WebGL context 已中斷，整個遊戲畫面需要重新建立；請回標題或重新整理。');
   };
 
   private onContextRestored = (): void => {
-    this.statusText.setText(`WebGL context 已恢復；請回標題後重新建立 P5 ${this.portName}。`);
+    this.statusText.setVisible(true);
+    this.statusText.setText(`WebGL context 已恢復；請回標題後重新進入${this.portName}。`);
   };
 
   dispose(): void {

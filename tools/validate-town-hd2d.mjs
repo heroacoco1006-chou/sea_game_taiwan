@@ -81,7 +81,7 @@ check(renderer.includes('screenToGround') && renderer.includes('pickFacility') &
 check(renderer.includes('updateFollowCamera') && prototype.includes('screenMovementToGround'), 'P4 必須有玩家跟隨鏡頭及畫面方向移動換算')
 check(renderer.includes('loadFormalArt') && renderer.includes('MirroredRepeatWrapping') && renderer.includes('buildSetDressing'), 'P4 renderer 必須載入正式材質與街景小物')
 check(registry.includes('townSceneForPort') && registry.includes('townIndex.ports'), 'P3 必須透過資料索引選擇港町，不可在 PortScene 寫月港特例')
-check(prototype.includes("dataset.townHd2dMode = 'P5-B'"), '預覽診斷模式必須標記 P5-B')
+check(prototype.includes("dataset.townHd2dMode = 'formal'"), 'P5 資產與導航必須接入正式 renderer 診斷標記')
 check(prototype.includes('characterWalkUrl(this.state.story.heroId)'), 'P5 必須依目前主角載入行走圖')
 check(prototype.includes("scene.input.on('pointerdown'"), 'P3 預覽缺少點地導航')
 check(pointer.includes('viewportWidth / canvasWidth') && prototype.includes('townViewportPoint'), 'P4 必須修正 2 倍超取樣指標座標')

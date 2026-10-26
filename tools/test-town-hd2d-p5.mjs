@@ -59,7 +59,7 @@ const prototype = source('src/town/TownHd2dPrototype.ts')
 const title = source('src/scenes/TitleScene.ts')
 assert.ok(boot.includes("query.get('hero')") && boot.includes('hero.startPortId === portId'), 'Boot 應支援三主角預覽')
 assert.ok(prototype.includes('characterWalkUrl(this.state.story.heroId)'), 'P5 應依目前主角載入行走圖')
-assert.ok(prototype.includes("dataset.townHd2dMode = 'P5-B'"), 'P5 診斷標記')
+assert.ok(prototype.includes("dataset.townHd2dMode = 'formal'"), 'P5 資產與導航已接入正式 renderer 診斷標記')
 assert.ok(title.includes('previewPortId') && title.includes('previewPortName'), '標題返回應保留目前預覽港口')
 
 console.log('✅ HD-2D P5：四主題、三主角、22 港設施素材與導航全部通過')
