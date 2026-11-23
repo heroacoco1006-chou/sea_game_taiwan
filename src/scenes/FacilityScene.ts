@@ -26,6 +26,7 @@ export default class FacilityScene extends Phaser.Scene {
   private info!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private skipReputationNotice = false;
+  private skipStoryNotice = false;
   private tutorial?: TutorialOverlay;
   private departButton?: Phaser.GameObjects.Container;
 
@@ -37,11 +38,12 @@ export default class FacilityScene extends Phaser.Scene {
     return this.registry.get('state') as GameState;
   }
 
-  init(data: { portId: string; type: FacilityType; door: { x: number; y: number }; skipReputationNotice?: boolean }): void {
+  init(data: { portId: string; type: FacilityType; door: { x: number; y: number }; skipReputationNotice?: boolean; skipStoryNotice?: boolean }): void {
     this.port = PORTS.find((p) => p.id === data.portId)!;
     this.type = data.type;
     this.door = data.door;
     this.skipReputationNotice = !!data.skipReputationNotice;
+    this.skipStoryNotice = !!data.skipStoryNotice;
   }
 
   create(): void {
@@ -202,7 +204,7 @@ export default class FacilityScene extends Phaser.Scene {
 
     const chapter = currentStoryChapter(s);
     const targetPort = storyTargetPort(chapter);
-    if (chapter && chapter.targetPortId === this.port.id) {
+    if (!this.skipStoryNotice && chapter && chapter.targetPortId === this.port.id) {
       const teaser = storyChapterTeaser(s.story.heroId, chapter.chapter);
       const stageProgress = storyStageProgressText(s, chapter);
       this.body.setText(
@@ -210,7 +212,7 @@ export default class FacilityScene extends Phaser.Scene {
         `年份：${chapter.year}　人物：${chapter.npc}\n\n` +
         `${teaser}\n\n目標：${chapter.objective}\n${storyRequirementText(chapter)}${stageProgress ? `\n${stageProgress}` : ''}`
       );
-      makeButton(this, W / 2, 520, 340, 52, '推進主線（看劇情）', () => {
+      makeButton(this, W / 2, 500, 340, 52, '推進主線（看劇情）', () => {
         const check = storyAdvanceCheck(s, this.port);
         if (!check.ok) {
           showModal(this, chapter.title, check.message, [{ label: '知道了', onPick: () => {} }]);
@@ -224,6 +226,15 @@ export default class FacilityScene extends Phaser.Scene {
           ret: { scene: 'Facility', portId: this.port.id, type: this.type, door: this.door },
         });
       });
+      makeButton(this, W / 2, 562, 340, 44, '稍後再說（處理一般委託）', () => {
+        this.scene.restart({
+          portId: this.port.id,
+          type: this.type,
+          door: this.door,
+          skipReputationNotice: true,
+          skipStoryNotice: true,
+        });
+      }, 15);
       return;
     }
 

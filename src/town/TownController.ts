@@ -17,6 +17,7 @@ export class TownController {
   private route: TownGroundPoint[] = [];
   private routeTarget: TownGroundPoint | null = null;
   private targetFacility: TownFacilityKey | null = null;
+  private arrivedFacility: TownFacilityKey | null = null;
 
   constructor(
     private readonly data: TownSceneData,
@@ -62,6 +63,13 @@ export class TownController {
       if (this.route.length === 0) {
         this.routeTarget = null;
         this.renderer.setNavigationPath([]);
+        if (this.targetFacility) {
+          const near = this.nearestFacility();
+          if (near?.key === this.targetFacility) {
+            this.arrivedFacility = this.targetFacility;
+          }
+          this.targetFacility = null;
+        }
       }
     }
 
@@ -78,6 +86,11 @@ export class TownController {
     this.route = route.map((waypoint) => ({ ...waypoint }));
     this.routeTarget = this.route.length > 0 ? { ...this.route[this.route.length - 1] } : { ...point };
     this.targetFacility = facility;
+    this.arrivedFacility = null;
+    if (facility && this.route.length === 0 && this.nearestFacility()?.key === facility) {
+      this.arrivedFacility = facility;
+      this.targetFacility = null;
+    }
     this.renderer.setNavigationPath([this.player, ...this.route]);
     return true;
   }
@@ -87,10 +100,17 @@ export class TownController {
     return facility ? this.navigateTo(facility.approach, key) : false;
   }
 
+  consumeArrivedFacility(): TownFacilityKey | null {
+    const key = this.arrivedFacility;
+    this.arrivedFacility = null;
+    return key;
+  }
+
   clearRoute(): void {
     this.route = [];
     this.routeTarget = null;
     this.targetFacility = null;
+    this.arrivedFacility = null;
     this.renderer.setNavigationPath([]);
   }
 

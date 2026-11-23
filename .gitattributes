@@ -1,0 +1,8 @@
+# 統一跨 Windows / Mac 文字檔換行符號為 LF，避免同步造成大量假差異
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.mp3 binary
+*.ogg binary
+*.wav binary

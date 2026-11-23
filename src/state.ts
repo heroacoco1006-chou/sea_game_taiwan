@@ -1945,30 +1945,51 @@ export function useConsumable(state: GameState, itemId: string): string {
   return `使用了【${item.name}】。`;
 }
 
-/** 把舊版單一存檔（seagame_save1）搬到第 1 格（index 0），只搬一次。 */
-function migrateLegacySave(): void {
+function safeGetItem(key: string): string | null {
   try {
-    const legacy = localStorage.getItem(LEGACY_SAVE_KEY);
-    if (!legacy) return;
-    if (!localStorage.getItem(slotKey(0))) {
-      localStorage.setItem(slotKey(0), legacy);
-    }
-    localStorage.removeItem(LEGACY_SAVE_KEY);
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
   } catch {
     /* localStorage 不可用時略過 */
   }
+}
+
+/** 把舊版單一存檔（seagame_save1）搬到第 1 格（index 0），只搬一次。 */
+function migrateLegacySave(): void {
+  const legacy = safeGetItem(LEGACY_SAVE_KEY);
+  if (!legacy) return;
+  if (!safeGetItem(slotKey(0))) {
+    safeSetItem(slotKey(0), legacy);
+  }
+  safeRemoveItem(LEGACY_SAVE_KEY);
 }
 migrateLegacySave();
 
 /** 目前作用中的存檔格（0 起算）；自動存檔都寫到這一格。 */
 export function getActiveSlot(): number {
-  const raw = localStorage.getItem(ACTIVE_SLOT_KEY);
+  const raw = safeGetItem(ACTIVE_SLOT_KEY);
   const n = raw ? Number.parseInt(raw, 10) : 0;
   return Number.isInteger(n) && n >= 0 && n < SAVE_SLOT_COUNT ? n : 0;
 }
 
 export function setActiveSlot(slot: number): void {
-  if (slot >= 0 && slot < SAVE_SLOT_COUNT) localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
+  if (slot >= 0 && slot < SAVE_SLOT_COUNT) safeSetItem(ACTIVE_SLOT_KEY, String(slot));
 }
 
 /** 開發／驗收預覽可沿用正式場景，但不得覆寫玩家任何存檔格。 */
@@ -1982,19 +2003,38 @@ export function isTransientGameState(state: GameState): boolean {
 }
 
 /** 存檔到指定格（預設為作用中的格子）；存到哪格，之後的自動存檔就跟到哪格。 */
-export function saveGame(state: GameState, slot: number = getActiveSlot()): void {
-  if (isTransientGameState(state)) return;
+export function saveGame(state: GameState, slot: number = getActiveSlot()): boolean {
+  if (isTransientGameState(state)) return false;
   setActiveSlot(slot);
-  localStorage.setItem(slotKey(slot), JSON.stringify(state));
+  return safeSetItem(slotKey(slot), JSON.stringify(state));
 }
 
 /** 讀取指定格（預設為作用中的格子）；含舊存檔升級。 */
 export function loadGame(slot: number = getActiveSlot()): GameState | null {
-  const raw = localStorage.getItem(slotKey(slot));
+  const raw = safeGetItem(slotKey(slot));
   if (!raw) return null;
   const s = migrateSave(raw);
   if (s) setActiveSlot(slot);
   return s;
+}
+
+/** 匯出指定存檔格的 JSON 字串供下載備份（無存檔或格式無效回傳 null）。 */
+export function exportSaveSlotJson(slot: number): string | null {
+  const raw = safeGetItem(slotKey(slot));
+  if (!raw) return null;
+  const migrated = migrateSave(raw);
+  return migrated ? JSON.stringify(migrated, null, 2) : null;
+}
+
+/** 匯入備份 JSON 字串到指定存檔格（會經過 migrateSave 驗證與升級）。 */
+export function importSaveSlotJson(slot: number, raw: string): { ok: boolean; msg: string; state?: GameState } {
+  if (slot < 0 || slot >= SAVE_SLOT_COUNT) return { ok: false, msg: '存檔格編號無效。' };
+  const migrated = migrateSave(raw);
+  if (!migrated) return { ok: false, msg: '這份檔案不是有效的《大航海福爾摩沙》存檔。' };
+  const saved = safeSetItem(slotKey(slot), JSON.stringify(migrated));
+  if (!saved) return { ok: false, msg: '瀏覽器目前不允許寫入存檔（可能開啟了無痕模式或空間不足）。' };
+  setActiveSlot(slot);
+  return { ok: true, msg: `已匯入備份到第 ${slot + 1} 格！`, state: migrated };
 }
 
 /** 把存檔字串解析並升級到最新版本；解析失敗回 null。 */
@@ -2256,13 +2296,13 @@ function migrateSave(raw: string): GameState | null {
 
 /** 指定格（預設作用中格子）是否有存檔。 */
 export function hasSave(slot: number = getActiveSlot()): boolean {
-  return localStorage.getItem(slotKey(slot)) !== null;
+  return safeGetItem(slotKey(slot)) !== null;
 }
 
 /** 是否有任何一格存在存檔。 */
 export function hasAnySave(): boolean {
   for (let i = 0; i < SAVE_SLOT_COUNT; i++) {
-    if (localStorage.getItem(slotKey(i))) return true;
+    if (safeGetItem(slotKey(i))) return true;
   }
   return false;
 }
@@ -2278,7 +2318,7 @@ export interface SaveSlotInfo {
 }
 
 export function saveSlotInfo(slot: number): SaveSlotInfo {
-  const raw = localStorage.getItem(slotKey(slot));
+  const raw = safeGetItem(slotKey(slot));
   if (!raw) return { slot, exists: false };
   const s = migrateSave(raw);
   if (!s) return { slot, exists: false };
@@ -2298,7 +2338,13 @@ export function listSaveSlots(): SaveSlotInfo[] {
 }
 
 export function deleteSave(slot: number): void {
-  localStorage.removeItem(slotKey(slot));
+  safeRemoveItem(slotKey(slot));
+}
+
+/** 從目前主角的開局日期起算的實際遊玩天數（讓三位不同開局年份的主角皆享有相同新手保護期）。 */
+export function elapsedPlayDays(state: GameState): number {
+  const hero = heroDefById(state.story?.heroId);
+  return Math.max(0, state.day - dayForYear(hero.startYear));
 }
 
 export function cargoCount(state: GameState): number {

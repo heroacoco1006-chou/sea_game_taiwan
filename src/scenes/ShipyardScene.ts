@@ -94,14 +94,14 @@ export default class ShipyardScene extends Phaser.Scene {
     makeButton(this, 410, 540, 200, 42, `修理全艦隊（${REPAIR_PRICE} 兩/點）`, () => this.repairFleet(), 14);
 
     // ---------- 右側：建造船隻 ----------
-    this.add.text(950, 78, '— 可建造的船 —', textStyle(20)).setOrigin(0.5);
-    this.highlight = this.add.rectangle(-500, -500, 560, 32, 0xc9b178, 0.55);
+    this.add.text(950, 74, '— 可建造的船 —', textStyle(20)).setOrigin(0.5);
+    this.highlight = this.add.rectangle(-500, -500, 560, 30, 0xc9b178, 0.55);
     const availableShips = availableShipsAtPort(this.port);
-    this.add.text(950, 100, this.shipyardNote(), textStyle(13, '#6b5530')).setOrigin(0.5);
+    this.add.text(950, 96, this.shipyardNote(), textStyle(13, '#6b5530')).setOrigin(0.5);
     availableShips.forEach((t, i) => {
-      const y = 104 + i * 34;
+      const y = 114 + i * 32;
       const zone = this.add
-        .rectangle(950, y + 13, 560, 30, 0xffffff, 0.001)
+        .rectangle(950, y + 12, 560, 28, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.selectShip(t));
       const owned = this.state.ship.typeId === t.id ? '（旗艦）' : '';
@@ -113,20 +113,20 @@ export default class ShipyardScene extends Phaser.Scene {
       this.listTexts.set(t.id, txt);
     });
     if (availableShips.length === 0) {
-      this.add.text(950, 140, '這座港口沒有可建造的船型。', textStyle(16, '#6b5530')).setOrigin(0.5);
+      this.add.text(950, 144, '這座港口沒有可建造的船型。', textStyle(16, '#6b5530')).setOrigin(0.5);
     }
-    this.buyDetail = this.add.text(680, 300, '（點選上方船隻查看詳情）', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 545, useAdvancedWrap: true }, lineSpacing: 3 });
+    this.buyDetail = this.add.text(680, 290, '（點選上方船隻查看詳情）', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 545, useAdvancedWrap: true }, lineSpacing: 3 });
     this.buyDetail.setWordWrapWidth(365, true);
-    this.shipCardImage = this.add.image(1155, 360, 'ship').setVisible(false);
-    makeButton(this, 820, 520, 260, 50, '建造新旗艦（折抵舊旗艦）', () => this.orderShip(false), 15);
-    makeButton(this, 1100, 520, 220, 50, '建造僚艦', () => this.orderShip(true), 16);
+    this.shipCardImage = this.add.image(1155, 355, 'ship').setVisible(false);
+    makeButton(this, 820, 505, 260, 46, '建造新旗艦（折抵舊旗艦）', () => this.orderShip(false), 15);
+    makeButton(this, 1100, 505, 220, 46, '建造僚艦', () => this.orderShip(true), 16);
 
     // ---------- 船艦改造 ----------
-    this.add.text(950, 586, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
-    this.ordersText = this.add.text(690, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
-    this.figureheadText = this.add.text(980, 612, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 260, useAdvancedWrap: true }, lineSpacing: 4 });
-    makeButton(this, 820, 696, 220, 38, '建造進度／取船', () => this.showOrderMenu(), 15);
-    makeButton(this, 1100, 696, 220, 38, '船艦改造', () => this.showRefitMenu(), 16);
+    this.add.text(950, 558, '— 船艦改造 —', textStyle(18)).setOrigin(0.5);
+    this.ordersText = this.add.text(680, 582, '', { ...textStyle(13, '#5a4a30'), wordWrap: { width: 255, useAdvancedWrap: true }, lineSpacing: 4 });
+    this.figureheadText = this.add.text(680, 624, '', { ...textStyle(12, '#5a4a30'), wordWrap: { width: 265, useAdvancedWrap: true }, lineSpacing: 3 });
+    makeButton(this, 820, 680, 220, 36, '建造進度／取船', () => this.showOrderMenu(), 15);
+    makeButton(this, 1100, 680, 220, 36, '船艦改造', () => this.showRefitMenu(), 16);
 
     this.refreshFleet();
   }
@@ -212,6 +212,7 @@ export default class ShipyardScene extends Phaser.Scene {
     }
     s.gold -= CANNON_PRICE;
     s.ship.cannons += 1;
+    audio.playSfx('coin');
     this.refreshFleet();
     toast(this, `裝上第 ${s.ship.cannons} 門砲！海戰火力更強了`);
   }
@@ -410,18 +411,27 @@ export default class ShipyardScene extends Phaser.Scene {
       toast(this, '貨太多了，新旗艦貨艙裝不下！先賣掉一些貨再取船。');
       return;
     }
+    // 移轉原旗艦的船隻裝備到新旗艦，避免玩家誤以為花錢買的裝備消失
+    const oldShip = s.ship;
+    const carriedGear = [oldShip.figurehead, oldShip.armor, oldShip.sail, oldShip.cannonType].some(Boolean);
     s.ship = {
       ...newShip,
-      x: s.ship.x,
-      y: s.ship.y,
+      x: oldShip.x,
+      y: oldShip.y,
+      figurehead: oldShip.figurehead,
+      armor: oldShip.armor,
+      sail: oldShip.sail,
+      cannonType: oldShip.cannonType,
     };
+    s.ship.hull = shipHullMax(s.ship);
     s.crew = Math.min(s.crew, crewMax(s));
     s.food = Math.min(s.food, supplyMax(s));
     s.water = Math.min(s.water, supplyMax(s));
     s.shipOrders = s.shipOrders.filter((o) => o.id !== orderId);
+    audio.playSfx('coin');
     saveGame(s);
     this.scene.restart({ portId: this.port.id, door: this.door });
-    toast(this, `【${type.name}】完工，已成為新旗艦！`);
+    toast(this, `【${type.name}】完工，已成為新旗艦！${carriedGear ? '（原旗艦裝備已一併移轉）' : ''}`);
   }
 
   /** asEscort=false 建造新旗艦；true 建造僚艦 */
@@ -496,6 +506,10 @@ export default class ShipyardScene extends Phaser.Scene {
 
   private promoteEscort(idx: number): void {
     const s = this.state;
+    if (s.shipOrders.some((o) => o.mode === 'flagship')) {
+      toast(this, '有新旗艦正在建造中，請先取船後再更換旗艦。');
+      return;
+    }
     const flag = s.ship;
     const esc = s.escorts[idx];
     esc.x = flag.x;
@@ -540,8 +554,8 @@ export default class ShipyardScene extends Phaser.Scene {
       { label: '砲種', id: this.state.ship.cannonType },
     ];
     entries.forEach((entry, i) => {
-      const x = 978 + i * 68;
-      const y = 636;
+      const x = 986 + i * 68;
+      const y = 610;
       const frame = this.add.rectangle(x, y, 48, 48, COLORS.parchment, 0.88).setStrokeStyle(2, COLORS.wood);
       const key = entry.id ? this.m5Texture(shipEquipmentKey(entry.id), '') : '';
       this.equipmentPreviewObjs.push(frame);

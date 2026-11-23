@@ -13,10 +13,12 @@ import {
   completeStoryDuel,
   fleetShips,
   fleetStat,
+  hasRole,
   levelUpMessage,
   reduceCrewLoss,
   shipHullMax,
   shipTypeById,
+  supplyMax,
   updateQuestProgress,
   weaponBoard,
 } from '../state';
@@ -186,8 +188,9 @@ export function createHexBattleLaunch(
   const unitNames: Record<string, string> = {};
   const playerShipIndexes: Record<string, number> = {};
   const units: BattleUnit[] = [];
-  const gunnerMod = 1 + fleetStat(state, 'gun') / 300;
+  const gunnerMod = (hasRole(state, 'gunner') ? 1.2 : 1) * (1 + fleetStat(state, 'gun') / 300);
   const globalBoarding = weaponBoard(state)
+    + (hasRole(state, 'vice') ? 8 : 0)
     + Math.round(fleetStat(state, 'lead') / 15 + fleetStat(state, 'val') / 12);
   const crewLossMultiplier = reduceCrewLoss(state) ? 0.5 : 1;
 
@@ -319,8 +322,9 @@ export function settleHexBattle(
     for (const ship of fleetShips(state)) {
       ship.hull = Math.max(1, Math.round(shipTypeById(ship.typeId).hullMax * 0.4));
     }
-    state.food = Math.min(state.food, 10);
-    state.water = Math.min(state.water, 10);
+    const supCap = supplyMax(state);
+    state.food = Math.min(supCap, Math.max(state.food, Math.min(10, supCap)));
+    state.water = Math.min(supCap, Math.max(state.water, Math.min(10, supCap)));
     state.ship.x = nearest.x;
     state.ship.y = nearest.y + 26;
     return {

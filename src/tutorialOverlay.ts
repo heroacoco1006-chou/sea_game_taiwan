@@ -22,6 +22,8 @@ export class TutorialOverlay {
   private readonly anchors = new Map<string, AnchorObject>();
   private objects: Phaser.GameObjects.GameObject[] = [];
   private outline?: Phaser.GameObjects.Graphics;
+  private lastAnchorKey = '';
+  private dismissedResume = false;
   private destroyed = false;
   private keyboardWasEnabled?: boolean;
 
@@ -30,6 +32,7 @@ export class TutorialOverlay {
     private readonly state: GameState,
   ) {
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroy, this);
+    this.scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.syncAnchor, this);
     this.scene.scale.on('resize', this.redrawAnchor, this);
     this.refresh();
   }
@@ -58,8 +61,16 @@ export class TutorialOverlay {
   }
 
   private visibleStep(): TutorialStepDef | null {
-    return currentTutorialStep(this.state, this.scene.scene.key)
-      ?? tutorialResumeStep(this.state, this.scene.scene.key);
+    const active = currentTutorialStep(this.state, this.scene.scene.key);
+    if (active) return active;
+    if (this.dismissedResume) return null;
+    return tutorialResumeStep(this.state, this.scene.scene.key);
+  }
+
+  private isResumeOnlyStep(): boolean {
+    return !currentTutorialStep(this.state, this.scene.scene.key)
+      && !this.dismissedResume
+      && Boolean(tutorialResumeStep(this.state, this.scene.scene.key));
   }
 
   private instruction(step: TutorialStepDef): string {
@@ -156,13 +167,23 @@ export class TutorialOverlay {
     this.objects.push(panel, title, body);
 
     if (step.canSkip) {
-      const module = activeTutorialModule(this.state);
-      if (module) {
-        const skipLabel = module.id === 'core' ? '跳過核心教學' : '稍後再學'
-        const skip = makeButton(this.scene, cx + 305, y + 16, 140, 38, skipLabel, () => this.skip(module.id), 13)
+      if (this.isResumeOnlyStep()) {
+        const dismiss = makeButton(this.scene, cx + 305, y + 16, 140, 38, '暫時收起', () => {
+          this.dismissedResume = true;
+          this.refresh();
+        }, 13)
           .setDepth(882)
           .setScrollFactor(0);
-        this.objects.push(skip);
+        this.objects.push(dismiss);
+      } else {
+        const module = activeTutorialModule(this.state);
+        if (module) {
+          const skipLabel = module.id === 'core' ? '跳過核心教學' : '稍後再學';
+          const skip = makeButton(this.scene, cx + 305, y + 16, 140, 38, skipLabel, () => this.skip(module.id), 13)
+            .setDepth(882)
+            .setScrollFactor(0);
+          this.objects.push(skip);
+        }
       }
     }
     this.redrawAnchor();
@@ -174,27 +195,53 @@ export class TutorialOverlay {
     this.refresh();
   }
 
-  private redrawAnchor(): void {
-    this.outline?.destroy();
-    this.outline = undefined;
+  private anchorBoundsForCurrentStep(): { x: number; y: number; width: number; height: number } | null {
     const step = this.visibleStep();
-    if (!step || step.presentation !== 'action') return;
+    if (!step || step.presentation !== 'action') return null;
     const anchorId = prefersTouchControls() ? step.anchor?.touch : step.anchor?.desktop;
-    if (!anchorId) return;
+    if (!anchorId) return null;
     const target = this.anchors.get(anchorId);
     const bounds = target?.getBounds?.();
-    if (!target || !bounds) return;
-
-    const cam = this.scene.cameras.main;
+    if (!target || !bounds) return null;
+    const cam = this.scene.cameras?.main;
+    if (!cam) return null;
     const fixed = target.scrollFactorX === 0 && target.scrollFactorY === 0;
     const x = fixed ? bounds.x : bounds.x - cam.scrollX;
     const y = fixed ? bounds.y : bounds.y - cam.scrollY;
+    return { x, y, width: bounds.width, height: bounds.height };
+  }
+
+  private syncAnchor(): void {
+    if (this.destroyed) return;
+    const rect = this.anchorBoundsForCurrentStep();
+    if (!rect) {
+      if (this.lastAnchorKey) {
+        this.lastAnchorKey = '';
+        this.outline?.destroy();
+        this.outline = undefined;
+      }
+      return;
+    }
+    const key = `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.width)},${Math.round(rect.height)}`;
+    if (key !== this.lastAnchorKey) this.redrawAnchor();
+  }
+
+  private redrawAnchor(): void {
+    this.outline?.destroy();
+    this.outline = undefined;
+    const rect = this.anchorBoundsForCurrentStep();
+    if (!rect) {
+      this.lastAnchorKey = '';
+      return;
+    }
+    const { x, y, width, height } = rect;
+    this.lastAnchorKey = `${Math.round(x)},${Math.round(y)},${Math.round(width)},${Math.round(height)}`;
     const pad = 8;
     this.outline = this.scene.add.graphics().setDepth(879).setScrollFactor(0);
     this.outline.lineStyle(5, COLORS.gold, 1);
-    this.outline.strokeRoundedRect(x - pad, y - pad, bounds.width + pad * 2, bounds.height + pad * 2, 12);
+    this.outline.strokeRoundedRect(x - pad, y - pad, width + pad * 2, height + pad * 2, 12);
     this.outline.lineStyle(2, 0xfff3c8, 0.8);
-    this.outline.strokeRoundedRect(x - pad - 4, y - pad - 4, bounds.width + pad * 2 + 8, bounds.height + pad * 2 + 8, 14);
+    this.outline.strokeRoundedRect(x - pad - 4, y - pad - 4, width + pad * 2 + 8, height + pad * 2 + 8, 14);
   }
 
   private clear(): void {
@@ -206,6 +253,7 @@ export class TutorialOverlay {
     this.objects = [];
     this.outline?.destroy();
     this.outline = undefined;
+    this.lastAnchorKey = '';
   }
 
   destroy(): void {
@@ -217,6 +265,7 @@ export class TutorialOverlay {
     }
     this.destroyed = true;
     this.clear();
+    this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.syncAnchor, this);
     this.scene.scale.off('resize', this.redrawAnchor, this);
     this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.destroy, this);
   }

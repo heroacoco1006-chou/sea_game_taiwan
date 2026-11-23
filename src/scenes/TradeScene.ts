@@ -9,6 +9,7 @@ import { TutorialOverlay } from '../tutorialOverlay';
 
 const LIST_TOP = 150;
 const ROW_H = 40;
+const CARGO_PAGE_SIZE = 9;
 const LEFT_X = 64;
 const RIGHT_X = 660;
 const COL_W = 552;
@@ -25,10 +26,12 @@ export default class TradeScene extends Phaser.Scene {
   private side: 'cargo' | 'shop' = 'shop';
   private cargoIds: string[] = [];
   private shopIds: string[] = [];
+  private cargoPage = 0;
   private selectedId: string | null = null;
   private qty = 1;
   private highlight!: Phaser.GameObjects.Rectangle;
   private leftObjs: Phaser.GameObjects.GameObject[] = [];
+  private rightObjs: Phaser.GameObjects.GameObject[] = [];
   private detailName!: Phaser.GameObjects.Text;
   private detailDesc!: Phaser.GameObjects.Text;
   private qtyText!: Phaser.GameObjects.Text;
@@ -47,9 +50,11 @@ export default class TradeScene extends Phaser.Scene {
     this.port = PORTS.find((p) => p.id === data.portId)!;
     this.door = data.door ?? { x: 640, y: 600 };
     this.side = 'shop';
+    this.cargoPage = 0;
     this.selectedId = null;
     this.qty = 1;
     this.leftObjs = [];
+    this.rightObjs = [];
   }
 
   create(): void {
@@ -83,31 +88,11 @@ export default class TradeScene extends Phaser.Scene {
 
     this.highlight = this.add.rectangle(-500, -500, COL_W, ROW_H - 4, 0xc9b178, 0.55);
 
-    // 右欄：本港販售（固定）
+    // 右欄：本港販售（買賣後可同步更新持有數）
     this.shopIds = this.port.sells.slice();
-    this.shopIds.forEach((id, i) => {
-      const g = GOODS.find((x) => x.id === id)!;
-      const y = LIST_TOP + i * ROW_H;
-      const zone = this.add
-        .rectangle(RIGHT_X + COL_W / 2, y + ROW_H / 2 - 2, COL_W, ROW_H - 4, 0xffffff, 0.001)
-        .setInteractive({ useHandCursor: true });
-      zone.on('pointerdown', () => this.select('shop', id));
+    this.rebuildShopList();
 
-      const icon = this.add.image(RIGHT_X + 18, y + ROW_H / 2 - 2, `icon_${g.category}`).setScale(0.9);
-      icon.setTint(Phaser.Display.Color.HexStringToColor(g.color).color);
-      this.add.text(RIGHT_X + 40, y + 8, g.name, textStyle(19));
-      const price = priceOf(this.state, this.port, id, this.state.day);
-      this.add.text(RIGHT_X + 210, y + 8, `${price} 兩`, textStyle(19));
-      if (this.port.cheap.includes(id)) {
-        this.add.text(RIGHT_X + 320, y + 8, '▼特產', textStyle(17, '#2a7a3a'));
-      } else if (this.state.events.some((e) => e.portId === this.port.id && e.goodId === id && e.untilDay >= this.state.day)) {
-        this.add.text(RIGHT_X + 320, y + 8, '▲缺貨', textStyle(17, '#b8362a'));
-      }
-      const own = this.state.cargo[id] ?? 0;
-      if (own > 0) this.add.text(RIGHT_X + 430, y + 8, `持有 ${own}`, textStyle(16, '#6b5530'));
-    });
-
-    // 左欄：我的貨艙（動態重建）
+    // 左欄：我的貨艙（動態重建＋分頁防溢位）
     this.rebuildCargoList();
 
     // ----- 下方操作區 -----
@@ -151,7 +136,36 @@ export default class TradeScene extends Phaser.Scene {
     }
   }
 
-  /** 重建左欄（買賣後持有變動） */
+  /** 重建右欄（買賣後同步更新本港商品的持有數） */
+  private rebuildShopList(): void {
+    for (const o of this.rightObjs) o.destroy();
+    this.rightObjs = [];
+    this.shopIds.forEach((id, i) => {
+      const g = GOODS.find((x) => x.id === id)!;
+      const y = LIST_TOP + i * ROW_H;
+      const zone = this.add
+        .rectangle(RIGHT_X + COL_W / 2, y + ROW_H / 2 - 2, COL_W, ROW_H - 4, 0xffffff, 0.001)
+        .setInteractive({ useHandCursor: true });
+      zone.on('pointerdown', () => this.select('shop', id));
+      this.rightObjs.push(zone);
+
+      const icon = this.add.image(RIGHT_X + 18, y + ROW_H / 2 - 2, `icon_${g.category}`).setScale(0.9);
+      icon.setTint(Phaser.Display.Color.HexStringToColor(g.color).color);
+      this.rightObjs.push(icon);
+      this.rightObjs.push(this.add.text(RIGHT_X + 40, y + 8, g.name, textStyle(19)));
+      const price = priceOf(this.state, this.port, id, this.state.day);
+      this.rightObjs.push(this.add.text(RIGHT_X + 210, y + 8, `${price} 兩`, textStyle(19)));
+      if (this.port.cheap.includes(id)) {
+        this.rightObjs.push(this.add.text(RIGHT_X + 320, y + 8, '▼特產', textStyle(17, '#2a7a3a')));
+      } else if (this.state.events.some((e) => e.portId === this.port.id && e.goodId === id && e.untilDay >= this.state.day)) {
+        this.rightObjs.push(this.add.text(RIGHT_X + 320, y + 8, '▲缺貨', textStyle(17, '#b8362a')));
+      }
+      const own = this.state.cargo[id] ?? 0;
+      if (own > 0) this.rightObjs.push(this.add.text(RIGHT_X + 430, y + 8, `持有 ${own}`, textStyle(16, '#6b5530')));
+    });
+  }
+
+  /** 重建左欄（買賣後持有變動；超過 9 種商品自動分頁避免蓋住操作區） */
   private rebuildCargoList(): void {
     for (const o of this.leftObjs) o.destroy();
     this.leftObjs = [];
@@ -159,12 +173,18 @@ export default class TradeScene extends Phaser.Scene {
     this.cargoIds = GOODS.filter((g) => (s.cargo[g.id] ?? 0) > 0).map((g) => g.id);
 
     if (this.cargoIds.length === 0) {
+      this.cargoPage = 0;
       const t = this.add.text(LEFT_X + COL_W / 2, LIST_TOP + 40, '（貨艙是空的，到右邊採購吧！）', textStyle(17, '#8a7a58')).setOrigin(0.5);
       this.leftObjs.push(t);
       return;
     }
 
-    this.cargoIds.forEach((id, i) => {
+    const totalPages = Math.max(1, Math.ceil(this.cargoIds.length / CARGO_PAGE_SIZE));
+    this.cargoPage = Phaser.Math.Clamp(this.cargoPage, 0, totalPages - 1);
+    const start = this.cargoPage * CARGO_PAGE_SIZE;
+    const pageIds = this.cargoIds.slice(start, start + CARGO_PAGE_SIZE);
+
+    pageIds.forEach((id, i) => {
       const g = GOODS.find((x) => x.id === id)!;
       const y = LIST_TOP + i * ROW_H;
       const zone = this.add
@@ -189,6 +209,43 @@ export default class TradeScene extends Phaser.Scene {
       const color = diff > 0 ? '#1a6a2a' : diff < 0 ? '#a02a20' : '#3a2a14';
       this.leftObjs.push(this.add.text(LEFT_X + 425, y + 8, tag, textStyle(17, color)));
     });
+
+    if (totalPages > 1) {
+      const py = LIST_TOP + CARGO_PAGE_SIZE * ROW_H + 16;
+      const prev = makeButton(this, LEFT_X + 160, py, 96, 30, '上一頁', () => {
+        this.cargoPage = Math.max(0, this.cargoPage - 1);
+        audio.playSfx('page');
+        this.rebuildCargoList();
+        if (this.side === 'cargo') this.syncCargoHighlight();
+      }, 13);
+      const next = makeButton(this, LEFT_X + COL_W - 160, py, 96, 30, '下一頁', () => {
+        this.cargoPage = Math.min(totalPages - 1, this.cargoPage + 1);
+        audio.playSfx('page');
+        this.rebuildCargoList();
+        if (this.side === 'cargo') this.syncCargoHighlight();
+      }, 13);
+      const pageLabel = this.add.text(LEFT_X + COL_W / 2, py, `${this.cargoPage + 1}/${totalPages}`, textStyle(14, '#5a4a30')).setOrigin(0.5);
+      this.leftObjs.push(prev, next, pageLabel);
+    }
+  }
+
+  private syncCargoHighlight(): void {
+    if (!this.selectedId) {
+      this.highlight.setPosition(-500, -500);
+      return;
+    }
+    const idx = this.cargoIds.indexOf(this.selectedId);
+    if (idx < 0) {
+      this.highlight.setPosition(-500, -500);
+      return;
+    }
+    const page = Math.floor(idx / CARGO_PAGE_SIZE);
+    if (page !== this.cargoPage) {
+      this.highlight.setPosition(-500, -500);
+      return;
+    }
+    const row = idx % CARGO_PAGE_SIZE;
+    this.highlight.setPosition(LEFT_X + COL_W / 2, LIST_TOP + row * ROW_H + ROW_H / 2 - 2);
   }
 
   private switchSide(side: 'cargo' | 'shop'): void {
@@ -215,8 +272,17 @@ export default class TradeScene extends Phaser.Scene {
     this.selectedId = id;
     const ids = side === 'cargo' ? this.cargoIds : this.shopIds;
     const idx = ids.indexOf(id);
-    const x = side === 'cargo' ? LEFT_X : RIGHT_X;
-    this.highlight.setPosition(x + COL_W / 2, LIST_TOP + idx * ROW_H + ROW_H / 2 - 2);
+    if (side === 'cargo') {
+      const targetPage = Math.max(0, Math.floor(Math.max(0, idx) / CARGO_PAGE_SIZE));
+      if (targetPage !== this.cargoPage) {
+        this.cargoPage = targetPage;
+        this.rebuildCargoList();
+      }
+      const row = Math.max(0, idx) % CARGO_PAGE_SIZE;
+      this.highlight.setPosition(LEFT_X + COL_W / 2, LIST_TOP + row * ROW_H + ROW_H / 2 - 2);
+    } else {
+      this.highlight.setPosition(RIGHT_X + COL_W / 2, LIST_TOP + idx * ROW_H + ROW_H / 2 - 2);
+    }
     this.refreshDetail();
   }
 
@@ -335,6 +401,7 @@ export default class TradeScene extends Phaser.Scene {
 
   private afterTrade(): void {
     audio.playSfx('coin');
+    this.rebuildShopList();
     this.rebuildCargoList();
     // 賣光後選取可能失效，退回商店側
     if (this.selectedId && !(this.state.cargo[this.selectedId] ?? 0) && this.side === 'cargo') {

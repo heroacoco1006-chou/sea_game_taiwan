@@ -53,6 +53,8 @@ export default class InfoScene extends Phaser.Scene {
   private portId?: string;
   private spawn?: { x: number; y: number };
   private tab: InfoTab = 'quest';
+  private questPage = 0;
+  private backpackPage = 0;
   private matePage = 0;
   private mateDetailId?: string;
   private codexCategory = '';
@@ -79,6 +81,8 @@ export default class InfoScene extends Phaser.Scene {
     this.portId = data.portId;
     this.spawn = data.spawn;
     this.tab = 'quest';
+    this.questPage = 0;
+    this.backpackPage = 0;
     this.matePage = 0;
     this.mateDetailId = undefined;
     this.codexCategory = '';
@@ -293,21 +297,31 @@ export default class InfoScene extends Phaser.Scene {
     });
     const expiredLines = expiredQuests.map((def) => `⏳ 已錯過：${def.name}「${def.questTitle}」（${mateUnavailableReason(s, def)}）`);
     const reputationLines = reputationEventJournalLines(s);
-    this.addWrapped(
-      290,
-      395,
-      [
-        '— 聲望特殊事件 —',
-        reputationLines.length ? reputationLines.join('\n') : '聲望達到 40 或 80 後，特定港口會出現一次性特殊事件。',
-        '',
-        '— 夥伴專屬任務 —',
-        questLines.length ? questLines.join('\n') : '目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。',
-        ...expiredLines,
-      ].join('\n'),
-      840,
-      14,
-      '#5a4a30'
-    );
+    const extraEntries: string[] = [
+      '— 聲望特殊事件 —',
+      ...(reputationLines.length ? reputationLines : ['聲望達到 40 或 80 後，特定港口會出現一次性特殊事件。']),
+      '— 夥伴專屬任務 —',
+      ...(questLines.length ? questLines : ['目前沒有進行中的夥伴任務。到各港酒館找夥伴「接任務」吧。']),
+      ...expiredLines,
+    ];
+    const perPage = 5;
+    const totalPages = Math.max(1, Math.ceil(extraEntries.length / perPage));
+    this.questPage = Phaser.Math.Clamp(this.questPage, 0, totalPages - 1);
+    const pageLines = extraEntries.slice(this.questPage * perPage, this.questPage * perPage + perPage);
+    this.addWrapped(290, 392, pageLines.join('\n'), 840, 14, '#5a4a30');
+    if (totalPages > 1) {
+      this.dyn.push(makeButton(this, 610, 622, 110, 32, '上一頁', () => {
+        this.questPage = Math.max(0, this.questPage - 1);
+        audio.playSfx('page');
+        this.render();
+      }, 13));
+      this.dyn.push(this.add.text(730, 622, `${this.questPage + 1}/${totalPages}`, textStyle(14)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 850, 622, 110, 32, '下一頁', () => {
+        this.questPage = Math.min(totalPages - 1, this.questPage + 1);
+        audio.playSfx('page');
+        this.render();
+      }, 13));
+    }
   }
 
   private drawEquipment(): void {
@@ -315,21 +329,21 @@ export default class InfoScene extends Phaser.Scene {
     const s = this.state;
     this.addWrapped(
       290,
-      116,
+      112,
       `目前裝備：武器 ${s.equip.weapon ? itemNameById(s.equip.weapon) : '（無）'}　防具 ${s.equip.armor ? itemNameById(s.equip.armor) : '（無）'}　飾品 ${s.equip.accessory ? itemNameById(s.equip.accessory) : '（無）'}\n船首像與船隻裝備請到造船廠的「船艦改造」。`,
       840,
       15,
       '#5a4a30'
     );
-    this.drawEquipColumn('weapon', '武器', 410, 230, WEAPONS.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name} 接舷+${x.board}` })));
-    this.drawEquipColumn('armor', '防具', 710, 230, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
-    this.drawEquipColumn('accessory', '飾品', 1010, 230, ACCESSORIES.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name}` })));
+    this.drawEquipColumn('weapon', '武器', 410, 214, WEAPONS.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name} 接舷+${x.board}` })));
+    this.drawEquipColumn('armor', '防具', 710, 214, ARMORS.map((x) => ({ id: x.id, label: `${x.name} 防禦+${x.defense}` })));
+    this.drawEquipColumn('accessory', '飾品', 1010, 214, ACCESSORIES.map((x) => ({ id: x.id, label: `${x.rare ? '★' : ''}${x.name}` })));
   }
 
   private drawEquipColumn(cat: EquipCat, title: string, x: number, y: number, rows: Array<{ id: string; label: string }>): void {
     const current = this.state.equip[cat];
-    this.dyn.push(this.add.text(x, y - 42, `— ${title} —`, textStyle(19)).setOrigin(0.5));
-    const off = makeButton(this, x, y - 10, 220, 34, current ? '卸下目前裝備' : '目前未裝備', () => this.equip(cat, null), 13);
+    this.dyn.push(this.add.text(x, y - 36, `— ${title} —`, textStyle(18)).setOrigin(0.5));
+    const off = makeButton(this, x, y - 6, 220, 30, current ? '卸下目前裝備' : '目前未裝備', () => this.equip(cat, null), 13);
     off.setAlpha(current ? 1 : 0.45);
     this.dyn.push(off);
 
@@ -337,7 +351,7 @@ export default class InfoScene extends Phaser.Scene {
       const own = this.state.inventory[row.id] ?? 0;
       const equipped = current === row.id;
       const label = own > 0 ? `${equipped ? '✓ ' : ''}${row.label}` : `${row.label}（未持有）`;
-      const btn = makeButton(this, x, y + 34 + i * 42, 255, 34, label, () => this.equip(cat, row.id), 12);
+      const btn = makeButton(this, x, y + 30 + i * 38, 255, 32, label, () => this.equip(cat, row.id), 12);
       btn.setAlpha(own > 0 ? 1 : 0.45);
       this.dyn.push(btn);
     });
@@ -350,9 +364,14 @@ export default class InfoScene extends Phaser.Scene {
     const entries = this.backpackEntries();
     if (entries.length === 0) {
       this.addWrapped(300, 170, '背包目前是空的。', 840, 17);
+      return;
     }
-    entries.forEach((entry, i) => {
-      const y = 170 + i * 44;
+    const perPage = 9;
+    const totalPages = Math.max(1, Math.ceil(entries.length / perPage));
+    this.backpackPage = Phaser.Math.Clamp(this.backpackPage, 0, totalPages - 1);
+    const visible = entries.slice(this.backpackPage * perPage, this.backpackPage * perPage + perPage);
+    visible.forEach((entry, i) => {
+      const y = 166 + i * 46;
       const item = CONSUMABLES.find((x) => x.id === entry.id);
       const desc = itemDescById(entry.id);
       this.addWrapped(300, y, `${itemNameById(entry.id)} x${entry.qty}${desc ? `：${desc}` : ''}`, 600, 15);
@@ -365,6 +384,19 @@ export default class InfoScene extends Phaser.Scene {
         this.dyn.push(btn);
       }
     });
+    if (totalPages > 1) {
+      this.dyn.push(makeButton(this, 610, 622, 110, 32, '上一頁', () => {
+        this.backpackPage = Math.max(0, this.backpackPage - 1);
+        audio.playSfx('page');
+        this.render();
+      }, 13));
+      this.dyn.push(this.add.text(730, 622, `${this.backpackPage + 1}/${totalPages}`, textStyle(14)).setOrigin(0.5));
+      this.dyn.push(makeButton(this, 850, 622, 110, 32, '下一頁', () => {
+        this.backpackPage = Math.min(totalPages - 1, this.backpackPage + 1);
+        audio.playSfx('page');
+        this.render();
+      }, 13));
+    }
   }
 
   private backpackEntries(): Array<{ id: string; qty: number }> {
@@ -441,7 +473,7 @@ export default class InfoScene extends Phaser.Scene {
     this.addWrapped(
       290,
       112,
-      `艦隊 ${fleetShips(s).length}/5 艘　貨艙 ${cargoCount(s)}/${cargoMax(s)}　糧水艙 ${supplyMax(s)}　水手 ${s.crew}/${crewMax(s)}（最低 ${fleetMinCrew(s)}）\n旗艦：${flag.name}　船體 ${s.ship.hull}/${flag.hullMax}　大砲 ${s.ship.cannons}/${flag.cannonSlots}　船首像：${figurehead?.name ?? '（無）'}`,
+      `艦隊 ${fleetShips(s).length}/5 艘　貨艙 ${cargoCount(s)}/${cargoMax(s)}　糧水艙 ${supplyMax(s)}　水手 ${s.crew}/${crewMax(s)}（最低 ${fleetMinCrew(s)}）\n旗艦：${flag.name}　船體 ${s.ship.hull}/${shipHullMax(s.ship)}　大砲 ${s.ship.cannons}/${flag.cannonSlots}　船首像：${figurehead?.name ?? '（無）'}`,
       cardKey ? 560 : 840,
       15
     );
@@ -683,7 +715,7 @@ export default class InfoScene extends Phaser.Scene {
   }
 
   private drawCodexDetail(selected: CodexListEntry): void {
-    this.dyn.push(this.add.rectangle(730, 370, 930, 570, 0x3a2a14, 0.24));
+    this.dyn.push(this.add.rectangle(730, 370, 930, 570, 0x3a2a14, 0.24).setInteractive());
     this.dyn.push(drawPanel(this, 285, 105, 890, 540));
     const title = selected.unlocked ? `【${selected.type}】${selected.title}` : `【${selected.type}】???`;
     const body = selected.unlocked
@@ -822,6 +854,10 @@ export default class InfoScene extends Phaser.Scene {
 
   private promoteEscort(idx: number): void {
     const s = this.state;
+    if (s.shipOrders.some((o) => o.mode === 'flagship')) {
+      toast(this, '有新旗艦正在造船廠建造中，請先取船後再更換旗艦。');
+      return;
+    }
     const flag = s.ship;
     const esc = s.escorts[idx];
     esc.x = flag.x;

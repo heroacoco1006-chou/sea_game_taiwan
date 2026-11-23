@@ -14,7 +14,7 @@ import {
   rollExplorationEvent, applyExplorationEventEffects, ExplorationEventDef, ExplorationEventChoice,
   EXPLORATION_SAFE_IMAGE_ID,
   addReputation, addFriendship, updateQuestProgress, pendingQuestDuel, valorRepPirateReduction,
-  pirateEncounterTier, clearSeaStatusesOnPort,
+  pirateEncounterTier, clearSeaStatusesOnPort, elapsedPlayDays,
 } from '../state';
 import {
   explorationIconKey, explorationEventKey, facilityIconKey, shipWorldKey, shipWorldUrl,
@@ -668,6 +668,7 @@ export default class WorldMapScene extends Phaser.Scene {
     if (pointId === 'exp_siraya') gains.push(addFriendship(this.state, 'sinckan', 6));
     gains.push(...updateQuestProgress(this.state));
     const text = gains.filter(Boolean).join('\n');
+    audio.playSfx('unlock');
     if (text) toast(this, text, BASE_W / 2, 160);
     saveGame(this.state);
   }
@@ -911,7 +912,10 @@ export default class WorldMapScene extends Phaser.Scene {
       const dmg = Math.round((6 + Math.floor(Math.random() * 8)) * stormDamageMod(s));
       s.ship.hull = Math.max(0, s.ship.hull - dmg);
       fatigueGain += 5;
-      this.checkShipwreck();
+      if (this.checkShipwreck()) {
+        this.updateHud();
+        return;
+      }
     }
     if (hasSeaStatus(s, 'scurvy')) fatigueGain += 10;
     if (hasSeaStatus(s, 'mutiny')) fatigueGain += 8;
@@ -946,9 +950,11 @@ export default class WorldMapScene extends Phaser.Scene {
         `長期的疲勞讓一名水手病倒，無法繼續工作……\n\n剩餘水手 ${s.crew} 人。水手太少船會變慢、疲勞也升得更快。到港口的酒館可以雇用新水手，旅館休息能完全消除疲勞。`,
         [{ label: '撐住，找港口休整！', onPick: () => {} }]
       );
+      this.updateHud();
+      return;
     }
 
-    this.rollSeaEvents();
+    if (!this.paused) this.rollSeaEvents();
     this.updateHud();
   }
 
@@ -1026,7 +1032,7 @@ export default class WorldMapScene extends Phaser.Scene {
 
     // 具名任務決鬥：主線、夥伴與聲望事件共用遭遇入口。
     const duel = pendingQuestDuel(s);
-    if (duel && roll < stormP + 0.095 + 0.05 + 0.06 + 0.12 && s.day > 10) {
+    if (duel && roll < stormP + 0.095 + 0.05 + 0.06 + 0.12 && elapsedPlayDays(s) > 10) {
       this.pauseWithModal(
         `${duel.name}出現！`,
         `${duel.kind === 'story' ? '主線任務' : duel.kind === 'mate' ? '夥伴任務' : '聲望特殊事件'}的船隊擋在航路上，對方鳴砲挑戰！\n\n（${duel.kind === 'story' ? `主線「${duel.ownerName}」` : duel.kind === 'mate' ? `${duel.ownerName}的夥伴任務` : `特殊事件「${duel.ownerName}」`}：擊敗【${duel.name}】才能繼續。）`,
@@ -1058,7 +1064,7 @@ export default class WorldMapScene extends Phaser.Scene {
 
     // 海上威名被動（B-5）：威名越高，海盜越不敢招惹（機率最多降一半）；任務決鬥遭遇不受影響
     const pirateChance = 0.06 * (1 - valorRepPirateReduction(s));
-    if (roll < stormP + 0.095 + 0.05 + pirateChance && s.day > 10) {
+    if (roll < stormP + 0.095 + 0.05 + pirateChance && elapsedPlayDays(s) > 10) {
       const tribute = Math.floor(s.gold * 0.1);
       this.pauseWithModal(
         '海盜船出現！',
@@ -1100,9 +1106,9 @@ export default class WorldMapScene extends Phaser.Scene {
   }
 
   /** 船體歸零：漂流獲救（不會 Game Over） */
-  private checkShipwreck(): void {
+  private checkShipwreck(): boolean {
     const s = this.state;
-    if (s.ship.hull > 0) return;
+    if (s.ship.hull > 0) return false;
     let nearest = PORTS[0];
     let best = Number.MAX_VALUE;
     for (const p of PORTS) {
@@ -1120,12 +1126,14 @@ export default class WorldMapScene extends Phaser.Scene {
     s.ship.x = nearest.x;
     s.ship.y = nearest.y + 26;
     this.ship.setPosition(s.ship.x, s.ship.y);
+    this.ensureShipStartsOnWater();
     saveGame(s);
     this.pauseWithModal(
       '船難！',
       `船撐不住了，緩緩沉入海中……\n\n幸好路過的商船救起了大家，把你們送到【${nearest.name}】。\n修船和謝禮花了 ${lost} 兩。`,
       [{ label: '留得青山在……重新出發！', onPick: () => this.updateHud() }]
     );
+    return true;
   }
 
   private pauseWithModal(title: string, body: string, choices: { label: string; onPick: () => void }[]): void {

@@ -390,7 +390,8 @@ export function toast(scene: Phaser.Scene, msg: string, x = 640, y = 80): void {
   const t = scene.add
     .text(x, y, msg, { ...textStyle(20, '#fff8e0'), backgroundColor: '#3a2a14cc', padding: { x: 14, y: 8 } })
     .setOrigin(0.5)
-    .setDepth(1000);
+    .setDepth(1000)
+    .setScrollFactor(0);
   scene.tweens.add({
     targets: t,
     alpha: 0,

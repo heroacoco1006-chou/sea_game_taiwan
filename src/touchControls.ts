@@ -3,11 +3,43 @@ import { audio } from './audio';
 import { BASE_H, textStyle } from './ui';
 
 type Direction = { x: number; y: number };
+export type TouchControlMode = 'auto' | 'on' | 'off';
+
+const TOUCH_MODE_KEY = 'seagame_touch_mode';
+
+export function getTouchControlMode(): TouchControlMode {
+  try {
+    const raw = localStorage.getItem(TOUCH_MODE_KEY);
+    if (raw === 'on' || raw === 'off' || raw === 'auto') return raw;
+  } catch {
+    /* ignore */
+  }
+  return 'auto';
+}
+
+export function setTouchControlMode(mode: TouchControlMode): void {
+  try {
+    localStorage.setItem(TOUCH_MODE_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function cycleTouchControlMode(): TouchControlMode {
+  const cur = getTouchControlMode();
+  const next: TouchControlMode = cur === 'auto' ? 'on' : cur === 'on' ? 'off' : 'auto';
+  setTouchControlMode(next);
+  return next;
+}
 
 export function prefersTouchControls(): boolean {
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('touch') === '1') return true;
-  if (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) return true;
-  return typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
+  const mode = getTouchControlMode();
+  if (mode === 'on') return true;
+  if (mode === 'off') return false;
+  if (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true) return true;
+  const hasFinePointer = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches === true;
+  return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0 && !hasFinePointer;
 }
 
 /**
@@ -16,6 +48,7 @@ export function prefersTouchControls(): boolean {
 export class TouchControls {
   readonly enabled: boolean;
   private held = new Map<number, Direction>();
+  private directionZones: Phaser.GameObjects.Rectangle[] = [];
   private actionQueued = false;
   private actionText?: Phaser.GameObjects.Text;
   private actionZone?: Phaser.GameObjects.Rectangle;
@@ -37,10 +70,15 @@ export class TouchControls {
     this.createActionButton(900, 625, actionLabel);
 
     this.scene.input.on('pointerup', this.releasePointer, this);
+    this.scene.input.on('pointerupoutside', this.releasePointer, this);
+    this.scene.input.on('pointercancel', this.releaseAll, this);
+    this.scene.events.on(Phaser.Scenes.Events.PAUSE, this.releaseAll, this);
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.held.clear();
-      this.actionQueued = false;
+      this.releaseAll();
       this.scene.input.off('pointerup', this.releasePointer, this);
+      this.scene.input.off('pointerupoutside', this.releasePointer, this);
+      this.scene.input.off('pointercancel', this.releaseAll, this);
+      this.scene.events.off(Phaser.Scenes.Events.PAUSE, this.releaseAll, this);
     });
   }
 
@@ -106,6 +144,8 @@ export class TouchControls {
     };
     zone.on('pointerup', release);
     zone.on('pointerout', release);
+    zone.on('pointerupoutside', release);
+    this.directionZones.push(zone);
   }
 
   private createActionButton(x: number, y: number, label: string): void {
@@ -144,6 +184,15 @@ export class TouchControls {
   }
 
   private releasePointer(pointer: Phaser.Input.Pointer): void {
-    this.held.delete(pointer.id);
+    if (this.held.delete(pointer.id) && this.held.size === 0) {
+      for (const zone of this.directionZones) zone.setFillStyle(0xf0e3bd, 0.88);
+    }
+  }
+
+  private releaseAll(): void {
+    this.held.clear();
+    this.actionQueued = false;
+    for (const zone of this.directionZones) zone.setFillStyle(0xf0e3bd, 0.88);
+    this.actionZone?.setFillStyle(0xf0e3bd, 0.94);
   }
 }

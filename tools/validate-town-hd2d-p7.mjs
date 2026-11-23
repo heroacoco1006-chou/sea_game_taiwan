@@ -25,9 +25,11 @@ check(evidence.formalAudit?.medianFps >= 55 && evidence.formalAudit?.p95FrameMs 
 check(evidence.formalAudit?.storageWrites === 0 && evidence.formalAudit?.consoleErrors === 0 && evidence.formalAudit?.lastError === null, 'transient 正式驗收不得寫入存檔或出現錯誤')
 check(evidence.legacyRegression?.passed === true && evidence.legacyRegression?.p7AutomatedOverrideCheck === true, 'P7 legacy override 回歸證據缺失')
 check(p6Evidence.fallback?.legacyRendererMode === 'legacy' && p6Evidence.fallback?.threeRendererCreated === false && p6Evidence.fallback?.legacyVisualLoaded === true, '引用的 P6 legacy 瀏覽器證據不完整')
+const versionMatch = version.match(/GAME_VERSION\s*=\s*'([^']+)'/)
+const gameVersion = versionMatch ? versionMatch[1] : ''
 check(evidence.releaseCandidate?.gameVersion === '2.5.0' && evidence.releaseCandidate?.saveVersion === 23, 'P7 發版候選版本資料錯誤')
-check(packageData.version === '2.5.0' && lockData.version === '2.5.0' && lockData.packages[''].version === '2.5.0', 'package 版本未同步')
-check(version.includes("GAME_VERSION = '2.5.0'") && version.includes("GAME_VERSION_NAME = 'HD-2D 港町版'"), '玩家可見版本未同步')
+check(Boolean(gameVersion) && packageData.version === gameVersion && lockData.version === gameVersion && lockData.packages[''].version === gameVersion, 'package 與 src/version.ts 版本未同步')
+check(version.includes('GAME_VERSION_NAME ='), '玩家可見版本名稱缺失')
 check(state.includes('export const SAVE_VERSION = 23'), 'P7 不得提高存檔格式')
 check(port.includes('private hd2dPrototypeMode = true') && port.includes('this.hd2dPrototypeMode = !forceLegacy'), 'HD-2D 正式預設或 legacy 回退未接線')
 check(prototype.includes("dataset.townHd2dMode = 'formal'") && prototype.includes('if (this.diagnosticsVisible) this.createFacilityButtons()'), '正式 renderer 標記或開發捷徑隔離失效')

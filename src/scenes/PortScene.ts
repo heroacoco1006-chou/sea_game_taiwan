@@ -241,18 +241,20 @@ export default class PortScene extends Phaser.Scene {
   create(): void {
     if (this.hd2dPrototypeMode) {
       try {
-        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id, this.spawn);
+        this.hd2dPrototype = new TownHd2dPrototype(this, this.port.id, this.spawn, () => this.showPortIntro(false));
         if (!this.hd2dPrototype.mount()) return;
         const formalAudit = new URLSearchParams(window.location.search).has('townAudit');
         if (isTransientGameState(this.state) && !formalAudit) {
           this.hd2dPrototype.startTutorial();
           return;
         }
-        const firstVisit = this.processPortArrival();
+        audio.playSfx('port');
+        const { firstVisit, messages } = this.processPortArrival();
         if (firstVisit) {
           saveGame(this.state);
-          this.showPortIntro(true);
+          this.showPortIntro(true, messages);
         } else {
+          this.showArrivalMessages(messages);
           this.hd2dPrototype.startTutorial();
         }
       } catch (error) {
@@ -267,7 +269,8 @@ export default class PortScene extends Phaser.Scene {
     }
     if (showLoadingFailureIfNeeded(this)) return;
     audio.playBgm(townBgmForRegion(this.port.region));
-    const firstVisit = this.processPortArrival();
+    audio.playSfx('port');
+    const { firstVisit, messages } = this.processPortArrival();
     const style = CULTURE_STYLE[this.port.culture] ?? CULTURE_STYLE.han;
 
     const townBackground = this.addTownBackground();
@@ -367,14 +370,15 @@ export default class PortScene extends Phaser.Scene {
     // 首次抵達此港 → 自動跳出港口介紹（教育：認識古今地名與時代背景）
     if (firstVisit) {
       saveGame(this.state);
-      this.showPortIntro(true);
+      this.showPortIntro(true, messages);
     } else {
+      this.showArrivalMessages(messages);
       this.setupTutorial();
     }
   }
 
   /** 港口介紹彈窗：古名→今地名→所屬勢力→背景說明 */
-  private showPortIntro(firstTime: boolean): void {
+  private showPortIntro(firstTime: boolean, afterMessages: string[] = []): void {
     const p = this.port;
     const title = firstTime ? `初次抵達・${p.name}` : `${p.name}　港口介紹`;
     const body = `今地名：${p.modern}\n所屬勢力：${p.region}\n\n${p.desc}`;
@@ -384,6 +388,15 @@ export default class PortScene extends Phaser.Scene {
         label: firstTime ? '開始探索！' : '知道了',
         onPick: () => {
           this.input.keyboard!.enabled = true;
+          if (afterMessages.length) {
+            this.showArrivalMessages(afterMessages, () => {
+              if (firstTime) {
+                if (this.hd2dPrototypeMode) this.hd2dPrototype?.startTutorial();
+                else this.setupTutorial();
+              }
+            });
+            return;
+          }
           if (firstTime) {
             if (this.hd2dPrototypeMode) this.hd2dPrototype?.startTutorial();
             else this.setupTutorial();
@@ -393,19 +406,27 @@ export default class PortScene extends Phaser.Scene {
     ]);
   }
 
-  /** 正式新舊 renderer 共用的到港副作用，避免切換畫面後漏掉任務或首次造訪。 */
-  private processPortArrival(): boolean {
-    const { firstVisit, messages: mateQuestMsgs } = applyTownArrival(this.state, this.port.id);
-    if (mateQuestMsgs.length) {
-      saveGame(this.state);
-      this.time.delayedCall(400, () => showModal(this, '任務進度', mateQuestMsgs.join('\n'), [{ label: '知道了', onPick: () => {} }]));
+  private showArrivalMessages(messages: string[], onDone?: () => void): void {
+    if (!messages.length) {
+      onDone?.();
+      return;
     }
-    return firstVisit;
+    this.time.delayedCall(250, () => {
+      showModal(this, '任務進度', messages.join('\n'), [{ label: '知道了', onPick: () => onDone?.() }]);
+    });
+  }
+
+  /** 正式新舊 renderer 共用的到港副作用，避免切換畫面後漏掉任務或首次造訪。 */
+  private processPortArrival(): { firstVisit: boolean; messages: string[] } {
+    const { firstVisit, messages } = applyTownArrival(this.state, this.port.id);
+    if (messages.length) saveGame(this.state);
+    return { firstVisit, messages };
   }
 
   private switchToLegacy(): void {
     this.registry.set('townRendererOverride', 'legacy');
-    this.scene.start('Port', { portId: this.port.id, spawn: this.spawn, forceLegacy: true });
+    // 不可把 HD-2D 世界座標直接傳給舊版 2000×1100 座標系，避免人物被傳送到左上角。
+    this.scene.start('Port', { portId: this.port.id, forceLegacy: true });
   }
 
   private setupTutorial(): void {

@@ -1100,6 +1100,14 @@ export default class BattleHexScene extends Phaser.Scene {
       this.infoTitle.setText('戰鬥結束');
       const result = ended.winner === 'player' ? '我方勝利' : ended.winner === 'enemy' ? '我方失利' : '雙方脫離';
       const lines = this.completeLaunchBattle();
+      if (ended.winner === 'player') {
+        audio.playSfx('victory');
+        if (lines.some((line) => line.includes('升級！'))) {
+          this.time.delayedCall(380, () => audio.playSfx('levelup'));
+        }
+      } else if (ended.winner === 'enemy') {
+        audio.playSfx('defeat');
+      }
       if (lines.length > 0) this.infoBody.setText(`${this.battleMessage}\n\n${lines.join('\n')}`);
       else this.infoBody.setText(`${result}\n\n${this.battleMessage}\n\n（開發預覽不回寫世界地圖）`);
     }

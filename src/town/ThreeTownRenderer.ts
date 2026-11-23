@@ -164,13 +164,24 @@ export class ThreeTownRenderer implements TownRenderer {
     this.playerShadow?.position.set(point.u, 0.025, point.v);
     const follow = this.sceneData.camera.follow;
     if (follow?.mode === 'player') {
-      this.desiredCameraTarget = townCameraFollowTarget(point, this.sceneData.camera.yawDeg, follow.lookAhead);
+      const raw = townCameraFollowTarget(point, this.sceneData.camera.yawDeg, follow.lookAhead);
+      this.desiredCameraTarget = this.clampCameraTarget(raw);
       if (!this.cameraFollowInitialized) {
         this.cameraTarget.set(this.desiredCameraTarget.u, 0.7, this.desiredCameraTarget.v);
         this.applyCameraTransform();
         this.cameraFollowInitialized = true;
       }
     }
+  }
+
+  private clampCameraTarget(target: TownGroundPoint): TownGroundPoint {
+    const maxU = Math.max(2, this.sceneData.world.width * 0.28);
+    const minV = -Math.max(1.5, this.sceneData.world.height * 0.16);
+    const maxV = Math.max(2, this.sceneData.world.height * 0.34);
+    return {
+      u: THREE.MathUtils.clamp(target.u, -maxU, maxU),
+      v: THREE.MathUtils.clamp(target.v, minV, maxV),
+    };
   }
 
   setNavigationPath(points: TownGroundPoint[]): void {
@@ -203,8 +214,8 @@ export class ThreeTownRenderer implements TownRenderer {
     return null;
   }
 
-  worldToScreen(point: TownGroundPoint, viewportWidth: number, viewportHeight: number): { x: number; y: number } {
-    const projected = new THREE.Vector3(point.u, 0.95, point.v).project(this.camera);
+  worldToScreen(point: TownGroundPoint, viewportWidth: number, viewportHeight: number, yOffset = 0.95): { x: number; y: number } {
+    const projected = new THREE.Vector3(point.u, yOffset, point.v).project(this.camera);
     return { x: (projected.x + 1) * 0.5 * viewportWidth, y: (1 - projected.y) * 0.5 * viewportHeight };
   }
 
@@ -549,7 +560,10 @@ export class ThreeTownRenderer implements TownRenderer {
         sprite.userData.facilityKey = facility.key;
         this.threeScene.add(sprite);
         this.facilityMeshes.set(sprite, facility.key);
-        for (const fallback of this.facilityFallbacks.get(facility.key) ?? []) fallback.visible = false;
+        for (const fallback of this.facilityFallbacks.get(facility.key) ?? []) {
+          fallback.visible = false;
+          this.facilityMeshes.delete(fallback);
+        }
       }).catch((error) => {
         if (!this.disposed) townPrototypeDiagnostics.failed(error);
       });

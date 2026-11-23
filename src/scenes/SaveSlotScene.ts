@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import {
   newGame, loadGame, saveGame, deleteSave, listSaveSlots,
+  exportSaveSlotJson, importSaveSlotJson,
 } from '../state';
 import type { GameState, HeroId, SaveSlotInfo } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, toast } from '../ui';
@@ -52,11 +53,12 @@ export default class SaveSlotScene extends Phaser.Scene {
     this.add.text(W / 2, 64, title, textStyle(28)).setOrigin(0.5);
 
     const hint =
-      this.mode === 'new' ? '挑一個空格開始；選到已有進度的格子會先問你要不要覆蓋。'
-      : this.mode === 'save' ? '挑一格存檔；之後的自動存檔會跟著存在這一格。'
-      : '只能讀取有進度的格子（灰色是空的）。';
+      this.mode === 'new' ? '挑一個空格開始；選到已有進度的格子會先問你要不要覆蓋。（換電腦前可先下載備份）'
+      : this.mode === 'save' ? '挑一格存檔；之後的自動存檔會跟著存在這一格。（可下載備份檔防遺失）'
+      : '點「讀取」繼續冒險，也可以把進度下載成備份檔或從備份還原。';
     this.add.text(W / 2, 100, hint, textStyle(15, '#6b5530')).setOrigin(0.5);
 
+    makeButton(this, 220, H - 56, 260, 46, '📂 匯入備份檔', () => this.chooseImportSlot(), 16);
     makeButton(this, W - 150, H - 56, 220, 46, '返回', () => this.goBack());
 
     this.render();
@@ -102,14 +104,15 @@ export default class SaveSlotScene extends Phaser.Scene {
     // 主操作按鈕
     const canPick = this.mode === 'save' || this.mode === 'new' || info.exists;
     const actionLabel = this.mode === 'load' ? '讀取' : '存到這格';
-    const btn = makeButton(this, x + w / 2 - 90, y - 18, 140, 38, actionLabel, () => this.pick(info), 15);
+    const btn = makeButton(this, x + w / 2 - 90, y - 18, 140, 36, actionLabel, () => this.pick(info), 15);
     if (!canPick) btn.setAlpha(0.4).disableInteractive();
     this.dyn.push(btn);
 
-    // 刪除按鈕（任何模式，只要該格有存檔）
+    // 備份與刪除按鈕（只要該格有存檔）
     if (info.exists) {
-      const del = makeButton(this, x + w / 2 - 90, y + 20, 140, 30, '刪除', () => this.confirmDelete(info), 13);
-      this.dyn.push(del);
+      const exp = makeButton(this, x + w / 2 - 126, y + 20, 68, 28, '備份', () => this.exportSlot(info), 12);
+      const del = makeButton(this, x + w / 2 - 54, y + 20, 68, 28, '刪除', () => this.confirmDelete(info), 12);
+      this.dyn.push(exp, del);
     }
   }
 
@@ -173,6 +176,65 @@ export default class SaveSlotScene extends Phaser.Scene {
         { label: '取消', onPick: () => {} },
       ]
     );
+  }
+
+  private exportSlot(info: SaveSlotInfo): void {
+    const json = exportSaveSlotJson(info.slot);
+    if (!json) {
+      toast(this, '這格沒有可備份的存檔。');
+      return;
+    }
+    try {
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sea_game_slot${info.slot + 1}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast(this, `已下載第 ${info.slot + 1} 格的備份檔！`);
+    } catch {
+      toast(this, '此瀏覽器暫時無法下載檔案。');
+    }
+  }
+
+  private chooseImportSlot(): void {
+    const slots = listSaveSlots();
+    const emptySlot = slots.find((item) => !item.exists)?.slot ?? 0;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const raw = typeof reader.result === 'string' ? reader.result : '';
+        const targetInfo = slots[emptySlot];
+        const doImport = () => {
+          const result = importSaveSlotJson(emptySlot, raw);
+          toast(this, result.msg);
+          if (result.ok) this.render();
+        };
+        if (targetInfo?.exists) {
+          showModal(
+            this,
+            `覆蓋第 ${emptySlot + 1} 格？`,
+            `10 個存檔格都滿了，要把備份檔匯入並覆蓋第 ${emptySlot + 1} 格嗎？`,
+            [
+              { label: '覆蓋匯入', onPick: doImport },
+              { label: '取消', onPick: () => {} },
+            ]
+          );
+        } else {
+          doImport();
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    };
+    input.click();
   }
 
   private goBack(): void {

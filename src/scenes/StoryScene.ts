@@ -101,9 +101,12 @@ export default class StoryScene extends Phaser.Scene {
 
     this.createStoryBackground(W, H);
 
-    // 說話者名 → 頭像 id（三主角＋25 夥伴）
+    // 說話者名 → 頭像 id（三主角全名與劇本簡稱＋25 夥伴）
     this.nameToId = {};
     for (const h of HEROES) this.nameToId[h.name] = h.id;
+    this.nameToId['彼得'] = 'peter';
+    this.nameToId['千代'] = 'chiyo';
+    this.nameToId['船長'] = this.heroId;
     for (const m of MATE_DEFS) this.nameToId[m.name] = m.id;
 
     // 對話框上方的說話者頭像（V2 美術；無對應頭像時隱藏）
@@ -257,7 +260,7 @@ export default class StoryScene extends Phaser.Scene {
 
   private drawSpeech(line: StoryLine): void {
     const speaker = line.speaker ?? '';
-    const isHero = speaker === this.heroName;
+    const isHero = speaker === this.heroName || this.nameToId[speaker] === this.heroId;
     // 說話者名牌
     const plate = this.add.graphics();
     plate.fillStyle(isHero ? COLORS.gold : COLORS.woodLight, 1);
