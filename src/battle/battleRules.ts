@@ -209,6 +209,36 @@ export function hasLineOfSight(map: BattleMapDefinition, from: Hex, to: Hex): bo
   return line.slice(1, -1).every((hex) => !BATTLE_RULES.terrain[terrainAt(map, hex)].blocksLineOfSight);
 }
 
+/** 計算船隻在指定位置與船首朝向下，所有可側舷砲擊的六角格（供戰場射界預覽使用）。 */
+export function broadsideArcHexes(
+  map: BattleMapDefinition,
+  attacker: BattleUnit,
+  overrideHex?: Hex,
+  overrideFacing?: Facing,
+): Hex[] {
+  if (attacker.cannons <= 0) return [];
+  const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
+  if (!cannon) return [];
+  const origin = overrideHex ?? attacker.hex;
+  const facing = overrideFacing ?? attacker.facing;
+  const out: Hex[] = [];
+  for (let col = 0; col < map.width; col += 1) {
+    for (let row = 0; row < map.height; row += 1) {
+      const target = offsetToAxial(col, row);
+      const range = hexDistance(origin, target);
+      if (range < cannon.minRange || range > cannon.maxRange) continue;
+      if (BATTLE_RULES.terrain[terrainAt(map, target)].blocksLineOfSight) continue;
+      const bearing = bearingFacing(origin, target);
+      if (bearing === null) continue;
+      const difference = (bearing - facing + 6) % 6;
+      if (difference === 0 || difference === 3) continue;
+      if (!hasLineOfSight(map, origin, target)) continue;
+      out.push(target);
+    }
+  }
+  return out;
+}
+
 export function validateCannonAttack(
   map: BattleMapDefinition,
   attacker: BattleUnit,
@@ -232,7 +262,7 @@ function targetBowSternModifier(attacker: BattleUnit, target: BattleUnit): numbe
 
 export function cannonDamageBounds(attacker: BattleUnit, target: BattleUnit, range: number): { minimum: number; maximum: number } {
   const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
-  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'];
+  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'] ?? 0.7;
   const base = attacker.cannons
     * BATTLE_RULES.damage.basePerCannon
     * cannon.power
@@ -249,7 +279,7 @@ export function cannonDamageBounds(attacker: BattleUnit, target: BattleUnit, ran
 
 export function rollCannonDamage(attacker: BattleUnit, target: BattleUnit, range: number, rng: RandomSource): number {
   const cannon = BATTLE_RULES.cannons[attacker.cannonTypeId as CannonTypeId];
-  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'];
+  const rangeMod = BATTLE_RULES.damage.rangeModifiers[String(range) as '1' | '2' | '3'] ?? 0.7;
   const random = BATTLE_RULES.damage.randomMin + (BATTLE_RULES.damage.randomMax - BATTLE_RULES.damage.randomMin) * rng();
   const raw = attacker.cannons
     * BATTLE_RULES.damage.basePerCannon

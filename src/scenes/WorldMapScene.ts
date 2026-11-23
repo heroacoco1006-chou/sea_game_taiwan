@@ -15,8 +15,10 @@ import {
   EXPLORATION_SAFE_IMAGE_ID,
   addReputation, addFriendship, updateQuestProgress, pendingQuestDuel, valorRepPirateReduction,
   pirateEncounterTier, clearSeaStatusesOnPort, elapsedPlayDays,
+  currentStoryChapter, storyTargetPort, explorationPointById, compassDirectionText,
 } from '../state';
 import {
+  EXPLORATION_EVENT_URLS,
   explorationIconKey, explorationEventKey, facilityIconKey, shipWorldKey, shipWorldUrl,
   shipWorldDirectionalKey, shipWorldDirectionalUrl, worldArtKey,
 } from '../art';
@@ -77,6 +79,12 @@ export default class WorldMapScene extends Phaser.Scene {
   private windArrow!: Phaser.GameObjects.Triangle;
   private miniShip!: Phaser.GameObjects.Rectangle;
   private miniFadPort!: Phaser.GameObjects.Arc;
+  private miniStoryPort!: Phaser.GameObjects.Arc;
+  private miniQuestTarget!: Phaser.GameObjects.Arc;
+  private navHintText!: Phaser.GameObjects.Text;
+  private overviewModal?: Phaser.GameObjects.Container;
+  private mouseSteerActive = false;
+  private mouseSteerPoint: { x: number; y: number } | null = null;
   private fadPortRing!: Phaser.GameObjects.Arc;
   private fadPortLabel!: Phaser.GameObjects.Text;
   private fadTicker!: Phaser.GameObjects.Text;
@@ -119,6 +127,12 @@ export default class WorldMapScene extends Phaser.Scene {
     const directionalKey = shipWorldDirectionalKey(typeId);
     if (directionalUrl && !this.textures.exists(directionalKey)) {
       this.load.spritesheet(directionalKey, directionalUrl, { frameWidth: 96, frameHeight: 72 });
+    }
+
+    // 探險事件圖移至世界地圖按需載入，減少首次開機載入量。
+    for (const [id, url] of Object.entries(EXPLORATION_EVENT_URLS)) {
+      const key = explorationEventKey(id);
+      if (!this.textures.exists(key)) this.load.image(key, url);
     }
   }
 
@@ -193,6 +207,36 @@ export default class WorldMapScene extends Phaser.Scene {
     this.touchControls = new TouchControls(this, '互動');
     this.createCompass(this.touchControls.enabled ? 380 : 118, H - 130);
     this.createMinimap(W - MINIMAP_W - 16, H - MINIMAP_H - 16);
+
+    // 目標方向指示膠囊（小朋友防迷路：隨時顯示主線與委託目標方位）
+    this.navHintText = this.add
+      .text(14, 102, '', {
+        ...textStyle(14, '#fff4d6'),
+        backgroundColor: '#1b2c3bcc',
+        padding: { x: 10, y: 5 },
+      })
+      .setOrigin(0, 0)
+      .setDepth(101)
+      .setScrollFactor(0)
+      .setShadow(1, 1, '#000', 2);
+
+    // 桌機模式支援滑鼠按住海面朝向航行（不攔截 UI 按鈕）
+    this.mouseSteerActive = false;
+    this.mouseSteerPoint = null;
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
+      if (this.paused || this.touchControls?.enabled || currentlyOver.length > 0) return;
+      this.mouseSteerActive = true;
+      this.mouseSteerPoint = { x: pointer.worldX, y: pointer.worldY };
+    });
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!this.mouseSteerActive || !pointer.isDown) return;
+      this.mouseSteerPoint = { x: pointer.worldX, y: pointer.worldY };
+    });
+    this.input.on('pointerup', () => {
+      this.mouseSteerActive = false;
+      this.mouseSteerPoint = null;
+    });
+    this.input.keyboard?.on('keydown-ESC', () => this.closeWorldChartOverview());
 
     this.wind = windOf(this.state.day);
     this.updateHud();
@@ -481,10 +525,276 @@ export default class WorldMapScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setVisible(false);
     this.tweens.add({ targets: this.miniFadPort, scale: { from: 0.75, to: 1.35 }, alpha: { from: 1, to: 0.5 }, duration: 700, yoyo: true, repeat: -1 });
+    this.miniStoryPort = this.add
+      .circle(0, 0, 5.5, 0xffd54f, 0.96)
+      .setStrokeStyle(2, 0x3a2a14, 1)
+      .setDepth(103)
+      .setScrollFactor(0)
+      .setVisible(false);
+    this.tweens.add({ targets: this.miniStoryPort, scale: { from: 0.85, to: 1.3 }, duration: 900, yoyo: true, repeat: -1 });
+    this.miniQuestTarget = this.add
+      .circle(0, 0, 5, 0x4fc3f7, 0.96)
+      .setStrokeStyle(2, 0xffffff, 1)
+      .setDepth(103)
+      .setScrollFactor(0)
+      .setVisible(false);
     this.miniShip = this.add
       .rectangle(mx + this.ship.x * sx, my + this.ship.y * sy, 5, 5, 0xffffff)
-      .setDepth(101).setScrollFactor(0);
+      .setDepth(104).setScrollFactor(0);
+
+    // 小地圖圖例與點擊展開海圖總覽熱區
+    this.add
+      .text(mx + MINIMAP_W / 2, my - 10, '🗺 點地圖看全圖（⭐主線 🔵委託 🔥流行）', {
+        ...textStyle(11, '#ffe39a'),
+        backgroundColor: '#2a1d0fcc',
+        padding: { x: 6, y: 2 },
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(103)
+      .setScrollFactor(0);
+    const mapHit = this.add
+      .rectangle(mx + MINIMAP_W / 2, my + MINIMAP_H / 2, MINIMAP_W + 10, MINIMAP_H + 10, 0x000000, 0.001)
+      .setDepth(105)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+    mapHit.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _lx: number,
+      _ly: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      event.stopPropagation();
+      this.openWorldChartOverview();
+    });
     this.registry.set('minimapOrigin', { mx, my, sx, sy });
+  }
+
+  private currentQuestTarget(): { label: string; x: number; y: number } | null {
+    const q = this.state.quest;
+    if (!q) return null;
+    if (q.type === 'delivery') {
+      const target = PORTS.find((p) => p.id === q.portId);
+      return target ? { label: target.name, x: target.x, y: target.y } : null;
+    }
+    if (q.completed) {
+      const origin = PORTS.find((p) => p.id === q.originPortId);
+      return origin ? { label: `回${origin.name}領賞`, x: origin.x, y: origin.y } : null;
+    }
+    if (q.type === 'combat') {
+      return { label: q.title, x: q.targetX, y: q.targetY };
+    }
+    const point = explorationPointById(q.pointId);
+    if (!point) return null;
+    const approach = this.explorationApproach(point);
+    return { label: point.name, x: approach.x, y: approach.y };
+  }
+
+  private updateNavigationIndicators(): void {
+    const mm = this.registry.get('minimapOrigin') as { mx: number; my: number; sx: number; sy: number } | undefined;
+    const chapter = currentStoryChapter(this.state);
+    const storyPort = storyTargetPort(chapter);
+    const questTarget = this.currentQuestTarget();
+
+    if (this.miniStoryPort) {
+      if (storyPort && mm) {
+        this.miniStoryPort.setPosition(mm.mx + storyPort.x * mm.sx, mm.my + storyPort.y * mm.sy).setVisible(true);
+      } else {
+        this.miniStoryPort.setVisible(false);
+      }
+    }
+    if (this.miniQuestTarget) {
+      if (questTarget && mm) {
+        this.miniQuestTarget.setPosition(mm.mx + questTarget.x * mm.sx, mm.my + questTarget.y * mm.sy).setVisible(true);
+      } else {
+        this.miniQuestTarget.setVisible(false);
+      }
+    }
+
+    if (!this.navHintText) return;
+    const parts: string[] = [];
+    if (storyPort) {
+      const dir = compassDirectionText(this.ship.x, this.ship.y, storyPort.x, storyPort.y);
+      parts.push(`⭐ 主線：${storyPort.name}（${dir}）`);
+    }
+    if (questTarget) {
+      const dir = compassDirectionText(this.ship.x, this.ship.y, questTarget.x, questTarget.y);
+      parts.push(`🔵 委託：${questTarget.label}（${dir}）`);
+    }
+    if (parts.length === 0) {
+      parts.push('🧭 自由航行中｜點擊右下小地圖可查看 22 座港口全圖');
+    }
+    this.navHintText.setText(parts.join('　｜　'));
+  }
+
+  /** 展開東亞與東南亞 22 港大海圖總覽（點擊港口可看古今地名與方向，避免小朋友迷路）。 */
+  private openWorldChartOverview(): void {
+    if (this.paused || this.overviewModal) return;
+    this.paused = true;
+    this.mouseSteerActive = false;
+    this.mouseSteerPoint = null;
+    audio.playSfx('page');
+
+    const W = BASE_W;
+    const H = BASE_H;
+    const panelW = 1080;
+    const panelH = 610;
+    const px = (W - panelW) / 2;
+    const py = (H - panelH) / 2;
+    const mapX = px + 26;
+    const mapY = py + 58;
+    const mapW = 730;
+    const mapH = 490;
+    const sx = mapW / WORLD_W;
+    const sy = mapH / WORLD_H;
+
+    const parts: Phaser.GameObjects.GameObject[] = [];
+    const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65).setInteractive();
+    const bg = this.add.graphics();
+    bg.fillStyle(COLORS.wood, 1);
+    bg.fillRoundedRect(px, py, panelW, panelH, 12);
+    bg.fillStyle(COLORS.parchment, 1);
+    bg.fillRoundedRect(px + 8, py + 8, panelW - 16, panelH - 16, 8);
+    bg.lineStyle(2, COLORS.gold, 0.9);
+    bg.strokeRoundedRect(px + 12, py + 12, panelW - 24, panelH - 24, 6);
+    bg.fillStyle(COLORS.seaDeep, 1);
+    bg.fillRect(mapX, mapY, mapW, mapH);
+    bg.lineStyle(2, COLORS.wood, 0.9);
+    bg.strokeRect(mapX, mapY, mapW, mapH);
+    parts.push(dim, bg);
+
+    parts.push(
+      this.add.text(px + 26, py + 24, '🗺 東亞・東南亞 22 港海圖總覽', textStyle(22)).setOrigin(0, 0.5),
+      this.add.text(px + 370, py + 25, '點選任一港口可查看古今地名與航行方向', textStyle(14, '#6b5530')).setOrigin(0, 0.5),
+    );
+
+    const chartKey = this.textures.exists(worldArtKey('full_map_v3_preview'))
+      ? worldArtKey('full_map_v3_preview')
+      : this.textures.exists(worldArtKey('full_map_v3'))
+        ? worldArtKey('full_map_v3')
+        : '';
+    if (chartKey) {
+      parts.push(this.add.image(mapX, mapY, chartKey).setOrigin(0).setDisplaySize(mapW, mapH).setAlpha(0.95));
+    }
+
+    const chapter = currentStoryChapter(this.state);
+    const storyPort = storyTargetPort(chapter);
+    const questTarget = this.currentQuestTarget();
+    const fad = this.state.fad && this.state.fad.untilDay >= this.state.day ? this.state.fad : null;
+
+    // 右側資訊卡
+    const sideX = mapX + mapW + 18;
+    const sideW = panelW - (mapW + 64);
+    const sideBox = this.add.rectangle(sideX + sideW / 2, mapY + mapH / 2, sideW, mapH, COLORS.parchmentDark, 0.55)
+      .setStrokeStyle(2, COLORS.wood, 0.65);
+    parts.push(sideBox);
+
+    const legendText = this.add.text(
+      sideX + 12,
+      mapY + 12,
+      '【圖例說明】\n⛵ 白點：你的船隊\n⭐ 金圈：主線目標港\n🔵 藍圈：目前委託目標\n🔥 橘圈：正流行高價港',
+      { ...textStyle(14, '#4a3518'), lineSpacing: 5 },
+    );
+    parts.push(legendText);
+
+    const detailTitle = this.add.text(sideX + 12, mapY + 148, '目前航行目標', textStyle(17, '#7a3e10'));
+    const defaultLines: string[] = [];
+    if (storyPort && chapter) {
+      const dir = compassDirectionText(this.ship.x, this.ship.y, storyPort.x, storyPort.y);
+      defaultLines.push(`⭐ 主線第 ${chapter.chapter} 章\n前往【${storyPort.name}】（今：${storyPort.modern}）\n方向：${dir}`);
+    } else {
+      defaultLines.push('⭐ 主線已全部完成，可自由航行。');
+    }
+    if (questTarget) {
+      const dir = compassDirectionText(this.ship.x, this.ship.y, questTarget.x, questTarget.y);
+      defaultLines.push(`\n🔵 進行中委託\n目標：${questTarget.label}\n方向：${dir}`);
+    }
+    if (fad) {
+      const fp = PORTS.find((p) => p.id === fad.portId);
+      const fg = GOODS.find((g) => g.id === fad.goodId);
+      if (fp && fg) {
+        const dir = compassDirectionText(this.ship.x, this.ship.y, fp.x, fp.y);
+        defaultLines.push(`\n🔥 流行情報\n【${fp.name}】缺【${fg.name}】（賣價×2）\n方向：${dir}`);
+      }
+    }
+    const detailBody = this.add.text(sideX + 12, mapY + 180, defaultLines.join('\n'), {
+      ...textStyle(14, '#3a2a14'),
+      wordWrap: { width: sideW - 24 },
+      lineSpacing: 5,
+    });
+    parts.push(detailTitle, detailBody);
+
+    // 22 港口標記與可點擊名稱
+    for (const p of PORTS) {
+      const cx = mapX + p.x * sx;
+      const cy = mapY + p.y * sy;
+      const isStory = storyPort?.id === p.id;
+      const isFadPort = fad?.portId === p.id;
+      const isVisited = this.state.visitedPorts.includes(p.id);
+      if (isStory) {
+        parts.push(this.add.circle(cx, cy, 10, 0xffd54f, 0.35).setStrokeStyle(3, 0xffd54f, 1));
+      }
+      if (isFadPort) {
+        parts.push(this.add.circle(cx, cy, 13, 0xff8a24, 0.2).setStrokeStyle(2, 0xff8a24, 0.95));
+      }
+      const dot = this.add
+        .circle(cx, cy, isStory ? 5.5 : 4.5, isStory ? 0xffd54f : isVisited ? 0xd8432e : 0x8b4513, 1)
+        .setStrokeStyle(1.5, 0xfff8e0, 0.95)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add
+        .text(cx, cy + 10, p.name, {
+          ...textStyle(11, isStory ? '#ffe39a' : '#fff8e0'),
+          backgroundColor: isStory ? '#5c3408cc' : '#1b2c3bb8',
+          padding: { x: 3, y: 1 },
+        })
+        .setOrigin(0.5, 0)
+        .setInteractive({ useHandCursor: true });
+      const showPortInfo = () => {
+        const dir = compassDirectionText(this.ship.x, this.ship.y, p.x, p.y);
+        const cheapNames = p.cheap.map((id) => GOODS.find((g) => g.id === id)?.name ?? id).join('、');
+        detailTitle.setText(`⚓ ${p.name}（${p.region}）`);
+        detailBody.setText(
+          `今地名：${p.modern}\n` +
+          `相對於你：${dir}\n` +
+          `狀態：${isVisited ? '已造訪過' : '尚未造訪'}\n` +
+          `造船廠：${p.shipyard ? '有' : '無'}\n` +
+          `當地特產：${cheapNames || '無特別標註'}\n\n` +
+          `${p.desc}`,
+        );
+      };
+      dot.on('pointerdown', showPortInfo);
+      label.on('pointerdown', showPortInfo);
+      parts.push(dot, label);
+    }
+
+    // 支線委託目標標記
+    if (questTarget) {
+      const qx = mapX + questTarget.x * sx;
+      const qy = mapY + questTarget.y * sy;
+      parts.push(
+        this.add.circle(qx, qy, 9, 0x4fc3f7, 0.35).setStrokeStyle(2.5, 0x4fc3f7, 1),
+        this.add.text(qx, qy - 12, '🔵委託', textStyle(11, '#b8ecff')).setOrigin(0.5, 1).setShadow(1, 1, '#000', 2),
+      );
+    }
+
+    // 我方船隊位置
+    const shipX = mapX + this.ship.x * sx;
+    const shipY = mapY + this.ship.y * sy;
+    parts.push(
+      this.add.circle(shipX, shipY, 7, 0xffffff, 1).setStrokeStyle(3, 0x1e88e5, 1),
+      this.add.text(shipX, shipY - 11, '⛵你', textStyle(11, '#ffffff')).setOrigin(0.5, 1).setShadow(1, 1, '#000', 2),
+    );
+
+    const closeBtn = makeButton(this, px + panelW - 90, py + 30, 140, 38, '關閉海圖', () => this.closeWorldChartOverview(), 15);
+    parts.push(closeBtn);
+
+    this.overviewModal = this.add.container(0, 0, parts).setDepth(1800).setScrollFactor(0);
+  }
+
+  private closeWorldChartOverview(): void {
+    if (!this.overviewModal) return;
+    this.overviewModal.destroy();
+    this.overviewModal = undefined;
+    this.paused = false;
   }
 
   update(_time: number, delta: number): void {
@@ -503,6 +813,14 @@ export default class WorldMapScene extends Phaser.Scene {
     if (touchDirection) {
       dx += touchDirection.x;
       dy += touchDirection.y;
+    }
+    if (dx === 0 && dy === 0 && this.mouseSteerActive && this.mouseSteerPoint) {
+      const mdx = this.mouseSteerPoint.x - this.ship.x;
+      const mdy = this.mouseSteerPoint.y - this.ship.y;
+      if (Math.hypot(mdx, mdy) > 18) {
+        dx = mdx;
+        dy = mdy;
+      }
     }
 
     if (dx !== 0 || dy !== 0) {
@@ -538,9 +856,10 @@ export default class WorldMapScene extends Phaser.Scene {
       }
     }
 
-    // 小地圖船位
+    // 小地圖船位與任務方向
     const mm = this.registry.get('minimapOrigin') as { mx: number; my: number; sx: number; sy: number };
     if (mm) this.miniShip.setPosition(mm.mx + this.ship.x * mm.sx, mm.my + this.ship.y * mm.sy);
+    this.updateNavigationIndicators();
 
     // 入港判定
     this.nearPort = null;
@@ -1294,6 +1613,7 @@ export default class WorldMapScene extends Phaser.Scene {
     const st = statusSummary(s);
     v.status.setText(st && st !== '正常' ? st : '正常').setColor(st && st !== '正常' ? warn : norm);
     this.updateFadDisplay();
+    this.updateNavigationIndicators();
     this.updateWindHud();
   }
 

@@ -152,8 +152,10 @@ class AudioManager {
   private bgmTimer: number | null = null;
   private bgmStep = 0;
   private nextNoteTime = 0;
-  private bgmSource: AudioBufferSourceNode | null = null; // 音檔播放中的來源節點
-  private bgmBuffers: Record<string, AudioBuffer> = {};
+  private bgmAudioEl: HTMLAudioElement | null = null; // 串流播放中的 <audio> 元素，避免整檔 PCM 常駐記憶體
+  private bgmFadeTimer: number | null = null;
+  private bgmFadeRatio = 1;
+  private pendingPlayAfterUnlock = false;
 
   constructor() {
     this.settings = this.load();
@@ -181,9 +183,18 @@ class AudioManager {
   }
 
   /** 首次使用者互動時呼叫，解鎖瀏覽器音訊（自動播放限制）。 */
-  unlock(): void {
+  unlock(): boolean {
     const ctx = this.ensureCtx();
-    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    if (this.pendingPlayAfterUnlock && this.bgmAudioEl && this.bgmKey) {
+      this.pendingPlayAfterUnlock = false;
+      this.bgmAudioEl.play().catch(() => {
+        this.pendingPlayAfterUnlock = true;
+      });
+    }
+    return Boolean(ctx && ctx.state === 'running' && !this.pendingPlayAfterUnlock);
   }
 
   getSettings(): AudioSettings { return { ...this.settings }; }
@@ -206,6 +217,9 @@ class AudioManager {
   private refreshBgmGain(): void {
     if (this.bgmGain && this.ctx) {
       this.bgmGain.gain.setTargetAtTime(this.bgmLevel(), this.ctx.currentTime, 0.05);
+    }
+    if (this.bgmAudioEl) {
+      this.bgmAudioEl.volume = Math.max(0, Math.min(1, this.bgmLevel() * this.bgmFadeRatio));
     }
   }
 
@@ -260,9 +274,115 @@ class AudioManager {
     }
   }
 
-  // ---- 背景音樂（有 CC-BY 音檔就播音檔，否則程式合成循環樂句）----
+  // ---- 背景音樂（有 CC-BY 音檔就用串流 <audio> 平滑淡入，失敗退回程式合成）----
   playBgm(key: BgmKey): void {
-    if (this.bgmKey === key && (this.bgmTimer !== null || this.bgmSource !== null)) return; // 同曲播放中
+    if (this.bgmKey === key && (this.bgmTimer !== null || this.bgmAudioEl !== null)) return; // 同曲播放中
+    this.bgmKey = key;
+    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    this.bgmSpec = null;
+    this.stopBgmElement();
+
+    if (BGM_FILE_URLS[key] && typeof Audio !== 'undefined') {
+      this.playBgmStream(key, BGM_FILE_URLS[key]);
+      return;
+    }
+    this.startSynthBgm(key);
+  }
+
+  stopBgm(): void {
+    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    this.bgmKey = null;
+    this.bgmSpec = null;
+    if (this.bgmGain && this.ctx) this.bgmGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
+    this.fadeOutAndStopElement();
+  }
+
+  private clearFadeTimer(): void {
+    if (this.bgmFadeTimer !== null) {
+      clearInterval(this.bgmFadeTimer);
+      this.bgmFadeTimer = null;
+    }
+  }
+
+  private stopBgmElement(): void {
+    this.clearFadeTimer();
+    this.pendingPlayAfterUnlock = false;
+    if (this.bgmAudioEl) {
+      try {
+        this.bgmAudioEl.pause();
+        this.bgmAudioEl.src = '';
+      } catch { /* ignore */ }
+      this.bgmAudioEl = null;
+    }
+  }
+
+  private fadeOutAndStopElement(): void {
+    const el = this.bgmAudioEl;
+    if (!el) return;
+    this.clearFadeTimer();
+    this.bgmAudioEl = null;
+    this.pendingPlayAfterUnlock = false;
+    let ratio = this.bgmFadeRatio;
+    const timer = window.setInterval(() => {
+      ratio = Math.max(0, ratio - 0.2);
+      try { el.volume = Math.max(0, Math.min(1, this.bgmLevel() * ratio)); } catch { /* ignore */ }
+      if (ratio <= 0) {
+        clearInterval(timer);
+        try {
+          el.pause();
+          el.src = '';
+        } catch { /* ignore */ }
+      }
+    }, 30);
+  }
+
+  /** 以串流方式播放循環音檔並平滑淡入；載入失敗自動退回程式合成。 */
+  private playBgmStream(key: BgmKey, url: string): void {
+    const el = new Audio(url);
+    el.loop = true;
+    el.preload = 'auto';
+    this.bgmFadeRatio = 0;
+    el.volume = 0;
+    this.bgmAudioEl = el;
+
+    el.addEventListener('error', () => {
+      if (this.bgmKey !== key || this.bgmAudioEl !== el) return;
+      this.stopBgmElement();
+      this.startSynthBgm(key);
+    }, { once: true });
+
+    const startFadeIn = () => {
+      if (this.bgmKey !== key || this.bgmAudioEl !== el) return;
+      this.clearFadeTimer();
+      this.bgmFadeRatio = 0.05;
+      el.volume = Math.max(0, Math.min(1, this.bgmLevel() * this.bgmFadeRatio));
+      this.bgmFadeTimer = window.setInterval(() => {
+        if (this.bgmKey !== key || this.bgmAudioEl !== el) {
+          this.clearFadeTimer();
+          return;
+        }
+        this.bgmFadeRatio = Math.min(1, this.bgmFadeRatio + 0.12);
+        el.volume = Math.max(0, Math.min(1, this.bgmLevel() * this.bgmFadeRatio));
+        if (this.bgmFadeRatio >= 1) this.clearFadeTimer();
+      }, 35);
+    };
+
+    const playPromise = el.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(startFadeIn).catch(() => {
+        // 瀏覽器自動播放限制：等首次互動 unlock() 時再啟動並淡入
+        if (this.bgmKey === key && this.bgmAudioEl === el) {
+          this.pendingPlayAfterUnlock = true;
+          this.bgmFadeRatio = 1;
+          el.volume = Math.max(0, Math.min(1, this.bgmLevel()));
+        }
+      });
+    } else {
+      startFadeIn();
+    }
+  }
+
+  private startSynthBgm(key: BgmKey): void {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     if (!this.bgmGain) {
@@ -272,61 +392,12 @@ class AudioManager {
     } else {
       this.refreshBgmGain();
     }
-    this.bgmKey = key;
-    // 停掉前一首（兩種模式都停）
-    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
-    this.bgmSpec = null;
-    this.stopBgmSource();
-
-    if (BGM_FILE_URLS[key]) {
-      void this.playBgmFile(key, BGM_FILE_URLS[key]); // 真實音檔
-      return;
-    }
     const spec = BGM[key];
     if (!spec) return;
-    this.bgmSpec = spec; // 程式合成
+    this.bgmSpec = spec;
     this.bgmStep = 0;
     this.nextNoteTime = ctx.currentTime;
     this.bgmTimer = window.setInterval(() => this.scheduleBgm(), 25);
-  }
-
-  stopBgm(): void {
-    if (this.bgmTimer !== null) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
-    this.stopBgmSource();
-    this.bgmKey = null;
-    this.bgmSpec = null;
-    if (this.bgmGain && this.ctx) this.bgmGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
-  }
-
-  private stopBgmSource(): void {
-    if (this.bgmSource) {
-      try { this.bgmSource.stop(); } catch { /* 已停 */ }
-      try { this.bgmSource.disconnect(); } catch { /* ignore */ }
-      this.bgmSource = null;
-    }
-  }
-
-  /** 播放循環音檔（fetch→decode→loop），decode 結果快取。 */
-  private async playBgmFile(key: BgmKey, url: string): Promise<void> {
-    const ctx = this.ctx;
-    if (!ctx || !this.bgmGain) return;
-    let buf = this.bgmBuffers[key];
-    if (!buf) {
-      try {
-        const resp = await fetch(url);
-        const ab = await resp.arrayBuffer();
-        buf = await ctx.decodeAudioData(ab);
-        this.bgmBuffers[key] = buf;
-      } catch { return; }
-    }
-    if (this.bgmKey !== key) return; // 載入期間已切走
-    this.stopBgmSource();
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    src.connect(this.bgmGain);
-    src.start();
-    this.bgmSource = src;
   }
 
   /** 排程器：用 lookahead 把循環樂句的音符排到 AudioContext 時間軸上。 */

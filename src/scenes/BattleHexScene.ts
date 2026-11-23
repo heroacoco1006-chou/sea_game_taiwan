@@ -19,11 +19,13 @@ import { axialToPixel, hexEqual, hexInMap, hexNeighbor, offsetToAxial, pixelToAx
 import {
   BATTLE_RULES,
   assessAutoBattle,
+  broadsideArcHexes,
   type RandomSource,
   type ReachableHex,
   cannonDamageBounds,
   createSeededRng,
   deploymentHexes,
+  directionBetweenAdjacent,
   findPath,
   reachableHexes,
   repairExhausted,
@@ -36,7 +38,7 @@ import { applyCommand, createBattleState } from '../battle/battleEngine';
 import { chooseBattleAiDecision } from '../battle/battleAi';
 import {
   BASE_W, BASE_H, COLORS, drawPanel, makeButton, selectionRing,
-  setMinimumCssTouchTarget, textStyle, toast,
+  setMinimumCssTouchTarget, showModal, textStyle, toast,
 } from '../ui';
 import {
   MIN_TOUCH_TARGET_CSS_PX, isCompactBattleCanvas, minimumLogicalTouchTarget,
@@ -558,7 +560,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.autoStepCount = 0;
     this.autoStepSide = null;
     this.infoTitle.setText('選中資訊');
-    this.infoBody.setText('點戰場上的格子\n查看座標與船隻');
+    this.infoBody.setText('點選戰場上的船隻或海面\n查看地形效果與船況');
     this.legendLayer.setVisible(true);
 
     // 地圖切換鈕的選中金框（selectionRing 每次產生新 Graphics，換圖時汰舊換新）
@@ -928,8 +930,25 @@ export default class BattleHexScene extends Phaser.Scene {
     }, 150);
   }
 
-  private endTurn(): void {
+  private endTurn(confirmed = false): void {
     if (this.battle.winner !== null || this.animating) return;
+    if (!confirmed && !this.autoBattle && this.battle.activeSide === 'player') {
+      const remaining = this.battle.units.filter(
+        (unit) => unit.side === 'player' && unit.status === 'active' && !unit.acted,
+      ).length;
+      if (remaining > 0) {
+        showModal(
+          this,
+          '確定要結束回合嗎？',
+          `我方還有 ${remaining} 艘船本回合尚未行動喔！\n現在結束回合會立刻輪到敵方行動。`,
+          [
+            { label: '繼續操作船隊', onPick: () => {} },
+            { label: '確定結束回合', onPick: () => this.endTurn(true) },
+          ],
+        );
+        return;
+      }
+    }
     const events: BattleEvent[] = [];
     const result = this.applyCmd({ type: 'end_turn' });
     if (result.ok) events.push(...result.events);
@@ -1405,6 +1424,36 @@ export default class BattleHexScene extends Phaser.Scene {
       this.highlightG.strokePoints(this.hexCorners(center), true);
     }
 
+    // 側舷砲擊射界預覽：選船或預覽移動終點時，以暖橘金淡框顯示可開砲的海域格，幫小朋友直覺瞄準。
+    const arcUnit = this.selectedUnit();
+    if (
+      arcUnit
+      && arcUnit.side === 'player'
+      && arcUnit.status === 'active'
+      && !arcUnit.acted
+      && arcUnit.cannons > 0
+      && this.battle.winner === null
+      && this.battle.activeSide === 'player'
+      && !this.autoBattle
+      && this.actionMode !== 'board'
+    ) {
+      const map = this.currentMap();
+      let arcOrigin = arcUnit.hex;
+      let arcFacing = arcUnit.facing;
+      if (this.previewPath && this.previewPath.length >= 2) {
+        arcOrigin = this.previewPath[this.previewPath.length - 1];
+        const prevHex = this.previewPath[this.previewPath.length - 2];
+        arcFacing = directionBetweenAdjacent(prevHex, arcOrigin) ?? arcUnit.facing;
+      }
+      for (const hex of broadsideArcHexes(map, arcUnit, arcOrigin, arcFacing)) {
+        const center = axialToPixel(hex, HEX_SIZE, this.origin);
+        this.highlightG.fillStyle(0xf2a93b, this.actionMode === 'cannon' ? 0.22 : 0.14);
+        this.highlightG.fillPoints(this.hexCorners(center), true);
+        this.highlightG.lineStyle(1.6, 0xf2c14e, this.actionMode === 'cannon' ? 0.72 : 0.48);
+        this.highlightG.strokePoints(this.hexCorners(center), true);
+      }
+    }
+
     if (this.actionMode && this.selectedUnit()) {
       for (const target of this.battle.units.filter((unit) => unit.side === 'enemy' && unit.status === 'active')) {
         if (this.targetError(target) !== null) continue;
@@ -1564,12 +1613,17 @@ export default class BattleHexScene extends Phaser.Scene {
 
     const { col, row } = axialToOffset(hex);
     const terrain = terrainAt(map, hex);
+    const terrainEffect: Record<Terrain, string> = {
+      deep: '深海（正常移動）',
+      shallow: '淺灘（大船移動較慢）',
+      land: '島嶼（不可通行・遮擋砲線）',
+      reef: '暗礁（不可通行・可越過開砲）',
+    };
     const lines = unitAt
-      ? [`座標 (q,r)：(${hex.q}, ${hex.r})`, `地形：${TERRAIN_NAME[terrain]}`]
+      ? [`海域：${terrainEffect[terrain]}`]
       : [
-          `座標 (q,r)：(${hex.q}, ${hex.r})`,
-          `欄／列：第 ${col + 1} 欄・第 ${row + 1} 列`,
-          `地形：${TERRAIN_NAME[terrain]}`,
+          `海域位置：第 ${col + 1} 欄・第 ${row + 1} 列`,
+          `地形：${terrainEffect[terrain]}`,
         ];
     if (unitAt) {
       const name = this.unitNames.get(unitAt.id) ?? unitAt.id;

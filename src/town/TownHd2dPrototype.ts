@@ -4,7 +4,7 @@ import { audio, townBgmForRegion } from '../audio';
 import { GameState, PORTS, cargoCount, cargoMax, dateText, isTransientGameState, saveGame } from '../state';
 import { TouchControls } from '../touchControls';
 import { TutorialOverlay } from '../tutorialOverlay';
-import { BASE_H, BASE_W, makeButton, showModal, textStyle, toast } from '../ui';
+import { BASE_H, BASE_W, makeButton, setMinimumCssTouchTarget, showModal, textStyle, toast } from '../ui';
 import { TownController } from './TownController';
 import { ThreeTownRenderer } from './ThreeTownRenderer';
 import { townPrototypeDiagnostics } from './prototypeDiagnostics';
@@ -54,6 +54,7 @@ export class TownHd2dPrototype {
   private readonly portRegion: string;
   private readonly portCulture: string;
   private readonly diagnosticsVisible: boolean;
+  private readonly perfAuditActive: boolean;
 
   private get state(): GameState {
     return this.scene.registry.get('state') as GameState;
@@ -72,7 +73,9 @@ export class TownHd2dPrototype {
     this.portName = portInfo?.name ?? portId;
     this.portRegion = portInfo?.region ?? '';
     this.portCulture = portInfo?.culture ?? 'han';
-    this.diagnosticsVisible = new URLSearchParams(window.location.search).get('townPreview') === 'hd2d';
+    const query = new URLSearchParams(window.location.search);
+    this.diagnosticsVisible = query.get('townPreview') === 'hd2d';
+    this.perfAuditActive = this.diagnosticsVisible || query.has('townAudit');
     this.initialPosition = spawn ? { u: spawn.x, v: spawn.y } : { ...sceneData.spawn };
     this.cursors = scene.input.keyboard!.createCursorKeys();
     this.keys = scene.input.keyboard!.addKeys('W,A,S,D,ENTER') as PrototypeKeys;
@@ -104,12 +107,14 @@ export class TownHd2dPrototype {
       textStyle(14, '#d9e8eb'),
     ).setDepth(101).setScrollFactor(0);
 
-    makeButton(scene, BASE_W - 300, 25, 126, 36, '設定／音量', () => {
+    const settingsBtn = makeButton(scene, BASE_W - 300, 25, 126, 38, '設定／音量', () => {
       scene.scene.launch('Settings', { caller: 'Port' });
       scene.scene.pause();
     }, 15).setDepth(102).setScrollFactor(0);
-    makeButton(scene, BASE_W - 162, 25, 116, 36, '選單', () => this.openMenu(), 15)
+    const menuBtn = makeButton(scene, BASE_W - 162, 25, 116, 38, '選單', () => this.openMenu(), 15)
       .setDepth(102).setScrollFactor(0);
+    setMinimumCssTouchTarget(scene, settingsBtn, 126, 38);
+    setMinimumCssTouchTarget(scene, menuBtn, 116, 38);
     if (this.diagnosticsVisible) {
       makeButton(scene, BASE_W - 52, 25, 92, 36, '回標題', () => scene.scene.start('Title'), 14)
         .setDepth(102).setScrollFactor(0);
@@ -158,7 +163,13 @@ export class TownHd2dPrototype {
       const resolveAsset = (assetId: string): string | undefined => (
         assetId === failedAssetId ? undefined : hd2dTownUrl(assetId) ?? portTownBuildingUrl(assetId)
       );
-      this.renderer = new ThreeTownRenderer(this.scene, characterWalkUrl(this.state.story.heroId), this.sceneData, resolveAsset);
+      this.renderer = new ThreeTownRenderer(
+        this.scene,
+        characterWalkUrl(this.state.story.heroId),
+        this.sceneData,
+        resolveAsset,
+        this.perfAuditActive,
+      );
       this.renderer.mount();
       this.controller = new TownController(this.sceneData, this.renderer, this.initialPosition);
       this.createFacilitySigns();
@@ -261,7 +272,7 @@ export class TownHd2dPrototype {
       this.touchControls.setActionLabel('進入', false);
     }
 
-    if (Math.floor(time / 500) !== Math.floor((time - delta) / 500)) {
+    if (this.perfAuditActive && Math.floor(time / 500) !== Math.floor((time - delta) / 500)) {
       const d = townPrototypeDiagnostics.snapshot();
       const r = this.renderer.snapshot();
       if (this.diagnosticsVisible) {

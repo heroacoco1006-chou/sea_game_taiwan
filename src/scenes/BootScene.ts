@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
 import {
-  PORTRAIT_URLS, WORLD_ART_URLS, EXPLORATION_ICON_URLS, EXPLORATION_EVENT_URLS, FACILITY_ICON_URLS,
+  PORTRAIT_URLS, WORLD_ART_URLS, EXPLORATION_ICON_URLS, FACILITY_ICON_URLS,
   STORY_BACKGROUND_URLS, TITLE_BG_URL,
-  portraitKey, worldArtKey, explorationIconKey, explorationEventKey, facilityIconKey, storyBackgroundKey,
+  portraitKey, worldArtKey, explorationIconKey, facilityIconKey, storyBackgroundKey,
 } from '../art';
 import { HEROES, markTransientGameState, newGame, newPlayerShip } from '../state';
 import { createHexBattleLaunch, type HexBattleRequest } from '../battle/battleAdapter';
@@ -16,11 +16,13 @@ export default class BootScene extends Phaser.Scene {
 
   preload(): void {
     installLoadingHud(this);
-    // Boot 只載標題與共用導航素材；港町、船隻、章節與圖鑑由使用場景按需載入。
+    // Boot 只載標題與共用導航素材；舊版 v2 地圖與探險事件圖不再阻塞首次開機。
     for (const [id, url] of Object.entries(PORTRAIT_URLS)) this.load.image(portraitKey(id), url);
-    for (const [id, url] of Object.entries(WORLD_ART_URLS)) this.load.image(worldArtKey(id), url);
+    for (const [id, url] of Object.entries(WORLD_ART_URLS)) {
+      if (id.startsWith('full_map_v2')) continue;
+      this.load.image(worldArtKey(id), url);
+    }
     for (const [id, url] of Object.entries(EXPLORATION_ICON_URLS)) this.load.image(explorationIconKey(id), url);
-    for (const [id, url] of Object.entries(EXPLORATION_EVENT_URLS)) this.load.image(explorationEventKey(id), url);
     for (const [id, url] of Object.entries(FACILITY_ICON_URLS)) this.load.image(facilityIconKey(id), url);
     for (const [id, url] of Object.entries(STORY_BACKGROUND_URLS)) this.load.image(storyBackgroundKey(id), url);
     if (TITLE_BG_URL) this.load.image('title_bg', TITLE_BG_URL);

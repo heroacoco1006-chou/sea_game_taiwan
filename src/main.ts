@@ -109,9 +109,15 @@ game.events.once(Phaser.Core.Events.READY, () => {
   }
 });
 
-// 首次使用者互動時解鎖音訊（瀏覽器自動播放限制）
-for (const ev of ['pointerdown', 'keydown', 'touchstart']) {
-  window.addEventListener(ev, () => audio.unlock(), { passive: true });
+// 首次使用者互動時解鎖音訊（瀏覽器自動播放限制）；成功解鎖後自動移除監聽器。
+const unlockEvents = ['pointerdown', 'keydown', 'touchstart'] as const;
+const onFirstAudioGesture = (): void => {
+  if (audio.unlock()) {
+    for (const ev of unlockEvents) window.removeEventListener(ev, onFirstAudioGesture);
+  }
+};
+for (const ev of unlockEvents) {
+  window.addEventListener(ev, onFirstAudioGesture, { passive: true });
 }
 
 // 偵錯掛鉤（供自動化測試）

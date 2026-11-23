@@ -295,20 +295,57 @@ export default class ShipyardScene extends Phaser.Scene {
     ]);
   }
 
-  /** 裝甲／船帆／大砲種類共用的改裝選單 */
+  /** 裝甲／船帆／大砲種類共用的改裝選單（明示數值與砲種射程，避免買完進海戰才發現射程限制）。 */
   private showShipEquipMenu(slot: 'armor' | 'sail' | 'cannonType'): void {
     const cfg = {
-      armor: { title: '裝甲改裝', list: HULL_PLATINGS, cur: this.state.ship.armor },
-      sail: { title: '船帆改裝', list: SAILS, cur: this.state.ship.sail },
-      cannonType: { title: '大砲種類改裝', list: CANNON_TYPES, cur: this.state.ship.cannonType },
+      armor: {
+        title: '裝甲改裝',
+        body: '裝甲可提高船體耐久上限並減輕暴風損害；已買過的裝備留在背包，可免費換回。',
+        list: HULL_PLATINGS.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          spec: `耐久+${item.hullBonus}・抗風-${Math.round(item.stormReduce * 100)}%`,
+        })),
+        cur: this.state.ship.armor,
+      },
+      sail: {
+        title: '船帆改裝',
+        body: '換帆可提升航行速度與抗暴風能力；已買過的裝備留在背包，可免費換回。',
+        list: SAILS.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          spec: `航速+${Math.round(item.speedBonus * 100)}%${item.stormReduce > 0 ? `・抗風-${Math.round(item.stormReduce * 100)}%` : ''}`,
+        })),
+        cur: this.state.ship.sail,
+      },
+      cannonType: {
+        title: '大砲種類改裝',
+        body: '不同大砲在六角格海戰的射程不同：紅夷砲射程 2～3 格（貼身 1 格無法開砲）、散彈砲只打 1 格、佛朗機砲 1～2 格。',
+        list: CANNON_TYPES.map((item) => {
+          const rangeText = item.id === 'ct_hongyi'
+            ? '射程2～3格(不打貼身)'
+            : item.id === 'ct_scatter'
+              ? `射程1格・接舷+${item.board}`
+              : '射程1～2格';
+          return {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            spec: `威力×${item.power}・${rangeText}`,
+          };
+        }),
+        cur: this.state.ship.cannonType,
+      },
     }[slot];
     showModal(
       this,
       cfg.title,
-      '船隻裝備在造船廠購買與改裝；買過的會留在背包，可免費換回。',
+      cfg.body,
       [
         ...cfg.list.map((item) => ({
-          label: `${cfg.cur === item.id ? '✓' : ''}${item.name}　${hasInventory(this.state, item.id) ? '已持有' : `${item.price} 兩`}`,
+          label: `${cfg.cur === item.id ? '✓' : ''}${item.name}（${item.spec}）${hasInventory(this.state, item.id) ? '已持有' : `${item.price}兩`}`,
           onPick: () => this.installShipEquip(slot, item.id),
         })),
         { label: '取消', onPick: () => {} },
@@ -346,7 +383,7 @@ export default class ShipyardScene extends Phaser.Scene {
       '船首像屬於船隻裝備，在造船廠購買與改裝；已買過的船首像會留在背包，可免費換回。',
       [
         ...FIGUREHEADS.map((f) => ({
-          label: `${f.name}　${hasInventory(this.state, f.id) ? '已持有' : `${f.price} 兩`}`,
+          label: `${this.state.ship.figurehead === f.id ? '✓' : ''}${f.name}（${f.desc.replace(/。.*$/, '')}）${hasInventory(this.state, f.id) ? '已持有' : `${f.price}兩`}`,
           onPick: () => this.installFigurehead(f.id),
         })),
         { label: '取消', onPick: () => {} },
@@ -435,7 +472,7 @@ export default class ShipyardScene extends Phaser.Scene {
   }
 
   /** asEscort=false 建造新旗艦；true 建造僚艦 */
-  private orderShip(asEscort: boolean): void {
+  private orderShip(asEscort: boolean, confirmed = false): void {
     const s = this.state;
     const t = this.selectedType;
     if (!t) {
@@ -457,8 +494,21 @@ export default class ShipyardScene extends Phaser.Scene {
         toast(this, `建造僚艦要先付 ${t.price} 兩，資金不足！`);
         return;
       }
-      s.gold -= t.price;
       const days = shipBuildDays(t);
+      if (!confirmed && t.price >= 10000) {
+        showModal(
+          this,
+          `確定建造僚艦【${t.name}】？`,
+          `費用：${t.price.toLocaleString()} 兩｜工期：${days} 天（${dateText(s.day + days)} 完工）。\n\n付款後需回到【${this.port.name}】取船。`,
+          [
+            { label: `付款 ${t.price.toLocaleString()} 兩下訂`, onPick: () => this.orderShip(true, true) },
+            { label: '先想想', onPick: () => {} },
+          ],
+        );
+        return;
+      }
+      s.gold -= t.price;
+      audio.playSfx('coin');
       s.shipOrders.push({
         id: `${this.port.id}-${t.id}-${s.day}-${s.shipOrders.length}`,
         typeId: t.id,
@@ -488,8 +538,21 @@ export default class ShipyardScene extends Phaser.Scene {
       toast(this, `實付要 ${cost} 兩，資金不足！`);
       return;
     }
-    s.gold -= cost;
     const days = shipBuildDays(t);
+    if (!confirmed && cost >= 10000) {
+      showModal(
+        this,
+        `確定建造新旗艦【${t.name}】？`,
+        `實付金額：${cost.toLocaleString()} 兩（已折抵舊旗艦 ${this.tradeInValue().toLocaleString()} 兩）\n工期：${days} 天（${dateText(s.day + days)} 完工），原旗艦裝備會在取船時自動移轉。`,
+        [
+          { label: `付款 ${cost.toLocaleString()} 兩下訂`, onPick: () => this.orderShip(false, true) },
+          { label: '先想想', onPick: () => {} },
+        ],
+      );
+      return;
+    }
+    s.gold -= cost;
+    audio.playSfx('coin');
     s.shipOrders.push({
       id: `${this.port.id}-${t.id}-${s.day}-${s.shipOrders.length}`,
       typeId: t.id,
@@ -521,9 +584,10 @@ export default class ShipyardScene extends Phaser.Scene {
     toast(this, `${shipTypeById(esc.typeId).name} 升為旗艦！`);
   }
 
-  private sellEscort(idx: number): void {
+  private sellEscort(idx: number, confirmed = false): void {
     const s = this.state;
     const esc = s.escorts[idx];
+    if (!esc) return;
     const et = shipTypeById(esc.typeId);
     const newCargoMax = cargoMax(s) - esc.cargoSpace;
     if (cargoCount(s) > newCargoMax) {
@@ -531,7 +595,20 @@ export default class ShipyardScene extends Phaser.Scene {
       return;
     }
     const gain = Math.round(et.price * 0.6 + esc.cannons * CANNON_PRICE * 0.5);
+    if (!confirmed) {
+      showModal(
+        this,
+        `確定賣出僚艦【${et.name}】？`,
+        `賣出可獲得 ${gain.toLocaleString()} 兩。\n賣掉後這艘船會離開艦隊，超出的水手也會上岸。`,
+        [
+          { label: `確定賣出（+${gain.toLocaleString()} 兩）`, onPick: () => this.sellEscort(idx, true) },
+          { label: '先留著', onPick: () => {} },
+        ],
+      );
+      return;
+    }
     s.gold += gain;
+    audio.playSfx('coin');
     s.escorts.splice(idx, 1);
     s.food = Math.min(s.food, supplyMax(s));
     s.water = Math.min(s.water, supplyMax(s));

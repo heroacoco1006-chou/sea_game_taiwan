@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { installLoadingHud, showLoadingFailureIfNeeded } from '../loadingHud';
-import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, dateText, isTransientGameState } from '../state';
+import { GameState, PORTS, Port, cargoCount, cargoMax, saveGame, savePortSnapshot, dateText, isTransientGameState } from '../state';
 import {
   characterWalkKey, characterWalkUrl, harborSceneKey, harborSceneUrl,
   portBuildingKey, portTownBackgroundKey, portTownBackgroundUrl,
@@ -420,6 +420,7 @@ export default class PortScene extends Phaser.Scene {
   private processPortArrival(): { firstVisit: boolean; messages: string[] } {
     const { firstVisit, messages } = applyTownArrival(this.state, this.port.id);
     if (messages.length) saveGame(this.state);
+    savePortSnapshot(this.state);
     return { firstVisit, messages };
   }
 

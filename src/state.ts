@@ -582,6 +582,9 @@ const TRANSIENT_STATES = new WeakSet<object>();
 function slotKey(slot: number): string {
   return `seagame_save_slot${slot}`;
 }
+function portSnapshotKey(slot: number): string {
+  return `seagame_port_backup_slot${slot}`;
+}
 const START_POS = { x: 3260, y: 2076 }; // V3 月港外海 fallback
 
 type MapReanchorV3 = {
@@ -2339,6 +2342,35 @@ export function listSaveSlots(): SaveSlotInfo[] {
 
 export function deleteSave(slot: number): void {
   safeRemoveItem(slotKey(slot));
+  safeRemoveItem(portSnapshotKey(slot));
+}
+
+/** 進港時自動留存一份安全快照（避免在斷糧高疲勞下自動存檔造成必死局）。 */
+export function savePortSnapshot(state: GameState, slot: number = getActiveSlot()): boolean {
+  if (isTransientGameState(state)) return false;
+  return safeSetItem(portSnapshotKey(slot), JSON.stringify(state));
+}
+
+export function hasPortSnapshot(slot: number = getActiveSlot()): boolean {
+  return safeGetItem(portSnapshotKey(slot)) !== null;
+}
+
+export function loadPortSnapshot(slot: number = getActiveSlot()): GameState | null {
+  const raw = safeGetItem(portSnapshotKey(slot));
+  if (!raw) return null;
+  const s = migrateSave(raw);
+  if (s) setActiveSlot(slot);
+  return s;
+}
+
+/** 兩點間的八方位白話方向（供世界地圖防迷路導航與海圖總覽使用）。 */
+export function compassDirectionText(fromX: number, fromY: number, toX: number, toY: number, nearPx = 120): string {
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  if (Math.hypot(dx, dy) <= nearPx) return '就在附近';
+  const deg = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+  const labels = ['正東方', '東南方', '正南方', '西南方', '正西方', '西北方', '正北方', '東北方'];
+  return labels[Math.round(deg / 45) % 8];
 }
 
 /** 從目前主角的開局日期起算的實際遊玩天數（讓三位不同開局年份的主角皆享有相同新手保護期）。 */

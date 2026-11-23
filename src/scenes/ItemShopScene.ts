@@ -4,7 +4,7 @@ import {
   WEAPONS, ARMORS, ACCESSORIES, CONSUMABLES,
   addInventory, shopItemIdsForPort,
 } from '../state';
-import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast } from '../ui';
+import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, showModal, toast } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
 
 type Cat = 'weapon' | 'armor' | 'accessory' | 'consumable';
@@ -60,11 +60,16 @@ export default class ItemShopScene extends Phaser.Scene {
         const y = 150 + i * 86;
         const build = () => {
           const own = this.state.inventory[row.id] ?? 0;
+          const equipped =
+            this.state.equip.weapon === row.id
+            || this.state.equip.armor === row.id
+            || this.state.equip.accessory === row.id;
+          const badge = equipped ? '（已裝備）' : own > 0 ? `（持有${own}）` : '';
           const zone = this.add
             .rectangle(col.x, y + 26, 280, 78, own > 0 ? 0x4a6a4a : COLORS.parchmentDark, own > 0 ? 0.5 : 0.4)
             .setInteractive({ useHandCursor: true });
           zone.on('pointerdown', () => this.buy(col.cat, row));
-          const nameT = this.add.text(col.x, y, `${row.name}${own > 0 ? `（持有${own}）` : ''}`, textStyle(17)).setOrigin(0.5, 0);
+          const nameT = this.add.text(col.x, y, `${row.name}${badge}`, textStyle(16)).setOrigin(0.5, 0);
           const priceT = this.add.text(col.x, y + 26, `${row.price} 兩`, textStyle(15, '#6b5530')).setOrigin(0.5, 0);
           const noteT = this.add.text(col.x, y + 48, row.note, { ...textStyle(12, '#5a4a30'), wordWrap: { width: 270 }, align: 'center' }).setOrigin(0.5, 0);
           return [zone, nameT, priceT, noteT];
@@ -86,14 +91,28 @@ export default class ItemShopScene extends Phaser.Scene {
     });
   }
 
-  private buy(_cat: Cat, row: Row): void {
+  private buy(_cat: Cat, row: Row, confirmed = false): void {
     const s = this.state;
     if (s.gold < row.price) {
+      audio.playSfx('cancel');
       toast(this, '資金不足！');
+      return;
+    }
+    if (!confirmed && row.price >= 1000) {
+      showModal(
+        this,
+        `確定購買【${row.name}】？`,
+        `價格：${row.price.toLocaleString()} 兩\n效果：${row.note}\n\n購買後會放進背包，可從右上角「選單 → 裝備」穿戴。`,
+        [
+          { label: `花費 ${row.price.toLocaleString()} 兩購買`, onPick: () => this.buy(_cat, row, true) },
+          { label: '先想想', onPick: () => {} },
+        ],
+      );
       return;
     }
     s.gold -= row.price;
     addInventory(s, row.id);
+    audio.playSfx('coin');
     saveGame(s);
     for (const fn of this.rebuild) fn();
     this.refreshSummary();
@@ -104,7 +123,7 @@ export default class ItemShopScene extends Phaser.Scene {
     const s = this.state;
     const itemCount = Object.values(s.inventory).reduce((sum, n) => sum + n, 0);
     this.summary.setText(
-      `資金 ${s.gold} 兩　　背包共有 ${itemCount} 件道具　　不同城市販售內容不同；隱藏道具之後會放進特殊任務。`
+      `資金 ${s.gold} 兩　　背包共有 ${itemCount} 件道具　　不同城市販售內容不同；稀有寶物可透過聲望特殊事件與海上探索取得。`
     );
   }
 }

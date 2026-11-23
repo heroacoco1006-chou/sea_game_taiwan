@@ -115,15 +115,16 @@ export default class StoryScene extends Phaser.Scene {
     // 上方標題列
     this.add.text(40, 30, this.headerText, textStyle(20, '#f2e3bd')).setOrigin(0, 0.5);
 
-    // 跳過（也方便重玩時快轉）
-    makeButton(this, W - 90, 30, 130, 40, '跳過 ▶▶', () => this.finish(), 14).setDepth(50);
+    // 上一句＋跳過（讓小朋友能回頭重讀歷史說明，並防止手滑直接跳過整章劇情）
+    makeButton(this, W - 236, 30, 126, 40, '◀ 上一句', () => this.goPrev(), 14).setDepth(50);
+    makeButton(this, W - 90, 30, 130, 40, '跳過 ▶▶', () => this.confirmSkip(), 14).setDepth(50);
 
     // 下方對話框面板
     drawPanel(this, 60, 470, W - 120, 210);
 
     // 前進提示
     this.hint = this.add
-      .text(W - 80, 660, '點畫面 / 按 Enter 繼續 ▼', textStyle(15, '#6b5530'))
+      .text(W - 80, 660, '點畫面 / 按 Enter 繼續 ▼　（← 鍵可看上一句）', textStyle(15, '#6b5530'))
       .setOrigin(1, 0.5);
 
     // 點對話框區域前進（避開上方按鈕）
@@ -134,6 +135,8 @@ export default class StoryScene extends Phaser.Scene {
 
     this.input.keyboard?.on('keydown-ENTER', () => this.advance());
     this.input.keyboard?.on('keydown-SPACE', () => this.advance());
+    this.input.keyboard?.on('keydown-LEFT', () => this.goPrev());
+    this.input.keyboard?.on('keydown-BACKSPACE', () => this.goPrev());
 
     if (this.lines.length === 0) {
       this.finish();
@@ -168,7 +171,28 @@ export default class StoryScene extends Phaser.Scene {
       this.finish();
       return;
     }
+    audio.playSfx('page');
     this.renderBeat();
+  }
+
+  private goPrev(): void {
+    if (this.finished || this.index <= 0) return;
+    this.index -= 1;
+    audio.playSfx('page');
+    this.renderBeat();
+  }
+
+  private confirmSkip(): void {
+    if (this.finished) return;
+    showModal(
+      this,
+      '要跳過這段對話嗎？',
+      '跳過後會直接進入結算畫面，獎勵與圖鑑一樣會拿到。\n如果想慢慢看故事，可以選「繼續看劇情」。',
+      [
+        { label: '繼續看劇情', onPick: () => {} },
+        { label: '確定跳過', onPick: () => this.finish() },
+      ],
+    );
   }
 
   /** 依當前句子顯示說話者頭像（對白＝說話者、心聲＝主角、其餘隱藏） */

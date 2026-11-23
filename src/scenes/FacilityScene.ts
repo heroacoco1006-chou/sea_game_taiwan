@@ -115,6 +115,15 @@ export default class FacilityScene extends Phaser.Scene {
         makeButton(this, W / 2 - 90, 420, 170, 52, `3 天（${INN_DAY_PRICE * 3} 兩）`, () => this.stayAtInn(3), 15);
         makeButton(this, W / 2 + 90, 420, 170, 52, `7 天（${INN_DAY_PRICE * 7} 兩）`, () => this.stayAtInn(7), 15);
         makeButton(this, W / 2 + 270, 420, 170, 52, `30 天（${INN_DAY_PRICE * 30} 兩）`, () => this.stayAtInn(30), 15);
+        if (s.gold < INN_DAY_PRICE) {
+          makeButton(this, W / 2, 505, 380, 48, '碼頭免費休整一夜（疲勞歸零・+1天）', () => {
+            s.day += 1;
+            s.fatigue = 0;
+            saveGame(s);
+            this.refreshInfo();
+            toast(this, '在碼頭船艙安心睡了一夜，疲勞歸零了！');
+          }, 15);
+        }
         break;
       }
 

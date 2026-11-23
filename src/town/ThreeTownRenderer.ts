@@ -82,14 +82,17 @@ export class ThreeTownRenderer implements TownRenderer {
   private diagnosticsMounted = false;
   private readonly frameTimes: number[] = [];
   private lastFrameAt = 0;
+  private readonly collectPerfSamples: boolean;
 
   constructor(
     private readonly phaserScene: Phaser.Scene,
     private readonly heroTextureUrl: string | undefined,
     private readonly sceneData: TownSceneData,
     private readonly assetUrl: (assetId: string) => string | undefined,
+    collectPerfSamples = false,
   ) {
     this.desiredCameraTarget = { ...sceneData.spawn };
+    this.collectPerfSamples = collectPerfSamples;
   }
 
   mount(): void {
@@ -131,12 +134,14 @@ export class ThreeTownRenderer implements TownRenderer {
 
   update(time: number, delta: number, movement: TownMovementInput): void {
     if (!this.mounted || this.paused || this.disposed || !this.player) return;
-    const frameAt = performance.now();
-    if (this.lastFrameAt > 0) {
-      this.frameTimes.push(frameAt - this.lastFrameAt);
-      if (this.frameTimes.length > 3600) this.frameTimes.splice(0, this.frameTimes.length - 3600);
+    if (this.collectPerfSamples) {
+      const frameAt = performance.now();
+      if (this.lastFrameAt > 0) {
+        this.frameTimes.push(frameAt - this.lastFrameAt);
+        if (this.frameTimes.length > 3600) this.frameTimes.splice(0, this.frameTimes.length - 3600);
+      }
+      this.lastFrameAt = frameAt;
     }
-    this.lastFrameAt = frameAt;
     const length = Math.hypot(movement.x, movement.y);
     const nx = length > 0 ? movement.x / length : 0;
 
@@ -247,7 +252,7 @@ export class ThreeTownRenderer implements TownRenderer {
     renderer.resetState();
     this.frames += 1;
 
-    if (this.frames % 30 === 0) townPrototypeDiagnostics.sampled(this.snapshot());
+    if (this.collectPerfSamples && this.frames % 30 === 0) townPrototypeDiagnostics.sampled(this.snapshot());
   }
 
   snapshot(): TownRendererSnapshot {
