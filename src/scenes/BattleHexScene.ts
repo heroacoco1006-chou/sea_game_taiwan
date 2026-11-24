@@ -135,6 +135,9 @@ const ERROR_TEXT: Partial<Record<BattleErrorCode, string>> = {
   FULL_HULL: '耐久已滿，不需要修整',
   NOTHING_TO_UNDO: '這艘船目前沒有可反悔的移動',
   UNDO_BLOCKED: '原本的位置已被其他船佔住，無法退回',
+  TACTIC_UNAVAILABLE: '目前船隊尚未指派軍師，無法使用軍師計策',
+  TACTIC_ALREADY_USED: '本場戰鬥已經使用過軍師計策了',
+  TACTIC_NO_TARGETS: '我方船隻 3 格內沒有敵船，無法發動順風火攻',
 };
 
 export default class BattleHexScene extends Phaser.Scene {
@@ -184,6 +187,7 @@ export default class BattleHexScene extends Phaser.Scene {
   private btnReturn!: Phaser.GameObjects.Container;
   private btnRetreat!: Phaser.GameObjects.Container;
   private btnUndo!: Phaser.GameObjects.Container;
+  private btnTactic!: Phaser.GameObjects.Container;
   private tutorial?: TutorialOverlay;
   private tutorialCommandAnchor?: Phaser.GameObjects.Rectangle;
 
@@ -301,6 +305,7 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnReturn = makeButton(this, 1185, 682, 110, 44, this.launch ? '\u8fd4\u56de\u5927\u6d77' : '\u8fd4\u56de\u6a19\u984c', () => this.leaveBattle(), 16);
     this.btnRetreat = makeButton(this, 1128, 548, 220, 38, '撤退（需在我方邊界）', () => this.retreatSelected(), 14);
     this.btnUndo = makeButton(this, 1128, 504, 220, 38, '↩ 反悔移動', () => this.undoMoveSelected(), 14);
+    this.btnTactic = makeButton(this, 1128, 460, 220, 38, '📜 軍師計策（1次）', () => this.openStrategistTactic(), 14);
     this.battleTouchControls.push(
       { id: 'turn-left', button: this.btnTurnL, defaultX: 475, defaultY: 682, visualWidth: 70, visualHeight: 44 },
       { id: 'turn-right', button: this.btnTurnR, defaultX: 555, defaultY: 682, visualWidth: 70, visualHeight: 44 },
@@ -316,6 +321,7 @@ export default class BattleHexScene extends Phaser.Scene {
       { id: 'return', button: this.btnReturn, defaultX: 1185, defaultY: 682, visualWidth: 110, visualHeight: 44 },
       { id: 'retreat', button: this.btnRetreat, defaultX: 1128, defaultY: 548, visualWidth: 220, visualHeight: 38 },
       { id: 'undo-move', button: this.btnUndo, defaultX: 1128, defaultY: 504, visualWidth: 220, visualHeight: 38 },
+      { id: 'tactic', button: this.btnTactic, defaultX: 1128, defaultY: 460, visualWidth: 220, visualHeight: 38 },
     );
     this.decorateCommandButton(this.btnTurnL, 'turn_left', -18, 10, 22);
     this.decorateCommandButton(this.btnTurnR, 'turn_right', -18, 10, 22);
@@ -548,7 +554,13 @@ export default class BattleHexScene extends Phaser.Scene {
     this.mapNameText.setText(`${map.name}（11×7）`);
     const battleSeed = this.launch?.seed ?? BATTLE_SEED;
     this.rng = createSeededRng(battleSeed);
-    this.battle = createBattleState({ seed: battleSeed, mapId, units: this.buildUnits(map) });
+    this.battle = createBattleState({
+      seed: battleSeed,
+      mapId,
+      units: this.buildUnits(map),
+      strategistAvailable: Boolean(this.launch?.hasStrategist),
+      strategistName: this.launch?.strategistName,
+    });
     this.reachable = [];
     this.previewPath = null;
     this.actionMode = null;
@@ -812,6 +824,47 @@ export default class BattleHexScene extends Phaser.Scene {
     this.refreshHud();
   }
 
+  /** 軍師計策（每場 1 次）：由在隊軍師發動鼓舞軍心或順風火攻。 */
+  private openStrategistTactic(): void {
+    if (this.animating || this.autoBattle || this.battle.winner !== null || this.battle.activeSide !== 'player') return;
+    if (!this.battle.strategistAvailable) {
+      toast(this, ERROR_TEXT.TACTIC_UNAVAILABLE!);
+      return;
+    }
+    if (this.battle.strategistUsed) {
+      toast(this, ERROR_TEXT.TACTIC_ALREADY_USED!);
+      return;
+    }
+    const name = this.battle.strategistName ?? '軍師';
+    showModal(
+      this,
+      `📜 ${name}的軍師計策（每場限用 1 次）`,
+      '請選擇要發動的戰術指令（不消耗船隻本回合行動）：\n\n' +
+      '• 🚩 鼓舞軍心：我方全體存活船隻立刻回復 12% 耐久，且本場砲擊威力 +15%！\n' +
+      '• 🔥 順風火攻：對距離我方船隻 3 格內的敵船施放火攻，造成火焰耐久傷害！',
+      [
+        { label: '🚩 鼓舞軍心（補耐久＋增火力）', onPick: () => this.executeStrategistTactic('inspire') },
+        { label: '🔥 順風火攻（範圍火焰傷害）', onPick: () => this.executeStrategistTactic('fire') },
+        { label: '先留著不用', onPick: () => {} },
+      ],
+    );
+  }
+
+  private executeStrategistTactic(tactic: 'inspire' | 'fire'): void {
+    const result = this.applyCmd({ type: 'tactic', tactic });
+    if (!result.ok) {
+      toast(this, ERROR_TEXT[result.error] ?? '目前無法發動軍師計策');
+      return;
+    }
+    this.previewPath = null;
+    this.actionMode = null;
+    this.targetUnitId = null;
+    this.renderBoard();
+    this.playEvents(result.events);
+    this.redrawOverlays();
+    this.refreshHud();
+  }
+
   private turnSelected(direction: -1 | 1): void {
     const unit = this.selectedUnit();
     if (!unit) return;
@@ -1060,6 +1113,19 @@ export default class BattleHexScene extends Phaser.Scene {
         const outcome = event.outcome === 'won' ? '敵船投降' : event.outcome === 'balanced' ? '雙方退開' : '接舷失利';
         effectText(event.targetId, outcome, '#ffd2a1');
         messages.push(`接舷結果：${outcome}。`);
+      } else if (event.type === 'tactic_used') {
+        if (event.tactic === 'inspire') {
+          audio.playSfx('unlock');
+          for (const id of event.affectedIds) effectText(id, '鼓舞！火力↑', '#ffe588');
+          messages.push(`軍師發動【鼓舞軍心】！全艦隊火力 +15%，共回復 ${event.totalValue} 點耐久。`);
+        } else {
+          audio.playSfx('cannon');
+          for (const id of event.affectedIds) {
+            effectArt(id, 'deck_fire', 64);
+            effectText(id, '火攻命中！', '#ffae70');
+          }
+          messages.push(`軍師發動【順風火攻】！共對敵船造成 ${event.totalValue} 點火焰傷害。`);
+        }
       } else if (event.type === 'unit_repaired') {
         effectText(event.unitId, `+${event.amount} 耐久`, '#a8f0b8');
         messages.push(`修整完成，回復 ${event.amount} 點耐久。`);
@@ -1559,6 +1625,10 @@ export default class BattleHexScene extends Phaser.Scene {
     this.btnRetreat.setVisible(actionReady);
     // 反悔移動：只在「已移動、尚未行動」時出現
     this.btnUndo.setVisible(actionReady && unit.moved && !!unit.undo);
+    // 軍師計策：船隊有軍師且玩家回合可用時顯示
+    const showTactic = !over && !this.animating && !this.autoBattle && playerTurn
+      && Boolean(this.battle.strategistAvailable) && !this.battle.strategistUsed;
+    this.btnTactic.setVisible(showTactic);
 
     const target = this.battle.units.find((item) => item.id === this.targetUnitId);
     const validTarget = !!target && this.targetError(target) === null;

@@ -807,21 +807,25 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   return state;
 }
 
-/** 每日糧食消耗量（水手越多吃越多） */
-export function foodPerDay(crew: number): number {
-  return Math.max(1, Math.ceil(crew / 5));
+/** 每日糧食消耗量（水手越多吃越多；指派水手長可節省 15%） */
+export function foodPerDay(crew: number, state?: GameState): number {
+  const base = Math.max(1, Math.ceil(crew / 5));
+  if (state && hasRole(state, 'boatswain')) return Math.max(1, Math.round(base * 0.85));
+  return base;
 }
 
-/** 每日清水消耗量 */
-export function waterPerDay(crew: number): number {
-  return Math.max(1, Math.ceil(crew / 5));
+/** 每日清水消耗量（指派水手長可節省 15%） */
+export function waterPerDay(crew: number, state?: GameState): number {
+  const base = Math.max(1, Math.ceil(crew / 5));
+  if (state && hasRole(state, 'boatswain')) return Math.max(1, Math.round(base * 0.85));
+  return base;
 }
 
 /** 以目前糧水與水手數估算還能航行幾天 */
 export function sailableDays(state: GameState): number {
   return Math.min(
-    Math.floor(state.food / foodPerDay(state.crew)),
-    Math.floor(state.water / waterPerDay(state.crew))
+    Math.floor(state.food / foodPerDay(state.crew, state)),
+    Math.floor(state.water / waterPerDay(state.crew, state))
   );
 }
 
@@ -902,15 +906,16 @@ export function stormDamageMod(state: GameState): number {
   return m;
 }
 
-/** 海上突襲機率倍率（望遠鏡降低） */
+/** 海上突襲機率倍率（望遠鏡／異國望遠鏡降低） */
 export function ambushMod(state: GameState): number {
-  return accessoryEffect(state) === 'scout' ? 0.6 : 1;
+  const scout = accessoryEffectValue(state, 'scout', 0.6);
+  return scout > 0 ? scout : 1;
 }
 
-/** 每日疲勞累積倍率（媽祖護身符＋鳳凰像＋水手長） */
+/** 每日疲勞累積倍率（媽祖護身符／海商護符＋鳳凰像＋水手長） */
 export function fatigueMod(state: GameState): number {
   let m = 1;
-  if (accessoryEffect(state) === 'morale') m -= 0.2;
+  m -= accessoryEffectValue(state, 'morale', 0.2);
   if (figureheadEffect(state) === 'morale') m -= 0.2;
   if (hasRole(state, 'boatswain')) m -= 0.2;
   m -= Math.min(0.3, fleetStat(state, 'lead') / 500); // 統率越高，疲勞累積越慢
@@ -934,10 +939,24 @@ export function cannonMod(state: GameState): number {
   return m;
 }
 
-/** 交易折扣比例（算盤飾品＋主計長夥伴）：買價×(1−d)、賣價×(1+d） */
-export function tradeBonus(state: GameState): number {
+/** 主角的母文化圈（用來判定通譯在異文化港口的交涉優惠） */
+export function heroNativeCulture(heroId: string): string {
+  if (heroId === 'peter') return 'euro';
+  if (heroId === 'chiyo') return 'wa';
+  return 'han';
+}
+
+/** 通譯職位在異文化港口的額外交易優惠（+4%） */
+export function interpreterTradeBonus(state: GameState, port: Port): number {
+  if (!hasRole(state, 'interpreter')) return 0;
+  return port.culture !== heroNativeCulture(state.story?.heroId ?? 'lin') ? 0.04 : 0;
+}
+
+/** 交易折扣比例（算盤飾品＋主計長夥伴＋交涉＋商人聲望）：買價×(1−d)、賣價×(1+d） */
+export function tradeBonus(state: GameState, port?: Port): number {
   let d = accessoryEffectValue(state, 'trade', 0.05);
   if (hasRole(state, 'purser')) d += 0.05;
+  if (port) d += interpreterTradeBonus(state, port);
   d += Math.min(0.1, fleetStat(state, 'neg') / 800); // 交涉能力加成
   d += tradeRepBonus(state); // 商人聲望被動（B-5）
   return d;
@@ -1051,12 +1070,13 @@ export function statsAtLevel(heroId: string, level: number): Stats {
 
 export interface XpResult { gained: number; levelsGained: number; newLevel: number; statGains: Partial<Stats>; }
 
-/** 給船長加經驗，處理升級與自動加點；回傳升級資訊供 UI 提示。 */
-export function addXp(state: GameState, amount: number): XpResult {
+/** 給船長加經驗，處理升級與自動加點；知識類經驗（主線／探索／地標）在有書記時額外 +15%。 */
+export function addXp(state: GameState, amount: number, opts?: { knowledge?: boolean }): XpResult {
   const cap = state.captain;
-  const res: XpResult = { gained: amount, levelsGained: 0, newLevel: cap.level, statGains: {} };
-  if (amount <= 0 || cap.level >= LEVEL_CAP) return res;
-  cap.xp += amount;
+  const effective = opts?.knowledge && hasRole(state, 'scholar') ? Math.round(amount * 1.15) : amount;
+  const res: XpResult = { gained: effective, levelsGained: 0, newLevel: cap.level, statGains: {} };
+  if (effective <= 0 || cap.level >= LEVEL_CAP) return res;
+  cap.xp += effective;
   const before = { ...cap.stats };
   while (cap.level < LEVEL_CAP && cap.xp >= xpForNextLevel(cap.level)) {
     cap.xp -= xpForNextLevel(cap.level);
@@ -1738,17 +1758,26 @@ export function hasRole(state: GameState, roleKey: string): boolean {
   return state.mates.some((m) => m.role === roleKey);
 }
 
-/** 接舷額外戰力（副隊長＋統率／武勇能力） */
+/** 接舷額外戰力（副隊長＋防具防護＋統率／武勇能力＋散彈砲） */
 export function boardBonus(state: GameState): number {
   let b = hasRole(state, 'vice') ? 8 : 0;
+  b += Math.round(armorDefense(state) * 0.5);
   b += Math.round(fleetStat(state, 'lead') / 15 + fleetStat(state, 'val') / 12);
   b += shipCannonType(state)?.board ?? 0; // 散彈砲接舷壓制
   return b;
 }
 
-/** 接舷減員是否獲得緩衝（醫師夥伴、重甲或高統率） */
+/** 接舷水手損失倍率：依個人防具防禦線性減傷，再疊加醫師與高統率保護（最低 0.35）。 */
+export function crewLossFactor(state: GameState): number {
+  let factor = Math.max(0.55, 1 - armorDefense(state) * 0.035);
+  if (hasRole(state, 'surgeon')) factor *= 0.75;
+  if (fleetStat(state, 'lead') >= 80) factor *= 0.85;
+  return Number(Math.max(0.35, factor).toFixed(3));
+}
+
+/** 接舷減員是否獲得顯著緩衝（向下相容舊海戰判斷） */
 export function reduceCrewLoss(state: GameState): boolean {
-  return hasRole(state, 'surgeon') || armorDefense(state) >= 8 || fleetStat(state, 'lead') >= 80;
+  return crewLossFactor(state) <= 0.78 || hasRole(state, 'surgeon') || armorDefense(state) >= 5;
 }
 
 // ---------- 背包／道具 ----------
@@ -2008,6 +2037,7 @@ export function isTransientGameState(state: GameState): boolean {
 /** 存檔到指定格（預設為作用中的格子）；存到哪格，之後的自動存檔就跟到哪格。 */
 export function saveGame(state: GameState, slot: number = getActiveSlot()): boolean {
   if (isTransientGameState(state)) return false;
+  syncGlobalCodex(state);
   setActiveSlot(slot);
   return safeSetItem(slotKey(slot), JSON.stringify(state));
 }
@@ -2017,7 +2047,10 @@ export function loadGame(slot: number = getActiveSlot()): GameState | null {
   const raw = safeGetItem(slotKey(slot));
   if (!raw) return null;
   const s = migrateSave(raw);
-  if (s) setActiveSlot(slot);
+  if (s) {
+    setActiveSlot(slot);
+    syncGlobalCodex(s);
+  }
   return s;
 }
 
@@ -2503,20 +2536,55 @@ function consumeStoryRequirements(state: GameState, chapter: StoryChapter): void
   }
 }
 
+const GLOBAL_CODEX_KEY = 'seagame_global_codex_v1';
+
+/** 讀取跨存檔全域圖鑑清單（三條主角線可跨檔累計達成 100%「福爾摩沙活字典」）。 */
+export function loadGlobalCodex(): string[] {
+  const raw = safeGetItem(GLOBAL_CODEX_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 將目前存檔已解鎖的圖鑑同步至跨存檔全域圖鑑（暫態預覽不寫入）。 */
+export function syncGlobalCodex(state: GameState): void {
+  if (isTransientGameState(state)) return;
+  const current = state.story?.codex ?? [];
+  if (current.length === 0) return;
+  const merged = new Set(loadGlobalCodex());
+  const before = merged.size;
+  for (const id of current) merged.add(id);
+  if (merged.size > before) {
+    safeSetItem(GLOBAL_CODEX_KEY, JSON.stringify([...merged]));
+  }
+}
+
+export function globalCodexIdsForState(state: GameState): Set<string> {
+  const set = new Set<string>(state.story?.codex ?? []);
+  if (!isTransientGameState(state)) {
+    for (const id of loadGlobalCodex()) set.add(id);
+  }
+  return set;
+}
+
 export function codexEntriesForState(state: GameState): CodexEntry[] {
   return state.story.codex
     .map((id) => CODEX_ENTRIES.find((entry) => entry.id === id))
     .filter((entry): entry is CodexEntry => Boolean(entry));
 }
 
-export function codexEntriesForCategory(state: GameState, categoryId: string): CodexListEntry[] {
-  const unlocked = new Set(state.story.codex);
+export function codexEntriesForCategory(state: GameState, categoryId: string, includeGlobal = false): CodexListEntry[] {
+  const unlocked = includeGlobal ? globalCodexIdsForState(state) : new Set(state.story.codex);
   return CODEX_ENTRIES
     .filter((entry) => (entry.category ?? entry.type) === categoryId)
     .map((entry) => ({ ...entry, unlocked: unlocked.has(entry.id) }));
 }
 
-/** 圖鑑收集率：已解鎖筆數／總筆數與百分比。 */
+/** 圖鑑收集率：已解鎖筆數／總筆數與百分比（本存檔）。 */
 export function codexCollection(state: GameState): { unlocked: number; total: number; rate: number } {
   const total = CODEX_ENTRIES.length;
   const unlockedSet = new Set(state.story.codex);
@@ -2525,9 +2593,22 @@ export function codexCollection(state: GameState): { unlocked: number; total: nu
   return { unlocked, total, rate };
 }
 
-/** 依圖鑑收集率給予稱號；全收集為最高榮譽稱號。 */
+/** 跨存檔全路線圖鑑收集率（結合本檔與其他主角線存檔已收集條目）。 */
+export function globalCodexCollection(state: GameState): { unlocked: number; total: number; rate: number } {
+  const total = CODEX_ENTRIES.length;
+  const unlockedSet = globalCodexIdsForState(state);
+  const unlocked = CODEX_ENTRIES.filter((e) => unlockedSet.has(e.id)).length;
+  const rate = total > 0 ? Math.round((unlocked / total) * 100) : 0;
+  return { unlocked, total, rate };
+}
+
+/** 依圖鑑收集率給予稱號；本檔或跨檔全路線收集齊全皆可獲最高榮譽「福爾摩沙活字典」。 */
 export function codexTitle(state: GameState): string {
-  const { unlocked, total, rate } = codexCollection(state);
+  const local = codexCollection(state);
+  const global = globalCodexCollection(state);
+  const unlocked = Math.max(local.unlocked, global.unlocked);
+  const total = local.total;
+  const rate = Math.max(local.rate, global.rate);
   if (total > 0 && unlocked >= total) return '福爾摩沙活字典';
   if (rate >= 75) return '通曉四海的智者';
   if (rate >= 50) return '博學的船長';
@@ -2537,7 +2618,7 @@ export function codexTitle(state: GameState): string {
 }
 
 export function firstUnlockedCodexCategory(state: GameState): string {
-  const unlocked = new Set(state.story.codex);
+  const unlocked = globalCodexIdsForState(state);
   return (
     CODEX_CATEGORIES.find((cat) => CODEX_ENTRIES.some((entry) => entry.category === cat.id && unlocked.has(entry.id)))?.id ??
     CODEX_CATEGORIES[0]?.id ??
@@ -2554,6 +2635,7 @@ export function unlockCodex(state: GameState, ids: string[]): string[] {
       unlocked.push(entry?.title ?? id);
     }
   }
+  if (unlocked.length > 0) syncGlobalCodex(state);
   return unlocked;
 }
 
@@ -2645,7 +2727,7 @@ export function completeStoryChapter(
   state.story.completed.push(chapter.id);
   const unlocked = unlockCodex(state, chapterCodexIds(chapter.heroId, chapter.chapter));
   if (chapter.rewardGold > 0) state.gold += chapter.rewardGold;
-  const xp = addXp(state, 400);
+  const xp = addXp(state, 400, { knowledge: true });
   state.story.chapter += 1;
 
   // 客座夥伴於劇情節點自動離隊；主線要角於指定章節自動同行
@@ -2747,11 +2829,63 @@ export function windLabel(headingDir: number, wind: Wind): string {
   return '側風';
 }
 
+// ---------- 黑潮暖流加速帶（建構書 §5-2：花東外海→琉球→九州北上暖流） ----------
+
+export const KUROSHIO_PATH: ReadonlyArray<{ x: number; y: number }> = [
+  { x: 4060, y: 2920 },
+  { x: 4160, y: 2400 },
+  { x: 4320, y: 1860 },
+  { x: 4680, y: 1460 },
+  { x: 5260, y: 1120 },
+];
+const KUROSHIO_HALF_WIDTH = 175;
+
+/** 判斷船位是否在台灣東部黑潮流域內；在流域內回傳該段海流方向（弧度，東北北向）與貼近程度。 */
+export function kuroshioCurrentAt(x: number, y: number): { inCurrent: boolean; dir: number; strength: number } {
+  let bestDist = Number.POSITIVE_INFINITY;
+  let bestDir = -Math.PI / 3;
+  for (let i = 0; i < KUROSHIO_PATH.length - 1; i += 1) {
+    const a = KUROSHIO_PATH[i];
+    const b = KUROSHIO_PATH[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq > 0 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / lenSq)) : 0;
+    const dist = Math.hypot(x - (a.x + dx * t), y - (a.y + dy * t));
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestDir = Math.atan2(dy, dx);
+    }
+  }
+  if (bestDist > KUROSHIO_HALF_WIDTH) return { inCurrent: false, dir: bestDir, strength: 0 };
+  const strength = Math.max(0.45, 1 - (bestDist / KUROSHIO_HALF_WIDTH) * 0.55);
+  return { inCurrent: true, dir: bestDir, strength };
+}
+
+/** 黑潮對航速的倍率：順流（往東北／九州）最多 +30%，逆流（往南）最多 −15%。 */
+export function kuroshioSpeedMod(x: number, y: number, headingDir: number): number {
+  const cur = kuroshioCurrentAt(x, y);
+  if (!cur.inCurrent) return 1;
+  const align = Math.cos(headingDir - cur.dir);
+  if (align > 0.25) return Number((1 + 0.3 * align * cur.strength).toFixed(3));
+  if (align < -0.25) return Number((1 + 0.15 * align * cur.strength).toFixed(3));
+  return 1;
+}
+
+/** 給世界地圖 HUD 顯示的黑潮白話提示（不在流域內回空字串）。 */
+export function kuroshioLabel(x: number, y: number, headingDir: number): string {
+  const cur = kuroshioCurrentAt(x, y);
+  if (!cur.inCurrent) return '';
+  const align = Math.cos(headingDir - cur.dir);
+  if (align > 0.25) return '🌊 黑潮順流加速';
+  if (align < -0.25) return '🌊 逆黑潮減速';
+  return '🌊 黑潮流域（北上暖流）';
+}
+
 // ---------- 價格 ----------
 
-/** 某港口某商品在某一天的「市價／買價」（特產便宜、需求品貴、每日波動、行情事件加成）。
- *  賣價另見 sellPriceOf（含交涉加成、流行、供需飽和、原地洗錢防呆）。 */
-export function priceOf(state: GameState, port: Port, goodId: string, day: number): number {
+/** 某港口某商品在某一天的「基準市價」（不含買方折扣；供賣價基準與行情參考）。 */
+function marketBasePriceOf(state: GameState, port: Port, goodId: string, day: number): number {
   const good = GOODS.find((g) => g.id === goodId);
   if (!good) return 0;
   let mod = 1.0;
@@ -2763,6 +2897,15 @@ export function priceOf(state: GameState, port: Port, goodId: string, day: numbe
   if (boosted) mod *= 1.5;
   const noise = 1 + (hashNoise(day, port.id + '|' + goodId) - 0.5) * 0.16;
   return Math.max(1, Math.round(good.basePrice * mod * noise));
+}
+
+/** 某港口某商品在某一天的「買入價」（套用算盤／主計長／通譯／交涉買價折扣，最多折 18%）。
+ *  賣價另見 sellPriceOf（含交涉加成、通譯、流行、供需飽和與原地洗錢防呆）。 */
+export function priceOf(state: GameState, port: Port, goodId: string, day: number): number {
+  const base = marketBasePriceOf(state, port, goodId, day);
+  if (base <= 0) return 0;
+  const discount = Math.min(0.18, Math.max(0, tradeBonus(state, port)));
+  return Math.max(1, Math.round(base * (1 - discount)));
 }
 
 // ---- 交易動態：供需飽和、流行、賣價（v16） ----
@@ -2782,8 +2925,7 @@ export function currentSaturation(state: GameState, portId: string, goodId: stri
 
 /**
  * 玩家在某港賣出某貨後：累積供需飽和度（壓低後續賣價）；
- * 傳入 revenue（成交總額）時同步累積交易統計、商人聲望（每 1000 兩 +1）並巡檢夥伴任務。
- * 回傳聲望／任務進度提示文字（可能為空陣列）。
+ * 傳入 revenue（成交總額）時以累計貿易額每滿 1,000 兩 +1 商人聲望（小額買賣零頭不再蒸發），並巡檢任務。
  */
 export function recordSale(state: GameState, port: Port, goodId: string, qty: number, day: number, revenue = 0): string[] {
   if (!state.demand) state.demand = {};
@@ -2792,9 +2934,11 @@ export function recordSale(state: GameState, port: Port, goodId: string, qty: nu
   const msgs: string[] = [];
   if (revenue > 0) {
     if (!state.tradeStats) state.tradeStats = { total: 0, byPort: {} };
+    const beforeTotal = state.tradeStats.total;
     state.tradeStats.total += revenue;
     state.tradeStats.byPort[port.id] = (state.tradeStats.byPort[port.id] ?? 0) + revenue;
-    const rep = addReputation(state, 'trade', Math.floor(revenue / 1000));
+    const repGain = Math.floor(state.tradeStats.total / 1000) - Math.floor(beforeTotal / 1000);
+    const rep = addReputation(state, 'trade', repGain);
     if (rep) msgs.push(rep);
     msgs.push(...updateQuestProgress(state));
   }
@@ -2808,17 +2952,20 @@ export function isFad(state: GameState, port: Port, goodId: string, day: number)
 }
 
 /**
- * 賣價：市價 ×(1+交涉加成) ×流行倍率 ×(1−供需飽和)。
- * 防原地洗錢：凡「本港也販售」的貨物，賣價一律壓在市價（買價）的 0.9 以下，
+ * 賣價：基準市價 ×(1+交涉與通譯加成) ×流行倍率 ×(1−供需飽和)。
+ * 防原地洗錢：凡「本港也販售」的貨物，賣價一律壓在「當日買入價」的 0.9 以下，
  * 確保同港買進立刻賣出必定虧損。
  */
 export function sellPriceOf(state: GameState, port: Port, goodId: string, day: number): number {
-  const market = priceOf(state, port, goodId, day);
-  let mult = 1 + tradeBonus(state);
+  const market = marketBasePriceOf(state, port, goodId, day);
+  let mult = 1 + tradeBonus(state, port);
   if (isFad(state, port, goodId, day)) mult *= FAD_MULT;
   mult *= 1 - currentSaturation(state, port.id, goodId, day);
   let price = Math.round(market * mult);
-  if (port.sells.includes(goodId)) price = Math.min(price, Math.round(market * 0.9));
+  if (port.sells.includes(goodId)) {
+    const buyPrice = priceOf(state, port, goodId, day);
+    price = Math.min(price, Math.floor(buyPrice * 0.9));
+  }
   return Math.max(1, price);
 }
 
@@ -2982,7 +3129,7 @@ export function explorationFindChance(state: GameState, point: ExplorationPoint)
   const base = point.difficulty <= 1 ? 0.72 : point.difficulty === 2 ? 0.58 : 0.44;
   const guide = hasRole(state, 'guide') ? 0.16 : 0;
   const scholar = hasRole(state, 'scholar') ? 0.08 : 0;
-  const telescope = accessoryEffect(state) === 'scout' ? 0.08 : 0;
+  const telescope = state.equip.accessory === 'tr_seafarer_telescope' ? 0.11 : accessoryEffect(state) === 'scout' ? 0.08 : 0;
   const astrolabe = accessoryEffectValue(state, 'discover', 0.08);
   const retry = Math.min(0.2, explorationMissStreak(state, point.id) * 0.05);
   const know = Math.min(0.15, fleetStat(state, 'kno') / 600); // 知識能力加成
@@ -3328,13 +3475,64 @@ export function questProgressText(state: GameState, q: Quest): string {
   return `探險任務：${q.title}\n${originText}\n前往【${point?.name ?? q.pointId}】探索，完成後回到【${origin?.name ?? q.originPortId}】官府／商館領賞。\n期限：${dateText(q.deadlineDay)}　酬勞：${q.reward} 兩　狀態：${q.completed ? '已完成，回報中' : '尚未完成'}`;
 }
 
-/** 酒館傳聞文字 */
+/** 彙整目前所有進行中任務（主線、支線採購、夥伴任務、聲望事件）所需的貨物數量，供交易所標示。 */
+export function neededGoodsForQuests(state: GameState): Record<string, number> {
+  const need: Record<string, number> = {};
+  const add = (goodId: string, qty: number) => {
+    need[goodId] = Math.max(need[goodId] ?? 0, qty);
+  };
+  if (state.quest?.type === 'delivery') add(state.quest.goodId, state.quest.qty);
+  const chapter = currentStoryChapter(state);
+  for (const req of chapter?.requirements?.cargo ?? []) add(req.goodId, req.qty);
+  for (const [mateId, prog] of Object.entries(state.mateQuests ?? {})) {
+    if (prog.status !== 'active') continue;
+    const def = mateDefById(mateId);
+    const stages = def?.questStages ?? [];
+    for (let i = 0; i < stages.length; i += 1) {
+      if (prog.stagesDone[i]) continue;
+      for (const c of stages[i].requirement?.cargo ?? []) add(c.goodId, c.qty);
+      break;
+    }
+  }
+  for (const ev of REPUTATION_EVENTS) {
+    const prog = state.reputationEvents?.[ev.id];
+    if (!prog || prog.status !== 'active') continue;
+    for (let i = 0; i < ev.stages.length; i += 1) {
+      if (prog.stagesDone[i]) continue;
+      for (const c of ev.stages[i].requirement?.cargo ?? []) add(c.goodId, c.qty);
+      break;
+    }
+  }
+  return need;
+}
+
+/** 列出玩家已造訪過、且高價收購（dear）某商品的港口名稱（供交易所提示，減輕小朋友記憶負擔）。 */
+export function knownDearPortsForGood(state: GameState, goodId: string, excludePortId?: string): string[] {
+  const visited = new Set(state.visitedPorts ?? []);
+  return PORTS
+    .filter((p) => p.id !== excludePortId && visited.has(p.id) && p.dear.includes(goodId))
+    .map((p) => p.name);
+}
+
+/** 酒館傳聞文字（若有通譯在職，額外提供 1 條跨區高價情報） */
 export function rumorTexts(state: GameState): string[] {
   const lines: string[] = [];
   for (const e of state.events) {
     const p = PORTS.find((x) => x.id === e.portId);
     const g = GOODS.find((x) => x.id === e.goodId);
     if (p && g) lines.push(`聽說【${p.name}】最近缺${g.name}，價錢開得很高！`);
+  }
+  if (hasRole(state, 'interpreter')) {
+    const candidates = PORTS.filter((p) => p.dear.length > 0);
+    if (candidates.length > 0) {
+      const idx = Math.floor(hashNoise(state.day, 'interp_rumor') * candidates.length);
+      const pickedPort = candidates[idx];
+      const goodId = pickedPort.dear[Math.floor(hashNoise(state.day, 'interp_good') * pickedPort.dear.length)];
+      const good = GOODS.find((x) => x.id === goodId);
+      if (good) {
+        lines.push(`🗣️ 通譯打聽到的跨區情報：【${pickedPort.name}（${pickedPort.region}）】長期高價收購【${good.name}】，帶去賣一定划算！`);
+      }
+    }
   }
   if (lines.length === 0) lines.push('最近海上風平浪靜，沒什麼特別的消息。');
   return lines;

@@ -79,6 +79,10 @@ export interface BattleState {
   winner: Side | 'draw' | null;
   resultReason: string | null;
   log: BattleLogEntry[];
+  /** 是否指派軍師（每場可使用 1 次軍師計策） */
+  strategistAvailable?: boolean;
+  strategistUsed?: boolean;
+  strategistName?: string;
 }
 
 export type BattleCommand =
@@ -91,6 +95,7 @@ export type BattleCommand =
   | { type: 'retreat'; unitId: string }
   | { type: 'wait'; unitId: string }
   | { type: 'undo_move'; unitId: string }
+  | { type: 'tactic'; tactic: 'inspire' | 'fire' }
   | { type: 'end_turn' };
 
 export type BattleEvent =
@@ -105,6 +110,7 @@ export type BattleEvent =
   | { type: 'unit_move_undone'; unitId: string; to: Hex; facing: Facing }
   | { type: 'unit_retreated'; unitId: string }
   | { type: 'unit_waited'; unitId: string }
+  | { type: 'tactic_used'; tactic: 'inspire' | 'fire'; affectedIds: string[]; totalValue: number }
   | { type: 'turn_ended'; side: Side; round: number }
   | { type: 'battle_ended'; winner: Side | 'draw'; reason: string };
 
@@ -134,7 +140,10 @@ export type BattleErrorCode =
   | 'FULL_HULL'
   | 'NOT_ON_RETREAT_EDGE'
   | 'NOTHING_TO_UNDO'
-  | 'UNDO_BLOCKED';
+  | 'UNDO_BLOCKED'
+  | 'TACTIC_UNAVAILABLE'
+  | 'TACTIC_ALREADY_USED'
+  | 'TACTIC_NO_TARGETS';
 
 /**
  * 地圖資料檔（battleMaps.json）內的 q/r 是「視覺欄／列」座標（q=第幾欄、r=第幾列），

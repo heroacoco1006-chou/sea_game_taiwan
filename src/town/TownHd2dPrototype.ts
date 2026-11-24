@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
 import { characterWalkUrl, hd2dTownUrl, portTownBuildingUrl } from '../art';
 import { audio, townBgmForRegion } from '../audio';
-import { GameState, PORTS, cargoCount, cargoMax, dateText, isTransientGameState, saveGame } from '../state';
+import {
+  GameState, PORTS, GOODS, cargoCount, cargoMax, dateText, isTransientGameState, saveGame,
+  unlockCodex, addXp, levelUpMessage,
+} from '../state';
+import townLandmarksData from '../data/townLandmarks.json';
 import { TouchControls } from '../touchControls';
 import { TutorialOverlay } from '../tutorialOverlay';
 import { BASE_H, BASE_W, makeButton, setMinimumCssTouchTarget, showModal, textStyle, toast } from '../ui';
@@ -34,6 +38,29 @@ declare global {
   }
 }
 
+type TownLandmarkDef = {
+  portId: string;
+  id: string;
+  name: string;
+  era: string;
+  at: { u: number; v: number };
+  accent: string;
+  codexIds: string[];
+  summary: string;
+  whyImportant: string;
+};
+
+type TownNpcTemplate = {
+  id: string;
+  name: string;
+  robe: string;
+  hat: string;
+  at: { u: number; v: number };
+};
+
+const TOWN_LANDMARKS = (townLandmarksData as { landmarks: TownLandmarkDef[] }).landmarks;
+const TOWN_NPC_TEMPLATES = (townLandmarksData as { npcTemplates: Record<string, TownNpcTemplate[]> }).npcTemplates;
+
 /** PortScene 內的正式 HD-2D 港町；開發預覽使用 transient state，因此不寫玩家存檔。 */
 export class TownHd2dPrototype {
   private renderer?: ThreeTownRenderer;
@@ -47,6 +74,10 @@ export class TownHd2dPrototype {
   private readonly playerAnchor: Phaser.GameObjects.Rectangle;
   private readonly initialPosition: { u: number; v: number };
   private readonly facilitySigns: Array<{ key: TownFacilityKey; at: { u: number; v: number }; yOffset: number; label: Phaser.GameObjects.Text }> = [];
+  private readonly extraSigns: Array<{ at: { u: number; v: number }; yOffset: number; label: Phaser.GameObjects.Text }> = [];
+  private readonly portLandmark?: TownLandmarkDef;
+  private readonly portNpcs: TownNpcTemplate[] = [];
+  private npcTalkCount = 0;
   private tutorial?: TutorialOverlay;
   private tutorialMoveOrigin?: { u: number; v: number };
   private disposed = false;
@@ -73,6 +104,11 @@ export class TownHd2dPrototype {
     this.portName = portInfo?.name ?? portId;
     this.portRegion = portInfo?.region ?? '';
     this.portCulture = portInfo?.culture ?? 'han';
+    this.portLandmark = TOWN_LANDMARKS.find((item) => item.portId === portId);
+    this.portNpcs = (TOWN_NPC_TEMPLATES[this.portCulture] ?? TOWN_NPC_TEMPLATES.han ?? []).map((npc) => ({
+      ...npc,
+      at: { ...npc.at },
+    }));
     const query = new URLSearchParams(window.location.search);
     this.diagnosticsVisible = query.get('townPreview') === 'hd2d';
     this.perfAuditActive = this.diagnosticsVisible || query.has('townAudit');
@@ -169,10 +205,17 @@ export class TownHd2dPrototype {
         this.sceneData,
         resolveAsset,
         this.perfAuditActive,
+        {
+          landmark: this.portLandmark
+            ? { id: this.portLandmark.id, at: this.portLandmark.at, accent: this.portLandmark.accent }
+            : undefined,
+          npcs: this.portNpcs,
+        },
       );
       this.renderer.mount();
       this.controller = new TownController(this.sceneData, this.renderer, this.initialPosition);
       this.createFacilitySigns();
+      this.createExtraSigns();
       this.updateFacilitySigns();
       const port = PORTS.find((candidate) => candidate.id === this.portId);
       if (port) audio.playBgm(townBgmForRegion(port.region));
@@ -325,6 +368,8 @@ export class TownHd2dPrototype {
     this.scene.input.off('pointerdown', this.onPointerDown, this);
     for (const sign of this.facilitySigns) sign.label.destroy();
     this.facilitySigns.length = 0;
+    for (const sign of this.extraSigns) sign.label.destroy();
+    this.extraSigns.length = 0;
     this.tutorial?.destroy();
     this.tutorial = undefined;
     this.controller?.clearRoute();
@@ -379,6 +424,8 @@ export class TownHd2dPrototype {
   private createFacilitySigns(): void {
     for (const sign of this.facilitySigns) sign.label.destroy();
     this.facilitySigns.length = 0;
+    for (const sign of this.extraSigns) sign.label.destroy();
+    this.extraSigns.length = 0;
     for (const facility of this.sceneData.facilities) {
       const obj = this.sceneData.objects.find((candidate) => candidate.id === facility.objectId);
       const at = obj ? obj.at : facility.door;
@@ -408,9 +455,121 @@ export class TownHd2dPrototype {
     }
   }
 
+  private createExtraSigns(): void {
+    for (const sign of this.extraSigns) sign.label.destroy();
+    this.extraSigns.length = 0;
+
+    if (this.portLandmark) {
+      const lm = this.portLandmark;
+      const label = this.scene.add
+        .text(-500, -500, `🏛 ${lm.name}`, {
+          ...textStyle(13, '#ffe7a6'),
+          backgroundColor: '#4c2612e0',
+          padding: { x: 8, y: 4 },
+        })
+        .setOrigin(0.5)
+        .setDepth(86)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+      label.on('pointerover', () => label.setColor('#ffffff'));
+      label.on('pointerout', () => label.setColor('#ffe7a6'));
+      label.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
+        this.openLandmarkModal(lm);
+      });
+      this.extraSigns.push({ at: lm.at, yOffset: 2.2, label });
+    }
+
+    for (const npc of this.portNpcs) {
+      const label = this.scene.add
+        .text(-500, -500, `💬 ${npc.name}`, {
+          ...textStyle(12, '#e6f4ff'),
+          backgroundColor: '#1b3446d8',
+          padding: { x: 7, y: 3 },
+        })
+        .setOrigin(0.5)
+        .setDepth(84)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+      label.on('pointerover', () => label.setColor('#ffe39a'));
+      label.on('pointerout', () => label.setColor('#e6f4ff'));
+      label.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
+        this.openNpcModal(npc);
+      });
+      this.extraSigns.push({ at: npc.at, yOffset: 1.28, label });
+    }
+  }
+
+  private openLandmarkModal(lm: TownLandmarkDef): void {
+    const s = this.state;
+    const unlocked = isTransientGameState(s) ? [] : unlockCodex(s, lm.codexIds);
+    let xpLine = '';
+    if (unlocked.length > 0) {
+      const lv = levelUpMessage(addXp(s, 25, { knowledge: true }));
+      audio.playSfx('unlock');
+      saveGame(s);
+      xpLine = `\n\n✨ 解鎖圖鑑：${unlocked.join('、')}${lv ? `\n${lv}` : ''}`;
+    } else {
+      audio.playSfx('page');
+    }
+    showModal(
+      this.scene,
+      `🏛 ${lm.name}（${lm.era}）`,
+      `${lm.summary}\n\n💡 為什麼重要：${lm.whyImportant}${xpLine}`,
+      [{ label: '記下來了！', onPick: () => {} }],
+    );
+  }
+
+  private openNpcModal(npc: TownNpcTemplate): void {
+    audio.playSfx('page');
+    const s = this.state;
+    const port = PORTS.find((p) => p.id === this.portId);
+    const lines: string[] = [];
+    if (port) {
+      const cheapNames = port.cheap.map((id) => GOODS.find((g) => g.id === id)?.name ?? id);
+      const dearNames = port.dear.map((id) => GOODS.find((g) => g.id === id)?.name ?? id);
+      if (cheapNames.length > 0) {
+        lines.push(`「船長您好！我們【${port.name}】最便宜的特產是【${cheapNames.join('、')}】，運到別處買賣最容易賺錢喔！」`);
+      }
+      if (dearNames.length > 0) {
+        lines.push(`「這陣子街上大家最缺【${dearNames.join('、')}】，如果您船上有帶來，交易所一定會開高價收購！」`);
+      }
+      lines.push(`「您知道嗎？古早時期的【${port.name}】，就是現在的【${port.modern}】一帶呢！」`);
+    }
+    if (s.fad && s.fad.untilDay >= s.day) {
+      const fp = PORTS.find((p) => p.id === s.fad!.portId);
+      const fg = GOODS.find((g) => g.id === s.fad!.goodId);
+      if (fp && fg) {
+        lines.push(`「偷偷告訴您，最近剛入港的商船都在傳：【${fp.name}】正在流行【${fg.name}】，賣價翻倍呢！」`);
+      }
+    }
+    const text = lines.length > 0
+      ? lines[this.npcTalkCount % lines.length]
+      : `「歡迎來到${this.portName}！祝船長一帆風順！」`;
+    this.npcTalkCount += 1;
+    showModal(this.scene, `💬 ${npc.name}`, text, [{ label: '謝謝提醒！', onPick: () => {} }]);
+  }
+
   private updateFacilitySigns(): void {
     if (!this.renderer) return;
     for (const sign of this.facilitySigns) {
+      const pos = this.renderer.worldToScreen(sign.at, BASE_W, BASE_H, sign.yOffset);
+      const visible = pos.x >= 40 && pos.x <= BASE_W - 40 && pos.y >= 64 && pos.y <= BASE_H - 40;
+      sign.label.setVisible(visible);
+      if (visible) sign.label.setPosition(Math.round(pos.x), Math.round(pos.y));
+    }
+    for (const sign of this.extraSigns) {
       const pos = this.renderer.worldToScreen(sign.at, BASE_W, BASE_H, sign.yOffset);
       const visible = pos.x >= 40 && pos.x <= BASE_W - 40 && pos.y >= 64 && pos.y <= BASE_H - 40;
       sign.label.setVisible(visible);

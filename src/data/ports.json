@@ -15,7 +15,8 @@
       ],
       "dear": [
         "cotton",
-        "pottery"
+        "pottery",
+        "lacquer"
       ],
       "sells": [
         "deerskin",
@@ -37,7 +38,8 @@
       "shipyard": false,
       "desc": "西班牙人在北台灣建的據點，聖薩爾瓦多城守著港口。附近火山出產硫磺。",
       "cheap": [
-        "sulfur"
+        "sulfur",
+        "wood"
       ],
       "dear": [
         "rice",
@@ -144,7 +146,9 @@
       ],
       "dear": [
         "silver",
-        "pepper"
+        "pepper",
+        "sulfur",
+        "tin"
       ],
       "sells": [
         "silk_raw",
@@ -172,7 +176,8 @@
       ],
       "dear": [
         "silver",
-        "sappan"
+        "sappan",
+        "coral"
       ],
       "sells": [
         "silk_cloth",
@@ -196,11 +201,13 @@
       "cheap": [
         "silk_cloth",
         "pottery",
-        "salt"
+        "salt",
+        "cotton"
       ],
       "dear": [
         "ivory",
-        "pepper"
+        "pepper",
+        "sulfur"
       ],
       "sells": [
         "silk_cloth",
@@ -228,7 +235,8 @@
       "dear": [
         "clove",
         "nutmeg",
-        "ivory"
+        "ivory",
+        "lacquer"
       ],
       "sells": [
         "wine",
@@ -255,7 +263,8 @@
       "dear": [
         "silk_raw",
         "silk_cloth",
-        "deerskin"
+        "deerskin",
+        "tin"
       ],
       "sells": [
         "silver",
@@ -282,7 +291,8 @@
       "dear": [
         "silk_raw",
         "sugar",
-        "sappan"
+        "sappan",
+        "rattan"
       ],
       "sells": [
         "silver",
@@ -308,7 +318,9 @@
       ],
       "dear": [
         "silk_cloth",
-        "porcelain"
+        "porcelain",
+        "rattan",
+        "coral"
       ],
       "sells": [
         "copper",
@@ -383,7 +395,8 @@
       "desc": "越南中部的國際商港，日本人町與唐人街隔橋相望，蘇木與陶器的集散地。",
       "cheap": [
         "sappan",
-        "pottery"
+        "pottery",
+        "cotton"
       ],
       "dear": [
         "copper"
@@ -409,7 +422,8 @@
       "cheap": [
         "sappan",
         "ivory",
-        "rice"
+        "rice",
+        "wood"
       ],
       "dear": [
         "silver",
@@ -467,7 +481,8 @@
       "dear": [
         "silver",
         "silk_raw",
-        "porcelain"
+        "porcelain",
+        "lacquer"
       ],
       "sells": [
         "pepper",

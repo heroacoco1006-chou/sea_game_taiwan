@@ -8,7 +8,7 @@ import {
   dateText, MATE_DEFS, ROLES, mateDefById, roleName, questProgressText,
   itemDescById, isTreasureItem, itemSellValueById, sellInventoryItem,
   CODEX_CATEGORIES, CodexListEntry, codexEntriesForCategory, firstUnlockedCodexCategory,
-  codexCollection, codexTitle,
+  codexCollection, globalCodexCollection, codexTitle,
   STAT_KEYS, STAT_NAMES, fleetStat, mateStats, xpProgressText,
   REP_NAMES, RepKind, repLevelDesc, FACTION_NAMES,
   tradeRepBonus, adventureRepBonus, valorRepPirateReduction,
@@ -24,7 +24,7 @@ import { PORTS } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, selectionRing, showModal } from '../ui';
 import { TutorialOverlay } from '../tutorialOverlay';
 import {
-  TUTORIAL_DATA, disableContextTutorials, enableContextTutorials,
+  TUTORIAL_DATA, disableContextTutorials, enableContextTutorials, restartCoreTutorial,
   tutorialModuleStatus, tutorialProgressText,
 } from '../tutorial';
 
@@ -62,6 +62,7 @@ export default class InfoScene extends Phaser.Scene {
   private codexPage = 0;
   private codexDetailPage = 0;
   private codexDetailOpen = false;
+  private codexShowGlobal = true;
   private codexImageLoading = new Set<string>();
   private codexImageFailed = new Set<string>();
   private dyn: Phaser.GameObjects.GameObject[] = [];
@@ -246,11 +247,17 @@ export default class InfoScene extends Phaser.Scene {
     }, 14));
 
     const tipsOn = this.state.tutorial.tipsEnabled;
-    this.dyn.push(makeButton(this, 730, 625, 330, 40, tipsOn ? '關閉第一次情境提示' : '重新開啟情境提示', () => {
+    this.dyn.push(makeButton(this, 560, 628, 290, 38, tipsOn ? '關閉第一次情境提示' : '重新開啟情境提示', () => {
       const changed = tipsOn ? disableContextTutorials(this.state) : enableContextTutorials(this.state);
       if (changed) saveGame(this.state);
       this.render();
       toast(this, tipsOn ? '已關閉情境提示；手冊仍可閱讀。' : '已重新開啟尚未完成的情境提示。');
+    }, 14));
+    this.dyn.push(makeButton(this, 900, 628, 250, 38, '重玩核心教學', () => {
+      restartCoreTutorial(this.state);
+      saveGame(this.state);
+      this.render();
+      toast(this, '已重新啟動核心教學！離開選單後就會開始引導。');
     }, 14));
   }
 
@@ -442,7 +449,7 @@ export default class InfoScene extends Phaser.Scene {
         .map(([fid, v]) => `💛${FACTION_NAMES[fid] ?? fid}友好度 ${v}`),
       `主線方向：${hero.routeFocus}`,
       `已招募夥伴：${s.mates.length} 位`,
-      `圖鑑收集：${codexCollection(s).unlocked}/${codexCollection(s).total}（${codexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
+      `圖鑑收集：本檔 ${codexCollection(s).unlocked}/${codexCollection(s).total}｜跨檔總計 ${globalCodexCollection(s).unlocked}/${globalCodexCollection(s).total}（${globalCodexCollection(s).rate}%）　稱號：${codexTitle(s)}`,
     ];
     // WP-5：右側主角精緻立繪卡；有立繪時文字讓出右欄
     const pKey = this.m5Texture(portraitKey(s.story.heroId), '');
@@ -642,11 +649,31 @@ export default class InfoScene extends Phaser.Scene {
 
   private drawCodex(): void {
     const col = codexCollection(this.state);
+    const gCol = globalCodexCollection(this.state);
+    const header = gCol.unlocked > col.unlocked
+      ? `圖鑑　本檔 ${col.unlocked}/${col.total}｜跨檔總計 ${gCol.unlocked}/${gCol.total}（${gCol.rate}%）　稱號：${codexTitle(this.state)}`
+      : `圖鑑　收集 ${col.unlocked}/${col.total}（${col.rate}%）　稱號：${codexTitle(this.state)}`;
     this.dyn.push(
       this.add
-        .text(730, 88, `圖鑑　收集 ${col.unlocked}/${col.total}（${col.rate}%）　稱號：${codexTitle(this.state)}`, textStyle(19))
+        .text(730, 86, header, textStyle(17))
         .setOrigin(0.5)
     );
+    this.dyn.push(makeButton(
+      this,
+      1065,
+      246,
+      210,
+      30,
+      this.codexShowGlobal ? '顯示：全路線跨檔圖鑑' : '顯示：僅本存檔圖鑑',
+      () => {
+        this.codexShowGlobal = !this.codexShowGlobal;
+        this.codexId = undefined;
+        this.codexDetailOpen = false;
+        audio.playSfx('page');
+        this.render();
+      },
+      12,
+    ));
     if (!this.codexCategory) this.codexCategory = firstUnlockedCodexCategory(this.state);
     const category = CODEX_CATEGORIES.find((cat) => cat.id === this.codexCategory) ?? CODEX_CATEGORIES[0];
     if (!category) {
@@ -655,8 +682,9 @@ export default class InfoScene extends Phaser.Scene {
     }
 
     CODEX_CATEGORIES.forEach((cat, i) => {
-      const unlockedCount = codexEntriesForCategory(this.state, cat.id).filter((entry) => entry.unlocked).length;
-      const total = codexEntriesForCategory(this.state, cat.id).length;
+      const list = codexEntriesForCategory(this.state, cat.id, this.codexShowGlobal);
+      const unlockedCount = list.filter((entry) => entry.unlocked).length;
+      const total = list.length;
       const btn = makeButton(this, 385 + (i % 3) * 170, 120 + Math.floor(i / 3) * 38, 158, 32, `${cat.label} ${unlockedCount}/${total}`, () => {
         this.codexCategory = cat.id;
         this.codexId = undefined;
@@ -674,7 +702,7 @@ export default class InfoScene extends Phaser.Scene {
     });
 
     this.addWrapped(300, 238, category.desc, 520, 14, '#6b5530');
-    const entries = codexEntriesForCategory(this.state, category.id);
+    const entries = codexEntriesForCategory(this.state, category.id, this.codexShowGlobal);
     if (entries.length === 0) {
       this.addWrapped(300, 286, '這個分類目前沒有資料。', 520, 15);
       return;

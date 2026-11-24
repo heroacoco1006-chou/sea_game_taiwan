@@ -8,14 +8,16 @@ import {
   PORTS,
   addReputation,
   addXp,
+  armorDefense,
   completeMateDuel,
   completeReputationDuel,
   completeStoryDuel,
+  crewLossFactor,
   fleetShips,
   fleetStat,
   hasRole,
   levelUpMessage,
-  reduceCrewLoss,
+  mateDefById,
   shipHullMax,
   shipTypeById,
   supplyMax,
@@ -72,6 +74,8 @@ export interface HexBattleLaunchData {
   encounterId: string;
   loot: number;
   playerShipIndexes: Record<string, number>;
+  hasStrategist?: boolean;
+  strategistName?: string;
 }
 
 export interface HexBattleSettlement {
@@ -190,9 +194,12 @@ export function createHexBattleLaunch(
   const units: BattleUnit[] = [];
   const gunnerMod = (hasRole(state, 'gunner') ? 1.2 : 1) * (1 + fleetStat(state, 'gun') / 300);
   const globalBoarding = weaponBoard(state)
+    + Math.round(armorDefense(state) * 0.5)
     + (hasRole(state, 'vice') ? 8 : 0)
     + Math.round(fleetStat(state, 'lead') / 15 + fleetStat(state, 'val') / 12);
-  const crewLossMultiplier = reduceCrewLoss(state) ? 0.5 : 1;
+  const crewLossMultiplier = crewLossFactor(state);
+  const strategistMate = state.mates.find((m) => m.role === 'strategist');
+  const strategistName = strategistMate ? mateDefById(strategistMate.id)?.name : undefined;
 
   playerShips.forEach((ship, index) => {
     const id = `p${index}`;
@@ -249,6 +256,8 @@ export function createHexBattleLaunch(
     encounterId: encounter.id,
     loot: encounter.loot,
     playerShipIndexes,
+    hasStrategist: Boolean(strategistMate),
+    strategistName,
   };
 }
 

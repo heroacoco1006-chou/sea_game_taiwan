@@ -18,6 +18,7 @@ export class TownController {
   private routeTarget: TownGroundPoint | null = null;
   private targetFacility: TownFacilityKey | null = null;
   private arrivedFacility: TownFacilityKey | null = null;
+  private stuckMs = 0;
 
   constructor(
     private readonly data: TownSceneData,
@@ -49,15 +50,27 @@ export class TownController {
         this.player = { ...waypoint };
         this.route.shift();
       } else {
+        const before = { ...this.player };
         const travel = Math.min(distance, this.speed * seconds);
         movement = { x: (waypoint.u - this.player.u) / distance, y: (waypoint.v - this.player.v) / distance };
         this.player = this.navigator.moveWithCollision(this.player, {
           u: movement.x * travel,
           v: movement.y * travel,
         });
-        if (groundDistance(this.player, waypoint) <= 0.04) {
+        const actualMoved = groundDistance(before, this.player);
+        if (actualMoved < 0.008 && travel > 0.012) {
+          this.stuckMs += Math.min(delta, 50);
+          if (this.stuckMs >= 360) {
+            this.clearRoute();
+            movement = { x: 0, y: 0 };
+          }
+        } else {
+          this.stuckMs = 0;
+        }
+        if (this.route.length > 0 && groundDistance(this.player, waypoint) <= 0.04) {
           this.player = { ...waypoint };
           this.route.shift();
+          this.stuckMs = 0;
         }
       }
       if (this.route.length === 0) {
@@ -87,6 +100,7 @@ export class TownController {
     this.routeTarget = this.route.length > 0 ? { ...this.route[this.route.length - 1] } : { ...point };
     this.targetFacility = facility;
     this.arrivedFacility = null;
+    this.stuckMs = 0;
     if (facility && this.route.length === 0 && this.nearestFacility()?.key === facility) {
       this.arrivedFacility = facility;
       this.targetFacility = null;
@@ -111,6 +125,7 @@ export class TownController {
     this.routeTarget = null;
     this.targetFacility = null;
     this.arrivedFacility = null;
+    this.stuckMs = 0;
     this.renderer.setNavigationPath([]);
   }
 

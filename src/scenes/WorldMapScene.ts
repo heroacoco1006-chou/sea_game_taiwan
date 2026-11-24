@@ -4,8 +4,9 @@ import {
   GameState, PORTS, Port, GOODS, LANDS, LABELS, WORLD_W, WORLD_H,
   cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
+  KUROSHIO_PATH, kuroshioSpeedMod, kuroshioLabel,
   foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
-  fleetMinCrew, crewMax,
+  fleetMinCrew, crewMax, hasRole,
   gearSpeedMod, stormDamageMod, ambushMod, fatigueMod, statusSpeedMod,
   addSeaStatus, hasSeaStatus, statusSummary,
   EXPLORATION_POINTS, DISCOVERIES, DiscoveryEntry, ExplorationPoint,
@@ -147,6 +148,7 @@ export default class WorldMapScene extends Phaser.Scene {
     // ----- 世界 -----
     this.createSeaBase();
     this.createLandVisuals();
+    this.createKuroshioVisuals();
 
     for (const lb of LABELS) {
       this.add.text(lb.x, lb.y, lb.text, textStyle(lb.size, '#6b5530')).setOrigin(0.5).setDepth(6).setShadow(1, 1, '#f2e3bd', 1);
@@ -300,6 +302,39 @@ export default class WorldMapScene extends Phaser.Scene {
       const y = this.seededRange(7109, i + 411, 0, WORLD_H);
       sea.lineBetween(x, y, x + this.seededRange(7109, i + 31, 80, 260), y + this.seededRange(7109, i + 61, -18, 18));
     }
+  }
+
+  private createKuroshioVisuals(): void {
+    const g = this.add.graphics().setDepth(6);
+    g.lineStyle(22, 0x3894c8, 0.16);
+    g.beginPath();
+    g.moveTo(KUROSHIO_PATH[0].x, KUROSHIO_PATH[0].y);
+    for (let i = 1; i < KUROSHIO_PATH.length; i += 1) {
+      g.lineTo(KUROSHIO_PATH[i].x, KUROSHIO_PATH[i].y);
+    }
+    g.strokePath();
+
+    // 沿黑潮畫出向北流動的水流箭頭，讓小朋友一眼看出黑潮方向
+    g.lineStyle(3, 0xa8e8ff, 0.55);
+    for (let i = 0; i < KUROSHIO_PATH.length - 1; i += 1) {
+      const a = KUROSHIO_PATH[i];
+      const b = KUROSHIO_PATH[i + 1];
+      const angle = Math.atan2(b.y - a.y, b.x - a.x);
+      for (const t of [0.25, 0.65]) {
+        const mx = a.x + (b.x - a.x) * t;
+        const my = a.y + (b.y - a.y) * t;
+        const backX = mx - Math.cos(angle) * 28;
+        const backY = my - Math.sin(angle) * 28;
+        g.lineBetween(backX, backY, mx, my);
+        g.lineBetween(mx, my, mx - Math.cos(angle - 0.55) * 12, my - Math.sin(angle - 0.55) * 12);
+        g.lineBetween(mx, my, mx - Math.cos(angle + 0.55) * 12, my - Math.sin(angle + 0.55) * 12);
+      }
+    }
+    this.add
+      .text(4380, 2140, '🌊 黑潮（北上暖流）', textStyle(14, '#cceeff'))
+      .setOrigin(0.5)
+      .setDepth(7)
+      .setShadow(1, 1, '#082032', 2);
   }
 
   private createLandVisuals(): void {
@@ -826,8 +861,9 @@ export default class WorldMapScene extends Phaser.Scene {
     if (dx !== 0 || dy !== 0) {
       this.heading = Math.atan2(dy, dx);
       const supplyMod = this.state.food <= 0 || this.state.water <= 0 ? 0.5 : 1;
+      const currentMod = kuroshioSpeedMod(this.ship.x, this.ship.y, this.heading);
       const speed =
-        SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) *
+        SHIP_SPEED * shipTypeOf(this.state).speed * windSpeedMod(this.heading, this.wind) * currentMod *
         supplyMod * crewSpeedMod(this.state) * gearSpeedMod(this.state) * statusSpeedMod(this.state);
       const len = Math.hypot(dx, dy);
       const nx = Phaser.Math.Clamp(this.ship.x + (dx / len) * speed * dt, 10, WORLD_W - 10);
@@ -1216,15 +1252,15 @@ export default class WorldMapScene extends Phaser.Scene {
     const s = this.state;
     s.day += 1;
     s.daysAtSea += 1;
-    s.food = Math.max(0, s.food - foodPerDay(s.crew));
-    s.water = Math.max(0, s.water - waterPerDay(s.crew));
+    s.food = Math.max(0, s.food - foodPerDay(s.crew, s));
+    s.water = Math.max(0, s.water - waterPerDay(s.crew, s));
     this.wind = windOf(s.day);
     refreshMarketEvents(s);
 
     // 疲勞：每天累積，水手少升更快；斷糧斷水大增（壞血病風險）
     let fatigueGain = 3 + (s.crew <= 10 ? 2 : 0);
     if (hasSeaStatus(s, 'rats')) {
-      s.food = Math.max(0, s.food - Math.max(1, Math.ceil(foodPerDay(s.crew) / 2)));
+      s.food = Math.max(0, s.food - Math.max(1, Math.ceil(foodPerDay(s.crew, s) / 2)));
       fatigueGain += 2;
     }
     if (hasSeaStatus(s, 'storm')) {
@@ -1252,8 +1288,9 @@ export default class WorldMapScene extends Phaser.Scene {
       }
     }
     s.fatigue = Math.min(100, s.fatigue + Math.round(fatigueGain * fatigueMod(s)));
+    const hasSurgeon = hasRole(s, 'surgeon');
     s.statuses = s.statuses
-      .map((x) => ({ ...x, days: x.days - 1 }))
+      .map((x) => ({ ...x, days: x.days - (hasSurgeon && x.id === 'scurvy' ? 2 : 1) }))
       .filter((x) => x.days > 0);
 
     // 疲勞滿 100：一名水手倒下
@@ -1558,7 +1595,10 @@ export default class WorldMapScene extends Phaser.Scene {
 
   private updateWindHud(): void {
     this.windArrow.setRotation(this.wind.dir + Math.PI / 2);
-    this.windText.setText(`${this.wind.name}・${windLabel(this.heading, this.wind)}`);
+    const curTag = kuroshioLabel(this.ship.x, this.ship.y, this.heading);
+    this.windText.setText(curTag
+      ? `${this.wind.name}・${windLabel(this.heading, this.wind)}\n${curTag}`
+      : `${this.wind.name}・${windLabel(this.heading, this.wind)}`);
   }
 
   /** 頂部資源列：圖示＋數字（取代原本兩行純文字 HUD），國小友善、一眼看懂。 */

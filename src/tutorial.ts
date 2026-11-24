@@ -242,6 +242,17 @@ export function disableContextTutorials(state: GameState): boolean {
   return true;
 }
 
+/** 讓玩家可從「玩法教學」重新進行一次核心教學（不影響已完成的遊戲進度）。 */
+export function restartCoreTutorial(state: GameState): void {
+  const coreStepIds = new Set(coreTutorial().steps.map((step) => step.id));
+  state.tutorial.onboarding = 'active';
+  state.tutorial.completedSteps = state.tutorial.completedSteps.filter((id) => !coreStepIds.has(id));
+  state.tutorial.skippedModules = state.tutorial.skippedModules.filter((id) => id !== CORE_TUTORIAL_ID);
+  state.tutorial.activeContextModuleId = null;
+  // 歡迎頁已看過，直接從進港步驟開始
+  state.tutorial.completedSteps.push('core_welcome');
+}
+
 export type TutorialModuleStatus = '未開始' | '進行中' | '已完成' | '已跳過' | '舊存檔未啟用';
 
 export function tutorialModuleStatus(state: GameState, module: TutorialModuleDef): TutorialModuleStatus {

@@ -29,6 +29,8 @@ export default class FacilityScene extends Phaser.Scene {
   private skipStoryNotice = false;
   private tutorial?: TutorialOverlay;
   private departButton?: Phaser.GameObjects.Container;
+  private diceDay = -1;
+  private dicePaidToday = 0;
 
   constructor() {
     super('Facility');
@@ -97,13 +99,14 @@ export default class FacilityScene extends Phaser.Scene {
         this.body.setText(
           `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n碼頭邊有不少想出海討生活的人，每人雇用費 ${CREW_PRICE} 兩（生力軍加入，全隊疲勞也會跟著降）。\n請大家喝一輪酒（每人 1 兩），疲勞 -30！`
         );
-        makeButton(this, W / 2 - 240, 510, 210, 50, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1), 16);
-        makeButton(this, W / 2, 510, 210, 50, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5), 16);
-        makeButton(this, W / 2 + 240, 510, 210, 50, '請大家喝一輪酒', () => this.buyRound(), 16);
-        makeButton(this, W / 2, 580, 320, 50, '結識夥伴（招募・指派職位）', () => {
+        makeButton(this, W / 2 - 240, 505, 210, 48, `雇水手 +1（${CREW_PRICE} 兩）`, () => this.hireCrew(1), 16);
+        makeButton(this, W / 2, 505, 210, 48, `雇水手 +5（${CREW_PRICE * 5} 兩）`, () => this.hireCrew(5), 16);
+        makeButton(this, W / 2 + 240, 505, 210, 48, '請大家喝一輪酒', () => this.buyRound(), 16);
+        makeButton(this, W / 2 - 175, 574, 310, 48, '結識夥伴（招募・指派職位）', () => {
           saveGame(s);
           this.scene.start('Mates', { portId: this.port.id, door: this.door });
         }, 16);
+        makeButton(this, W / 2 + 175, 574, 310, 48, '🎲 玩大航海骰子（趣味小遊戲）', () => this.playTavernDice(), 16);
         break;
       }
 
@@ -309,7 +312,7 @@ export default class FacilityScene extends Phaser.Scene {
         s.gold += q.reward;
         const unlocked = unlockCodex(s, q.codexIds);
         s.quest = null;
-        const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80));
+        const lv = levelUpMessage(addXp(s, q.type === 'combat' ? 100 : 80, { knowledge: q.type === 'exploration' }));
         const gains = [
           addReputation(s, q.type === 'combat' ? 'valor' : 'adventure', 5),
           ['tayouan', 'ponkan'].includes(this.port.id) ? addFriendship(s, 'sinckan', 3) : '',
@@ -445,6 +448,81 @@ export default class FacilityScene extends Phaser.Scene {
     s.fatigue = Math.max(0, s.fatigue - 30);
     this.refreshInfo();
     toast(this, `乾杯——！大家精神都來了（疲勞 -30，花費 ${cost} 兩）`);
+  }
+
+  /** 酒館趣味骰子小遊戲（國小友善小額娛樂：每日最多 3 局 50 兩押注局，之後或資金不足皆可免費玩友誼局）。 */
+  private playTavernDice(): void {
+    const s = this.state;
+    if (this.diceDay !== s.day) {
+      this.diceDay = s.day;
+      this.dicePaidToday = 0;
+    }
+    const stake = 50;
+    const canWager = this.dicePaidToday < 3 && s.gold >= stake;
+    const intro = canWager
+      ? `老水手搖著木骰盅笑道：「來比大小吧！一人擲 2 顆骰子，點數大的人贏！\n押注 ${stake} 兩，贏了拿回 ${stake * 2} 兩還能振奮士氣（疲勞 −5）。」（今日剩餘押注局：${3 - this.dicePaidToday}/3）`
+      : `老水手笑道：「今天玩得差不多啦，來局不押錢的友誼賽切磋手氣吧！一人擲 2 顆骰子比總和！」`;
+    const choices: Array<{ label: string; onPick: () => void }> = [];
+    if (canWager) {
+      choices.push({ label: `押 ${stake} 兩擲骰子！`, onPick: () => this.rollTavernDice(true) });
+    }
+    choices.push({ label: '免費友誼賽擲骰！', onPick: () => this.rollTavernDice(false) });
+    choices.push({ label: '先不玩了', onPick: () => {} });
+    showModal(this, '🎲 大航海骰子', intro, choices);
+  }
+
+  private rollTavernDice(wager: boolean): void {
+    const s = this.state;
+    const stake = 50;
+    const roll = () => 1 + Math.floor(Math.random() * 6);
+    const p1 = roll();
+    const p2 = roll();
+    const e1 = roll();
+    const e2 = roll();
+    const pSum = p1 + p2;
+    const eSum = e1 + e2;
+    const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+    let outcome = '';
+    if (wager && s.gold >= stake && this.dicePaidToday < 3) {
+      this.dicePaidToday += 1;
+      if (pSum > eSum) {
+        s.gold += stake;
+        s.fatigue = Math.max(0, s.fatigue - 5);
+        audio.playSfx('coin');
+        outcome = `🎉 你贏了！老水手爽快付了 ${stake} 兩，水手們跟著歡呼（疲勞 −5）！`;
+      } else if (pSum < eSum) {
+        s.gold -= stake;
+        audio.playSfx('cancel');
+        outcome = `😅 差一點點！請老水手喝壺茶花了 ${stake} 兩，下次再贏回來！`;
+      } else {
+        audio.playSfx('page');
+        outcome = '🤝 平手！兩人哈哈大笑，誰也沒輸沒贏！';
+      }
+      saveGame(s);
+      this.refreshInfo();
+    } else {
+      if (pSum > eSum) {
+        s.fatigue = Math.max(0, s.fatigue - 2);
+        audio.playSfx('unlock');
+        outcome = '🎉 友誼賽獲勝！大家開心鼓掌（疲勞 −2）！';
+        this.refreshInfo();
+      } else if (pSum < eSum) {
+        audio.playSfx('page');
+        outcome = '😅 老水手運氣比較好呢，不過玩得很開心！';
+      } else {
+        audio.playSfx('page');
+        outcome = '🤝 點數一模一樣，真是太巧了！';
+      }
+    }
+    showModal(
+      this,
+      '🎲 擲骰結果',
+      `你的骰子：${faces[p1 - 1]} ${faces[p2 - 1]}（共 ${pSum} 點）\n老水手：${faces[e1 - 1]} ${faces[e2 - 1]}（共 ${eSum} 點）\n\n${outcome}`,
+      [
+        { label: '再玩一局', onPick: () => this.playTavernDice() },
+        { label: '收手休息', onPick: () => {} },
+      ],
+    );
   }
 
   private stayAtInn(days: number): void {

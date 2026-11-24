@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import * as THREE from 'three';
 import { TownAssetLoader } from './TownAssetLoader';
-import { townCameraFollowTarget } from './townCamera';
+import { groundMovementToScreen, townCameraFollowTarget } from './townCamera';
 import { summarizeTownFrameTimes } from './townPerformance';
 import { townPrototypeDiagnostics } from './prototypeDiagnostics';
 import type {
@@ -63,6 +63,9 @@ export class ThreeTownRenderer implements TownRenderer {
   private groundMaterial?: THREE.MeshLambertMaterial;
   private heroImage?: HTMLImageElement;
   private lastHeroFrame = -1;
+  private lastHeroFlipX = false;
+  private heroFacing: 'down' | 'up' | 'side' = 'down';
+  private heroFlipX = false;
   private water?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
   private waterMaterial?: THREE.MeshLambertMaterial;
   private playerShadow?: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
@@ -70,6 +73,7 @@ export class ThreeTownRenderer implements TownRenderer {
   private readonly facilityFallbacks = new Map<TownFacilityKey, THREE.Object3D[]>();
   private readonly animatedFlags: Array<{ mesh: THREE.Mesh; phase: number }> = [];
   private readonly animatedFoliage: Array<{ group: THREE.Group; phase: number }> = [];
+  private readonly animatedNpcs: Array<{ sprite: THREE.Sprite; baseY: number; phase: number }> = [];
   private readonly ambienceGroups = new Map<string, THREE.Group>();
   private readonly cameraOffset = new THREE.Vector3();
   private readonly cameraTarget = new THREE.Vector3();
@@ -83,6 +87,10 @@ export class ThreeTownRenderer implements TownRenderer {
   private readonly frameTimes: number[] = [];
   private lastFrameAt = 0;
   private readonly collectPerfSamples: boolean;
+  private readonly extras?: {
+    landmark?: { id: string; at: TownGroundPoint; accent: string };
+    npcs?: Array<{ id: string; at: TownGroundPoint; robe: string; hat: string }>;
+  };
 
   constructor(
     private readonly phaserScene: Phaser.Scene,
@@ -90,9 +98,14 @@ export class ThreeTownRenderer implements TownRenderer {
     private readonly sceneData: TownSceneData,
     private readonly assetUrl: (assetId: string) => string | undefined,
     collectPerfSamples = false,
+    extras?: {
+      landmark?: { id: string; at: TownGroundPoint; accent: string };
+      npcs?: Array<{ id: string; at: TownGroundPoint; robe: string; hat: string }>;
+    },
   ) {
     this.desiredCameraTarget = { ...sceneData.spawn };
     this.collectPerfSamples = collectPerfSamples;
+    this.extras = extras;
   }
 
   mount(): void {
@@ -143,12 +156,29 @@ export class ThreeTownRenderer implements TownRenderer {
       this.lastFrameAt = frameAt;
     }
     const length = Math.hypot(movement.x, movement.y);
-    const nx = length > 0 ? movement.x / length : 0;
+    if (length > 0.01) {
+      const screenMove = groundMovementToScreen(movement, this.sceneData.camera.yawDeg);
+      if (Math.abs(screenMove.x) > Math.abs(screenMove.y)) {
+        this.heroFacing = 'side';
+        this.heroFlipX = screenMove.x < 0;
+      } else if (screenMove.y < 0) {
+        this.heroFacing = 'up';
+        this.heroFlipX = false;
+      } else {
+        this.heroFacing = 'down';
+        this.heroFlipX = false;
+      }
+    }
 
     if (this.heroImage && this.playerTexture) {
-      const frame = length > 0 ? Math.floor(time / 150) % 3 : 0;
-      this.drawHeroFrame(frame);
-      this.playerMaterial!.rotation = nx < -0.1 ? 0.025 : nx > 0.1 ? -0.025 : 0;
+      const step = length > 0.01 ? Math.floor(time / 150) % 3 : 0;
+      const frame = this.heroFacing === 'side' ? 3 + step : this.heroFacing === 'up' ? 6 : step;
+      this.drawHeroFrame(frame, this.heroFlipX);
+      const bob = length > 0.01 && this.heroFacing === 'up' ? Math.abs(Math.sin(time / 130)) * 0.04 : 0;
+      this.player.position.y = 0.04 + bob;
+      this.playerMaterial!.rotation = length > 0.01 && this.heroFacing === 'side'
+        ? (this.heroFlipX ? 0.025 : -0.025)
+        : 0;
     }
     if (this.water) this.water.position.y = -0.18 + Math.sin(time / 700) * 0.025;
     if (this.waterMaterial?.map) {
@@ -157,6 +187,9 @@ export class ThreeTownRenderer implements TownRenderer {
     }
     for (const flag of this.animatedFlags) flag.mesh.rotation.y = Math.sin(time / 420 + flag.phase) * 0.16;
     for (const foliage of this.animatedFoliage) foliage.group.rotation.z = Math.sin(time / 900 + foliage.phase) * 0.025;
+    for (const npc of this.animatedNpcs) {
+      npc.sprite.position.y = npc.baseY + Math.sin(time / 580 + npc.phase) * 0.018;
+    }
     this.updateFollowCamera(delta);
   }
 
@@ -454,6 +487,7 @@ export class ThreeTownRenderer implements TownRenderer {
 
     this.buildAmbienceObjects();
     this.buildSetDressing();
+    this.buildTownExtras();
 
     this.playerShadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.21, 24),
@@ -765,12 +799,109 @@ export class ThreeTownRenderer implements TownRenderer {
     return texture;
   }
 
-  private drawHeroFrame(frame: number): void {
+  private buildTownExtras(): void {
+    const landmark = this.extras?.landmark;
+    if (landmark) {
+      const group = new THREE.Group();
+      group.position.set(landmark.at.u, 0, landmark.at.v);
+      const baseStone = new THREE.MeshLambertMaterial({ color: this.sceneData.palette?.stone ?? DEFAULT_PALETTE.stone });
+      const accentMat = new THREE.MeshLambertMaterial({ color: landmark.accent });
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.28, 0.95), baseStone);
+      plinth.position.y = 0.14;
+      group.add(plinth);
+      const stele = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.38, 0.3), baseStone);
+      stele.position.y = 0.96;
+      group.add(stele);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(0.56, 0.36, 4), accentMat);
+      cap.position.y = 1.82;
+      cap.rotation.y = Math.PI / 4;
+      group.add(cap);
+      const ring = new THREE.Mesh(
+        new THREE.CircleGeometry(0.62, 24),
+        new THREE.MeshBasicMaterial({ color: 0xf2c14e, transparent: true, opacity: 0.45, side: THREE.DoubleSide }),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.03;
+      group.add(ring);
+      this.threeScene.add(group);
+    }
+
+    const npcs = this.extras?.npcs ?? [];
+    npcs.forEach((npc, idx) => {
+      const shadow = new THREE.Mesh(
+        new THREE.CircleGeometry(0.19, 18),
+        new THREE.MeshBasicMaterial({ color: 0x1d1710, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide }),
+      );
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(npc.at.u, 0.025, npc.at.v);
+      this.threeScene.add(shadow);
+
+      const texture = this.makeNpcTexture(npc.robe, npc.hat);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.05 }));
+      sprite.center.set(0.5, 0);
+      sprite.scale.set(0.62, 0.94, 1);
+      sprite.position.set(npc.at.u, 0.04, npc.at.v);
+      this.threeScene.add(sprite);
+      this.animatedNpcs.push({ sprite, baseY: 0.04, phase: idx * 2.1 + 0.5 });
+    });
+  }
+
+  private makeNpcTexture(robeColor: string, hatColor: string): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 96;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, 96, 128);
+    // 頭與帽子
+    ctx.fillStyle = '#e4c09c';
+    ctx.beginPath();
+    ctx.arc(48, 34, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = hatColor;
+    ctx.beginPath();
+    ctx.ellipse(48, 22, 22, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(36, 12, 24, 12);
+    // 眼睛
+    ctx.fillStyle = '#2a1d14';
+    ctx.fillRect(42, 33, 3, 4);
+    ctx.fillRect(51, 33, 3, 4);
+    // 外袍與腰帶
+    ctx.fillStyle = robeColor;
+    ctx.beginPath();
+    ctx.moveTo(30, 50);
+    ctx.lineTo(66, 50);
+    ctx.lineTo(72, 102);
+    ctx.lineTo(24, 102);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#d9b56a';
+    ctx.fillRect(29, 72, 38, 6);
+    // 腳
+    ctx.fillStyle = '#33241a';
+    ctx.fillRect(34, 102, 10, 18);
+    ctx.fillRect(52, 102, 10, 18);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    this.loadedTextures.push(texture);
+    return texture;
+  }
+
+  private drawHeroFrame(frame: number, flipX = false): void {
     if (!this.heroImage || !this.playerCanvas || !this.playerContext || !this.playerTexture) return;
-    if (frame === this.lastHeroFrame) return;
+    if (frame === this.lastHeroFrame && flipX === this.lastHeroFlipX) return;
     const frameWidth = this.heroImage.naturalWidth / 7;
     if (!Number.isFinite(frameWidth) || frameWidth <= 0) return;
     this.playerContext.clearRect(0, 0, 128, 128);
+    this.playerContext.save();
+    if (flipX) {
+      this.playerContext.translate(128, 0);
+      this.playerContext.scale(-1, 1);
+    }
     this.playerContext.drawImage(
       this.heroImage,
       frame * frameWidth,
@@ -782,7 +913,9 @@ export class ThreeTownRenderer implements TownRenderer {
       96,
       128,
     );
+    this.playerContext.restore();
     this.playerTexture.needsUpdate = true;
     this.lastHeroFrame = frame;
+    this.lastHeroFlipX = flipX;
   }
 }

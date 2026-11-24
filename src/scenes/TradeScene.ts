@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   GameState, PORTS, GOODS, Good, Port, priceOf, sellPriceOf, recordSale, isFad, currentSaturation,
-  cargoCount, cargoMax, saveGame, avgCost,
+  cargoCount, cargoMax, saveGame, avgCost, neededGoodsForQuests, knownDearPortsForGood,
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, floatText } from '../ui';
 import { audio, townBgmForRegion } from '../audio';
@@ -136,10 +136,11 @@ export default class TradeScene extends Phaser.Scene {
     }
   }
 
-  /** 重建右欄（買賣後同步更新本港商品的持有數） */
+  /** 重建右欄（買賣後同步更新本港商品的持有數與任務需求標記） */
   private rebuildShopList(): void {
     for (const o of this.rightObjs) o.destroy();
     this.rightObjs = [];
+    const needed = neededGoodsForQuests(this.state);
     this.shopIds.forEach((id, i) => {
       const g = GOODS.find((x) => x.id === id)!;
       const y = LIST_TOP + i * ROW_H;
@@ -154,11 +155,14 @@ export default class TradeScene extends Phaser.Scene {
       this.rightObjs.push(icon);
       this.rightObjs.push(this.add.text(RIGHT_X + 40, y + 8, g.name, textStyle(19)));
       const price = priceOf(this.state, this.port, id, this.state.day);
-      this.rightObjs.push(this.add.text(RIGHT_X + 210, y + 8, `${price} 兩`, textStyle(19)));
-      if (this.port.cheap.includes(id)) {
-        this.rightObjs.push(this.add.text(RIGHT_X + 320, y + 8, '▼特產', textStyle(17, '#2a7a3a')));
+      this.rightObjs.push(this.add.text(RIGHT_X + 205, y + 8, `${price} 兩`, textStyle(19)));
+      const needQty = needed[id] ?? 0;
+      if (needQty > 0) {
+        this.rightObjs.push(this.add.text(RIGHT_X + 305, y + 8, `📜需${needQty}`, textStyle(16, '#8b3a0e')));
+      } else if (this.port.cheap.includes(id)) {
+        this.rightObjs.push(this.add.text(RIGHT_X + 305, y + 8, '▼特產', textStyle(17, '#2a7a3a')));
       } else if (this.state.events.some((e) => e.portId === this.port.id && e.goodId === id && e.untilDay >= this.state.day)) {
-        this.rightObjs.push(this.add.text(RIGHT_X + 320, y + 8, '▲缺貨', textStyle(17, '#b8362a')));
+        this.rightObjs.push(this.add.text(RIGHT_X + 305, y + 8, '▲缺貨', textStyle(17, '#b8362a')));
       }
       const own = this.state.cargo[id] ?? 0;
       if (own > 0) this.rightObjs.push(this.add.text(RIGHT_X + 430, y + 8, `持有 ${own}`, textStyle(16, '#6b5530')));
@@ -304,7 +308,18 @@ export default class TradeScene extends Phaser.Scene {
       line += `　持有 ${own}・賣價 ${sell}・均 ${avg}（${tag}）`;
     }
     this.detailName.setText(line);
-    this.detailDesc.setText(g.desc);
+    const tips: string[] = [g.desc];
+    const needQty = neededGoodsForQuests(s)[g.id] ?? 0;
+    if (needQty > 0) tips.push(`📜 任務需求：需要 ${needQty} 件（目前持有 ${own} 件）`);
+    const dearPorts = knownDearPortsForGood(s, g.id, this.port.id);
+    if (dearPorts.length > 0) {
+      tips.push(`💡 曾在【${dearPorts.slice(0, 4).join('、')}】聽說高價收購`);
+    }
+    if (s.fad && s.fad.goodId === g.id && s.fad.portId !== this.port.id && s.fad.untilDay >= s.day) {
+      const fp = PORTS.find((p) => p.id === s.fad!.portId);
+      if (fp) tips.push(`🔥 目前在【${fp.name}】流行中（賣價×2）！`);
+    }
+    this.detailDesc.setText(tips.join('\n'));
   }
 
   private changeQty(d: number): void {

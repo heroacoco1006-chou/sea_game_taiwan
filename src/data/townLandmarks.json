@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "landmarks": [
+    {
+      "portId": "tayouan",
+      "id": "lm_tayouan",
+      "name": "熱蘭遮城望樓",
+      "era": "1624 年起建",
+      "at": { "u": -0.35, "v": 1.45 },
+      "accent": "#c85a32",
+      "codexIds": ["codex_peter_3_0"],
+      "summary": "荷蘭東印度公司在台南安平沙洲興建的紅磚要塞，俯瞰台江內海與商船往來，是十七世紀台灣連結中國、日本與南洋的貿易中樞。",
+      "whyImportant": "今日台南安平古堡的殘牆，正是熱蘭遮城留下的歷史見證。"
+    },
+    {
+      "portId": "keelung",
+      "id": "lm_keelung",
+      "name": "聖薩爾瓦多城碑",
+      "era": "1626 年建",
+      "at": { "u": 0.45, "v": 1.35 },
+      "accent": "#b86b35",
+      "codexIds": ["codex_peter_6_0"],
+      "summary": "西班牙人在基隆和平島修築的石造城堡，用來守護北台灣港灣與馬尼拉之間的航線，後來在 1642 年改由荷蘭人接管。",
+      "whyImportant": "這裡見證了北台灣也曾是歐洲大航海勢力競逐的前線。"
+    },
+    {
+      "portId": "tamsui",
+      "id": "lm_tamsui",
+      "name": "紅毛城（聖多明哥城）",
+      "era": "1628 年起建",
+      "at": { "u": -0.4, "v": 1.4 },
+      "accent": "#b44332",
+      "codexIds": ["codex_peter_6_0"],
+      "summary": "矗立在淡水河口山丘上的紅磚古堡，最早由西班牙人建立，之後由荷蘭人以磚石重建，當地人稱它為「紅毛城」。",
+      "whyImportant": "淡水河口扼守北台灣硫磺與藤條貿易，紅毛城至今仍保留在淡水山坡上。"
+    },
+    {
+      "portId": "ponkan",
+      "id": "lm_ponkan",
+      "name": "笨港開墾紀念碑",
+      "era": "1621 年起",
+      "at": { "u": 0.25, "v": 1.35 },
+      "accent": "#a46a2c",
+      "codexIds": ["codex_lin_2_0"],
+      "summary": "顏思齊與海商船隊在雲林、嘉義沿海一帶設寨落腳，成為早期漢人渡海開墾台灣的重要據點，也是鹿皮與稻米集散地。",
+      "whyImportant": "笨港的故事讓我們看見民間海商與原住民族早期互動的起點。"
+    },
+    {
+      "portId": "penghu",
+      "id": "lm_penghu",
+      "name": "澎湖媽祖宮古碑",
+      "era": "明萬曆年間",
+      "at": { "u": -0.25, "v": 1.45 },
+      "accent": "#c04b38",
+      "codexIds": ["codex_peter_2_0"],
+      "summary": "台灣海峽航道中繼站的信仰中心。明朝水師與各地漁民出海前都會來此祈求平安；1622 至 1624 年明荷也曾在此爆發澎湖之役。",
+      "whyImportant": "澎湖天后宮至今仍保存明代〈沈有容諭退紅毛番韋麻郎等〉石碑。"
+    },
+    {
+      "portId": "yuegang",
+      "id": "lm_yuegang",
+      "name": "月港通商牌坊",
+      "era": "1567 年開港",
+      "at": { "u": 0.2, "v": 1.45 },
+      "accent": "#9e3f2f",
+      "codexIds": ["view_yuegang_river"],
+      "summary": "明朝隆慶元年開放海禁後，漳州月港成為唯一合法的民間海外貿易港，海商領取「商引」即可載著生絲與瓷器揚帆南洋。",
+      "whyImportant": "月港開港開啟了福建帆船與白銀貿易最熱絡的時代。"
+    },
+    {
+      "portId": "anhai",
+      "id": "lm_anhai",
+      "name": "安海商旗石柱",
+      "era": "1630 年代",
+      "at": { "u": -0.2, "v": 1.45 },
+      "accent": "#8c3528",
+      "codexIds": ["codex_lin_4_0"],
+      "summary": "安海鎮是鄭芝龍經營海上貿易的大本營，港灣內帆檣林立，商船領取「鄭氏令旗」便可在台海與東亞航路上通行。",
+      "whyImportant": "安海展現了十七世紀東南沿海強大的民間海商勢力。"
+    },
+    {
+      "portId": "macau",
+      "id": "lm_macau",
+      "name": "澳門大三巴牌坊",
+      "era": "1602 年起建",
+      "at": { "u": 0.3, "v": 1.45 },
+      "accent": "#b07b42",
+      "codexIds": ["view_macau_church"],
+      "summary": "聖保祿教堂高聳的花崗岩前壁，是葡萄牙商船與傳教士往來中國與日本的海上地標，東西方工藝在雕刻上交會融合。",
+      "whyImportant": "大三巴見證了澳門作為歐洲進入東亞門戶的歷史地位。"
+    },
+    {
+      "portId": "hirado",
+      "id": "lm_hirado",
+      "name": "平戶荷蘭商館跡",
+      "era": "1609 年設立",
+      "at": { "u": -0.35, "v": 1.45 },
+      "accent": "#405f86",
+      "codexIds": ["view_hirado_trading_post"],
+      "summary": "荷蘭東印度公司與英國商館都曾設在九州平戶，明朝海商領袖李旦也長居此地，是日本鎖國前最熱鬧的國際港之一。",
+      "whyImportant": "平戶連結了日本白銀、中國生絲與台灣鹿皮的三角貿易。"
+    },
+    {
+      "portId": "nagasaki",
+      "id": "lm_nagasaki",
+      "name": "出島扇形海堤碑",
+      "era": "1636 年築成",
+      "at": { "u": 0.35, "v": 1.45 },
+      "accent": "#3a5c7e",
+      "codexIds": ["view_nagasaki_dejima", "codex_chiyo_7_0"],
+      "summary": "長崎港內人工填海築成的扇形小島，鎖國時期成為荷蘭商館與歐洲世界接觸日本的唯一窗口，各類科學書籍由此傳入。",
+      "whyImportant": "即使在鎖國時代，海上交流也未曾完全中斷。"
+    },
+    {
+      "portId": "sakai",
+      "id": "lm_sakai",
+      "name": "堺自治商會碑",
+      "era": "十六至十七世紀",
+      "at": { "u": -0.3, "v": 1.45 },
+      "accent": "#4a5d6e",
+      "codexIds": ["view_sakai_workshops"],
+      "summary": "日本近畿著名的自由商業港，聚集了漆器、刀劍與火繩槍工匠，豪商們派出朱印船遠航台灣與東南亞。",
+      "whyImportant": "堺的職人手藝與商業文化讓日本工藝名揚海外。"
+    },
+    {
+      "portId": "naha",
+      "id": "lm_naha",
+      "name": "首里城遙望臺",
+      "era": "琉球王國時期",
+      "at": { "u": 0.3, "v": 1.45 },
+      "accent": "#b84530",
+      "codexIds": ["view_shuri_castle"],
+      "summary": "站在那霸港望向高處的朱紅宮殿，正是琉球王國的政治與文化中心。琉球商船憑藉「萬國津梁」精神串連東北亞與南洋。",
+      "whyImportant": "琉球王國曾是東亞最重要的中介轉口港之一。"
+    },
+    {
+      "portId": "manila",
+      "id": "lm_manila",
+      "name": "馬尼拉石城砲臺",
+      "era": "1571 年起建",
+      "at": { "u": -0.35, "v": 1.45 },
+      "accent": "#8f6f47",
+      "codexIds": ["view_manila_walls"],
+      "summary": "西班牙人在呂宋興建的堅固石造王城，每年迎接滿載墨西哥白銀橫越太平洋而來的大帆船，換購中國生絲與瓷器。",
+      "whyImportant": "馬尼拉大帆船航線把美洲、亞洲與歐洲真正連成全球貿易網。"
+    },
+    {
+      "portId": "hoian",
+      "id": "lm_hoian",
+      "name": "會安日本橋牌樓",
+      "era": "1590 年代建",
+      "at": { "u": 0.35, "v": 1.45 },
+      "accent": "#9e5e32",
+      "codexIds": ["view_hoian_bridge"],
+      "summary": "橫跨小河的有頂石木廊橋，連結會安的日本人町與唐人街，各國商船趁著東北季風南下至此交換蘇木、瓷器與白銀。",
+      "whyImportant": "這座小橋至今仍屹立在越南會安，象徵跨國海商和平共處。"
+    },
+    {
+      "portId": "batavia",
+      "id": "lm_batavia",
+      "name": "巴達維亞運河橋",
+      "era": "1619 年建城",
+      "at": { "u": -0.35, "v": 1.45 },
+      "accent": "#346e78",
+      "codexIds": ["view_batavia_canal"],
+      "summary": "荷蘭東印度公司在爪哇仿照阿姆斯特丹修築的運河城鎮，是荷蘭在亞洲的總部，許多華人商民與工匠也共同建設此城。",
+      "whyImportant": "巴達維亞正是今天印尼首都雅加達的歷史前身。"
+    },
+    {
+      "portId": "banten",
+      "id": "lm_banten",
+      "name": "萬丹胡椒市集碑",
+      "era": "十六至十七世紀",
+      "at": { "u": 0.35, "v": 1.45 },
+      "accent": "#7a5b32",
+      "codexIds": ["view_banten_pepper"],
+      "summary": "爪哇西部熱鬧非凡的國際市集，來自中國、阿拉伯、荷蘭與英國的商人都曾齊聚於此搶購珍貴的胡椒。",
+      "whyImportant": "胡椒在當年就像黑金一樣值錢，是推動大航海的關鍵香料。"
+    }
+  ],
+  "npcTemplates": {
+    "han": [
+      { "id": "npc_a", "name": "碼頭老船工", "robe": "#325878", "hat": "#d9bd80", "at": { "u": -2.4, "v": -1.35 } },
+      { "id": "npc_b", "name": "福建行商", "robe": "#82412c", "hat": "#3b2c20", "at": { "u": 2.8, "v": 0.65 } }
+    ],
+    "wa": [
+      { "id": "npc_a", "name": "港町町人", "robe": "#3b5670", "hat": "#cfc4a8", "at": { "u": 2.4, "v": -1.35 } },
+      { "id": "npc_b", "name": "朱印船商", "robe": "#6b475f", "hat": "#2f2a2a", "at": { "u": -2.8, "v": 0.65 } }
+    ],
+    "ryu": [
+      { "id": "npc_a", "name": "那霸老漁夫", "robe": "#2f6b70", "hat": "#e0c888", "at": { "u": -2.3, "v": -1.35 } },
+      { "id": "npc_b", "name": "琉球商客", "robe": "#a84c32", "hat": "#4c3522", "at": { "u": 2.7, "v": 0.65 } }
+    ],
+    "euro": [
+      { "id": "npc_a", "name": "商館書記員", "robe": "#3d4e66", "hat": "#2a2420", "at": { "u": -2.35, "v": -1.35 } },
+      { "id": "npc_b", "name": "老水手", "robe": "#6e5135", "hat": "#c8ad7c", "at": { "u": 2.75, "v": 0.65 } }
+    ],
+    "sea": [
+      { "id": "npc_a", "name": "市集貨郎", "robe": "#327258", "hat": "#e0c57e", "at": { "u": 2.35, "v": -1.35 } },
+      { "id": "npc_b", "name": "香料商人", "robe": "#8f552b", "hat": "#4f3722", "at": { "u": -2.75, "v": 0.65 } }
+    ]
+  }
+}

@@ -21,6 +21,7 @@ import {
   validateCannonAttack,
   validatePath,
 } from './battleRules';
+import { hexDistance } from './hex';
 
 export type ApplyCommandResult =
   | { ok: true; state: BattleState; events: BattleEvent[] }
@@ -31,6 +32,8 @@ export interface CreateBattleStateOptions {
   mapId: string;
   units: BattleUnit[];
   maxRounds?: number;
+  strategistAvailable?: boolean;
+  strategistName?: string;
 }
 
 export function createBattleState(options: CreateBattleStateOptions): BattleState {
@@ -47,6 +50,9 @@ export function createBattleState(options: CreateBattleStateOptions): BattleStat
     winner: null,
     resultReason: null,
     log: [],
+    strategistAvailable: Boolean(options.strategistAvailable),
+    strategistUsed: false,
+    ...(options.strategistName ? { strategistName: options.strategistName } : {}),
   };
 }
 
@@ -191,6 +197,57 @@ export function applyCommand(
 ): ApplyCommandResult {
   if (state.phase === 'result' || state.winner !== null) return failure(state, 'BATTLE_OVER');
   if (command.type === 'end_turn') return endTurn(state);
+  if (command.type === 'tactic') {
+    if (state.activeSide !== 'player' || !state.strategistAvailable) return failure(state, 'TACTIC_UNAVAILABLE');
+    if (state.strategistUsed) return failure(state, 'TACTIC_ALREADY_USED');
+    const activePlayers = state.units.filter((u) => u.side === 'player' && u.status === 'active');
+    if (activePlayers.length === 0) return failure(state, 'TACTIC_NO_TARGETS');
+
+    const next = cloneState(state);
+    const events: BattleEvent[] = [];
+    if (command.tactic === 'inspire') {
+      const affectedIds: string[] = [];
+      let totalHeal = 0;
+      for (const u of next.units) {
+        if (u.side !== 'player' || u.status !== 'active') continue;
+        const heal = Math.min(u.hullMax - u.hull, Math.max(8, Math.round(u.hullMax * 0.12)));
+        u.hull += heal;
+        u.cannonPower = Number((u.cannonPower * 1.15).toFixed(3));
+        totalHeal += heal;
+        affectedIds.push(u.id);
+      }
+      next.strategistUsed = true;
+      events.push({ type: 'tactic_used', tactic: 'inspire', affectedIds, totalValue: totalHeal });
+      pushLog(next, 'TACTIC_INSPIRE', undefined, undefined, totalHeal);
+      return { ok: true, state: next, events };
+    }
+
+    // 順風火攻計：對距離任一存活我方船隻 3 格內的敵船造成火焰傷害
+    const nextPlayers = next.units.filter((u) => u.side === 'player' && u.status === 'active');
+    const targets = next.units.filter((u) => (
+      u.side === 'enemy'
+      && u.status === 'active'
+      && nextPlayers.some((p) => hexDistance(p.hex, u.hex) <= 3)
+    ));
+    if (targets.length === 0) return failure(state, 'TACTIC_NO_TARGETS');
+    const affectedIds: string[] = [];
+    let totalDamage = 0;
+    for (const enemy of targets) {
+      const dmg = 15 + Math.floor(enemy.hullMax * 0.08);
+      enemy.hull = Math.max(0, enemy.hull - dmg);
+      totalDamage += dmg;
+      affectedIds.push(enemy.id);
+      if (enemy.hull === 0) {
+        enemy.status = 'sunk';
+        events.push({ type: 'unit_status_changed', unitId: enemy.id, status: 'sunk' });
+      }
+    }
+    next.strategistUsed = true;
+    events.unshift({ type: 'tactic_used', tactic: 'fire', affectedIds, totalValue: totalDamage });
+    pushLog(next, 'TACTIC_FIRE', undefined, undefined, totalDamage);
+    evaluateBattleResult(next, events);
+    return { ok: true, state: next, events };
+  }
 
   const id = actorId(command);
   const unit = id === null ? undefined : findUnit(state, id);
