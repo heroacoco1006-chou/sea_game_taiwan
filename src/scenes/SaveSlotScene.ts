@@ -55,7 +55,7 @@ export default class SaveSlotScene extends Phaser.Scene {
     const hint =
       this.mode === 'new' ? '挑一個空格開始；選到已有進度的格子會先問你要不要覆蓋。（換電腦前可先下載備份）'
       : this.mode === 'save' ? '挑一格存檔；之後的自動存檔會跟著存在這一格。（可下載備份檔防遺失）'
-      : '點「讀取」繼續冒險，也可以把進度下載成備份檔或從備份還原。';
+      : '點「讀取」繼續冒險。備份包含這一格的遊戲進度和全路線圖鑑。';
     this.add.text(W / 2, 100, hint, textStyle(15, '#6b5530')).setOrigin(0.5);
 
     makeButton(this, 220, H - 56, 260, 46, '📂 匯入備份檔', () => this.chooseImportSlot(), 16);
@@ -194,7 +194,7 @@ export default class SaveSlotScene extends Phaser.Scene {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast(this, `已下載第 ${info.slot + 1} 格的備份檔！`);
+      toast(this, `已下載第 ${info.slot + 1} 格的備份檔（含跨檔圖鑑）！`);
     } catch {
       toast(this, '此瀏覽器暫時無法下載檔案。');
     }

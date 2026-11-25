@@ -22,10 +22,14 @@
           "id": "core_enter_port",
           "scene": "WorldMap",
           "presentation": "action",
-          "title": "先進入起始港",
+          "title": "先靠港進城",
           "body": {
-            "desktop": "你的船已停在起始港旁。按 Enter 進港，不必先把船開走。",
-            "touch": "你的船已停在起始港旁。按右下角的「進港」按鈕。"
+            "desktop": "已靠近【{port}】。按 Enter 進港。",
+            "touch": "已靠近【{port}】。按右下角的「進港」按鈕。"
+          },
+          "approach": {
+            "desktop": "最近的是【{port}】（{direction}）。用方向鍵或 WASD 航向【{port}】，靠近後按 Enter 進港。",
+            "touch": "最近的是【{port}】（{direction}）。按住左下方向鍵航行，靠近後按「進港」。"
           },
           "anchor": { "desktop": "world.player", "touch": "world.touch.action" },
           "completeOn": { "event": "port_entered" },

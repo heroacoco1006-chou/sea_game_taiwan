@@ -10,6 +10,7 @@ import explorationEventsData from './data/exploration_events.json';
 import reputationEventsData from './data/reputationEvents.json';
 import discoveriesData from './data/discoveries.json';
 import codexData from './data/codex.json';
+import townLandmarksData from './data/townLandmarks.json';
 import mapReanchorV3Data from './data/map_reanchor_v3.json';
 import { chapterCodexIds, getChapterScript } from './story/parseStory';
 export { getChapterScript, getMateScript } from './story/parseStory';
@@ -476,6 +477,8 @@ export interface GameState {
   costBasis: Record<string, number>;
   food: number;
   water: number;
+  sailingSupplyCarry?: number;
+  tavernDice?: { day: number; paid: number };
   crew: number;
   /** 疲勞 0~100，滿了水手減員 */
   fatigue: number;
@@ -560,8 +563,18 @@ export const STORY_CHAPTERS: StoryChapter[] = storyData.chapters as StoryChapter
 export const DISCOVERIES: DiscoveryEntry[] = discoveriesData.discoveries as DiscoveryEntry[];
 export const EXPLORATION_POINTS: ExplorationPoint[] = explorationData.points as ExplorationPoint[];
 export const CODEX_CATEGORIES: CodexCategory[] = codexData.categories as CodexCategory[];
-// 圖鑑主資料在 data/codex.json；主線、探索、夥伴只負責解鎖 id。
-export const CODEX_ENTRIES: CodexEntry[] = codexData.entries as CodexEntry[];
+const TOWN_LANDMARKS = townLandmarksData.landmarks;
+export type TownLandmarkDef = (typeof TOWN_LANDMARKS)[number];
+// 港町地標使用獨立條目，不解鎖主線或海上探索圖鑑。
+export const CODEX_ENTRIES: CodexEntry[] = [
+  ...codexData.entries as CodexEntry[],
+  ...TOWN_LANDMARKS.map((lm): CodexEntry => ({
+    id: lm.id, category: 'place', type: '港町地標', title: lm.name,
+    short: lm.era, body: lm.summary, whyImportant: lm.whyImportant,
+    unlockHint: '到對應港町查看地標。部分地標要等到對應年代才會出現。',
+    source: `town:${lm.portId}`,
+  })),
+];
 export const CREW_START = 16;
 export const START_YEAR = 1622;
 export const CANNON_PRICE = 3000;
@@ -807,26 +820,67 @@ export function newGame(heroId: HeroId = 'lin'): GameState {
   return state;
 }
 
-/** 每日糧食消耗量（水手越多吃越多；指派水手長可節省 15%） */
+function dailySailingRate(crew: number, state?: GameState): number {
+  return Math.max(1, Math.ceil(crew / 5)) * (state && hasRole(state, 'boatswain') ? 85 : 100);
+}
+
+// 以百分之一單位跨日進位，物資、補給價格和 UI 仍使用整數。
+function sailingSupplyCarry(state?: GameState): number {
+  const carry = state?.sailingSupplyCarry;
+  return typeof carry === 'number' && Number.isInteger(carry) && carry >= 0 && carry < 100 ? carry : 50;
+}
+
 export function foodPerDay(crew: number, state?: GameState): number {
-  const base = Math.max(1, Math.ceil(crew / 5));
-  if (state && hasRole(state, 'boatswain')) return Math.max(1, Math.round(base * 0.85));
-  return base;
+  return Math.floor((dailySailingRate(crew, state) + sailingSupplyCarry(state)) / 100);
 }
 
-/** 每日清水消耗量（指派水手長可節省 15%） */
-export function waterPerDay(crew: number, state?: GameState): number {
-  const base = Math.max(1, Math.ceil(crew / 5));
-  if (state && hasRole(state, 'boatswain')) return Math.max(1, Math.round(base * 0.85));
-  return base;
+export const waterPerDay = foodPerDay;
+
+export function consumeDailySailingSupplies(state: GameState): void {
+  const due = dailySailingRate(state.crew, state) + sailingSupplyCarry(state);
+  const units = Math.floor(due / 100);
+  state.sailingSupplyCarry = due % 100;
+  state.food = Math.max(0, state.food - units);
+  state.water = Math.max(0, state.water - units);
 }
 
-/** 以目前糧水與水手數估算還能航行幾天 */
+/** 使用相同的跨日進位估計正常航行日數，不計臨時事件。 */
 export function sailableDays(state: GameState): number {
-  return Math.min(
-    Math.floor(state.food / foodPerDay(state.crew, state)),
-    Math.floor(state.water / waterPerDay(state.crew, state))
-  );
+  const units = Math.floor(Math.min(state.food, state.water));
+  if (units <= 0) return 0;
+  const budget = units * 100 - sailingSupplyCarry(state);
+  const rate = dailySailingRate(state.crew, state);
+  // 若恰好扣到零，下一天即使不進位扣款，也已無補給可航行。
+  return Math.min(Math.floor((budget + 99) / rate), Math.ceil(budget / rate));
+}
+
+export const TAVERN_DICE_STAKE = 50;
+export const TAVERN_DICE_DAILY_LIMIT = 3;
+
+export function tavernDicePaidRemaining(state: GameState): number {
+  const paid = state.tavernDice?.day === state.day ? state.tavernDice.paid : 0;
+  return Number.isInteger(paid) && paid >= 0 ? Math.max(0, TAVERN_DICE_DAILY_LIMIT - paid) : TAVERN_DICE_DAILY_LIMIT;
+}
+
+export function resolveTavernDice(state: GameState, wager: boolean, rng = Math.random) {
+  const remaining = tavernDicePaidRemaining(state);
+  if (wager && (remaining === 0 || state.gold < TAVERN_DICE_STAKE)) return null;
+  const roll = () => 1 + Math.floor(rng() * 6);
+  const player = [roll(), roll()];
+  const opponent = [roll(), roll()];
+  const playerTotal = player[0] + player[1];
+  const opponentTotal = opponent[0] + opponent[1];
+  const result = playerTotal > opponentTotal ? 'win' : playerTotal < opponentTotal ? 'loss' : 'tie';
+  if (wager) {
+    state.tavernDice = { day: state.day, paid: TAVERN_DICE_DAILY_LIMIT - remaining + 1 };
+    if (result === 'win') {
+      state.gold += TAVERN_DICE_STAKE;
+      state.fatigue = Math.max(0, state.fatigue - 5);
+    } else if (result === 'loss') {
+      state.gold -= TAVERN_DICE_STAKE;
+    }
+  }
+  return { player, opponent, playerTotal, opponentTotal, result };
 }
 
 /**
@@ -2059,18 +2113,27 @@ export function exportSaveSlotJson(slot: number): string | null {
   const raw = safeGetItem(slotKey(slot));
   if (!raw) return null;
   const migrated = migrateSave(raw);
-  return migrated ? JSON.stringify(migrated, null, 2) : null;
+  if (!migrated) return null;
+  const globalCodexBackup = [...new Set([...loadGlobalCodex(), ...storedSlotCodexIds()])];
+  return JSON.stringify({ ...migrated, globalCodexBackup }, null, 2);
 }
 
 /** 匯入備份 JSON 字串到指定存檔格（會經過 migrateSave 驗證與升級）。 */
 export function importSaveSlotJson(slot: number, raw: string): { ok: boolean; msg: string; state?: GameState } {
-  if (slot < 0 || slot >= SAVE_SLOT_COUNT) return { ok: false, msg: '存檔格編號無效。' };
+  if (!Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOT_COUNT) return { ok: false, msg: '存檔格編號無效。' };
   const migrated = migrateSave(raw);
   if (!migrated) return { ok: false, msg: '這份檔案不是有效的《大航海福爾摩沙》存檔。' };
-  const saved = safeSetItem(slotKey(slot), JSON.stringify(migrated));
+  const { globalCodexBackup, ...state } = migrated as GameState & { globalCodexBackup?: unknown };
+  const existing = storedSlotCodexIds();
+  const saved = safeSetItem(slotKey(slot), JSON.stringify(state));
   if (!saved) return { ok: false, msg: '瀏覽器目前不允許寫入存檔（可能開啟了無痕模式或空間不足）。' };
   setActiveSlot(slot);
-  return { ok: true, msg: `已匯入備份到第 ${slot + 1} 格！`, state: migrated };
+  const codexSaved = mergeGlobalCodex([...existing, ...validCodexIds(globalCodexBackup), ...validCodexIds(state.story.codex)]);
+  return {
+    ok: true,
+    msg: codexSaved ? `已匯入備份到第 ${slot + 1} 格！` : '存檔已匯入，但跨檔圖鑑無法寫入，請保留備份檔。',
+    state,
+  };
 }
 
 /** 把存檔字串解析並升級到最新版本；解析失敗回 null。 */
@@ -2374,6 +2437,7 @@ export function listSaveSlots(): SaveSlotInfo[] {
 }
 
 export function deleteSave(slot: number): void {
+  syncStoredSlotCodex();
   safeRemoveItem(slotKey(slot));
   safeRemoveItem(portSnapshotKey(slot));
 }
@@ -2537,14 +2601,43 @@ function consumeStoryRequirements(state: GameState, chapter: StoryChapter): void
 }
 
 const GLOBAL_CODEX_KEY = 'seagame_global_codex_v1';
+const GLOBAL_CODEX_SCAN_KEY = 'seagame_global_codex_slots_v1';
+const VALID_CODEX_IDS = new Set(CODEX_ENTRIES.map((entry) => entry.id));
+
+function validCodexIds(raw: unknown): string[] {
+  return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && VALID_CODEX_IDS.has(id)) : [];
+}
+
+function storedSlotCodexIds(): string[] {
+  const ids = new Set<string>();
+  for (let slot = 0; slot < SAVE_SLOT_COUNT; slot += 1) {
+    const raw = safeGetItem(slotKey(slot));
+    if (!raw) continue;
+    const save = migrateSave(raw);
+    for (const id of validCodexIds(save?.story?.codex)) ids.add(id);
+  }
+  return [...ids];
+}
+
+function mergeGlobalCodex(ids: string[]): boolean {
+  const merged = new Set(loadGlobalCodex());
+  const before = merged.size;
+  for (const id of ids) merged.add(id);
+  return merged.size === before || safeSetItem(GLOBAL_CODEX_KEY, JSON.stringify([...merged]));
+}
+
+function syncStoredSlotCodex(): void {
+  if (safeGetItem(GLOBAL_CODEX_SCAN_KEY) && safeGetItem(GLOBAL_CODEX_KEY) !== null) return;
+  const ids = storedSlotCodexIds();
+  if (ids.length > 0 && mergeGlobalCodex(ids)) safeSetItem(GLOBAL_CODEX_SCAN_KEY, '1');
+}
 
 /** 讀取跨存檔全域圖鑑清單（三條主角線可跨檔累計達成 100%「福爾摩沙活字典」）。 */
 export function loadGlobalCodex(): string[] {
   const raw = safeGetItem(GLOBAL_CODEX_KEY);
   if (!raw) return [];
   try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+    return validCodexIds(JSON.parse(raw));
   } catch {
     return [];
   }
@@ -2553,14 +2646,8 @@ export function loadGlobalCodex(): string[] {
 /** 將目前存檔已解鎖的圖鑑同步至跨存檔全域圖鑑（暫態預覽不寫入）。 */
 export function syncGlobalCodex(state: GameState): void {
   if (isTransientGameState(state)) return;
-  const current = state.story?.codex ?? [];
-  if (current.length === 0) return;
-  const merged = new Set(loadGlobalCodex());
-  const before = merged.size;
-  for (const id of current) merged.add(id);
-  if (merged.size > before) {
-    safeSetItem(GLOBAL_CODEX_KEY, JSON.stringify([...merged]));
-  }
+  syncStoredSlotCodex();
+  mergeGlobalCodex(validCodexIds(state.story?.codex));
 }
 
 export function globalCodexIdsForState(state: GameState): Set<string> {
@@ -2569,6 +2656,16 @@ export function globalCodexIdsForState(state: GameState): Set<string> {
     for (const id of loadGlobalCodex()) set.add(id);
   }
   return set;
+}
+
+export function availableTownLandmark(state: GameState, portId: string): TownLandmarkDef | undefined {
+  const year = dateOf(state.day).year;
+  return TOWN_LANDMARKS.find((lm) => lm.portId === portId && lm.firstYear <= year);
+}
+
+export function visitTownLandmark(state: GameState, portId: string): string[] {
+  const lm = availableTownLandmark(state, portId);
+  return lm && !isTransientGameState(state) ? unlockCodex(state, [lm.id]) : [];
 }
 
 export function codexEntriesForState(state: GameState): CodexEntry[] {
@@ -3510,29 +3607,44 @@ export function neededGoodsForQuests(state: GameState): Record<string, number> {
 export function knownDearPortsForGood(state: GameState, goodId: string, excludePortId?: string): string[] {
   const visited = new Set(state.visitedPorts ?? []);
   return PORTS
-    .filter((p) => p.id !== excludePortId && visited.has(p.id) && p.dear.includes(goodId))
+    .filter((p) => p.id !== excludePortId && visited.has(p.id) && highDemandGoodsForPort(state, p).some((good) => good.id === goodId))
     .map((p) => p.name);
 }
 
+export function highDemandGoodsForPort(state: GameState, port: Port): Good[] {
+  return port.dear.flatMap((id) => {
+    const good = GOODS.find((g) => g.id === id);
+    return good && !port.sells.includes(id) && sellPriceOf(state, port, id, state.day) > good.basePrice ? [good] : [];
+  });
+}
+
+export const PORT_ENTER_RADIUS = 34;
+
+export function nearestPortToPosition(x: number, y: number): Port | undefined {
+  let nearest: Port | undefined;
+  let best = Infinity;
+  for (const port of PORTS) {
+    const d = (x - port.x) ** 2 + (y - port.y) ** 2;
+    if (d < best) { best = d; nearest = port; }
+  }
+  return nearest;
+}
+
 /** 酒館傳聞文字（若有通譯在職，額外提供 1 條跨區高價情報） */
-export function rumorTexts(state: GameState): string[] {
+export function rumorTexts(state: GameState, currentPort = nearestPortToPosition(state.ship.x, state.ship.y)): string[] {
   const lines: string[] = [];
   for (const e of state.events) {
     const p = PORTS.find((x) => x.id === e.portId);
     const g = GOODS.find((x) => x.id === e.goodId);
-    if (p && g) lines.push(`聽說【${p.name}】最近缺${g.name}，價錢開得很高！`);
+    if (p && g && e.untilDay >= state.day && !p.sells.includes(g.id) && sellPriceOf(state, p, g.id, state.day) > g.basePrice) {
+      lines.push(`聽說【${p.name}】最近缺${g.name}，不妨比較看看當地的賣價。`);
+    }
   }
   if (hasRole(state, 'interpreter')) {
-    const candidates = PORTS.filter((p) => p.dear.length > 0);
-    if (candidates.length > 0) {
-      const idx = Math.floor(hashNoise(state.day, 'interp_rumor') * candidates.length);
-      const pickedPort = candidates[idx];
-      const goodId = pickedPort.dear[Math.floor(hashNoise(state.day, 'interp_good') * pickedPort.dear.length)];
-      const good = GOODS.find((x) => x.id === goodId);
-      if (good) {
-        lines.push(`🗣️ 通譯打聽到的跨區情報：【${pickedPort.name}（${pickedPort.region}）】長期高價收購【${good.name}】，帶去賣一定划算！`);
-      }
-    }
+    const candidates = PORTS.filter((p) => p.region !== currentPort?.region)
+      .flatMap((port) => highDemandGoodsForPort(state, port).map((good) => ({ port, good })));
+    const picked = candidates[Math.floor(hashNoise(state.day, 'interp_rumor') * candidates.length)];
+    if (picked) lines.push(`🗣️ 通譯打聽到的跨區情報：【${picked.port.name}（${picked.port.region}）】近日較高價收購【${picked.good.name}】，出發前先比較買價。`);
   }
   if (lines.length === 0) lines.push('最近海上風平浪靜，沒什麼特別的消息。');
   return lines;

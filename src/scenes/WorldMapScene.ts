@@ -5,7 +5,7 @@ import {
   cargoCount, cargoMax, hullMax, shipTypeOf, saveGame, dateText, dateOf,
   windOf, windSpeedMod, windLabel, Wind, refreshMarketEvents,
   KUROSHIO_PATH, kuroshioSpeedMod, kuroshioLabel,
-  foodPerDay, waterPerDay, sailableDays, crewSpeedMod,
+  foodPerDay, consumeDailySailingSupplies, sailableDays, crewSpeedMod, PORT_ENTER_RADIUS,
   fleetMinCrew, crewMax, hasRole,
   gearSpeedMod, stormDamageMod, ambushMod, fatigueMod, statusSpeedMod,
   addSeaStatus, hasSeaStatus, statusSummary,
@@ -49,7 +49,7 @@ const MAP_COLLISION_V3_BYTES = Uint8Array.from(
 
 const SHIP_SPEED = 150; // 基準船速 px/s
 const PX_PER_DAY = 220; // 每航行 220px 過一天
-const PORT_RADIUS = 34;
+
 const DISCOVERY_RADIUS = 52;
 const SCENERY_HINT_RADIUS = 180;
 const EXPLORE_RADIUS = 58;
@@ -900,7 +900,7 @@ export default class WorldMapScene extends Phaser.Scene {
     // 入港判定
     this.nearPort = null;
     for (const p of PORTS) {
-      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, p.x, p.y) <= PORT_RADIUS) {
+      if (Phaser.Math.Distance.Between(this.ship.x, this.ship.y, p.x, p.y) <= PORT_ENTER_RADIUS) {
         this.nearPort = p;
         break;
       }
@@ -1252,15 +1252,14 @@ export default class WorldMapScene extends Phaser.Scene {
     const s = this.state;
     s.day += 1;
     s.daysAtSea += 1;
-    s.food = Math.max(0, s.food - foodPerDay(s.crew, s));
-    s.water = Math.max(0, s.water - waterPerDay(s.crew, s));
+    consumeDailySailingSupplies(s);
     this.wind = windOf(s.day);
     refreshMarketEvents(s);
 
     // 疲勞：每天累積，水手少升更快；斷糧斷水大增（壞血病風險）
     let fatigueGain = 3 + (s.crew <= 10 ? 2 : 0);
     if (hasSeaStatus(s, 'rats')) {
-      s.food = Math.max(0, s.food - Math.max(1, Math.ceil(foodPerDay(s.crew, s) / 2)));
+      s.food = Math.max(0, s.food - Math.max(1, Math.ceil(foodPerDay(s.crew) / 2)));
       fatigueGain += 2;
     }
     if (hasSeaStatus(s, 'storm')) {

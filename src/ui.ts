@@ -51,12 +51,13 @@ export function setMinimumCssTouchTarget(
   const height = Math.max(visualHeight, logical.height);
   target.setSize(width, height);
 
+  // Phaser 已加上容器的 displayOrigin（寬、高的一半），命中區從 0 開始才對準按鈕。
   const hitArea = target.input?.hitArea;
   if (hitArea instanceof Phaser.Geom.Rectangle) {
-    hitArea.setTo(-width / 2, -height / 2, width, height);
+    hitArea.setTo(0, 0, width, height);
   } else {
     target.setInteractive(
-      new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+      new Phaser.Geom.Rectangle(0, 0, width, height),
       Phaser.Geom.Rectangle.Contains,
     );
   }

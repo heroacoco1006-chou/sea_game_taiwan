@@ -3,7 +3,7 @@ import { characterWalkUrl, hd2dTownUrl, portTownBuildingUrl } from '../art';
 import { audio, townBgmForRegion } from '../audio';
 import {
   GameState, PORTS, GOODS, cargoCount, cargoMax, dateText, isTransientGameState, saveGame,
-  unlockCodex, addXp, levelUpMessage,
+  availableTownLandmark, visitTownLandmark, highDemandGoodsForPort, addXp, levelUpMessage, type TownLandmarkDef,
 } from '../state';
 import townLandmarksData from '../data/townLandmarks.json';
 import { TouchControls } from '../touchControls';
@@ -38,18 +38,6 @@ declare global {
   }
 }
 
-type TownLandmarkDef = {
-  portId: string;
-  id: string;
-  name: string;
-  era: string;
-  at: { u: number; v: number };
-  accent: string;
-  codexIds: string[];
-  summary: string;
-  whyImportant: string;
-};
-
 type TownNpcTemplate = {
   id: string;
   name: string;
@@ -58,7 +46,6 @@ type TownNpcTemplate = {
   at: { u: number; v: number };
 };
 
-const TOWN_LANDMARKS = (townLandmarksData as { landmarks: TownLandmarkDef[] }).landmarks;
 const TOWN_NPC_TEMPLATES = (townLandmarksData as { npcTemplates: Record<string, TownNpcTemplate[]> }).npcTemplates;
 
 /** PortScene 內的正式 HD-2D 港町；開發預覽使用 transient state，因此不寫玩家存檔。 */
@@ -104,7 +91,7 @@ export class TownHd2dPrototype {
     this.portName = portInfo?.name ?? portId;
     this.portRegion = portInfo?.region ?? '';
     this.portCulture = portInfo?.culture ?? 'han';
-    this.portLandmark = TOWN_LANDMARKS.find((item) => item.portId === portId);
+    this.portLandmark = availableTownLandmark(this.state, portId);
     this.portNpcs = (TOWN_NPC_TEMPLATES[this.portCulture] ?? TOWN_NPC_TEMPLATES.han ?? []).map((npc) => ({
       ...npc,
       at: { ...npc.at },
@@ -513,7 +500,7 @@ export class TownHd2dPrototype {
 
   private openLandmarkModal(lm: TownLandmarkDef): void {
     const s = this.state;
-    const unlocked = isTransientGameState(s) ? [] : unlockCodex(s, lm.codexIds);
+    const unlocked = visitTownLandmark(s, this.portId);
     let xpLine = '';
     if (unlocked.length > 0) {
       const lv = levelUpMessage(addXp(s, 25, { knowledge: true }));
@@ -526,7 +513,7 @@ export class TownHd2dPrototype {
     showModal(
       this.scene,
       `🏛 ${lm.name}（${lm.era}）`,
-      `${lm.summary}\n\n💡 為什麼重要：${lm.whyImportant}${xpLine}`,
+      `港町導覽標記（遊戲示意）\n${lm.summary}\n\n💡 為什麼重要：${lm.whyImportant}${xpLine}`,
       [{ label: '記下來了！', onPick: () => {} }],
     );
   }
@@ -538,12 +525,12 @@ export class TownHd2dPrototype {
     const lines: string[] = [];
     if (port) {
       const cheapNames = port.cheap.map((id) => GOODS.find((g) => g.id === id)?.name ?? id);
-      const dearNames = port.dear.map((id) => GOODS.find((g) => g.id === id)?.name ?? id);
+      const dearNames = highDemandGoodsForPort(s, port).map((good) => good.name);
       if (cheapNames.length > 0) {
-        lines.push(`「船長您好！我們【${port.name}】最便宜的特產是【${cheapNames.join('、')}】，運到別處買賣最容易賺錢喔！」`);
+        lines.push(`「船長您好！我們【${port.name}】的便宜特產有【${cheapNames.join('、')}】。運到別處前，記得先比較買賣價格喔！」`);
       }
       if (dearNames.length > 0) {
-        lines.push(`「這陣子街上大家最缺【${dearNames.join('、')}】，如果您船上有帶來，交易所一定會開高價收購！」`);
+        lines.push(`「這陣子交易所給【${dearNames.join('、')}】的賣價比較高，買得便宜才容易賺錢喔！」`);
       }
       lines.push(`「您知道嗎？古早時期的【${port.name}】，就是現在的【${port.modern}】一帶呢！」`);
     }

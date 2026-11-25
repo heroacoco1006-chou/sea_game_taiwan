@@ -152,7 +152,7 @@ test('軍師計策（鼓舞軍心／順風火攻）規則正確且限用 1 次',
 
 test('跨存檔全域圖鑑可達成 100% 福爾摩沙活字典，暫態狀態不寫入', () => {
   store.clear();
-  const allIds = codexData.entries.map((e) => e.id);
+  const allIds = stateMod.CODEX_ENTRIES.map((e) => e.id);
   const half = Math.floor(allIds.length / 2);
 
   const lin = stateMod.newGame('lin');
@@ -188,14 +188,14 @@ test('台灣東部黑潮加速帶：順流加速、逆流減速、流域外無�
 });
 
 test('HD-2D 歷史地標資料完整、所有圖鑑 ID 有效，且 TownController 卡牆會安全中止尋路', () => {
-  const codexSet = new Set(codexData.entries.map((e) => e.id));
+  const entries = new Map(stateMod.CODEX_ENTRIES.map((e) => [e.id, e]));
   const portSet = new Set(portsData.ports.map((p) => p.id));
   assert.ok(landmarksData.landmarks.length >= 14);
   for (const lm of landmarksData.landmarks) {
     assert.ok(portSet.has(lm.portId), `無效地標港口 ${lm.portId}`);
-    for (const cid of lm.codexIds) {
-      assert.ok(codexSet.has(cid), `地標 ${lm.id} 引用不存在圖鑑 ${cid}`);
-    }
+    assert.ok(Number.isInteger(lm.firstYear), `地標 ${lm.id} 缺少開放年代`);
+    assert.equal(entries.get(lm.id)?.source, `town:${lm.portId}`);
+    assert.ok(!codexData.entries.some((e) => e.id === lm.id), `地標 ${lm.id} 不可與既有圖鑑重複`);
   }
 
   // 驗證 TownController 卡牆偵測：若 renderer 正常運作但目標被強制阻擋，360ms 後自動清空路線

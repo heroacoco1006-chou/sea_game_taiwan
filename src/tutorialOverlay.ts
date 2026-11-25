@@ -22,6 +22,7 @@ export class TutorialOverlay {
   private readonly anchors = new Map<string, AnchorObject>();
   private objects: Phaser.GameObjects.GameObject[] = [];
   private outline?: Phaser.GameObjects.Graphics;
+  private actionBody?: Phaser.GameObjects.Text;
   private lastAnchorKey = '';
   private dismissedResume = false;
   private destroyed = false;
@@ -164,6 +165,7 @@ export class TutorialOverlay {
       .setOrigin(0, 0.5)
       .setDepth(881)
       .setScrollFactor(0);
+    this.actionBody = body;
     this.objects.push(panel, title, body);
 
     if (step.canSkip) {
@@ -195,8 +197,7 @@ export class TutorialOverlay {
     this.refresh();
   }
 
-  private anchorBoundsForCurrentStep(): { x: number; y: number; width: number; height: number } | null {
-    const step = this.visibleStep();
+  private anchorBoundsForCurrentStep(step = this.visibleStep()): { x: number; y: number; width: number; height: number } | null {
     if (!step || step.presentation !== 'action') return null;
     const anchorId = prefersTouchControls() ? step.anchor?.touch : step.anchor?.desktop;
     if (!anchorId) return null;
@@ -213,7 +214,12 @@ export class TutorialOverlay {
 
   private syncAnchor(): void {
     if (this.destroyed) return;
-    const rect = this.anchorBoundsForCurrentStep();
+    const step = this.visibleStep();
+    if (step?.presentation === 'action' && this.actionBody) {
+      const text = this.instruction(step);
+      if (this.actionBody.text !== text) this.actionBody.setText(text);
+    }
+    const rect = this.anchorBoundsForCurrentStep(step);
     if (!rect) {
       if (this.lastAnchorKey) {
         this.lastAnchorKey = '';
@@ -245,6 +251,7 @@ export class TutorialOverlay {
   }
 
   private clear(): void {
+    this.actionBody = undefined;
     if (this.keyboardWasEnabled !== undefined && this.scene.input.keyboard) {
       this.scene.input.keyboard.enabled = this.keyboardWasEnabled;
       this.keyboardWasEnabled = undefined;

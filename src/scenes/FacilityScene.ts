@@ -6,6 +6,7 @@ import {
   questProgressText, questTitle, explorationPointById, unlockCodex, Quest,
   addXp, levelUpMessage, addReputation, addFriendship, updateQuestProgress,
   reputationEventNoticeAtPort, reportReputationEventStage, reputationEventNextStepText, REP_NAMES,
+  resolveTavernDice, tavernDicePaidRemaining, TAVERN_DICE_STAKE, TAVERN_DICE_DAILY_LIMIT,
 } from '../state';
 import { BASE_W, BASE_H, textStyle, makeButton, drawPanel, toast, showModal, flashFx } from '../ui';
 import { TutorialOverlay } from '../tutorialOverlay';
@@ -29,8 +30,6 @@ export default class FacilityScene extends Phaser.Scene {
   private skipStoryNotice = false;
   private tutorial?: TutorialOverlay;
   private departButton?: Phaser.GameObjects.Container;
-  private diceDay = -1;
-  private dicePaidToday = 0;
 
   constructor() {
     super('Facility');
@@ -95,7 +94,7 @@ export default class FacilityScene extends Phaser.Scene {
 
     switch (this.type) {
       case 'tavern': {
-        const rumors = rumorTexts(s).map((r) => `🍺 ${r}`).join('\n');
+        const rumors = rumorTexts(s, this.port).map((r) => `🍺 ${r}`).join('\n');
         this.body.setText(
           `老闆娘端來一杯熱茶：「客人，聽聽最近的消息吧——」\n\n${rumors}\n\n碼頭邊有不少想出海討生活的人，每人雇用費 ${CREW_PRICE} 兩（生力軍加入，全隊疲勞也會跟著降）。\n請大家喝一輪酒（每人 1 兩），疲勞 -30！`
         );
@@ -453,15 +452,12 @@ export default class FacilityScene extends Phaser.Scene {
   /** 酒館趣味骰子小遊戲（國小友善小額娛樂：每日最多 3 局 50 兩押注局，之後或資金不足皆可免費玩友誼局）。 */
   private playTavernDice(): void {
     const s = this.state;
-    if (this.diceDay !== s.day) {
-      this.diceDay = s.day;
-      this.dicePaidToday = 0;
-    }
-    const stake = 50;
-    const canWager = this.dicePaidToday < 3 && s.gold >= stake;
-    const intro = canWager
-      ? `老水手搖著木骰盅笑道：「來比大小吧！一人擲 2 顆骰子，點數大的人贏！\n押注 ${stake} 兩，贏了拿回 ${stake * 2} 兩還能振奮士氣（疲勞 −5）。」（今日剩餘押注局：${3 - this.dicePaidToday}/3）`
-      : `老水手笑道：「今天玩得差不多啦，來局不押錢的友誼賽切磋手氣吧！一人擲 2 顆骰子比總和！」`;
+    const stake = TAVERN_DICE_STAKE;
+    const remaining = tavernDicePaidRemaining(s);
+    const canWager = remaining > 0 && s.gold >= stake;
+    const intro = '一人擲 2 顆骰子，總點數大的人贏！友誼賽不花錢，也不改變疲勞。\n\n' + (canWager
+      ? `押注 ${stake} 兩，贏了多拿 ${stake} 兩、疲勞最多減 5；平手不扣錢。今日剩 ${remaining}/${TAVERN_DICE_DAILY_LIMIT} 局。`
+      : remaining === 0 ? '今天的押注局已玩完，還可以玩友誼賽。' : '資金不足，可以免費玩友誼賽。');
     const choices: Array<{ label: string; onPick: () => void }> = [];
     if (canWager) {
       choices.push({ label: `押 ${stake} 兩擲骰子！`, onPick: () => this.rollTavernDice(true) });
@@ -473,40 +469,30 @@ export default class FacilityScene extends Phaser.Scene {
 
   private rollTavernDice(wager: boolean): void {
     const s = this.state;
-    const stake = 50;
-    const roll = () => 1 + Math.floor(Math.random() * 6);
-    const p1 = roll();
-    const p2 = roll();
-    const e1 = roll();
-    const e2 = roll();
-    const pSum = p1 + p2;
-    const eSum = e1 + e2;
+    const stake = TAVERN_DICE_STAKE;
+    const round = resolveTavernDice(s, wager);
+    if (!round) { this.playTavernDice(); return; }
+    const { player: [p1, p2], opponent: [e1, e2], playerTotal: pSum, opponentTotal: eSum, result } = round;
     const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     let outcome = '';
-    if (wager && s.gold >= stake && this.dicePaidToday < 3) {
-      this.dicePaidToday += 1;
-      if (pSum > eSum) {
-        s.gold += stake;
-        s.fatigue = Math.max(0, s.fatigue - 5);
+    if (wager) {
+      if (result === 'win') {
         audio.playSfx('coin');
-        outcome = `🎉 你贏了！老水手爽快付了 ${stake} 兩，水手們跟著歡呼（疲勞 −5）！`;
-      } else if (pSum < eSum) {
-        s.gold -= stake;
+        outcome = `🎉 你贏了！多拿 ${stake} 兩，水手們也打起精神（疲勞最多減 5）。`;
+      } else if (result === 'loss') {
         audio.playSfx('cancel');
         outcome = `😅 差一點點！請老水手喝壺茶花了 ${stake} 兩，下次再贏回來！`;
       } else {
         audio.playSfx('page');
         outcome = '🤝 平手！兩人哈哈大笑，誰也沒輸沒贏！';
       }
-      saveGame(s);
+      if (!saveGame(s)) toast(this, '未能保存這局結果，請檢查瀏覽器存檔設定。');
       this.refreshInfo();
     } else {
-      if (pSum > eSum) {
-        s.fatigue = Math.max(0, s.fatigue - 2);
+      if (result === 'win') {
         audio.playSfx('unlock');
-        outcome = '🎉 友誼賽獲勝！大家開心鼓掌（疲勞 −2）！';
-        this.refreshInfo();
-      } else if (pSum < eSum) {
+        outcome = '🎉 友誼賽獲勝！大家開心鼓掌。';
+      } else if (result === 'loss') {
         audio.playSfx('page');
         outcome = '😅 老水手運氣比較好呢，不過玩得很開心！';
       } else {

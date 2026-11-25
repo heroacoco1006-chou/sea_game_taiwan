@@ -1,5 +1,6 @@
 import tutorialData from './data/tutorial.json';
 import type { GameState, TutorialProgress } from './state';
+import { compassDirectionText, nearestPortToPosition, PORT_ENTER_RADIUS } from './state';
 
 export type TutorialPresentation = 'modal' | 'action';
 export type TutorialModuleKind = 'core' | 'context';
@@ -15,6 +16,7 @@ export interface TutorialStepDef {
   presentation: TutorialPresentation;
   title: string;
   body: TutorialText;
+  approach?: TutorialText;
   anchor?: {
     desktop?: string;
     touch?: string;
@@ -100,7 +102,23 @@ export function currentTutorialStep(state: GameState, sceneKey?: string): Tutori
   }
 
   if (step && sceneKey && step.scene !== sceneKey) return null;
+  if (step?.id === 'core_enter_port') return withPortApproach(state, step);
   return step;
+}
+
+function withPortApproach(state: GameState, step: TutorialStepDef): TutorialStepDef {
+  const { x, y } = state.ship;
+  const port = nearestPortToPosition(x, y);
+  if (!port) return step;
+  const near = Math.hypot(x - port.x, y - port.y) <= PORT_ENTER_RADIUS;
+  const body = near ? step.body : step.approach ?? step.body;
+  const direction = compassDirectionText(x, y, port.x, port.y, PORT_ENTER_RADIUS);
+  const format = (text: string) => text.replace(/\{port\}/g, port.name).replace(/\{direction\}/g, direction);
+  return {
+    ...step,
+    body: { desktop: format(body.desktop), touch: format(body.touch) },
+    anchor: near ? step.anchor : { desktop: 'world.player', touch: 'world.touch.direction' },
+  };
 }
 
 /**
@@ -119,9 +137,11 @@ export function tutorialResumeStep(state: GameState, sceneKey: string): Tutorial
 
   if (sceneKey === 'WorldMap' && ['Port', 'Trade', 'Facility'].includes(expected.scene)) {
     title = '回到港口繼續教學';
-    desktop = '教學進度已保存。先靠近任一港口並按 Enter 進港，再繼續上一個步驟。';
-    touch = '教學進度已保存。先靠近任一港口並按右下「進港」，再繼續上一個步驟。';
-    anchor = { desktop: 'world.player', touch: 'world.touch.action' };
+    const enter = tutorialStep('core_enter_port');
+    if (!enter) return null;
+    const guide = withPortApproach(state, enter);
+    ({ desktop, touch } = guide.body);
+    anchor = guide.anchor;
   } else if (sceneKey === 'Port' && expected.scene === 'Trade') {
     title = '回到交易所繼續教學';
     desktop = '找到「交易所」，走到門口後按 Enter，教學會從上次的步驟接續。';
@@ -243,14 +263,14 @@ export function disableContextTutorials(state: GameState): boolean {
 }
 
 /** 讓玩家可從「玩法教學」重新進行一次核心教學（不影響已完成的遊戲進度）。 */
-export function restartCoreTutorial(state: GameState): void {
+export function restartCoreTutorial(state: GameState, scene: 'WorldMap' | 'Port' = 'WorldMap'): void {
   const coreStepIds = new Set(coreTutorial().steps.map((step) => step.id));
   state.tutorial.onboarding = 'active';
   state.tutorial.completedSteps = state.tutorial.completedSteps.filter((id) => !coreStepIds.has(id));
   state.tutorial.skippedModules = state.tutorial.skippedModules.filter((id) => id !== CORE_TUTORIAL_ID);
   state.tutorial.activeContextModuleId = null;
-  // 歡迎頁已看過，直接從進港步驟開始
   state.tutorial.completedSteps.push('core_welcome');
+  if (scene === 'Port') state.tutorial.completedSteps.push('core_enter_port');
 }
 
 export type TutorialModuleStatus = '未開始' | '進行中' | '已完成' | '已跳過' | '舊存檔未啟用';

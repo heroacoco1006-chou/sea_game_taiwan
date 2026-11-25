@@ -254,7 +254,7 @@ export default class InfoScene extends Phaser.Scene {
       toast(this, tipsOn ? '已關閉情境提示；手冊仍可閱讀。' : '已重新開啟尚未完成的情境提示。');
     }, 14));
     this.dyn.push(makeButton(this, 900, 628, 250, 38, '重玩核心教學', () => {
-      restartCoreTutorial(this.state);
+      restartCoreTutorial(this.state, this.from);
       saveGame(this.state);
       this.render();
       toast(this, '已重新啟動核心教學！離開選單後就會開始引導。');
