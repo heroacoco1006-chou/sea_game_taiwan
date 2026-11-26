@@ -391,14 +391,17 @@ export class ThreeTownRenderer implements TownRenderer {
     this.water.position.set(waterObject?.at.u ?? 0, waterObject?.elevation ?? -0.18, waterObject?.at.v ?? -4.8);
     this.threeScene.add(this.water);
 
+    const shoreV = Math.min(...this.sceneData.walkable.flat().map((point) => point.v));
+    const harborGate = this.sceneData.objects.find((object) => object.id === 'harbor-gate');
     const stone = new THREE.MeshLambertMaterial({ color: palette.stone });
     const quay = new THREE.Mesh(new THREE.BoxGeometry(this.sceneData.world.width, 0.55, 0.7), stone);
-    quay.position.set(0, 0.12, -3.15);
+    quay.position.set(0, 0.12, shoreV - 0.3);
     this.threeScene.add(quay);
 
     const wood = new THREE.MeshLambertMaterial({ color: palette.wood });
     const dock = new THREE.Group();
-    dock.position.set(-3.8, -0.02, -4.65);
+    const dockU = (harborGate?.at.u ?? 1.5) >= 0 ? -3.8 : 3.8;
+    dock.position.set(dockU, -0.02, shoreV - 1.8);
     const plankGeometry = new THREE.BoxGeometry(3.15, 0.18, 0.25);
     const planks = new THREE.InstancedMesh(plankGeometry, wood, 12);
     const instanceMatrix = new THREE.Matrix4();

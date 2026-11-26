@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  GameState, PORTS, GOODS, Good, Port, priceOf, sellPriceOf, recordSale, isFad, currentSaturation,
+  GameState, PORTS, GOODS, Good, Port, priceOf, sellPriceOf, sellBatchTotal, recordSale, isFad, currentSaturation,
   cargoCount, cargoMax, saveGame, avgCost, neededGoodsForQuests, knownDearPortsForGood,
 } from '../state';
 import { BASE_W, BASE_H, COLORS, textStyle, makeButton, drawPanel, toast, floatText } from '../ui';
@@ -397,14 +397,14 @@ export default class TradeScene extends Phaser.Scene {
       toast(this, '沒有這項貨物可賣！');
       return;
     }
-    const price = this.sellPriceOf(id);
+    const revenue = sellBatchTotal(s, this.port, id, can, s.day);
     const basis = s.costBasis[id] ?? 0;
     s.costBasis[id] = Math.round(basis * ((own - can) / own));
-    s.gold += price * can;
+    s.gold += revenue;
     s.cargo[id] = own - can;
-    floatText(this, 1047, BASE_H - 150, `+${price * can} 兩`, '#b8f0c0');
+    floatText(this, 1047, BASE_H - 150, `+${revenue} 兩`, '#b8f0c0');
     // 供需飽和：在此港賣此貨會壓低後續賣價（隨時間回復）；同時累積交易統計與商人聲望
-    const gainMsgs = recordSale(s, this.port, id, can, s.day, price * can);
+    const gainMsgs = recordSale(s, this.port, id, can, s.day, revenue);
     this.tutorial?.emit('trade_sold', { portId: this.port.id, goodId: id, qty: can });
     if (gainMsgs.length) toast(this, gainMsgs.join('\n'), 640, 150);
     if (s.cargo[id] === 0) {

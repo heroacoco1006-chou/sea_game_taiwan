@@ -74,6 +74,28 @@ function failedFileKey(file: Phaser.Loader.File): string {
   return key || '未知素材';
 }
 
+/** 將內部素材技術 key 轉換成國小生看得懂的中文分類名稱。 */
+export function friendlyAssetLabel(key: string): string {
+  if (!key || key === '未知素材') return '遊戲素材';
+  if (key === LOAD_TEST_KEY) return '載入測試素材';
+  if (key.startsWith('bh_ship_')) return '海戰船隻圖示';
+  if (key.startsWith('bh_terrain_') || key.startsWith('bh_island_')) return '海戰海域與島嶼';
+  if (key.startsWith('bh_effect_') || key.startsWith('bh_overlay_') || key.startsWith('bh_marker_')) return '海戰特效與標記';
+  if (key.startsWith('bh_cmd_')) return '海戰指令按鈕圖示';
+  if (key.startsWith('m5_world_') || key.startsWith('world_')) return '東亞世界海圖';
+  if (key.startsWith('m5_exp_event_')) return '探險圖文事件插圖';
+  if (key.startsWith('m5_exp_') || key.startsWith('m5_discovery_')) return '探險地點標記';
+  if (key.startsWith('m5_story_ch_') || key.startsWith('m5_story_bg_')) return '主線章節劇情背景';
+  if (key.startsWith('m5_portrait_')) return '角色對話頭像';
+  if (key.startsWith('m5_walk_')) return '主角行走圖';
+  if (key.startsWith('m5tb_') || key.startsWith('m5b_') || key.startsWith('m5_town_') || key.startsWith('m5_harbor_')) return '港町街景與建築';
+  if (key.startsWith('m5_ship_card_') || key.startsWith('m5_ship_world_') || key.startsWith('m5_ship_dir_') || key.startsWith('m5_ship_battle_')) return '船隻外觀與船卡';
+  if (key.startsWith('m5_ship_equip_')) return '船隻裝備圖示';
+  if (key.startsWith('m5_codex_')) return '歷史圖鑑插圖';
+  if (key.startsWith('m5_icon_')) return '介面與港口圖示';
+  return '遊戲畫面素材';
+}
+
 function maybeInjectLoadTestFailure(scene: Phaser.Scene): void {
   if (typeof window === 'undefined') return;
   const target = new URLSearchParams(window.location.search).get('loadtest');
@@ -113,8 +135,8 @@ export function installLoadingHud(scene: Phaser.Scene): void {
   };
   const onFileProgress = (file: Phaser.Loader.File): void => {
     createProgressHud(scene, state);
-    const key = failedFileKey(file);
-    state.fileLabel?.setText(`正在讀取：${key.length > 46 ? `${key.slice(0, 43)}…` : key}`);
+    const label = friendlyAssetLabel(failedFileKey(file));
+    state.fileLabel?.setText(`正在準備：${label}`);
   };
   const onLoadError = (file: Phaser.Loader.File): void => {
     state.failedKeys.add(failedFileKey(file));
@@ -165,8 +187,9 @@ export function showLoadingFailureIfNeeded(scene: Phaser.Scene): boolean {
   destroyObjects(state.progressObjects);
   prepareLoadingCamera(scene);
   const failed = [...state.failedKeys];
-  const visibleKeys = failed.slice(0, 4).map((key) => `• ${key}`).join('\n');
-  const extra = failed.length > 4 ? `\n另有 ${failed.length - 4} 個素材` : '';
+  const uniqueLabels = [...new Set(failed.map((key) => friendlyAssetLabel(key)))];
+  const visibleKeys = uniqueLabels.slice(0, 4).map((label) => `• ${label}`).join('\n');
+  const extra = uniqueLabels.length > 4 ? `\n另有 ${uniqueLabels.length - 4} 類素材` : '';
 
   const blocker = scene.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, COLORS.seaDeep, 0.98)
     .setScrollFactor(0).setDepth(HUD_DEPTH).setInteractive();

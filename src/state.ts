@@ -1783,12 +1783,12 @@ export function mateRequirementStatus(state: GameState, def: MateDef): { ok: boo
 }
 
 /** 招募夥伴（共用入隊邏輯）：扣謝禮、入隊、指派預設職位（同職位互斥）、解鎖人物圖鑑。
- *  呼叫前請先用 mateRequirementStatus 確認條件、確認資金足夠。 */
+ *  若 preserveExistingRole=true（主線自動入隊），預設職位已被其他幹部佔用時保留原幹部、不硬踢。 */
 export function recruitMate(
   state: GameState,
   mateId: string,
-  opts?: { free?: boolean }
-): { ok: boolean; unlocked: string[]; roleKey: string | null; levelMsg: string } {
+  opts?: { free?: boolean; preserveExistingRole?: boolean }
+): { ok: boolean; unlocked: string[]; roleKey: string | null; levelMsg: string; keptExistingRole?: boolean } {
   const def = mateDefById(mateId);
   if (!def) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
   if (state.mates.some((m) => m.id === mateId)) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
@@ -1796,15 +1796,22 @@ export function recruitMate(
     if (state.gold < def.fee) return { ok: false, unlocked: [], roleKey: null, levelMsg: '' };
     state.gold -= def.fee;
   }
-  const roleKey = def.roles[0] ?? null;
+  let roleKey: string | null = def.roles[0] ?? null;
+  let keptExistingRole = false;
   if (roleKey) {
-    for (const m of state.mates) if (m.role === roleKey) m.role = null; // 同職位互斥
+    const occupied = state.mates.some((m) => m.role === roleKey);
+    if (opts?.preserveExistingRole && occupied) {
+      roleKey = null;
+      keptExistingRole = true;
+    } else {
+      for (const m of state.mates) if (m.role === roleKey) m.role = null; // 同職位互斥
+    }
   }
   state.mates.push({ id: mateId, role: roleKey });
   if (state.mateQuests?.[mateId]) state.mateQuests[mateId].status = 'done';
   const unlocked = unlockCodex(state, [mateCodexId(mateId)]);
   const levelMsg = levelUpMessage(addXp(state, 40));
-  return { ok: true, unlocked, roleKey, levelMsg };
+  return { ok: true, unlocked, roleKey, levelMsg, keptExistingRole };
 }
 
 /** 是否有夥伴擔任某職位 */
@@ -2774,9 +2781,12 @@ export function processAutoJoins(state: GameState): string[] {
     if (state.mates.some((m) => m.id === def.id)) continue;
     const guest = mateGuestFor(def, state.story.heroId);
     if (guest && state.story.chapter > guest.leaveAfterChapter) continue; // 客座窗口已過，不重複加入
-    const result = recruitMate(state, def.id, { free: true });
+    const result = recruitMate(state, def.id, { free: true, preserveExistingRole: true });
     if (result.ok) {
-      messages.push(`👥 ${def.name}加入船隊同行${guest ? '（客座，會依劇情離隊）' : ''}，擔任${roleName(result.roleKey)}！`);
+      const roleNote = result.keptExistingRole
+        ? '（原職位已有幹部，暫列待命，可到選單調整）'
+        : `，擔任${roleName(result.roleKey)}`;
+      messages.push(`👥 ${def.name}加入船隊同行${guest ? '（客座，會依劇情離隊）' : ''}${roleNote}！`);
     }
   }
   return messages;
@@ -3064,6 +3074,28 @@ export function sellPriceOf(state: GameState, port: Port, goodId: string, day: n
     price = Math.min(price, Math.floor(buyPrice * 0.9));
   }
   return Math.max(1, price);
+}
+
+/**
+ * 批次賣出總成交額：依逐件遞增的供需飽和度累加計算，避免一次「全賣」繞過供需飽和。
+ * 單件賣出時結果與 sellPriceOf 完全相同。
+ */
+export function sellBatchTotal(state: GameState, port: Port, goodId: string, qty: number, day: number): number {
+  if (qty <= 0) return 0;
+  if (qty === 1) return sellPriceOf(state, port, goodId, day);
+  const market = marketBasePriceOf(state, port, goodId, day);
+  let baseMult = 1 + tradeBonus(state, port);
+  if (isFad(state, port, goodId, day)) baseMult *= FAD_MULT;
+  const startSat = currentSaturation(state, port.id, goodId, day);
+  const cap = port.sells.includes(goodId) ? Math.floor(priceOf(state, port, goodId, day) * 0.9) : Number.POSITIVE_INFINITY;
+  let total = 0;
+  for (let i = 0; i < qty; i += 1) {
+    const sat = Math.min(SAT_MAX, startSat + i * SAT_PER_UNIT);
+    let unitPrice = Math.round(market * baseMult * (1 - sat));
+    if (unitPrice > cap) unitPrice = cap;
+    total += Math.max(1, unitPrice);
+  }
+  return total;
 }
 
 /** 每 7 天產生新行情事件（2 港需求大增）＋輪替流行事件，並清掉過期事件 */
